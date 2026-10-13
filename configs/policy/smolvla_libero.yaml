@@ -1,0 +1,9 @@
+policy:
+  path: HuggingFaceVLA/smolvla_libero
+  device: cuda
+  dtype: float32
+  # number of actions executed from each predicted chunk before re-planning.
+  # checkpoint default is 1 (replan every step); larger is faster.
+  n_action_steps: 10
+  # flow-matching sampling temperature (scale of initial noise); 1.0 = default
+  noise_scale: 1.0

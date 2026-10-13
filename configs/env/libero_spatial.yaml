@@ -1,0 +1,24 @@
+# LIBERO-Spatial nominal + LIBERO-Recover spatial scene settings.
+env:
+  suite: libero_spatial
+  resolution: 256
+  nominal_max_steps: 280      # lerobot TASK_SUITE_MAX_STEPS[libero_spatial]
+  nominal_num_steps_wait: 10  # lerobot LiberoEnv default
+  mujoco_gl: egl
+
+recover:
+  scene_root: data/assets/scenes/scenes/selected_bddl_scenes_spatial
+  # official LIBERO-Recovery protocol (examples/LIBERO/eval_files/eval_libero_custom_scene.py)
+  max_steps: 520
+  num_close_trials: 5
+  num_open_trials: 5
+  obj_noise_xy: 0.02
+  gripper_settle_steps: 20
+  num_steps_wait: 0
+  placement_max_attempts: 12
+  # bddl: (:language ...) line in the scene (official; paraphrased wording)
+  # canonical: original LIBERO instruction derived from the task folder name
+  instruction: bddl
+
+split:
+  file: data/splits/spatial_v1.json

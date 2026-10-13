@@ -1,0 +1,8 @@
+# M1 baseline: random recovery augmentation (initial proposal pool only, no CEM refit).
+defaults: [exp/m1_oracle_cem_spatial]
+tag: random_search_spatial
+search:
+  method: random
+  n_iters: 1
+dataset:
+  out_root: data/recovery/m1_random_spatial

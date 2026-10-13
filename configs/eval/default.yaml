@@ -1,0 +1,6 @@
+eval:
+  n_workers: 24          # parallel MuJoCo worker processes
+  seed: 7
+  save_videos: failures  # none | failures | all
+  video_fps: 20
+  max_videos: 40

@@ -1,0 +1,6 @@
+# M1c baseline: SFT on random-search recoveries (same trajectory count as oracle CEM).
+defaults: [exp/m1_sft_oracle_cem]
+tag: sft_random
+train:
+  recovery_datasets: [data/recovery/m1_random_spatial]
+  match_trajectory_count_of: data/recovery/m1_oracle_cem_spatial

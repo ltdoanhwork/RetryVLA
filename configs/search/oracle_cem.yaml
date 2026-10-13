@@ -1,0 +1,27 @@
+search:
+  method: cem              # cem | random
+  scorer: oracle_sim       # oracle_sim | wm_critic (M3)
+  objective: competence    # competence (pi0 continuation success) | goal_progress (ablation)
+  horizon: 50              # recovery segment length in env steps (= SmolVLA chunk size)
+  n_samples: 64            # candidates per iteration
+  n_elites: 8
+  n_iters: 4
+  init:
+    n_vla: 24              # SmolVLA chunk samples at the failure obs
+    vla_noise_scales: [1.0, 1.5]
+    n_perturb: 24          # bounded gaussian perturbations of VLA samples
+    perturb_std: 0.3
+    use_primitives: true   # open/retreat/reposition/regrasp
+  cem:
+    min_std: 0.05
+    init_std: 0.4
+    smooth_kernel: 5       # temporal smoothing of sampled noise (steps)
+    alpha: 0.7             # momentum on mean/std refit
+  score:
+    success_bonus: 1.0
+    time_weight: 0.3       # reward faster success: bonus*(1 - time_weight*t/T)
+    progress_weight: 0.2   # dense shaping when no success (goal-progress)
+    smooth_cost: 0.02
+  continuation_max_steps: 300   # pi0 steps after the recovery segment
+  stop_after_successes: 4       # stop search on a failure instance once this many verified
+  max_instances: 0              # 0 = all

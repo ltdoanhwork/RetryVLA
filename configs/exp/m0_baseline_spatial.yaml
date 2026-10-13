@@ -1,0 +1,11 @@
+# M0: pretrained SmolVLA (no fine-tuning) on nominal LIBERO-Spatial + LIBERO-Recover spatial scenes.
+defaults: [env/libero_spatial, policy/smolvla_libero, eval/default]
+milestone: M0
+tag: baseline_spatial
+
+nominal:
+  task_ids: null            # null = all 10
+  episodes_per_task: 50
+
+recover_eval:
+  splits: [test, pilot]     # which split partitions to evaluate

@@ -1,0 +1,6 @@
+# M1c: SFT SmolVLA on original LIBERO-Spatial + verified oracle-CEM recoveries.
+defaults: [env/libero_spatial, policy/smolvla_libero, eval/default, train/sft]
+milestone: M1
+tag: sft_oracle_cem
+train:
+  recovery_datasets: [data/recovery/m1_oracle_cem_spatial]

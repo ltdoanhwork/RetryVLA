@@ -1,0 +1,18 @@
+# M1: oracle (simulator) CEM recovery search on train/pilot failure instances,
+# then write verified recoveries as a LeRobotDataset.
+defaults: [env/libero_spatial, policy/smolvla_libero, eval/default, search/oracle_cem]
+milestone: M1
+tag: oracle_cem_spatial
+
+search_on:
+  split: pilot              # never test
+  trials_per_scene: [close, open]   # failure instances = scene x gripper_init (fixed noise seed)
+  only_pi0_failures: true   # skip instances pi0 already solves (from a pre-check rollout)
+  precheck_rollouts: 2
+  shard: 0                  # scene-level sharding across GPUs (set dataset.out_root per shard)
+  num_shards: 1
+
+dataset:
+  out_root: data/recovery/m1_oracle_cem_spatial
+  max_trajs_per_instance: 4
+  keep_continuation: true
