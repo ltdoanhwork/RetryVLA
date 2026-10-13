@@ -69,7 +69,8 @@ class MixDataset(Dataset):
         allowed = {SEGMENT_IDS[s] for s in segments}
         self.rec_index: list[tuple[int, int]] = []
         for di, ds in enumerate(recovery):
-            seg = np.asarray(ds.hf_dataset["segment"]).reshape(-1)
+            # read ONLY the segment column (hf_dataset["segment"] would decode every image)
+            seg = np.asarray(ds.hf_dataset.with_format(None).select_columns(["segment"])["segment"]).reshape(-1)
             self.rec_index += [(di, int(i)) for i in np.nonzero(np.isin(seg, list(allowed)))[0]]
         if not self.rec_index:
             self.ratio = 0.0
