@@ -48,7 +48,7 @@ Findings (`experiments/figs/m1_search_overview.png`, `scripts/analyze_m1.py`):
 | Policy | test RSR | close | open |
 |---|---|---|---|
 | pi0 (smolvla_libero) | 0.118 | | |
-| pi1-nominal (SFT on Spatial demos only, 6k steps) | 0.138 | 0.107 | 0.168 |
+| pi1-nominal (SFT on Spatial demos only, 6k steps) | 0.138 | 0.107 | 0.168 | nominal SR 0.796 (pi0 0.656) |
 | pi1-random | running | | |
 | pi1-CEM | waiting for search | | |
 

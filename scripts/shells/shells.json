@@ -20,10 +20,15 @@
   "tmux_prefix": "rv_"
  },
  "claims": {
-  "9dfdca1e:0": {
-   "tmux": "rv_m1d_nom_nominal",
-   "args": "retryvla.eval.eval_nominal configs/exp/m0_baseline_spatial.yaml milestone=M1 nominal_tag=pi1nom_nominal policy.path=runs/20261013-080655_M1_sft_nominal_only/checkpoints/006000/pretrained_model eval.n_workers=12 eval.save_videos=none",
-   "since": "2026-10-13T15:12:23"
+  "ca18f440:0": {
+   "tmux": "rv_m1c_sft_rand",
+   "args": "retryvla.train.sft configs/exp/m1_sft_random.yaml",
+   "since": "2026-10-13T15:48:52"
+  },
+  "aa1cf25d:1": {
+   "tmux": "rv_m1c_sft_cem",
+   "args": "retryvla.train.sft configs/exp/m1_sft_oracle_cem.yaml",
+   "since": "2026-10-13T15:49:04"
   }
  }
 }
