@@ -1,0 +1,44 @@
+{
+ "_doc": "RetryVLA multi-shell registry. avoid = never touch (owner's running jobs / user shell). claims = what RetryVLA currently runs where. Edit when you claim/release. Shell IDs are ephemeral: re-check with scripts/shells/find_free.sh before every dispatch.",
+ "avoid": {
+  "8c7cc072": "roboworm (DreamDojo, running)",
+  "eae733b2": "VLA_doanh_newmethod (14B, running)",
+  "661efdd6": "VLA_doanh_bench8 (Ctrl-World 4-view, running)",
+  "15f251a1": "VLA_doanh_timing (DreamGen, running)",
+  "f1fcfcfe": "roboworm (reserved, new)",
+  "d4c06aca": "roboworm (reserved, new)",
+  "8fcf8097": "retryvla (listed by user; node shared with other jobs)",
+  "7a52c6b5": "retryvla (listed by user; same node as d4c06aca)",
+  "f6fb5d66": "VLA_doanh_user (user's own shell, never use)",
+  "4aec7049": "VLA_doanh_cpu1 (no GPU)",
+  "433d27b6": "VLA_doanh_cpu2 (no GPU)"
+ },
+ "borrow_rules": {
+  "min_free_mib": 40000,
+  "max_util_pct": 30,
+  "max_load_per_core": 0.6,
+  "tmux_prefix": "rv_"
+ },
+ "claims": {
+  "22d385b6:0": {
+   "tmux": "rv_xcheck",
+   "args": "lerobot.scripts.lerobot_eval --policy.path=HuggingFaceVLA/smolvla_libero --env.type=libero --env.task=libero_spatial --eval.batch_size=10 --eval.n_episodes=20 --policy.n_action_steps=10 --policy.device=cuda --output_dir=runs/_xcheck/lerobot_eval_nas10",
+   "since": "2026-10-13T06:34:02"
+  },
+  "22d385b6:1": {
+   "tmux": "rv_nas1",
+   "args": "retryvla.eval.eval_nominal configs/exp/m0_baseline_spatial.yaml nominal_tag=nas1_full policy.n_action_steps=1 nominal.episodes_per_task=20 eval.n_workers=10 eval.save_videos=none",
+   "since": "2026-10-13T06:34:13"
+  },
+  "ca18f440:1": {
+   "tmux": "rv_m0c_bddl",
+   "args": "retryvla.eval.eval_recover configs/exp/m0_baseline_spatial.yaml recover_tag=recover_bddl recover_eval.splits=[test,pilot] recover.instruction=bddl eval.n_workers=12",
+   "since": "2026-10-13T06:36:16"
+  },
+  "22d385b6:2": {
+   "tmux": "rv_m0c_canon",
+   "args": "retryvla.eval.eval_recover configs/exp/m0_baseline_spatial.yaml recover_tag=recover_canonical recover_eval.splits=[test,pilot] recover.instruction=canonical eval.n_workers=8",
+   "since": "2026-10-13T06:36:27"
+  }
+ }
+}
