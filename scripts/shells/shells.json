@@ -24,6 +24,11 @@
    "tmux": "rv_m1a_cem_s0b",
    "args": "retryvla.search.run_search configs/exp/m1_oracle_cem_spatial.yaml search_on.shard=0 search_on.num_shards=2 search_on.resume_from=[data/recovery/m1_oracle_cem_spatial_s0] dataset.out_root=data/recovery/m1_oracle_cem_spatial_s0b eval.n_workers=14",
    "since": "2026-10-13T09:34:15"
+  },
+  "ca18f440:0": {
+   "tmux": "rv_m1c_sft_rand",
+   "args": "retryvla.train.sft configs/exp/m1_sft_random.yaml",
+   "since": "2026-10-13T14:35:37"
   }
  }
 }

@@ -11,3 +11,4 @@ Run directories (`runs/`) are gitignored; this file plus the `M*.md` docs are th
 | 20261013-063621_M0_recover_bddl | M0 | recover_bddl | done | 1a6cce1 | rsr=0.152, rsr_close=0.153, rsr_open=0.150, n_episodes=1160 | pi0 RSR, bddl instruction, test+pilot |
 | 20261013-063631_M0_recover_canonical | M0 | recover_canonical | done | 7ac9bce | rsr=0.155, rsr_close=0.162, rsr_open=0.148, n_episodes=1160 | recover_canonical |
 | 20261013-080655_M1_sft_nominal_only | M1 | sft_nominal_only | done | 7ac9bce | final_loss=0.337 | sft_nominal_only |
+| 20261013-093503_M1_pi1nom_recover_test | M1 | pi1nom_recover_test | done | 021e66f | rsr=0.138, rsr_close=0.107, rsr_open=0.168, n_episodes=560 | pi1-nominal (SFT demos only) test RSR |
