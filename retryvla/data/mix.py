@@ -111,5 +111,10 @@ class MixDataset(Dataset):
         else:
             item, src = self.orig[int(rng.integers(len(self.orig)))], 0
         out = {k: item[k] for k in CORE_KEYS if k in item}
+        # image-format datasets get an observation delta dim ([1,C,H,W]); video ones don't
+        for k in ("observation.images.image", "observation.images.image2", "observation.state"):
+            v = out.get(k)
+            if v is not None and v.ndim == (4 if "images" in k else 2) and v.shape[0] == 1:
+                out[k] = v[0]
         out["source"] = torch.tensor(src)
         return out
