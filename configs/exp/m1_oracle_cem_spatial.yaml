@@ -11,6 +11,9 @@ search_on:
   precheck_rollouts: 2
   shard: 0                  # scene-level sharding across GPUs (set dataset.out_root per shard)
   num_shards: 1
+  sub_shard: 0              # instance-level split of one shard (after resume filtering)
+  num_sub_shards: 1
+  resume_from: []           # dataset roots of earlier (crashed) parts: their searched instances are skipped
 
 dataset:
   out_root: data/recovery/m1_oracle_cem_spatial

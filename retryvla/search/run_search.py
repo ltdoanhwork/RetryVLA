@@ -119,6 +119,21 @@ def build_instances(pool, policy, scenes, cfg, part) -> tuple[list[Instance], li
     return insts, pre_rows
 
 
+def completed_instances(roots) -> set[str]:
+    """Instance ids fully searched in previous (possibly crashed) runs.
+    Uses done.jsonl when present; older runs without it: every instance in instances.jsonl
+    except the last one (which may have been interrupted mid-write)."""
+    done: set[str] = set()
+    for root in roots:
+        side = REPO_ROOT / root / "retryvla"
+        if (side / "done.jsonl").exists():
+            done |= {json.loads(l)["instance_id"] for l in open(side / "done.jsonl")}
+        elif (side / "instances.jsonl").exists():
+            ids = [json.loads(l)["instance_id"] for l in open(side / "instances.jsonl")]
+            done |= set(ids[:-1])
+    return done
+
+
 def search_instance(inst, scorer, proposals, sc, rng_seed) -> tuple[list[dict], list[dict]]:
     """Returns (branches rows, verified successes [{record, score, ...}])."""
     h = int(sc.horizon)
@@ -195,7 +210,15 @@ def main() -> None:
                 todo = [i for i in insts if i.meta["pi0_precheck_sr"] < 1.0]
             else:
                 todo = insts
+            done_ids = completed_instances(cfg.search_on.get("resume_from") or [])
+            if done_ids:
+                todo = [i for i in todo if i.instance_id not in done_ids]
+                log.info("resume: skipping %d instances already searched", len(done_ids))
             log.info("%d instances, %d after pi0 pre-check filter", len(insts), len(todo))
+            n_sub, sub = int(cfg.search_on.get("num_sub_shards", 1)), int(cfg.search_on.get("sub_shard", 0))
+            if n_sub > 1:  # split the remaining instances of this shard over more GPUs
+                todo = todo[sub::n_sub]
+                log.info("sub-shard %d/%d: %d instances", sub, n_sub, len(todo))
             scorer = make_scorer(sc.scorer, pool=pool, policy=policy, objective=sc.objective,
                                  horizon=int(sc.horizon), continuation_max_steps=int(sc.continuation_max_steps),
                                  success_bonus=float(sc.score.success_bonus), time_weight=float(sc.score.time_weight),
@@ -216,6 +239,8 @@ def main() -> None:
                                           keep_continuation=bool(cfg.dataset.keep_continuation))
                 n_traj += len(wins)
                 n_solved += bool(wins)
+                with open(out_root / "retryvla" / "done.jsonl", "a") as f:  # resume marker
+                    f.write(json.dumps({"instance_id": inst.instance_id, "n_written": len(wins)}) + "\n")
                 per_inst.append({"instance_id": inst.instance_id, "n_branches": len(branches),
                                  "n_success": int(sum(b["success"] for b in branches)), "n_written": len(wins),
                                  "pi0_precheck_sr": inst.meta["pi0_precheck_sr"]})

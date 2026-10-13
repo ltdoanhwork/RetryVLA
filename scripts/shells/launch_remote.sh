@@ -21,7 +21,7 @@ read -r USED TOT UTIL <<<"$STATE"
 if [ $((TOT-USED)) -lt 40000 ] || [ "$UTIL" -gt 30 ]; then
   echo "REFUSED: $PREFIX gpu $GPU busy (used=${USED}MiB util=${UTIL}%)"; exit 1
 fi
-OUT=$(det shell open "$FULL" -- bash "$HERE/remote_tmux.sh" "$SESS" "$GPU" "$@" 2>&1 | grep -E "LAUNCHED|EXISTS|NO_TMUX|rror" || true)
+OUT=$(det shell open "$FULL" -- bash "$HERE/remote_tmux.sh" "$SESS" "$GPU" "$@" 2>&1 | grep -E "LAUNCHED|EXISTS|NO_TMUX|QUOTA|rror" || true)
 echo "$OUT"
 [[ "$OUT" == *LAUNCHED* ]] || { echo "launch failed; no claim recorded"; exit 1; }
 # record the claim

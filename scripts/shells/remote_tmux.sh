@@ -9,6 +9,11 @@ export PATH="/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/.local/bin:$PATH"   # t
 command -v tmux >/dev/null || { echo "NO_TMUX"; exit 3; }
 if tmux has-session -t "=$SESS" 2>/dev/null; then echo "SESSION_EXISTS $SESS"; exit 2; fi
 mkdir -p "$REPO/runs/_logs" "$REPO/runs/_jobs"
+# /pfss quota is shared workspace-wide and has been exhausted before: probe a real write first
+if ! dd if=/dev/zero of="$REPO/runs/_jobs/.quota_probe" bs=1M count=64 status=none 2>/dev/null; then
+  rm -f "$REPO/runs/_jobs/.quota_probe"; echo "QUOTA_EXCEEDED on /pfss, not launching"; exit 4
+fi
+rm -f "$REPO/runs/_jobs/.quota_probe"
 TS=$(date +%Y%m%d-%H%M%S)
 LOG="$REPO/runs/_logs/${SESS}_$(hostname)_${TS}.log"
 JOB="$REPO/runs/_jobs/${SESS}_${TS}.sh"
