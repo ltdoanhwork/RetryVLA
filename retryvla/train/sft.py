@@ -20,7 +20,7 @@ from torch.utils.data import DataLoader
 
 from retryvla import REPO_ROOT, tracking
 from retryvla.config import cli_config
-from retryvla.data.mix import MixDataset, count_trajectories, recovery_episode_subset, spatial_episode_ids
+from retryvla.data.mix import MixDataset, count_trajectories, recovery_episode_subsets, spatial_episode_ids
 from retryvla.utils import setup_logging
 
 log = logging.getLogger("sft")
@@ -46,13 +46,15 @@ def build_datasets(cfg, policy_cfg):
     log.info("original dataset %s: %s episodes", tc.original_dataset, "all" if eps is None else len(eps))
     orig = LeRobotDataset(tc.original_dataset, episodes=eps, delta_timestamps=dts)
     recs = []
-    n_match = None
+    n_match = tc.get("max_recovery_trajectories")
     if tc.get("match_trajectory_count_of"):
         n_match = count_trajectories(REPO_ROOT / tc.match_trajectory_count_of)
         log.info("matching trajectory count of %s: %d", tc.match_trajectory_count_of, n_match)
-    for root in tc.recovery_datasets:
-        root = REPO_ROOT / root
-        sub = recovery_episode_subset(root, n_match)
+    roots = [REPO_ROOT / r for r in tc.recovery_datasets]
+    subs = recovery_episode_subsets(roots, int(n_match) if n_match else None)
+    for root, sub in zip(roots, subs):
+        if sub is not None and not sub:
+            continue
         ds = LeRobotDataset("retryvla/recovery", root=root, episodes=sub, delta_timestamps=dts)
         log.info("recovery dataset %s: %d episodes, %d frames", root, ds.num_episodes, ds.num_frames)
         recs.append(ds)

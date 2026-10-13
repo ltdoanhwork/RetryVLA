@@ -1,0 +1,9 @@
+,CEM,random
+instances searched,100.0,108.0
+instances solved,72.0,74.0
+solve rate,0.72,0.6851851851851852
+trajectories,268.0,241.0
+sim episodes (branches),15232.0,6912.0
+branch success rate,0.05173319327731092,0.1048900462962963
+mean recovery len,35.88059701492537,33.44398340248963
+mean total len,78.88059701492537,72.39419087136929

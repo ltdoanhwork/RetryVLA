@@ -20,30 +20,10 @@
   "tmux_prefix": "rv_"
  },
  "claims": {
-  "aa1cf25d:1": {
-   "tmux": "rv_m1a_cem_s1",
-   "args": "retryvla.search.run_search configs/exp/m1_oracle_cem_spatial.yaml search_on.shard=1 search_on.num_shards=2 dataset.out_root=data/recovery/m1_oracle_cem_spatial_s1 eval.n_workers=14",
-   "since": "2026-10-13T07:56:29"
-  },
-  "22d385b6:1": {
-   "tmux": "rv_m1r_rand_s1",
-   "args": "retryvla.search.run_search configs/exp/m1_random_search_spatial.yaml search_on.shard=1 search_on.num_shards=2 dataset.out_root=data/recovery/m1_random_spatial_s1 eval.n_workers=8",
-   "since": "2026-10-13T07:56:51"
-  },
   "aa1cf25d:0": {
    "tmux": "rv_m1a_cem_s0b",
    "args": "retryvla.search.run_search configs/exp/m1_oracle_cem_spatial.yaml search_on.shard=0 search_on.num_shards=2 search_on.resume_from=[data/recovery/m1_oracle_cem_spatial_s0] dataset.out_root=data/recovery/m1_oracle_cem_spatial_s0b eval.n_workers=14",
    "since": "2026-10-13T09:34:15"
-  },
-  "9dfdca1e:0": {
-   "tmux": "rv_m1r_rand_s0b",
-   "args": "retryvla.search.run_search configs/exp/m1_random_search_spatial.yaml search_on.shard=0 search_on.num_shards=2 search_on.resume_from=[data/recovery/m1_random_spatial_s0] dataset.out_root=data/recovery/m1_random_spatial_s0b eval.n_workers=12",
-   "since": "2026-10-13T09:34:25"
-  },
-  "9dfdca1e:1": {
-   "tmux": "rv_m1d_nom_rec",
-   "args": "retryvla.eval.eval_recover configs/exp/m0_baseline_spatial.yaml milestone=M1 recover_tag=pi1nom_recover_test policy.path=runs/20261013-080655_M1_sft_nominal_only/checkpoints/006000/pretrained_model recover_eval.splits=[test] eval.n_workers=10",
-   "since": "2026-10-13T09:34:54"
   }
  }
 }

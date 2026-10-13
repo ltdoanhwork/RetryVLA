@@ -30,6 +30,22 @@ def spatial_episode_ids(repo_id: str, suite: str) -> list[int]:
     return sorted(int(e) for e, t in ep_task.items() if int(t) in keep_idx)
 
 
+def recovery_episode_subsets(roots, n: int | None) -> list[list[int] | None]:
+    """Global top-n trajectories by search score across several dataset roots (None = all)."""
+    if n is None:
+        return [None] * len(roots)
+    rows = []
+    for k, root in enumerate(roots):
+        for l in open(Path(root) / "retryvla" / "trajectories.jsonl"):
+            r = json.loads(l)
+            rows.append((r.get("score", 0.0), k, r["episode_index"]))
+    rows.sort(key=lambda x: -x[0])
+    keep = [[] for _ in roots]
+    for _, k, e in rows[:n]:
+        keep[k].append(e)
+    return [sorted(v) for v in keep]
+
+
 def recovery_episode_subset(root: str | Path, n: int | None) -> list[int] | None:
     """Top-n episodes by search score (None = all)."""
     if n is None:

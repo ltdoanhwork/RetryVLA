@@ -1,6 +1,10 @@
-# M1c: SFT SmolVLA on original LIBERO-Spatial + verified oracle-CEM recoveries.
+# M1c: SFT SmolVLA on original LIBERO-Spatial + verified oracle-CEM recoveries (all shards/parts).
 defaults: [env/libero_spatial, policy/smolvla_libero, eval/default, train/sft]
 milestone: M1
 tag: sft_oracle_cem
 train:
-  recovery_datasets: [data/recovery/m1_oracle_cem_spatial]
+  recovery_datasets:
+    - data/recovery/m1_oracle_cem_spatial_s0
+    - data/recovery/m1_oracle_cem_spatial_s0b
+    - data/recovery/m1_oracle_cem_spatial_s1
+  max_recovery_trajectories: 241   # equal count across arms (= random arm total)
