@@ -9,3 +9,5 @@ Run directories (`runs/`) are gitignored; this file plus the `M*.md` docs are th
 | 20261013-063336_M0_verify_scenes | M0 | verify_scenes | done | 144499e | - | M0b 20 scenes; physics exact 20/20, 1px GL jitter on 4; 2 scenes already-success |
 | 20261013-063416_M0_nas1_full | M0 | nas1_full | done | 38de7b2 | success_rate=0.715, n_episodes=200 | pi0 nominal n_action_steps=1 (20/task) |
 | 20261013-063621_M0_recover_bddl | M0 | recover_bddl | done | 1a6cce1 | rsr=0.152, rsr_close=0.153, rsr_open=0.150, n_episodes=1160 | pi0 RSR, bddl instruction, test+pilot |
+| 20261013-063631_M0_recover_canonical | M0 | recover_canonical | done | 7ac9bce | rsr=0.155, rsr_close=0.162, rsr_open=0.148, n_episodes=1160 | recover_canonical |
+| 20261013-080655_M1_sft_nominal_only | M1 | sft_nominal_only | done | 7ac9bce | final_loss=0.337 | sft_nominal_only |
