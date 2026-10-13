@@ -39,6 +39,10 @@ def build_datasets(cfg, policy_cfg):
     from lerobot.datasets.factory import resolve_delta_timestamps
     from lerobot.datasets.lerobot_dataset import LeRobotDataset, LeRobotDatasetMetadata
 
+    from retryvla.data.mix import patch_lerobot_index_mapping
+
+    patch_lerobot_index_mapping()
+
     tc = cfg.train
     meta = LeRobotDatasetMetadata(tc.original_dataset)
     dts = resolve_delta_timestamps(policy_cfg, meta)

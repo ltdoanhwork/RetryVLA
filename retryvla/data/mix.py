@@ -14,6 +14,31 @@ CORE_KEYS = ("observation.images.image", "observation.images.image2", "observati
 SEGMENT_IDS = {"recovery": 0, "continuation": 1}
 
 
+def patch_lerobot_index_mapping() -> None:
+    """lerobot 0.5.1 builds the abs->rel index map with ``hf_dataset["index"]``, which runs the
+    torch transform and decodes every image of image-format datasets (30+ min on /pfss for our
+    recovery data when an episode subset is selected). Read the raw column instead."""
+    import torch
+    from lerobot.datasets import dataset_reader as dr
+
+    if getattr(dr, "_retryvla_patched", False):
+        return
+
+    def _build_index_mapping(self) -> None:
+        self._absolute_to_relative_idx = None
+        if self.episodes is not None and self.hf_dataset is not None:
+            col = self.hf_dataset.with_format(None).select_columns(["index"])["index"]
+            self._absolute_to_relative_idx = {
+                (a.item() if isinstance(a, torch.Tensor) else int(a)): i for i, a in enumerate(col)
+            }
+
+    for name in dir(dr):
+        cls = getattr(dr, name)
+        if isinstance(cls, type) and "_build_index_mapping" in cls.__dict__:
+            cls._build_index_mapping = _build_index_mapping
+    dr._retryvla_patched = True
+
+
 def spatial_episode_ids(repo_id: str, suite: str) -> list[int]:
     """Episodes of ``repo_id`` whose task language belongs to the given LIBERO suite."""
     import pandas as pd
