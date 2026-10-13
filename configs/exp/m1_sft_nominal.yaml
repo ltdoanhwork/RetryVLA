@@ -1,0 +1,7 @@
+# M1 control: same SFT recipe on the original LIBERO-Spatial demos only (no recovery data).
+# Separates "fine-tuning more" from "learning from recovery data" (pi0 is below its reported SR).
+defaults: [exp/m1_sft_oracle_cem]
+tag: sft_nominal_only
+train:
+  recovery_datasets: []
+  recovery_ratio: 0.0

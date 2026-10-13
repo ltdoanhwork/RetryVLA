@@ -20,16 +20,6 @@
   "tmux_prefix": "rv_"
  },
  "claims": {
-  "22d385b6:0": {
-   "tmux": "rv_xcheck",
-   "args": "lerobot.scripts.lerobot_eval --policy.path=HuggingFaceVLA/smolvla_libero --env.type=libero --env.task=libero_spatial --eval.batch_size=10 --eval.n_episodes=20 --policy.n_action_steps=10 --policy.device=cuda --output_dir=runs/_xcheck/lerobot_eval_nas10",
-   "since": "2026-10-13T06:34:02"
-  },
-  "22d385b6:1": {
-   "tmux": "rv_nas1",
-   "args": "retryvla.eval.eval_nominal configs/exp/m0_baseline_spatial.yaml nominal_tag=nas1_full policy.n_action_steps=1 nominal.episodes_per_task=20 eval.n_workers=10 eval.save_videos=none",
-   "since": "2026-10-13T06:34:13"
-  },
   "ca18f440:1": {
    "tmux": "rv_m0c_bddl",
    "args": "retryvla.eval.eval_recover configs/exp/m0_baseline_spatial.yaml recover_tag=recover_bddl recover_eval.splits=[test,pilot] recover.instruction=bddl eval.n_workers=12",

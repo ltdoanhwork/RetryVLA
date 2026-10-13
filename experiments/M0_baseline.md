@@ -17,6 +17,20 @@ fails most LIBERO-Recover spatial failure states. That gap is the room for recov
 ## Results
 (filled from `experiments/REGISTRY.md`)
 
+**Nominal LIBERO-Spatial (M0a), pi0 = `HuggingFaceVLA/smolvla_libero` as-is:**
+
+| Eval | n_action_steps | Episodes | SR |
+|---|---|---|---|
+| our engine | 10 | 500 (10x50) | 0.656 |
+| `lerobot-eval` (official, cross-check) | 10 | 200 (10x20) | 0.680 |
+| our engine | 1 | 200 (10x20) | 0.715 |
+| our engine | 5 (tasks 5, 9 only) | 60 | 0.533 (vs 0.50 at 10) |
+
+The official `lerobot-eval` matches our engine, so the interface is correct. The checkpoint itself is at about 68% on Spatial
+under lerobot 0.5.1, not the ~90% reported for SmolVLA. Replanning every step gains about 5 points at about 10x the cost.
+**Decision: keep `n_action_steps=10` for pi0** (eval, search continuation, pi1). Add an SFT control arm on the nominal data only
+(`configs/exp/m1_sft_nominal.yaml`), so that recovery gains are not confused with gains from simply fine-tuning more.
+
 M0b (20 scenes, borrowed GPU ca18f440): obs ok 20/20. Physics replay is bit-exact for 20/20 (reload and snapshot).
 The rendered pixels differ by at most 1 intensity level on 4 scenes (GL jitter, harmless). 2/20 scenes already satisfy the BDDL goal
 at the failure state (`cookie_box ep044 s0180`, `stove ep044 s0180`). They count as trivial successes under the official
