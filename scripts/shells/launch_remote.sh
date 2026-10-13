@@ -4,6 +4,8 @@
 #   session names are auto-prefixed with "rv_" so they never collide with the owner's sessions.
 # e.g. scripts/shells/launch_remote.sh 22d385b6 0 m0c retryvla.eval.eval_recover configs/exp/m0_baseline_spatial.yaml
 set -euo pipefail
+# det -> ssh breaks with the conda env libs on LD_LIBRARY_PATH (OpenSSL mismatch)
+unset LD_LIBRARY_PATH
 HERE=$(cd "$(dirname "$0")" && pwd)
 PREFIX=$1; GPU=$2; SESS=$3; shift 3
 [[ "$SESS" == rv_* ]] || SESS="rv_$SESS"

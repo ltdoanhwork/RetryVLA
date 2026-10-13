@@ -20,11 +20,6 @@
   "tmux_prefix": "rv_"
  },
  "claims": {
-  "ca18f440:1": {
-   "tmux": "rv_m0c_bddl",
-   "args": "retryvla.eval.eval_recover configs/exp/m0_baseline_spatial.yaml recover_tag=recover_bddl recover_eval.splits=[test,pilot] recover.instruction=bddl eval.n_workers=12",
-   "since": "2026-10-13T06:36:16"
-  },
   "22d385b6:2": {
    "tmux": "rv_m0c_canon",
    "args": "retryvla.eval.eval_recover configs/exp/m0_baseline_spatial.yaml recover_tag=recover_canonical recover_eval.splits=[test,pilot] recover.instruction=canonical eval.n_workers=8",

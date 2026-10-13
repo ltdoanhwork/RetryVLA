@@ -14,11 +14,14 @@ from __future__ import annotations
 import argparse
 import concurrent.futures as cf
 import json
+import os
 import subprocess
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 CFG = json.loads((HERE / "shells.json").read_text())
+# det -> ssh breaks if the conda env libs are on LD_LIBRARY_PATH (OpenSSL mismatch)
+os.environ.pop("LD_LIBRARY_PATH", None)
 
 
 def running_shells() -> list[tuple[str, str]]:

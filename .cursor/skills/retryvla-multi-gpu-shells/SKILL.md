@@ -92,6 +92,7 @@ Register them with `scripts/register_run.py` as usual.
 | `'NoneType' object has no attribute 'eglQueryString'` | image has no libglvnd. `tools/nvidia-egl-<drv>/lib` ships `libEGL.so.1` too (`scripts/02_setup_nvidia_egl.sh`) |
 | torchcodec `libavutil.so.6x: cannot open` (SFT / dataset video decode) | other images ship no ffmpeg. The env has conda-forge `ffmpeg 7` and `activate.sh` puts `$CONDA_PREFIX/lib` on `LD_LIBRARY_PATH` |
 | `CXXABI_1.3.15 not found` (libopenvino) | system libstdc++ is too old for conda's ffmpeg deps. Same fix: `$CONDA_PREFIX/lib` first on `LD_LIBRARY_PATH` |
+| `OpenSSL version mismatch` from `det shell open` | `env/activate.sh` was sourced in the calling shell (conda libs break ssh). The shell tools unset `LD_LIBRARY_PATH` themselves. For raw `det` calls use `env -u LD_LIBRARY_PATH det ...` |
 | unsure whether a shell's image works | `det shell open <id> -- bash scripts/shells/envcheck.sh` should print `OK video decode` and `OK sim 50 steps ~1s` |
 | sim about 250 ms/step | Mesa software EGL. `source env/activate.sh` must find `tools/nvidia-egl-<driver>`. The driver must match (all nodes 610.43.02 now) |
 | job gone, log empty | started with nohup/& inside `det shell open`. Only tmux survives |

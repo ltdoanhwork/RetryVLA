@@ -3,6 +3,8 @@
 # usage: scripts/shells/remote_ctl.sh status            # every claim: tmux alive? last log line
 #        scripts/shells/remote_ctl.sh stop <shell8:gpu> # kill that rv_ session + release claim
 set -euo pipefail
+# det -> ssh breaks with the conda env libs on LD_LIBRARY_PATH (OpenSSL mismatch)
+unset LD_LIBRARY_PATH
 HERE=$(cd "$(dirname "$0")" && pwd); REPO=$(cd "$HERE/../.." && pwd)
 CMD=${1:-status}
 export PATH="/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/.local/bin:$PATH"
