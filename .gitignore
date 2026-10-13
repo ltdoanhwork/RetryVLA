@@ -1,0 +1,32 @@
+# outputs
+runs/
+outputs/
+wandb/
+*.mp4
+*.npz
+*.parquet
+*.safetensors
+*.pt
+*.ckpt
+
+# data (assets + generated datasets); splits are tracked
+data/*
+!data/splits/
+!data/README.md
+
+# python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+build/
+dist/
+
+# editors
+.vscode/
+.idea/
+
+# machine-local LIBERO config
+.libero/
+third_party/LIBERO-Recovery/

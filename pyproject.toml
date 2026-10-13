@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "retryvla"
+version = "0.1.0"
+description = "World-model-guided synthetic recovery learning for VLAs (LIBERO-Recover)"
+requires-python = ">=3.12"
+dependencies = [
+  "lerobot[smolvla,libero]==0.5.1",
+  "omegaconf>=2.3",
+  "tensorboard",
+  "tyro",
+  "imageio[ffmpeg]",
+  "pandas",
+  "pyarrow",
+  # headless: other cluster shells run an image without libxcb/X11
+  "opencv-python-headless>=4.9,<4.14",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "ruff"]
+
+[tool.setuptools.packages.find]
+include = ["retryvla*"]
+
+[tool.ruff]
+line-length = 110
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["sim: needs MuJoCo + LIBERO assets", "gpu: needs CUDA"]
