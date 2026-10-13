@@ -18,6 +18,8 @@ pip install -e "$REPO[dev]"
 # lerobot pulls opencv-python (needs libxcb); other cluster images lack X libs -> force headless
 pip uninstall -y opencv-python 2>/dev/null || true
 pip install "opencv-python-headless>=4.9,<4.14"
+# ffmpeg for torchcodec (dataset video decoding); other cluster images ship none
+conda install -y -p "$ENV_PREFIX" -c conda-forge "ffmpeg>=7,<8"
 # lerobot[libero] installs `hf-libero`; make sure its config points at bundled assets (no prompt).
 python - <<'PY'
 import os, pathlib, yaml, importlib.util

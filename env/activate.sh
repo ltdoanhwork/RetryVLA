@@ -24,4 +24,7 @@ fi
 # cluster pip.conf has an unreachable NGC extra index
 export PIP_CONFIG_FILE=/dev/null
 export TOKENIZERS_PARALLELISM=false
+# conda env libs first: ffmpeg (torchcodec video decoding) + its newer libstdc++ (CXXABI_1.3.15);
+# other cluster images have no ffmpeg at all and an older system libstdc++.
+export LD_LIBRARY_PATH="$CONDA_PREFIX/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 export PYTHONPATH="$RETRYVLA_ROOT${PYTHONPATH:+:$PYTHONPATH}"
