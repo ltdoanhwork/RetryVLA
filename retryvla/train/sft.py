@@ -55,7 +55,7 @@ def build_datasets(cfg, policy_cfg):
         n_match = count_trajectories(REPO_ROOT / tc.match_trajectory_count_of)
         log.info("matching trajectory count of %s: %d", tc.match_trajectory_count_of, n_match)
     roots = [REPO_ROOT / r for r in tc.recovery_datasets]
-    subs = recovery_episode_subsets(roots, int(n_match) if n_match else None)
+    subs = recovery_episode_subsets(roots, int(n_match) if n_match else None, int(tc.get("min_traj_len", 0)))
     for root, sub in zip(roots, subs):
         if sub is not None and not sub:
             continue

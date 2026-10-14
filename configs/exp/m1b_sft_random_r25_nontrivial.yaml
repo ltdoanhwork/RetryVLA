@@ -1,0 +1,6 @@
+# M1-v2 SFT ablation: ratio 0.25 + drop trivial recoveries (< 16 steps total).
+defaults: [exp/m1b_sft_random_r25]
+tag: sft_random_r25_nontrivial
+train:
+  min_traj_len: 16
+  max_recovery_trajectories: null

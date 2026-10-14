@@ -1,0 +1,7 @@
+# M1-v2 baseline: random search with the SAME budget (4 x 64) on the same hard instances.
+defaults: [exp/m1b_hard_cem_local]
+tag: hard_random
+search:
+  method: random
+dataset:
+  out_root: data/recovery/m1b_hard_random

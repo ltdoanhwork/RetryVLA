@@ -1,0 +1,16 @@
+# M1-v2: fixed CEM (elite-local refinement) on the 53 hard pilot instances (it0 <= 2 successes in M1).
+defaults: [exp/m1_oracle_cem_spatial]
+tag: hard_cem_local
+search:
+  method: cem
+  n_iters: 4
+  cem:
+    mode: elite_local
+    temperature: 0.2
+    decay: 0.6
+search_on:
+  instance_ids_file: data/splits/m1_hard_instances.txt
+  precheck_rollouts: 0          # known pi0 failures; just restore
+  only_pi0_failures: false
+dataset:
+  out_root: data/recovery/m1b_hard_cem_local

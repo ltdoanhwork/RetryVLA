@@ -55,18 +55,20 @@ def spatial_episode_ids(repo_id: str, suite: str) -> list[int]:
     return sorted(int(e) for e, t in ep_task.items() if int(t) in keep_idx)
 
 
-def recovery_episode_subsets(roots, n: int | None) -> list[list[int] | None]:
-    """Global top-n trajectories by search score across several dataset roots (None = all)."""
-    if n is None:
+def recovery_episode_subsets(roots, n: int | None, min_len: int = 0) -> list[list[int] | None]:
+    """Global top-n trajectories by search score across several dataset roots (None = all).
+    min_len drops trivial recoveries (e.g. <=15 steps: the failure state was already nearly solved)."""
+    if n is None and not min_len:
         return [None] * len(roots)
     rows = []
     for k, root in enumerate(roots):
         for l in open(Path(root) / "retryvla" / "trajectories.jsonl"):
             r = json.loads(l)
-            rows.append((r.get("score", 0.0), k, r["episode_index"]))
+            if r.get("length", 0) >= min_len:
+                rows.append((r.get("score", 0.0), k, r["episode_index"]))
     rows.sort(key=lambda x: -x[0])
     keep = [[] for _ in roots]
-    for _, k, e in rows[:n]:
+    for _, k, e in (rows if n is None else rows[:n]):
         keep[k].append(e)
     return [sorted(v) for v in keep]
 

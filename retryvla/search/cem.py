@@ -65,6 +65,29 @@ class CEM:
         idx = np.argsort(-scores)[:k]
         return cands[idx], idx
 
+    def sample_local(self, elites: np.ndarray, elite_scores: np.ndarray, iteration: int, n: int | None = None,
+                     temperature: float = 0.2, decay: float = 0.6, gripper_flip_p: float = 0.05) -> np.ndarray:
+        """Elite-local refinement (fixes Gaussian mode-averaging): each sample perturbs ONE elite,
+        chosen with softmax(score/T); noise std decays per iteration. The elite's gripper schedule is
+        kept (rarely flipped per-step-run) so a strategy's structure survives refinement."""
+        n = n or self.cfg.n_samples
+        s = np.asarray(elite_scores, dtype=np.float64)
+        p = np.exp((s - s.max()) / max(temperature, 1e-6))
+        p /= p.sum()
+        pick = self.rng.choice(len(elites), size=n, p=p)
+        std = max(self.cfg.init_std * (decay ** iteration), self.cfg.min_std)
+        z = smooth_noise(self.rng, n, self.h, self.a, self.cfg.smooth_kernel) * std
+        x = elites[pick].astype(np.float64) + z
+        if self.cfg.gripper_dim is not None:
+            g = self.cfg.gripper_dim
+            x[..., g] = elites[pick][..., g]
+            flip = self.rng.rand(n) < gripper_flip_p * self.h / 10
+            if flip.any():  # flip the gripper from a random step onward for a few samples
+                t0 = self.rng.randint(0, self.h, size=n)
+                for i in np.nonzero(flip)[0]:
+                    x[i, t0[i]:, g] *= -1
+        return np.clip(x, self.cfg.low, self.cfg.high).astype(np.float32)
+
 
 def roughness(actions: np.ndarray) -> np.ndarray:
     """Mean squared first difference of the arm dims, per candidate. actions [N,H,A]."""

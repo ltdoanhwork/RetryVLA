@@ -46,7 +46,10 @@ class Proposals:
         self.rng = np.random.RandomState(seed)
         self.calls = 0
 
-    def __call__(self, inst: Instance, n_total: int | None = None) -> tuple[np.ndarray, list[str]]:
+    def __call__(self, inst: Instance, n_total: int | None = None, fresh_only: bool = False
+                 ) -> tuple[np.ndarray, list[str]]:
+        """fresh_only: drop the deterministic fixed primitives (random-search iterations >= 1 would
+        just re-evaluate identical sequences); their slots go to random primitive variants."""
         ic = self.sc.init
         n_vla, n_pert = int(ic.n_vla), int(ic.n_perturb)
         if n_total is not None:  # random-search: rescale the pool to the requested budget
@@ -74,8 +77,10 @@ class Proposals:
             cands.append(pert)
             src += ["perturb"] * n_pert
         if ic.use_primitives:
-            prim, names = primitives.library(self.h, self.rng,
-                                             n_random=8 if n_total is None else max(0, (n_total or 0) // 8))
+            n_rand_prim = 8 if n_total is None else max(0, (n_total or 0) // 8)
+            if fresh_only:
+                n_rand_prim += 8
+            prim, names = primitives.library(self.h, self.rng, n_random=n_rand_prim, include_fixed=not fresh_only)
             cands.append(prim)
             src += [f"prim_{n}" for n in names]
         out = np.concatenate(cands, 0).astype(np.float32)
@@ -146,10 +151,14 @@ def search_instance(inst, scorer, proposals, sc, rng_seed) -> tuple[list[dict], 
     for it in range(int(sc.n_iters)):
         if it == 0:
             cands, src = proposals(inst, None if sc.method == "cem" else int(sc.n_samples))
+        elif sc.method == "cem" and str(sc.cem.get("mode", "gaussian")) == "elite_local":
+            cands = cem.sample_local(elite_c, elite_s, it, temperature=float(sc.cem.get("temperature", 0.2)),
+                                     decay=float(sc.cem.get("decay", 0.6)))
+            src = ["cem_local"] * len(cands)
         elif sc.method == "cem":
             cands, src = cem.sample(), ["cem"] * int(sc.n_samples)
         else:
-            cands, src = proposals(inst, int(sc.n_samples))
+            cands, src = proposals(inst, int(sc.n_samples), fresh_only=True)
         out = scorer.score(inst, cands, it)
         for k in range(len(cands)):
             branches.append({
@@ -191,6 +200,13 @@ def main() -> None:
         n_sc = int(np.ceil(int(sc.max_instances) / len(cfg.search_on.trials_per_scene)))
         scenes = scenes[:: max(1, len(scenes) // n_sc)][:n_sc]
     n_sh, sh = int(cfg.search_on.get("num_shards", 1)), int(cfg.search_on.get("shard", 0))
+    only_ids = None
+    if cfg.search_on.get("instance_ids_file"):
+        only_ids = {l.strip() for l in open(REPO_ROOT / cfg.search_on.instance_ids_file) if l.strip()}
+        keep_scenes = {i.rsplit("__", 1)[0] for i in only_ids}
+        scenes = [s for s in scenes if s.tag in keep_scenes]
+        log.info("instance list %s: %d instances over %d scenes", cfg.search_on.instance_ids_file, len(only_ids),
+                 len(scenes))
     if n_sh > 1:  # scene-level sharding across GPUs; each shard writes its own dataset
         scenes = scenes[sh::n_sh]
         cfg.tag = f"{cfg.tag}_s{sh}of{n_sh}"
@@ -211,6 +227,8 @@ def main() -> None:
             else:
                 todo = insts
             done_ids = completed_instances(cfg.search_on.get("resume_from") or [])
+            if only_ids is not None:
+                todo = [i for i in todo if i.instance_id in only_ids]
             if done_ids:
                 todo = [i for i in todo if i.instance_id not in done_ids]
                 log.info("resume: skipping %d instances already searched", len(done_ids))

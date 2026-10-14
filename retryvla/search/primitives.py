@@ -47,7 +47,8 @@ def regrasp(h: int, down_steps: int = 12, down: float = -0.6) -> np.ndarray:
     ]), h)
 
 
-def library(h: int, rng: np.random.RandomState, n_random: int = 8) -> tuple[np.ndarray, list[str]]:
+def library(h: int, rng: np.random.RandomState, n_random: int = 8, include_fixed: bool = True
+            ) -> tuple[np.ndarray, list[str]]:
     """Fixed primitives + randomized variants. Returns [N, h, 7] and names."""
     seqs, names = [open_gripper(h), retreat(h), retreat(h, steps=30), regrasp(h)], [
         "open", "retreat20", "retreat30", "regrasp"]
@@ -55,6 +56,8 @@ def library(h: int, rng: np.random.RandomState, n_random: int = 8) -> tuple[np.n
         th = k * np.pi / 2
         seqs.append(reposition(h, th))
         names.append(f"reposition_{int(np.degrees(th))}")
+    if not include_fixed:
+        seqs, names = [], []
     for k in range(n_random):
         kind = rng.randint(3)
         if kind == 0:
