@@ -2,7 +2,7 @@
 # M2 -> M3 pipeline that waits for free GPUs (avoid-list respected) and runs stages in order:
 #   collect (N shards) -> train_wm -> train_critic -> wm_search on hard instances (M shards)
 # Resume-safe: collect skips finished instances; finished stages are detected via RV_DONE rc=0 in logs.
-# usage: scripts/shells/pipeline_m2m3.sh [collect_shards=4] [search_shards=2]
+# usage: [ALLOWED_SLOTS="shell8:gpu ..."] scripts/shells/pipeline_m2m3.sh [collect_shards=4] [search_shards=2]
 set -o pipefail
 unset LD_LIBRARY_PATH
 cd "$(dirname "$0")/../.."
@@ -13,7 +13,11 @@ say() { echo "$(date -Is) $*" | tee -a "$LOG"; }
 done_ok() { grep -a -q "RV_DONE rc=0" runs/_logs/rv_$1_*.log 2>/dev/null; }
 failed()  { grep -a -q -E "RV_DONE rc=[1-9]" runs/_logs/rv_$1_*.log 2>/dev/null && ! done_ok "$1"; }
 running() { python3 -c "import json,sys; c=json.load(open('scripts/shells/shells.json'))['claims']; sys.exit(0 if any(v['tmux']=='rv_$1' for v in c.values()) else 1)"; }
-free_slot() { python3 scripts/shells/find_free.py --json 2>/dev/null | python3 -c "import json,sys; s=json.load(sys.stdin); print(f\"{s[0]['short']} {s[0]['gpu']}\" if s else '')"; }
+free_slot() { python3 scripts/shells/find_free.py --json 2>/dev/null | python3 -c "
+import json,sys,os
+allow = set(os.environ.get('ALLOWED_SLOTS','').split())
+s = [x for x in json.load(sys.stdin) if not allow or f\"{x['short']}:{x['gpu']}\" in allow]
+print(f\"{s[0]['short']} {s[0]['gpu']}\" if s else '')"; }
 release() {  # release claim of a finished session
   key=$(python3 -c "import json; c=json.load(open('scripts/shells/shells.json'))['claims']; print(next((k for k,v in c.items() if v['tmux']=='rv_$1'), ''))")
   [ -n "$key" ] && scripts/shells/remote_ctl.sh stop "$key" >/dev/null 2>&1
