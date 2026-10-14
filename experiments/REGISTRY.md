@@ -21,3 +21,7 @@ Run directories (`runs/`) are gitignored; this file plus the `M*.md` docs are th
 | 20261014-021105_M1_random_r25_nominal | M1 | random_r25_nominal | done | 18a35eb | success_rate=0.726, n_episodes=500 | M1-v2 random_r25_nominal |
 | 20261014-030113_M1_random_r25_nontrivial_recover_test | M1 | random_r25_nontrivial_recover_test | done | 18a35eb | rsr=0.220, rsr_close=0.207, rsr_open=0.232, n_episodes=560 | M1-v2 random_r25_nontrivial_recover_test |
 | 20261014-061522_M1_random_r25_nontrivial_nominal | M1 | random_r25_nontrivial_nominal | done | 18a35eb | success_rate=0.766, n_episodes=500 | M1-v2 random_r25_nontrivial_nominal |
+| 20261014-103001_M2_train_wm_v1 | M2 | train_wm_v1 | done | dd2c699 | - | train_wm_v1 |
+| 20261014-120238_M2_train_critic_v1 | M2 | train_critic_v1 | done | dd2c699 | - | train_critic_v1 |
+| 20261014-121255_M3_wm_search_hard_s0of2 | M3 | wm_search_hard_s0of2 | done | dd2c699 | - | wm_search_hard_s0of2 |
+| 20261014-121313_M3_wm_search_hard_s1of2 | M3 | wm_search_hard_s1of2 | done | dd2c699 | - | wm_search_hard_s1of2 |

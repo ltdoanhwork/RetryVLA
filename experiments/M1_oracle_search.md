@@ -99,3 +99,27 @@ instances random never does (2 the other way). On easy instances both stop in it
 There is a clean RSR / nominal trade-off controlled by how much recovery data the policy sees. Dropping the "trivial"
 (< 16 step) recoveries does NOT help RSR (0.254 -> 0.220): the short open-the-gripper recoveries are useful supervision,
 not noise. None of the mixes beats pi1-nominal's 0.796 on nominal tasks yet.
+
+# M2/M3 (2026-10-14): latent world model + critic guided search on hard, unseen failures
+
+- C1 data: 144 train-split instances (the 20 failure episodes containing the hard instances excluded) x 32
+  candidates = 4,608 sim-verified trajectories, DINOv2-small 6x6 patch tokens x 2 cams every 5 steps. 16% succeed;
+  54/144 instances have 0 successes.
+- C2 WM (11.6M, 4-head ensemble, 20k steps): open-loop latent MSE / copy-last-frame baseline on held-out failure
+  episodes = 0.63 (5 steps), 0.50 (10), 0.40 (20), 0.36 (30-50 steps).
+- C3 critic on real + imagined end latents: held-out AUC 0.71 real / 0.67 imagined; top-4 by critic succeed
+  0.33 vs 0.16 mean (2.1x); P(>=1 success in top-4) 0.50 vs 0.36 random. Poorly calibrated (ECE 0.15, most picks
+  get V~1.0, true rate 7%).
+- C4 search, 53 hard pilot instances never seen by WM/critic, 256 proposals + 2 latent-CEM iterations scored only
+  in imagination, then 16 simulator verifications per arm:
+
+| | WM + critic picks 16 | random 16 from the same pool |
+|---|---|---|
+| instances solved | **19/53 (0.36)** | 9/53 (0.17) |
+| verified successes | **57/848 (6.7%)** | 13/848 (1.5%) |
+| solved only by this arm | 15 | 5 |
+| mean roughness of picks | 0.017 | 0.027 |
+
+Sign test on discordant instances p = 0.04. 35/45 WM-found recoveries come from the latent CEM (candidates that
+were never simulated before verification). The gain is concentrated in the drawer task (WM 12/20 vs random
+1/20); on the other tasks WM 7/33 vs random 8/33 (no gain).
