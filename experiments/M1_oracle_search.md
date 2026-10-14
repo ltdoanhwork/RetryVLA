@@ -67,3 +67,35 @@ wooden cabinet 2 -> 7/12 of 60, stove 2 -> 6/10 of 40, cookie box (on) 0 in ever
    mix dilutes nominal competence. Next: lower recovery_ratio (0.2-0.3), use recovery segments only, or train longer.
 4. **GO for M2/M3,** with two fixes first: (a) a CEM that actually improves on its proposals (per-elite local refinement) with
    matched budgets, so search quality can matter; (b) filter trivial "already succeeded in <=15 steps" recoveries.
+
+## M1-v2 (2026-10-14): fixed CEM + SFT mix ablations
+
+### Search on the 53 hard pilot instances (it0 <= 2 successes in M1), budget-matched 4 x 64
+CEM refit replaced by elite-local refinement (`search.cem.mode=elite_local`: each sample perturbs one elite chosen by
+softmax(score/0.2), noise std decays 0.6x per iteration, elite gripper schedule kept). Random = fresh proposals each
+iteration (no repeated fixed primitives). Random shards died at 22/27 and 22/26 (the ca18f440 tmux server disappeared).
+Comparison is on the 40 instances searched by both arms.
+
+| | CEM elite-local | random |
+|---|---|---|
+| instances solved | **27/40 (0.68)** | 22/40 (0.55) |
+| verified trajectories | 103 | 60 |
+| branch success, it0 / it1 / it2 / it3 | 0.008 / 0.026 / 0.031 / 0.030 | 0.009 / 0.008 / 0.009 / 0.006 |
+| median sims to first success | 68 | 80 |
+| solved only by this arm | 7 | 2 |
+
+The fix works: success per sample triples after the first refit (0.8% -> 3%) while random stays flat, and CEM solves 7
+instances random never does (2 the other way). On easy instances both stop in iteration 0, which is why M1 saw no gap.
+
+### SFT mix ablations (random-search data, test RSR / nominal SR)
+
+| SFT | recovery data | ratio | test RSR [95% CI] | nominal SR |
+|---|---|---|---|---|
+| pi1-nominal | none | 0 | 0.138 [0.111, 0.169] | 0.796 |
+| pi1-random | 241 traj | 0.50 | 0.279 [0.243, 0.317] | 0.698 |
+| r25 | 241 traj | 0.25 | 0.254 [0.219, 0.291] | 0.726 |
+| r25 nontrivial | 170 traj (>= 16 steps) | 0.25 | 0.220 [0.187, 0.256] | 0.766 |
+
+There is a clean RSR / nominal trade-off controlled by how much recovery data the policy sees. Dropping the "trivial"
+(< 16 step) recoveries does NOT help RSR (0.254 -> 0.220): the short open-the-gripper recoveries are useful supervision,
+not noise. None of the mixes beats pi1-nominal's 0.796 on nominal tasks yet.

@@ -17,3 +17,7 @@ Run directories (`runs/`) are gitignored; this file plus the `M*.md` docs are th
 | 20261013-164219_M1_pi1rand_recover_test | M1 | pi1rand_recover_test | done | b737a4b | rsr=0.279, rsr_close=0.246, rsr_open=0.311, n_episodes=560 | pi1rand_recover_test |
 | 20261013-164233_M1_pi1cem_nominal | M1 | pi1cem_nominal | done | b737a4b | success_rate=0.690, n_episodes=500 | pi1cem_nominal |
 | 20261013-164238_M1_pi1rand_nominal | M1 | pi1rand_nominal | done | b737a4b | success_rate=0.698, n_episodes=500 | pi1rand_nominal |
+| 20261014-021046_M1_random_r25_recover_test | M1 | random_r25_recover_test | done | 18a35eb | rsr=0.254, rsr_close=0.225, rsr_open=0.282, n_episodes=560 | M1-v2 random_r25_recover_test |
+| 20261014-021105_M1_random_r25_nominal | M1 | random_r25_nominal | done | 18a35eb | success_rate=0.726, n_episodes=500 | M1-v2 random_r25_nominal |
+| 20261014-030113_M1_random_r25_nontrivial_recover_test | M1 | random_r25_nontrivial_recover_test | done | 18a35eb | rsr=0.220, rsr_close=0.207, rsr_open=0.232, n_episodes=560 | M1-v2 random_r25_nontrivial_recover_test |
+| 20261014-061522_M1_random_r25_nontrivial_nominal | M1 | random_r25_nontrivial_nominal | done | 18a35eb | success_rate=0.766, n_episodes=500 | M1-v2 random_r25_nontrivial_nominal |

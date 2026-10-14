@@ -19,36 +19,5 @@
   "max_load_per_core": 0.6,
   "tmux_prefix": "rv_"
  },
- "claims": {
-  "aa1cf25d:0": {
-   "tmux": "rv_m1b_cem_s0",
-   "args": "retryvla.search.run_search configs/exp/m1b_hard_cem_local.yaml search_on.shard=0 search_on.num_shards=2 dataset.out_root=data/recovery/m1b_hard_cem_local_s0 eval.n_workers=14",
-   "since": "2026-10-14T01:31:46"
-  },
-  "ca18f440:0": {
-   "tmux": "rv_m1b_rand_s0",
-   "args": "retryvla.search.run_search configs/exp/m1b_hard_random.yaml search_on.shard=0 search_on.num_shards=2 dataset.out_root=data/recovery/m1b_hard_random_s0 eval.n_workers=14",
-   "since": "2026-10-14T01:31:56"
-  },
-  "aa1cf25d:1": {
-   "tmux": "rv_m1b_cem_s1",
-   "args": "retryvla.search.run_search configs/exp/m1b_hard_cem_local.yaml search_on.shard=1 search_on.num_shards=2 dataset.out_root=data/recovery/m1b_hard_cem_local_s1 eval.n_workers=14",
-   "since": "2026-10-14T01:32:06"
-  },
-  "ca18f440:1": {
-   "tmux": "rv_m1b_rand_s1",
-   "args": "retryvla.search.run_search configs/exp/m1b_hard_random.yaml search_on.shard=1 search_on.num_shards=2 dataset.out_root=data/recovery/m1b_hard_random_s1 eval.n_workers=14",
-   "since": "2026-10-14T01:32:16"
-  },
-  "9dfdca1e:0": {
-   "tmux": "rv_m1b_sft_r25",
-   "args": "retryvla.train.sft configs/exp/m1b_sft_random_r25.yaml",
-   "since": "2026-10-14T01:32:25"
-  },
-  "9dfdca1e:1": {
-   "tmux": "rv_m1b_sft_r25nt",
-   "args": "retryvla.train.sft configs/exp/m1b_sft_random_r25_nontrivial.yaml",
-   "since": "2026-10-14T01:32:35"
-  }
- }
+ "claims": {}
 }
