@@ -1,0 +1,14 @@
+# M2 data collection for the latent world model + recovery critic (train split, hard-instance groups excluded).
+defaults: [exp/m1_oracle_cem_spatial]
+milestone: M2
+tag: collect_v1
+wm_collect:
+  split: train
+  exclude_instances_file: data/splits/m1_hard_instances.txt   # M3 search targets stay unseen
+  n_candidates: 32
+  stride: 5                 # latent frame every 5 env steps (= WM action chunk)
+  encoder: facebook/dinov2-small
+  pool_grid: 6              # 6x6 patch tokens per camera (spatial, not global)
+  out_root: data/wm/collect_v1
+  shard: 0
+  num_shards: 1

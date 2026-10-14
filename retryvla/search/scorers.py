@@ -39,30 +39,20 @@ class Scorer(ABC):
 
 
 class WMCriticScorer(Scorer):
-    """M3: score candidates by rolling them out in the latent world model and evaluating the
-    recovery value critic at the imagined end state:
-        S(A) = V_psi(z_H, q_H, g) - lambda * U_W(A) - beta * C(A)
-    Successes are *predicted*; they must be validated in the simulator before use (Stage 4)."""
+    """M3 scorer: imagined rollout in the latent WM + recovery critic (no simulator calls).
+    S(A) = V_psi(imagined end state) - lambda * U_WM(A) - beta * roughness(A).
+    Predictions only: verify the top candidates in the simulator before writing data
+    (``retryvla.search.wm_search`` does this end to end)."""
 
-    def __init__(self, wm, critic, encoder, uncertainty_weight: float = 0.1, smooth_cost: float = 0.02):
-        self.wm, self.critic, self.encoder = wm, critic, encoder
-        self.lam, self.beta = uncertainty_weight, smooth_cost
+    def __init__(self, ranker):
+        self.ranker = ranker  # retryvla.search.wm_search.WMCriticRanker
 
     def score(self, inst: Instance, cands: np.ndarray, iteration: int) -> ScoreOut:
-        import torch
-
-        from retryvla.search.cem import roughness
-
-        with torch.no_grad():
-            h0 = self.encoder.encode_obs(inst.obs0)                          # [1, T, D]
-            a = torch.as_tensor(cands, device=h0.device, dtype=h0.dtype)      # [N, H, A]
-            zH, qH, unc = self.wm.rollout(h0.expand(len(cands), *h0.shape[1:]), a)  # imagined end state
-            v = self.critic(zH, qH, [inst.task] * len(cands)).float().cpu().numpy()
-            u = unc.float().cpu().numpy() if unc is not None else np.zeros(len(cands))
-        scores = v - self.lam * u - self.beta * roughness(cands)
+        z0, q0 = self.ranker.encode(inst.obs0)
+        s = self.ranker.score(z0, q0, inst.task, cands)
         n = len(cands)
-        return ScoreOut(scores, v > 0.5, np.full(n, -1), np.zeros(n), [None] * n,
-                        {"value": v, "uncertainty": u})
+        return ScoreOut(s["score"], s["value"] > 0.5, np.full(n, -1), np.zeros(n), [None] * n,
+                        {"value": s["value"], "uncertainty": s["unc"]})
 
 
 def make_scorer(name: str, **kw) -> Scorer:

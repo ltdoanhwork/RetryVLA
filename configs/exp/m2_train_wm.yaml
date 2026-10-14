@@ -1,0 +1,21 @@
+# M2: latent world model on collected failure-state trajectories.
+defaults: [env/libero_spatial, policy/smolvla_libero, eval/default]
+milestone: M2
+tag: train_wm_v1
+wm:
+  data_roots: [data/wm/collect_v1]
+  val_frac: 0.15
+  width: 384
+  depth: 6
+  heads: 6
+  n_ensemble: 4
+  dropout: 0.0
+  lr: 3.0e-4
+  weight_decay: 0.01
+  batch_size: 64
+  steps: 20000
+  lam_open: 1.0
+  log_every: 100
+  eval_every: 2000
+  seed: 0
+  out_link: data/wm/latest_wm.txt     # path of the newest checkpoint (read by critic / search)

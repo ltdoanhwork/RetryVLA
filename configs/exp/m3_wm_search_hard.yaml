@@ -1,0 +1,20 @@
+# M3: world-model + critic guided search on the 53 hard pilot instances (unseen by WM/critic),
+# vs random selection from the same proposal pool at the same simulator verification budget.
+defaults: [exp/m2_collect]
+milestone: M3
+tag: wm_search_hard
+m3:
+  instance_ids_file: data/splits/m1_hard_instances.txt
+  wm_link: data/wm/latest_wm.txt
+  critic_link: data/wm/latest_critic.txt
+  pool_size: 256            # proposals scored in imagination (cheap)
+  latent_cem_iters: 2       # elite-local refinement scored only by the WM + critic
+  latent_elites: 16
+  latent_cem_std: 0.25
+  verify_budget: 16         # simulator rollouts per arm per instance (M)
+  lambda_unc: 0.5
+  beta_rough: 1.0           # smoothness matters: penalize jerky candidates
+  max_trajs_per_instance: 4
+  out_root: data/recovery/m3_wm_search_hard
+  shard: 0
+  num_shards: 1

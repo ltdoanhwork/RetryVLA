@@ -32,6 +32,7 @@ class Job:
     record: str = "none"           # none | success | all
     policy_seed: int = 0
     return_snapshot: bool = False  # return the start snapshot (load_scene only)
+    record_cfg: dict | None = None  # {"stride": k, "img_segments": [0]} -> sparse image recording
     meta: dict = field(default_factory=dict)
 
 
@@ -80,7 +81,7 @@ def run_jobs(pool: SimPool, policy, jobs: list[Job], noise_scale: float = 1.0,
                 w.job_id, w.job = jid, jobs[jid]
                 w.queue, w.steps, w.n_calls, w.prefix_success, w.success = [], 0, 0, False, False
                 pool.send(i, "begin", w.job.load_cmd, w.job.load_kwargs, record=w.job.record != "none",
-                          return_snapshot=w.job.return_snapshot)
+                          return_snapshot=w.job.return_snapshot, record_cfg=w.job.record_cfg)
                 w.phase = "loading"
 
         # 2) (unused: chunks are executed as one step_seq per worker)

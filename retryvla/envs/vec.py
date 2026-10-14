@@ -34,8 +34,15 @@ class _RecordingSim:
         return out
 
     # recording
-    def record(self, on: bool = True, segment: int = 0) -> None:
+    def record(self, on: bool = True, segment: int = 0, stride: int = 1, img_segments=None,
+               img_until: int | None = None) -> None:
+        """stride: keep images every `stride` env steps; img_segments: segments whose images are kept
+        (None = all); img_until: no images after this many recorded steps. Actions/states/segments are
+        always kept for every step."""
         self._rec_on, self.segment = on, segment
+        self._stride, self._img_segments = max(1, int(stride)), (None if img_segments is None else set(img_segments))
+        self._img_until = img_until
+        self._t_rec = 0
         if on:
             self._buf = []
 
@@ -47,18 +54,30 @@ class _RecordingSim:
         self._rec_on = False
         if not keep or not buf:
             return None
-        return {
-            "image": np.stack([b[0]["image"] for b in buf]),
-            "image2": np.stack([b[0]["image2"] for b in buf]),
+        img_t = [i for i, b in enumerate(buf) if b[0].get("image") is not None]
+        out = {
             "state": np.stack([b[0]["state"] for b in buf]),
             "action": np.stack([b[1] for b in buf]).astype(np.float32),
             "segment": np.asarray([b[2] for b in buf], dtype=np.int64),
+            "img_t": np.asarray(img_t, dtype=np.int64),
         }
+        if img_t:
+            out["image"] = np.stack([buf[i][0]["image"] for i in img_t])
+            out["image2"] = np.stack([buf[i][0]["image2"] for i in img_t])
+        if self._last_obs is not None:  # observation AFTER the last action (needed for end-state latents)
+            out["final_image"], out["final_image2"] = self._last_obs["image"], self._last_obs["image2"]
+            out["final_state"] = self._last_obs["state"]
+        return out
 
     def step(self, action) -> dict:
         a = np.asarray(action, dtype=np.float32)
         if self._rec_on and self._last_obs is not None:
-            self._buf.append((self._last_obs, a.copy(), self.segment))
+            keep_img = (self._t_rec % getattr(self, "_stride", 1) == 0) and (
+                getattr(self, "_img_segments", None) is None or self.segment in self._img_segments) and (
+                getattr(self, "_img_until", None) is None or self._t_rec <= self._img_until)
+            o = self._last_obs if keep_img else {"state": self._last_obs["state"]}
+            self._buf.append((o, a.copy(), self.segment))
+            self._t_rec += 1
         r = self.sim.step(a)
         self._last_obs = r.obs
         return {"obs": r.obs, "success": r.success, "t": self.sim.t}
@@ -78,10 +97,10 @@ class _RecordingSim:
         return out
 
     def begin(self, load_cmd: str, load_kwargs: dict, record: bool = False,
-              return_snapshot: bool = False) -> dict:
+              return_snapshot: bool = False, record_cfg: dict | None = None) -> dict:
         out = dict(getattr(self.sim, load_cmd)(**load_kwargs))
         self._last_obs = out["obs"]
-        self.record(bool(record), segment=1)
+        self.record(bool(record), segment=1, **(record_cfg or {}))
         if not return_snapshot:
             out.pop("snapshot", None)
         return out

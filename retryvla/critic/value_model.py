@@ -1,7 +1,7 @@
-"""M2 skeleton: Recovery Value Model  V_psi(z, q, g) = P(nominal VLA succeeds | z, q, g).
+"""Recovery Value Model  V_psi(z, q, g) = P(frozen pi0 completes the task | latent state, task).
 
-Operates on the same token space as the world model so it can score *imagined* end states.
-Calibration (ECE / reliability curve) must be measured on held-out simulator states.
+Operates on the same normalized token space as the latent WM so it can score *imagined* end states.
+Task conditioning = learned embedding over the (small, known) task vocabulary.
 """
 
 from __future__ import annotations
@@ -12,34 +12,28 @@ import torch.nn as nn
 
 
 class RecoveryValue(nn.Module):
-    def __init__(self, dim: int = 384, state_dim: int = 8, text_dim: int = 384, depth: int = 2, heads: int = 6):
+    def __init__(self, dim: int = 384, n_patch: int = 72, n_tasks: int = 16, width: int = 256, depth: int = 3,
+                 heads: int = 4, state_dim: int = 8, dropout: float = 0.1):
         super().__init__()
-        self.text_proj = nn.Linear(text_dim, dim)
-        self.q_proj = nn.Linear(state_dim, dim)
-        self.cls = nn.Parameter(torch.zeros(1, 1, dim))
-        layer = nn.TransformerEncoderLayer(dim, heads, 4 * dim, batch_first=True, norm_first=True)
+        self.in_proj = nn.Linear(dim, width)
+        self.q_proj = nn.Linear(state_dim, width)
+        self.task = nn.Embedding(n_tasks, width)
+        self.cls = nn.Parameter(torch.zeros(1, 1, width))
+        self.pos = nn.Parameter(torch.zeros(1, n_patch + 3, width))
+        layer = nn.TransformerEncoderLayer(width, heads, 4 * width, dropout=dropout, batch_first=True,
+                                           norm_first=True, activation="gelu")
         self.trunk = nn.TransformerEncoder(layer, depth)
-        self.head = nn.Linear(dim, 1)
-        self._text_cache: dict[str, torch.Tensor] = {}
-        self.text_encoder = None  # set to a callable str -> [text_dim] tensor
+        self.head = nn.Sequential(nn.LayerNorm(width), nn.Linear(width, 1))
 
-    def embed_text(self, tasks: list[str], device) -> torch.Tensor:
-        if self.text_encoder is None:
-            raise RuntimeError("RecoveryValue.text_encoder not set")
-        out = []
-        for t in tasks:
-            if t not in self._text_cache:
-                self._text_cache[t] = self.text_encoder(t).detach()
-            out.append(self._text_cache[t])
-        return torch.stack(out).to(device)
-
-    def logits(self, z: torch.Tensor, q: torch.Tensor, g: torch.Tensor) -> torch.Tensor:
+    def logits(self, z: torch.Tensor, q: torch.Tensor, task_idx: torch.Tensor) -> torch.Tensor:
+        """z [N,P,D] normalized tokens, q [N,8] normalized, task_idx [N] long."""
         n = z.shape[0]
-        x = torch.cat([self.cls.expand(n, -1, -1), self.text_proj(g)[:, None], self.q_proj(q)[:, None], z], 1)
+        x = torch.cat([self.cls.expand(n, -1, -1), self.task(task_idx)[:, None], self.q_proj(q)[:, None],
+                       self.in_proj(z)], 1) + self.pos
         return self.head(self.trunk(x)[:, 0]).squeeze(-1)
 
-    def forward(self, z: torch.Tensor, q: torch.Tensor, tasks: list[str]) -> torch.Tensor:
-        return torch.sigmoid(self.logits(z, q, self.embed_text(tasks, z.device)))
+    def forward(self, z, q, task_idx) -> torch.Tensor:
+        return torch.sigmoid(self.logits(z, q, task_idx))
 
 
 def expected_calibration_error(p: np.ndarray, y: np.ndarray, bins: int = 10) -> float:
@@ -51,3 +45,13 @@ def expected_calibration_error(p: np.ndarray, y: np.ndarray, bins: int = 10) -> 
         if m.any():
             ece += m.mean() * abs(p[m].mean() - y[m].mean())
     return float(ece)
+
+
+def auc(p: np.ndarray, y: np.ndarray) -> float:
+    p, y = np.asarray(p, float), np.asarray(y, bool)
+    if y.all() or (~y).all():
+        return float("nan")
+    order = np.argsort(p)
+    ranks = np.empty(len(p))
+    ranks[order] = np.arange(1, len(p) + 1)
+    return float((ranks[y].sum() - y.sum() * (y.sum() + 1) / 2) / (y.sum() * (~y).sum()))
