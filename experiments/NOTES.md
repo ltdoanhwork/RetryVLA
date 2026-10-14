@@ -1,0 +1,95 @@
+# RetryVLA: status, findings, and backlog (as of 2026-10-14)
+
+All numbers: LIBERO-Spatial, LIBERO-Recover `selected_bddl_scenes_spatial`, split `data/splits/spatial_v1.json`
+(train 112 / pilot 60 / test 56 scenes, grouped by failure episode). Test RSR = 56 scenes x 10 official trials = 560 ep.
+Run rows are in `experiments/REGISTRY.md`; details in `M0_baseline.md` and `M1_oracle_search.md`.
+
+## 1. Results so far
+
+### Policies (test RSR, nominal LIBERO-Spatial SR)
+
+| Policy | Recovery data | mix | test RSR [95% CI] | nominal SR |
+|---|---|---|---|---|
+| pi0 = smolvla_libero | - | - | 0.118 [0.094, 0.147] | 0.656 (lerobot-eval: 0.680) |
+| pi1-nominal (SFT demos only, 6k) | - | 0 | 0.138 [0.111, 0.169] | **0.796** |
+| pi1-random | 241 random-search traj (pilot, easy+hard) | 0.50 | **0.279** [0.243, 0.317] | 0.698 |
+| pi1-CEM (old Gaussian CEM) | 241 CEM traj | 0.50 | **0.286** [0.250, 0.324] | 0.690 |
+| r25 | 241 random traj | 0.25 | 0.254 [0.219, 0.291] | 0.726 |
+| r25 nontrivial | 170 random traj (>=16 steps) | 0.25 | 0.220 [0.187, 0.256] | 0.766 |
+
+### Search / data generation (pilot instances, simulator-verified)
+
+| Search | Instances | Budget / instance | Solved | Notes |
+|---|---|---|---|---|
+| random (M1) | 108 | 64 | 0.69 | |
+| Gaussian CEM (M1) | 106 | <=256 | 0.72 | refit broken (mode averaging): 11% -> 1% success after refit |
+| elite-local CEM (M1-v2), 40 hard | 40 | <=256 | **0.68** vs random 0.55 | success/sample 0.8% -> 3% after refit |
+| **WM + critic (M3)**, 53 hard, unseen by WM | 53 | **16 verified** | **0.36** vs random-16 0.17 | 57/848 vs 13/848 verified hits; p=0.04; 35/45 from latent CEM |
+
+### World model / critic (M2)
+- C1 data: 144 train instances (hard-instance failure episodes excluded) x 32 candidates = 4,608 traj,
+  DINOv2-small 6x6 tokens x 2 cams every 5 steps; 16% positive. `data/wm/collect_v1` (2.7 GB).
+- C2 WM: open-loop MSE / copy baseline on held-out failures: 0.63 (5 steps) ... 0.36 (50 steps).
+- C3 critic: AUC 0.71 real / 0.67 imagined; top-4 lift 0.33 vs 0.16; **badly calibrated** (ECE 0.15, V~1 for picks).
+
+## 2. Known problems (must address before claims)
+
+1. **Weak base policy.** smolvla_libero = 0.66-0.68 nominal (lerobot-eval agrees), reported SmolVLA ~0.90.
+   SFT on demos alone gives 0.80. Reviewers will ask for a stronger base. Use pi1-nominal as the base (init_from).
+2. **Nominal regression.** Recovery SFT drops nominal 0.80 -> 0.69-0.73. Trade-off controlled by mix ratio.
+3. **WM gain concentrated in one task** (drawer: WM 12/20 vs random 1/20; others 7/33 vs 8/33). N=53, p=0.04.
+4. **Data quality.** Searched segments are 4-6x jerkier than demos, with gripper chatter (3-4 flips / 50 steps vs 0.9).
+   Trivial (<16-step) recoveries are useful (removing them hurt RSR), so do not filter them.
+5. **Imbalanced data.** 29/45 WM recoveries are drawer. Ramekin / drawer dominate the scene set.
+6. **Single seed** for every SFT/eval. Differences < ~4 RSR points are noise on test.
+7. **Why a WM if the simulator exists?** Need a sim-efficiency curve (verified recoveries vs simulator calls),
+   and the "no simulator at the target" argument (real robot / unseen environments) for the paper story.
+
+## 3. Backlog (ideas, not run)
+
+Search yield (successes per verification):
+- [ ] Self-improving loop: retrain critic (+WM) on the 848 M3 verifications (labels exactly where the WM is wrong),
+      then re-run C4. Cheap; most likely yield gain.
+- [ ] Calibrate the critic (temperature scaling on held-out); use uncertainty for exploration, not just penalty.
+- [ ] Budget allocation across instances (bandit): stop solved ones, spend on unsolved / under-covered tasks.
+Diversity / quality:
+- [ ] Diversity-aware top-k (cluster imagined end latents or action modes, best per cluster; DPP / MAP-Elites).
+- [ ] Parameterized primitives (lift height, retreat dir, gripper) searched by the WM: smoother, interpretable.
+- [ ] Gripper "latch" (only flip when finger state changes) + stronger smoothness cost; smooth segments before saving.
+- [ ] Multi-chunk search (beam / MCTS over 10-step chunks) for multi-stage recoveries.
+Distillation:
+- [ ] C5: SFT with WM-found recoveries (+ random/CEM data); C6: test RSR + nominal.
+- [ ] Init from pi1-nominal; lower LR / longer training; recovery segments only; to fix nominal regression.
+- [ ] Advantage-weighted SFT (M5) once the critic is calibrated.
+- [ ] Iterate pi1 -> mine its remaining train failures -> search -> pi2 (Stage 6).
+Scale / rigor:
+- [ ] 3 seeds for the final SFT arms; report per-task RSR.
+- [ ] More suites (Object, Goal, LIBERO-10) after Spatial is solid.
+- [ ] L1-L4 breakdown once LIBERO-Recover releases level labels.
+
+## 4. How to run the pending cells (do NOT run without approval)
+
+```bash
+# WM / critic / M3 (C1 data exists)
+ALLOWED_SLOTS="<shell8:gpu ...>" scripts/shells/pipeline_m2m3.sh 4 2       # C2 -> C3 -> C4
+scripts/shells/launch_remote.sh <shell8> <gpu> m2_wm     retryvla.wm.train_wm         configs/exp/m2_train_wm.yaml
+scripts/shells/launch_remote.sh <shell8> <gpu> m2_critic retryvla.critic.train_critic configs/exp/m2_train_critic.yaml
+scripts/shells/launch_remote.sh <shell8> <gpu> m3_s0     retryvla.search.wm_search    configs/exp/m3_wm_search_hard.yaml m3.shard=0 m3.num_shards=2
+# SFT + eval (pattern)
+scripts/shells/launch_remote.sh <shell8> <gpu> sft_x retryvla.train.sft configs/exp/<sft>.yaml
+scripts/shells/launch_remote.sh <shell8> <gpu> ev_x  retryvla.eval.eval_recover configs/exp/m0_baseline_spatial.yaml \
+    milestone=M1 recover_tag=<tag>_recover_test policy.path=<ckpt> "recover_eval.splits=[test]"
+scripts/shells/launch_remote.sh <shell8> <gpu> ev_n  retryvla.eval.eval_nominal configs/exp/m0_baseline_spatial.yaml \
+    milestone=M1 nominal_tag=<tag>_nominal policy.path=<ckpt> eval.save_videos=none
+```
+Free GPUs: `python3 scripts/shells/find_free.py` (avoid-list in `scripts/shells/shells.json`).
+Visualizations: `scripts/viz_trajectories.py`, `scripts/viz_wm_data.py`, `scripts/viz_compare_wm.py`, `scripts/analyze_m1.py`.
+
+## 5. Assessment (2026-10-14)
+
+Feasible, with two positive signals: (a) distilling simulator-verified recoveries roughly doubles RSR on held-out
+failures beyond a fine-tuning control; (b) a latent WM + competence critic finds recoveries on hard, unseen failures
+about 2x more often than random at equal simulator budget, mostly via candidates it proposed in imagination.
+Both signals are small-N, single-seed, on one suite, from a weak base policy, and with a nominal-SR cost. The
+missing link is (c): does WM-generated data improve the VLA? Recommended order: C5/C6 on a stronger base (pi1-nominal
+init) with and without WM data, then the self-improving critic loop, then diversity-aware selection.

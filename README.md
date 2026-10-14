@@ -42,6 +42,7 @@ pytest -q tests/test_core.py && pytest -q -m sim tests/test_sim.py
 | M1 random baseline | `scripts/launch.sh m1r retryvla.search.run_search configs/exp/m1_random_search_spatial.yaml` | |
 | M1c SFT | `scripts/launch.sh m1c retryvla.train.sft configs/exp/m1_sft_oracle_cem.yaml` | |
 | M1d eval pi1 | `eval_recover` / `eval_nominal` with `policy.path=runs/<sft>/checkpoints/last/pretrained_model` | |
+| status / backlog | see [experiments/NOTES.md](experiments/NOTES.md) | |
 | M2-M6 | skeletons in `retryvla/{wm,critic}`, `search/scorers.py::WMCriticScorer`, `train/awr.py` | |
 
 ## Layout
