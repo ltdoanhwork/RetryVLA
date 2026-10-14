@@ -1,0 +1,186 @@
+{
+ "pi0": {
+  "rsr": 0.11785714285714285,
+  "ci": [
+   0.09371882734064836,
+   0.14720273644606052
+  ],
+  "k": 66,
+  "n": 560,
+  "close": 0.12142857142857143,
+  "open": 0.11428571428571428,
+  "tasks": {
+   "between_the_plate_and_the_ramekin": [
+    25,
+    80
+   ],
+   "in_the_top_drawer_of_the_wooden_cabinet": [
+    5,
+    160
+   ],
+   "next_to_the_cookie_box": [
+    5,
+    20
+   ],
+   "next_to_the_plate": [
+    15,
+    20
+   ],
+   "on_the_cookie_box": [
+    0,
+    20
+   ],
+   "on_the_ramekin": [
+    12,
+    160
+   ],
+   "on_the_stove": [
+    2,
+    40
+   ],
+   "on_the_wooden_cabinet": [
+    2,
+    60
+   ]
+  },
+  "nom": 0.656
+ },
+ "pi1-nominal": {
+  "rsr": 0.1375,
+  "ci": [
+   0.11143719205855296,
+   0.1685024221877176
+  ],
+  "k": 77,
+  "n": 560,
+  "close": 0.10714285714285714,
+  "open": 0.16785714285714284,
+  "tasks": {
+   "between_the_plate_and_the_ramekin": [
+    36,
+    80
+   ],
+   "in_the_top_drawer_of_the_wooden_cabinet": [
+    7,
+    160
+   ],
+   "next_to_the_cookie_box": [
+    1,
+    20
+   ],
+   "next_to_the_plate": [
+    15,
+    20
+   ],
+   "on_the_cookie_box": [
+    0,
+    20
+   ],
+   "on_the_ramekin": [
+    9,
+    160
+   ],
+   "on_the_stove": [
+    6,
+    40
+   ],
+   "on_the_wooden_cabinet": [
+    3,
+    60
+   ]
+  },
+  "nom": 0.796
+ },
+ "pi1-random": {
+  "rsr": 0.2785714285714286,
+  "ci": [
+   0.2430458663365289,
+   0.3171142921193211
+  ],
+  "k": 156,
+  "n": 560,
+  "close": 0.24642857142857144,
+  "open": 0.3107142857142857,
+  "tasks": {
+   "between_the_plate_and_the_ramekin": [
+    45,
+    80
+   ],
+   "in_the_top_drawer_of_the_wooden_cabinet": [
+    18,
+    160
+   ],
+   "next_to_the_cookie_box": [
+    1,
+    20
+   ],
+   "next_to_the_plate": [
+    16,
+    20
+   ],
+   "on_the_cookie_box": [
+    0,
+    20
+   ],
+   "on_the_ramekin": [
+    63,
+    160
+   ],
+   "on_the_stove": [
+    6,
+    40
+   ],
+   "on_the_wooden_cabinet": [
+    7,
+    60
+   ]
+  },
+  "nom": 0.698
+ },
+ "pi1-CEM": {
+  "rsr": 0.2857142857142857,
+  "ci": [
+   0.24985680796337287,
+   0.3244917324777722
+  ],
+  "k": 160,
+  "n": 560,
+  "close": 0.26071428571428573,
+  "open": 0.3107142857142857,
+  "tasks": {
+   "between_the_plate_and_the_ramekin": [
+    42,
+    80
+   ],
+   "in_the_top_drawer_of_the_wooden_cabinet": [
+    16,
+    160
+   ],
+   "next_to_the_cookie_box": [
+    6,
+    20
+   ],
+   "next_to_the_plate": [
+    15,
+    20
+   ],
+   "on_the_cookie_box": [
+    0,
+    20
+   ],
+   "on_the_ramekin": [
+    59,
+    160
+   ],
+   "on_the_stove": [
+    10,
+    40
+   ],
+   "on_the_wooden_cabinet": [
+    12,
+    60
+   ]
+  },
+  "nom": 0.69
+ }
+}

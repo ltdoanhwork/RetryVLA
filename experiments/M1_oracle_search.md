@@ -43,14 +43,27 @@ Findings (`experiments/figs/m1_search_overview.png`, `scripts/analyze_m1.py`):
 4. Proposal sources: primitives 0.14, perturbed 0.11, SmolVLA samples 0.08-0.09 branch success.
 5. Hard tasks stay hard: drawer (about 0.4 solved) and next-to-cookie-box (0-0.25).
 
-### Policies (test split, 560 episodes, official protocol)
+### Policies (test split, 56 scenes x 10 trials = 560 episodes, official protocol)
 
-| Policy | test RSR | close | open |
-|---|---|---|---|
-| pi0 (smolvla_libero) | 0.118 | | |
-| pi1-nominal (SFT on Spatial demos only, 6k steps) | 0.138 | 0.107 | 0.168 | nominal SR 0.796 (pi0 0.656) |
-| pi1-random | running | | |
-| pi1-CEM | waiting for search | | |
+![policy results](figs/m1_policy_results.png)
+
+| Policy | test RSR | 95% CI | close | open | nominal SR (500 ep) |
+|---|---|---|---|---|---|
+| pi0 (smolvla_libero) | 0.118 | [0.094, 0.147] | 0.121 | 0.114 | 0.656 |
+| pi1-nominal (SFT, Spatial demos only) | 0.138 | [0.111, 0.169] | 0.107 | 0.168 | 0.796 |
+| pi1-random (SFT, demos + 241 random-search recoveries) | 0.279 | [0.243, 0.317] | 0.246 | 0.311 | 0.698 |
+| pi1-CEM (SFT, demos + 241 CEM recoveries) | 0.286 | [0.250, 0.324] | 0.261 | 0.311 | 0.690 |
+
+Per task (test successes / episodes): ramekin 12 -> 63/59 of 160, drawer 5 -> 18/16 of 160, between 25 -> 45/42 of 80,
+wooden cabinet 2 -> 7/12 of 60, stove 2 -> 6/10 of 40, cookie box (on) 0 in every arm.
 
 ## Decision
-(go/no-go for M2)
+
+1. **Distilling simulator-verified recoveries works:** test RSR 0.118 -> 0.28 (2.4x), and +14 points over the nominal-only SFT
+   control (CIs do not overlap). This holds on held-out failure episodes never seen in search or SFT. Hypothesis 2 is confirmed.
+2. **Search method does not matter yet:** CEM 0.286 vs random 0.279 (identical within noise), consistent with the broken CEM refit
+   (all useful CEM trajectories come from iteration 0 = the random proposal pool).
+3. **Cost: nominal SR.** Recovery SFT lands at 0.69-0.70 vs 0.80 for nominal-only SFT (still >= pi0's 0.656). Recovery data at a 50%
+   mix dilutes nominal competence. Next: lower recovery_ratio (0.2-0.3), use recovery segments only, or train longer.
+4. **GO for M2/M3,** with two fixes first: (a) a CEM that actually improves on its proposals (per-elite local refinement) with
+   matched budgets, so search quality can matter; (b) filter trivial "already succeeded in <=15 steps" recoveries.
