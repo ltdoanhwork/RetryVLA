@@ -1,0 +1,11 @@
+# M4 arm B: arm A + the 45 WM-guided recoveries found on hard, WM-unseen instances (M3). Everything else equal.
+defaults: [exp/m4_sft_A_base_nom_random]
+tag: sft_B_base_nom_random_wm
+train:
+  recovery_datasets:
+    - data/recovery/m1_random_spatial_s0
+    - data/recovery/m1_random_spatial_s0b
+    - data/recovery/m1_random_spatial_s1
+    - data/recovery/m3_wm_search_hard_s0
+    - data/recovery/m3_wm_search_hard_s1
+  max_recovery_trajectories: null   # all 241 random + 45 WM

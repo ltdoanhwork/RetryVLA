@@ -1,0 +1,6 @@
+# M4 arm A: init from pi1-nominal (stronger base, nominal 0.80) + 241 random-search recoveries (same as pi1-random).
+defaults: [exp/m1_sft_random]
+milestone: M4
+tag: sft_A_base_nom_random
+train:
+  init_from: runs/20261013-080655_M1_sft_nominal_only/checkpoints/006000/pretrained_model
