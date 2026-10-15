@@ -36,6 +36,12 @@ module.exports = function part1(pres, C) {
     { x: 0.6, y: 5.75, w: 12.1, h: 0.5, fontSize: 15, color: HEX.ink2 });
   s.addNotes("Stage 1-6 from the research plan. M1 uses the simulator as the scorer (oracle). M2/M3 replace it with a latent world model + critic.");
 
+  // ---------- 2b. Pipeline overview ----------
+  s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Intro" });
+  s.addText("Pipeline overview", { placeholder: "title" });
+  img(s, "pipeline_overview.png", 0.6, 1.2, 12.1, 5.75, { alt: "RetryVLA pipeline overview diagram" });
+  s.addNotes("1 failure states, 2 search (simulator scorer in M1, world model + critic in M3), 3 verify in simulator, 4 recovery dataset, 5 distill into SmolVLA, 6 evaluate on held-out failures without search. Dashed: WM training (M2), critic self-improvement (M5), iterative loop (M6).");
+
   // ---------- 3. Setup ----------
   pres.addSection({ title: "Setup" });
   s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Setup" });

@@ -20,10 +20,25 @@
   "tmux_prefix": "rv_"
  },
  "claims": {
+  "04a5937c:0": {
+   "tmux": "rv_m5_r2_v1",
+   "args": "retryvla.search.wm_datagen configs/exp/m5_r2_eval.yaml tag=r2_eval_critic_v1 m5.critic_link=data/wm/latest_critic.txt m5.out_root=data/recovery/m5_r2_v1 m5.verif_out=data/wm/verif_r2_v1 eval.n_workers=14",
+   "since": "2026-10-15T08:26:00"
+  },
+  "04a5937c:1": {
+   "tmux": "rv_m5_r2_v2",
+   "args": "retryvla.search.wm_datagen configs/exp/m5_r2_eval.yaml tag=r2_eval_critic_v2 m5.critic_link=data/wm/latest_critic_v2.txt m5.out_root=data/recovery/m5_r2_v2 m5.verif_out=data/wm/verif_r2_v2 eval.n_workers=14",
+   "since": "2026-10-15T08:26:09"
+  },
+  "aa1cf25d:0": {
+   "tmux": "rv_m5_sft_rand",
+   "args": "retryvla.train.sft configs/exp/m5_sft_random_matched.yaml train.max_recovery_trajectories=241",
+   "since": "2026-10-15T08:39:13"
+  },
   "aa1cf25d:1": {
-   "tmux": "rv_m5_sft_wm",
-   "args": "retryvla.train.sft configs/exp/m5_sft_wm.yaml train.max_recovery_trajectories=241",
-   "since": "2026-10-15T07:47:06"
+   "tmux": "rv_m5_rec_wm",
+   "args": "retryvla.eval.eval_recover configs/exp/m0_baseline_spatial.yaml milestone=M5 recover_tag=sft_wm_r1_recover_test policy.path=runs/20261015-075204_M5_sft_wm_r1/checkpoints/006000/pretrained_model recover_eval.splits=[test] eval.n_workers=14",
+   "since": "2026-10-15T08:39:23"
   }
  }
 }
