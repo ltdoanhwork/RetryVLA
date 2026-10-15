@@ -93,3 +93,17 @@ about 2x more often than random at equal simulator budget, mostly via candidates
 Both signals are small-N, single-seed, on one suite, from a weak base policy, and with a nominal-SR cost. The
 missing link is (c): does WM-generated data improve the VLA? Recommended order: C5/C6 on a stronger base (pi1-nominal
 init) with and without WM data, then the self-improving critic loop, then diversity-aware selection.
+
+## 6. M4 (2026-10-15): does WM-found data help the VLA? (init from pi1-nominal, 6k steps, mix 0.5)
+
+| Arm | Recovery data | test RSR | drawer (test) | nominal SR |
+|---|---|---|---|---|
+| pi1-random (init pi0) | 241 random | 0.279 (156/560) | 18/160 | 0.698 |
+| A (init pi1-nominal) | 241 random | 0.293 (164/560) | 24/160 | pending |
+| B (init pi1-nominal) | 241 random + 45 WM (hard instances) | 0.298 (167/560) | 28/160 | pending |
+
+Paired test episodes: B-only success 61, A-only 58 -> **no measurable overall difference** (single seed).
+Drawer +4/160, consistent with WM data being drawer-heavy (29/45), but within noise. The 45 WM trajectories are only
+~16% of recovery data / ~8% of samples: too small a dose to move test RSR. Stronger init helps a little (0.279 -> 0.293).
+Bug found: run_m4 released claims by slot, which killed the following eval on the same GPU ~100 times
+(fixed: release by session). Interrupted run dirs were deleted.
