@@ -20,7 +20,7 @@ from torch.utils.data import DataLoader
 
 from retryvla import REPO_ROOT, tracking
 from retryvla.config import cli_config
-from retryvla.data.mix import MixDataset, count_trajectories, recovery_episode_subsets, spatial_episode_ids
+from retryvla.data.mix import MixDataset, count_trajectories, expand_roots, recovery_episode_subsets, spatial_episode_ids
 from retryvla.utils import setup_logging
 
 log = logging.getLogger("sft")
@@ -54,7 +54,8 @@ def build_datasets(cfg, policy_cfg):
     if tc.get("match_trajectory_count_of"):
         n_match = count_trajectories(REPO_ROOT / tc.match_trajectory_count_of)
         log.info("matching trajectory count of %s: %d", tc.match_trajectory_count_of, n_match)
-    roots = [REPO_ROOT / r for r in tc.recovery_datasets]
+    roots = [Path(r) for r in expand_roots([REPO_ROOT / r for r in tc.recovery_datasets])]
+    log.info("recovery roots: %d", len(roots))
     subs = recovery_episode_subsets(roots, int(n_match) if n_match else None, int(tc.get("min_traj_len", 0)))
     for root, sub in zip(roots, subs):
         if sub is not None and not sub:

@@ -55,6 +55,25 @@ def spatial_episode_ids(repo_id: str, suite: str) -> list[int]:
     return sorted(int(e) for e, t in ep_task.items() if int(t) in keep_idx)
 
 
+def expand_roots(patterns) -> list[str]:
+    """Expand glob patterns in train.recovery_datasets; skip incomplete resumable parts (p<k> without CLOSED)."""
+    import glob as _glob
+
+    out = []
+    for p in patterns:
+        p = str(p)
+        if not any(ch in p for ch in "*?["):
+            out.append(p)
+            continue
+        for d in sorted(_glob.glob(p)):
+            par = Path(d).parent
+            if par.name.startswith("p") and par.name[1:].isdigit() and not (par / "CLOSED").exists():
+                continue
+            if (Path(d) / "retryvla" / "trajectories.jsonl").exists():
+                out.append(d)
+    return out
+
+
 def recovery_episode_subsets(roots, n: int | None, min_len: int = 0) -> list[list[int] | None]:
     """Global top-n trajectories by search score across several dataset roots (None = all).
     min_len drops trivial recoveries (e.g. <=15 steps: the failure state was already nearly solved)."""

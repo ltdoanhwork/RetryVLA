@@ -72,6 +72,19 @@ class SmolVLAWrapper:
         return actions.float().cpu().numpy()
 
     @torch.no_grad()
+    def chunks_from_noise(self, obs: dict, task: str, noise: torch.Tensor, batch_size: int = 64) -> np.ndarray:
+        """Decode given flow-matching noise tensors [n, chunk_size, max_action_dim] at ONE observation.
+        Searching over `noise` keeps every candidate on SmolVLA's own action manifold."""
+        out = []
+        for s in range(0, len(noise), batch_size):
+            nz = noise[s: s + batch_size].to(self.device, torch.float32)
+            k = len(nz)
+            batch = self.pre(self._batch([obs] * k, [task] * k))
+            self.policy.reset()
+            out.append(self.post(self.policy.predict_action_chunk(batch, noise=nz)).float().cpu().numpy())
+        return np.concatenate(out, 0)
+
+    @torch.no_grad()
     def sample_chunks(self, obs: dict, task: str, n: int, noise_scale: float = 1.0,
                       seed: int = 0, batch_size: int = 64) -> np.ndarray:
         """n independent chunk samples at a single observation -> [n, T, A]."""

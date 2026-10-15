@@ -1,0 +1,25 @@
+# M5b: scaled paired comparison of search arms at an EQUAL simulator budget (16 sims / arm / instance).
+# Fresh pi0 failures: train scenes x object-noise trials 2..9 (WM / critic only ever saw trials 0, 1).
+defaults: [exp/m5_wm_datagen]
+milestone: M5
+tag: m5b_compare_arms
+eval:
+  n_workers: 14
+m5b:
+  arms: [random, wm_diverse, wm_noise, wm_qd]
+  exclude_trials: [0, 1]
+  select_seed: 2026
+  n_select: 288          # instances drawn before the pi0 pre-check (~85% are pi0 failures -> ~240)
+  shard: 0
+  num_shards: 8
+  pool_size: 256
+  budget: 16
+  noise_n: 256
+  noise_iters: 2
+  lambda_unc: 0.5
+  beta_rough: 1.0
+  max_trajs_per_instance: 4
+  wm_link: data/wm/latest_wm.txt
+  critic_link: data/wm/latest_critic_v2.txt
+  out_root: data/recovery/m5b
+  verif_out: data/wm/verif_m5b

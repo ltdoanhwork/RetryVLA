@@ -1,0 +1,7 @@
+# M5b: SFT from pi1-nominal on the verified recoveries of search arm 'wm_qd' (count matched across arms at launch).
+defaults: [exp/m4_sft_A_base_nom_random]
+milestone: M5
+tag: m5b_sft_wm_qd
+train:
+  recovery_datasets: [data/recovery/m5b/s*/p*/wm_qd]
+  max_recovery_trajectories: 400

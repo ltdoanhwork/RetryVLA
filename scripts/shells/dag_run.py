@@ -7,6 +7,9 @@ dag.json: {"name": "m5", "tasks": [{"name": "r1_s0", "module": "...", "args": [.
 Arg tokens resolved at launch time:
   @glob:<pattern>      -> newest path matching the glob (e.g. a checkpoint dir)
   @ntraj:<glob>:<cap>  -> min(cap, total trajectories in all matching recovery datasets)
+  @ntrajmin:<cap>:<g1>,<g2>,... -> min(cap, min over groups of trajectories in that group's datasets)
+Slots: <shell8>:<gpu> (borrowed Determined shell) or local:<gpu>:<lane> (this machine; several lanes may
+share one GPU, e.g. SFT + a CPU-bound eval on one 80 GB A100).
 A task is done when its log has `RV_DONE rc=0`; failed on `rc!=0` (runner stops and prints FAILED).
 Claims are released by SESSION name (never by slot). Stop: touch runs/_logs/<name>_STOP.
 """
@@ -57,21 +60,65 @@ def running(name: str) -> bool:
     return any(v["tmux"] == f"rv_{name}" for v in claims().values())
 
 
+TMUX = "/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/.local/bin/tmux"
+
+
+def set_claim(key: str, sess: str, args: str) -> None:
+    p = SH / "shells.json"
+    d = json.load(open(p))
+    d.setdefault("claims", {})[key] = {"tmux": sess, "args": args, "since": time.strftime("%Y-%m-%dT%H:%M:%S")}
+    json.dump(d, open(p, "w"), indent=1)
+
+
+def pop_claim(key: str) -> None:
+    p = SH / "shells.json"
+    d = json.load(open(p))
+    d.get("claims", {}).pop(key, None)
+    json.dump(d, open(p, "w"), indent=1)
+
+
 def release(name: str) -> None:
     for k, v in claims().items():
         if v["tmux"] == f"rv_{name}":
-            subprocess.run([str(SH / "remote_ctl.sh"), "stop", k], capture_output=True)
+            if k.startswith("local:"):
+                subprocess.run([TMUX, "kill-session", "-t", f"={v['tmux']}"], capture_output=True)
+                pop_claim(k)
+            else:
+                subprocess.run([str(SH / "remote_ctl.sh"), "stop", k], capture_output=True)
+
+
+def local_alive(sess: str) -> bool:
+    return subprocess.run([TMUX, "has-session", "-t", f"={sess}"], capture_output=True).returncode == 0
 
 
 def free_slots(allowed: list[str]) -> list[str]:
-    try:
-        out = subprocess.run(["python3", str(SH / "find_free.py"), "--json"], capture_output=True, text=True,
-                             timeout=300).stdout
-        free = {f"{s['short']}:{s['gpu']}" for s in json.loads(out)}
-    except Exception:
-        return []
+    used = claims()
+    for k, v in list(used.items()):  # local lane whose tmux died without RV_DONE (e.g. killed): free it
+        if k.startswith("local:") and k in allowed and not local_alive(v["tmux"]):
+            pop_claim(k)
     used = set(claims())
-    return [s for s in allowed if s in free and s not in used]
+    out = [s for s in allowed if s.startswith("local:") and s not in used]
+    remote = [s for s in allowed if not s.startswith("local:")]
+    if remote:
+        try:
+            js = subprocess.run(["python3", str(SH / "find_free.py"), "--json"], capture_output=True, text=True,
+                                timeout=300).stdout
+            free = {f"{s['short']}:{s['gpu']}" for s in json.loads(js)}
+        except Exception:
+            free = set()
+        out += [s for s in remote if s in free and s not in used]
+    return out
+
+
+def usable(d: str) -> bool:
+    """Resumable datasets live in .../p<k>/<arm>; only parts marked CLOSED are complete."""
+    par = Path(d).parent
+    return not (par.name.startswith("p") and par.name[1:].isdigit() and not (par / "CLOSED").exists())
+
+
+def ntraj(pat: str) -> int:
+    return sum(1 for d in glob.glob(str(REPO / pat)) if usable(d)
+               for f in glob.glob(d + "/retryvla/trajectories.jsonl") for _ in open(f))
 
 
 def resolve(arg: str) -> str:
@@ -81,6 +128,10 @@ def resolve(arg: str) -> str:
         if not m:
             raise FileNotFoundError(pat)
         return pre + os.path.relpath(m[-1], REPO)
+    if "@ntrajmin:" in arg:
+        pre, rest = arg.split("@ntrajmin:", 1)
+        cap, groups = rest.split(":", 1)
+        return pre + str(min([int(cap)] + [ntraj(g) for g in groups.split(",")]))
     if "@ntraj:" in arg:
         pre, rest = arg.split("@ntraj:", 1)
         pat, cap = rest.rsplit(":", 1)
@@ -133,11 +184,16 @@ def main() -> None:
                 except Exception as e:
                     say(log, f"cannot resolve args of {n}: {e}")
                     continue
-                cmd = [str(SH / "launch_remote.sh"), *slot.split(":"), n, t["module"], *args]
+                if slot.startswith("local:"):
+                    cmd = ["bash", str(SH / "remote_tmux.sh"), f"rv_{n}", slot.split(":")[1], t["module"], *args]
+                else:
+                    cmd = [str(SH / "launch_remote.sh"), *slot.split(":"), n, t["module"], *args]
                 if a.dry:
                     say(log, "DRY " + " ".join(cmd[1:]))
                     continue
                 out = subprocess.run(cmd, capture_output=True, text=True).stdout
+                if slot.startswith("local:") and "LAUNCHED" in out:
+                    set_claim(slot, f"rv_{n}", " ".join([t["module"], *args]))
                 ok = next((l for l in out.splitlines() if "LAUNCHED" in l or "REFUSED" in l or "fail" in l), out[-200:])
                 say(log, f"launch {n} on {slot}: {ok}")
             if a.dry:
