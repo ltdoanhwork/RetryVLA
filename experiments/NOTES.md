@@ -107,3 +107,15 @@ Drawer +4/160, consistent with WM data being drawer-heavy (29/45), but within no
 ~16% of recovery data / ~8% of samples: too small a dose to move test RSR. Stronger init helps a little (0.279 -> 0.293).
 Bug found: run_m4 released claims by slot, which killed the following eval on the same GPU ~100 times
 (fixed: release by session). Interrupted run dirs were deleted.
+
+## 7. M5 plan (code ready, NOT run): yield + diversity + matched distillation
+
+DAG `configs/dag/m5.json`, runner `scripts/shells/dag_run.py <dag> --slots <shell8:gpu ...>`:
+1. `m5_r1_s{0,1}`: `retryvla.search.wm_datagen` on all 108 pilot pi0-failure instances. Diverse top-k (k-means on
+   imagined end states), adaptive budget (batches of 8, stop at 4 successes, max 32 sims), every verification logged in
+   C1 latent format (`data/wm/verif_r1`). Data -> `data/recovery/m5_wm_r1_s*`.
+2. `m5_critic_v2`: critic retrained on C1 + round-1 verifications (round-2 held-out instances excluded from verif only).
+3. `m5_r2_v1` / `m5_r2_v2`: same fixed 16-sim budget on the 50 held-out instances, critic v1 vs v2 (self-improvement).
+4. `m5_sft_wm` / `m5_sft_rand`: SFT from pi1-nominal, WM-only vs random-only recoveries, SAME trajectory count
+   (`@ntraj` = min(241, WM count)). Then test RSR + nominal for both.
+Estimated: ~6 h on 2 GPUs (R1 ~2.5 h, critic 15 min, R2 ~40 min, SFT 45 min x2, evals ~45 min x4).

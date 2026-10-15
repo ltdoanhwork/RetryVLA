@@ -1,0 +1,26 @@
+# M5 round 1: WM-guided recovery data generation on all 108 pilot pi0-failure instances.
+# Diverse selection + adaptive budget (batches of 8, stop at 4 successes, max 32 sims) + verification logging.
+defaults: [exp/m2_collect]
+milestone: M5
+tag: wm_datagen_r1
+m5:
+  instance_ids_file: data/splits/m1_pilot_pi0fail_instances.txt
+  wm_link: data/wm/latest_wm.txt
+  critic_link: data/wm/latest_critic.txt
+  critic_ckpt: null
+  pool_size: 256
+  latent_cem_iters: 2
+  latent_elites: 16
+  latent_cem_std: 0.25
+  lambda_unc: 0.5
+  beta_rough: 1.0
+  diverse: true
+  random_arm: false
+  batch: 8
+  max_budget: 32
+  target_successes: 4
+  max_trajs_per_instance: 4
+  out_root: data/recovery/m5_wm_r1
+  verif_out: data/wm/verif_r1
+  shard: 0
+  num_shards: 1

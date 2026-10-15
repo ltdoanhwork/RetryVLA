@@ -1,0 +1,11 @@
+# M5 round 2: same fixed budget (16 sims, no early stop) on held-out instances; run once with critic v1 and once
+# with critic v2 (override m5.critic_ckpt / tag). Measures the self-improvement of the critic online.
+defaults: [exp/m5_wm_datagen]
+tag: r2_eval
+m5:
+  instance_ids_file: data/splits/m5_r2_heldout_instances.txt
+  batch: 16
+  max_budget: 16
+  target_successes: 999
+  out_root: data/recovery/m5_r2_eval
+  verif_out: data/wm/verif_r2_eval

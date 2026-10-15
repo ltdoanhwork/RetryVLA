@@ -1,0 +1,10 @@
+# M5: critic v2 = critic retrained on C1 data + round-1 verifications (labels where the WM/critic was wrong).
+# Round-2 held-out instances are excluded so the online comparison v1 vs v2 is clean.
+defaults: [exp/m2_train_critic]
+milestone: M5
+tag: train_critic_v2
+critic:
+  data_roots: [data/wm/collect_v1, data/wm/verif_r1]
+  exclude_instances_file: data/splits/m5_r2_heldout_instances.txt
+  exclude_only_roots: [data/wm/verif_r1]   # C1 stays identical to critic v1
+  out_link: data/wm/latest_critic_v2.txt

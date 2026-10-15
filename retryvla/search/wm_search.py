@@ -65,7 +65,7 @@ class WMCriticRanker:
     @torch.no_grad()
     def score(self, z0, q0, task: str, cands: np.ndarray, bs: int = 256) -> dict[str, np.ndarray]:
         tid = self.vocab.get(task, 0)
-        V, U = [], []
+        V, U, ZF = [], [], []
         for i in range(0, len(cands), bs):
             a = torch.as_tensor(cands[i: i + bs], device=self.dev)
             n = len(a)
@@ -74,10 +74,37 @@ class WMCriticRanker:
                 v = torch.sigmoid(self.critic.logits(zH.float(), qH.float(),
                                                      torch.full((n,), tid, device=self.dev, dtype=torch.long)))
             V.append(v.float().cpu().numpy()); U.append(unc.float().cpu().numpy())
+            ZF.append(torch.cat([zH.float().mean(1), qH.float()], 1).cpu().numpy())  # imagined end-state feature
         V, U = np.concatenate(V), np.concatenate(U)
         U_n = U / (np.median(U) + 1e-8)
         R = roughness(cands)
-        return {"value": V, "unc": U, "score": V - self.lam * U_n * V.std() - self.beta * R, "rough": R}
+        return {"value": V, "unc": U, "score": V - self.lam * U_n * V.std() - self.beta * R, "rough": R,
+                "zfeat": np.concatenate(ZF)}
+
+
+def diverse_ranking(score: np.ndarray, feat: np.ndarray, k: int, oversample: int = 4, seed: int = 0) -> np.ndarray:
+    """Pick k candidates: k-means over the imagined end states of the top (oversample*k) by score,
+    best candidate per cluster, ordered by score. Avoids spending the budget on 16 variants of one plan."""
+    top = np.argsort(-score)[: max(k, oversample * k)]
+    if len(top) <= k:
+        return top
+    x = feat[top].astype(np.float64)
+    x = (x - x.mean(0)) / (x.std(0) + 1e-6)
+    rng = np.random.default_rng(seed)
+    c = x[rng.choice(len(x), k, replace=False)]
+    for _ in range(15):
+        lab = ((x[:, None] - c[None]) ** 2).sum(-1).argmin(1)
+        for j in range(k):
+            if (lab == j).any():
+                c[j] = x[lab == j].mean(0)
+    picks = []
+    for j in range(k):
+        m = np.nonzero(lab == j)[0]
+        if len(m):
+            picks.append(top[m[np.argmax(score[top[m]])]])
+    rest = [i for i in top if i not in set(picks)]  # fill empty clusters by score
+    picks += rest[: k - len(picks)]
+    return np.array(sorted(picks, key=lambda i: -score[i]))
 
 
 def main() -> None:

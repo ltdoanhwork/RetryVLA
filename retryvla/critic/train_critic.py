@@ -25,7 +25,7 @@ from retryvla import REPO_ROOT, tracking
 from retryvla.config import cli_config, to_dict
 from retryvla.critic.value_model import RecoveryValue, auc, expected_calibration_error
 from retryvla.utils import setup_logging
-from retryvla.wm.data import Normalizer, group_split, load_latents, save_ckpt, task_vocab
+from retryvla.wm.data import Normalizer, concat_latents, group_split, load_latents, save_ckpt, task_vocab
 from retryvla.wm.dynamics import LatentWM
 
 log = logging.getLogger("train_critic")
@@ -98,7 +98,21 @@ def main() -> None:
     dev = torch.device(cfg.policy.device)
     wm_path = c.wm_ckpt if c.get("wm_ckpt") else (REPO_ROOT / c.wm_link).read_text().strip()
     wm, norm, wck = load_wm(wm_path, dev)
-    ls = load_latents(list(c.data_roots))
+    ex = set()
+    if c.get("exclude_instances_file"):
+        ex = {l.strip() for l in open(REPO_ROOT / c.exclude_instances_file) if l.strip()}
+    # the exclusion applies only to `exclude_only_roots` (e.g. round-1 verifications), so critic v2 sees exactly
+    # the same C1 data as critic v1 and the round-2 comparison is fair
+    ex_roots = set(c.get("exclude_only_roots") or [])
+    parts = []
+    for r in c.data_roots:
+        p = load_latents([r])
+        if ex and (not ex_roots or r in ex_roots):
+            keep = [i for i, s in enumerate(p.inst) if s not in ex]
+            log.info("%s: excluding %d trajectories of held-out instances", r, len(p) - len(keep))
+            p = p.subset(keep)
+        parts.append(p)
+    ls = concat_latents(parts)
     # use the SAME held-out failure episodes as the WM (critic val = WM val)
     val_set = set(wck.get("val_instances", []))
     va = np.array([i for i, s in enumerate(ls.inst) if s in val_set]) if val_set else group_split(ls, 0.15)[1]

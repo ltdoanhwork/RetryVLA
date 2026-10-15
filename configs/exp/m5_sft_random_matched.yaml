@@ -1,0 +1,6 @@
+# M5 C5 control: same as m5_sft_wm but random-search recoveries, same count (overridden at launch).
+defaults: [exp/m4_sft_A_base_nom_random]
+milestone: M5
+tag: sft_random_matched
+train:
+  max_recovery_trajectories: 241

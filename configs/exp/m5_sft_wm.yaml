@@ -1,0 +1,7 @@
+# M5 C5: SFT from pi1-nominal on WM round-1 recoveries only, trajectory count matched to the random arm below.
+defaults: [exp/m4_sft_A_base_nom_random]
+milestone: M5
+tag: sft_wm_r1
+train:
+  recovery_datasets: [data/recovery/m5_wm_r1_s0, data/recovery/m5_wm_r1_s1]
+  max_recovery_trajectories: 241

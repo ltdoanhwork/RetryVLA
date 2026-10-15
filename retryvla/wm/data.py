@@ -39,6 +39,16 @@ class LatentSet:
         return self.valid.long().cumsum(1).argmax(1)  # index of last valid frame
 
 
+def concat_latents(sets: list[LatentSet]) -> LatentSet:
+    sets = [s for s in sets if len(s)]
+    F = max(s.z.shape[1] for s in sets)
+    assert all(s.z.shape[1] == F for s in sets), "frame counts differ between latent sets"
+    return LatentSet(torch.cat([s.z for s in sets]), torch.cat([s.q for s in sets]),
+                     torch.cat([s.valid for s in sets]), torch.cat([s.actions for s in sets]),
+                     torch.cat([s.success for s in sets]), torch.cat([s.prefix_success for s in sets]),
+                     sum([s.inst for s in sets], []), sum([s.task for s in sets], []), sum([s.source for s in sets], []))
+
+
 def load_latents(roots) -> LatentSet:
     files = sorted(f for r in roots for f in glob.glob(str(REPO_ROOT / r / "*.pt")))
     if not files:
