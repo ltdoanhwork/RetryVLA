@@ -19,5 +19,21 @@
   "max_load_per_core": 0.6,
   "tmux_prefix": "rv_"
  },
- "claims": {}
+ "claims": {
+  "04a5937c:0": {
+   "tmux": "rv_m5_r1_s0",
+   "args": "retryvla.search.wm_datagen configs/exp/m5_wm_datagen.yaml m5.shard=0 m5.num_shards=4 m5.out_root=data/recovery/m5_wm_r1_s0 eval.n_workers=14",
+   "since": "2026-10-15T06:27:37"
+  },
+  "aa1cf25d:0": {
+   "tmux": "rv_m5_r1_s2",
+   "args": "retryvla.search.wm_datagen configs/exp/m5_wm_datagen.yaml m5.shard=2 m5.num_shards=4 m5.out_root=data/recovery/m5_wm_r1_s2 eval.n_workers=14",
+   "since": "2026-10-15T06:32:16"
+  },
+  "aa1cf25d:1": {
+   "tmux": "rv_m5_r1_s3",
+   "args": "retryvla.search.wm_datagen configs/exp/m5_wm_datagen.yaml m5.shard=3 m5.num_shards=4 m5.out_root=data/recovery/m5_wm_r1_s3 eval.n_workers=14",
+   "since": "2026-10-15T06:32:26"
+  }
+ }
 }
