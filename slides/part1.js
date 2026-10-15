@@ -1,5 +1,6 @@
 // RetryVLA progress deck, part 1: setup, data, M0, M1 (oracle search)
 const { HEX, card, text, bullets, img, badge, stat, caption } = require("./lib");
+const V = require("./videos");
 
 module.exports = function part1(pres, C) {
   // ---------- 1. Title ----------
@@ -15,7 +16,7 @@ module.exports = function part1(pres, C) {
   s.addText("The question we are answering", { placeholder: "title" });
   card(s, C, 0.6, 1.35, 12.1, 1.15, HEX.amberTint, "question");
   text(s, "Can a world model discover action sequences that recover from actual VLA failure states, and can those imagined recoveries be distilled into the VLA so it recovers without search at inference?",
-    { x: 0.9, y: 1.5, w: 11.5, h: 0.9, fontSize: 17, italic: true, color: HEX.ink, fontFace: "Cambria" });
+    { x: 0.9, y: 1.5, w: 11.5, h: 0.9, fontSize: 17, italic: true, color: HEX.ink, fontFace: "Times New Roman" });
   const steps = [
     ["Failure states", "LIBERO-Recover scenes where SmolVLA failed"],
     ["Search", "propose 50-step recovery segments, score them"],
@@ -100,6 +101,8 @@ module.exports = function part1(pres, C) {
     "replanning every step (n_action_steps=1) gives +5 points at 10x the cost, so we keep 10",
   ], { x: 4.95, y: 4.9, w: 7.5, h: 1.7, fontSize: 13, color: HEX.ink2 });
 
+  V.m0(pres, C);
+
   // ---------- 7. M1 how one candidate is tried ----------
   pres.addSection({ title: "M1 oracle search" });
   s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "M1 oracle search" });
@@ -119,6 +122,8 @@ module.exports = function part1(pres, C) {
   });
   img(s, "strip_primitive.png", 0.6, 3.65, 12.1, 2.85, { alt: "primitive recovery then SmolVLA" });
   caption(s, "Orange = searched segment (here a hand-written 'open + lift' primitive). Blue = SmolVLA takes over and places the bowl. Competence-targeted: the segment does not solve the task, it returns the robot to a state SmolVLA can finish from.", 0.6, 6.55, 12.1);
+
+  V.m1(pres, C);
 
   // ---------- 8. M1 search loop ----------
   s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "M1 oracle search" });
@@ -154,6 +159,8 @@ module.exports = function part1(pres, C) {
   caption(s, "One of 24 SmolVLA samples (different noise) happens to open and back off; continuation succeeds", 3.3, 3.55, 9.4);
   img(s, "strip_cem_bad.png", 3.3, 4.0, 9.4, 2.25, { alt: "noisy CEM recovery" });
   caption(s, "Old CEM on a hard instance: jerky, gripper chatter (3-4 flips / 50 steps vs 0.9 in demos). Searched segments are 4-6x jerkier than demos", 3.3, 6.25, 9.4);
+
+  V.m1bad(pres, C);
 
   // ---------- 10. M1 results ----------
   s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "M1 oracle search" });

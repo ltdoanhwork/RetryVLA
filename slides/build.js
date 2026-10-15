@@ -50,7 +50,7 @@ function part3(pres, C) {
   s.addText("The paper story we are building toward", { placeholder: "title" });
   card(s, C, 0.6, 1.4, 12.1, 1.35, HEX.amberTint, "story");
   text(s, "Competence-targeted world-model search generates recovery actions that restore the policy's ability to finish the task, and distilling them lets the VLA recover from unseen failures without search.",
-    { x: 0.9, y: 1.55, w: 11.5, h: 1.1, fontSize: 17, italic: true, fontFace: "Cambria" });
+    { x: 0.9, y: 1.55, w: 11.5, h: 1.1, fontSize: 17, italic: true, fontFace: "Times New Roman" });
   const abl = [["Goal-progress vs competence critic", "does scoring by 'can SmolVLA finish' beat 'is the bowl closer'?"],
     ["Random vs oracle vs WM selection", "same #trajectories: is the gain from the WM, not just more data?"],
     ["Sim-efficiency curve", "verified recoveries per simulator rollout: random, oracle CEM, WM"],

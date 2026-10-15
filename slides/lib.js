@@ -11,8 +11,8 @@ const sizeOf = (f) => {  // PNG size from IHDR
 
 const THEME = {
   name: "RetryVLA",
-  headFontFace: "Cambria",
-  bodyFontFace: "Calibri",
+  headFontFace: "Times New Roman",
+  bodyFontFace: "Times New Roman",
   colors: {
     dk1: "23303B", lt1: "FFFFFF", dk2: "3C4A57", lt2: "F2F4F6",
     accent1: "E8962E", accent2: "1F8FE5", accent3: "2A9D8F", accent4: "C8553D",
@@ -105,7 +105,7 @@ function badge(s, C, n, x, y, fill) {
 }
 
 function stat(s, big, small, x, y, w, color) {
-  text(s, big, { x, y, w, h: 0.75, fontSize: 40, bold: true, color: color || HEX.ink, fontFace: "Cambria" });
+  text(s, big, { x, y, w, h: 0.75, fontSize: 40, bold: true, color: color || HEX.ink, fontFace: "Times New Roman" });
   text(s, small, { x, y: y + 0.78, w, h: 0.6, fontSize: 12, color: HEX.muted });
 }
 

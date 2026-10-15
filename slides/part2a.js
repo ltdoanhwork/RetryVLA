@@ -1,5 +1,6 @@
 // part 2a: world model, critic, how WM search works
 const { HEX, card, text, bullets, img, badge, stat, caption } = require("./lib");
+const V = require("./videos");
 
 module.exports = function part2a(pres, C) {
   pres.addSection({ title: "World model" });
@@ -48,6 +49,8 @@ module.exports = function part2a(pres, C) {
   img(s, "strip_c1_fail.png", 0.6, 4.05, 12.1, 2.35, { alt: "C1 failure sample" });
   caption(s, "Label 0: also opens, but drags the bowl off the plate (t≥35), so SmolVLA cannot finish. The critic must tell these apart from latents alone", 0.6, 6.4, 12.1);
 
+  V.c1(pres, C);
+
   // dynamics model
   s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "World model" });
   s.addText("M2: latent dynamics h(t+1) = h(t) + F(h(t), 5 actions)", { placeholder: "title" });
@@ -70,7 +73,7 @@ module.exports = function part2a(pres, C) {
   s.addText("M2: the competence critic V(z, q, task)", { placeholder: "title" });
   card(s, C, 0.6, 1.4, 6.0, 1.3, HEX.amberTint, "q");
   text(s, "“From this (possibly imagined) state, will frozen SmolVLA finish the task?”",
-    { x: 0.85, y: 1.55, w: 5.5, h: 1.0, fontSize: 17, italic: true, fontFace: "Cambria" });
+    { x: 0.85, y: 1.55, w: 5.5, h: 1.0, fontSize: 17, italic: true, fontFace: "Times New Roman" });
   bullets(s, ["small transformer over the same tokens + learned task embedding",
     "trained on real AND WM-imagined end states (50/50), so it is calibrated for what search feeds it",
     "competence-targeted: lifting out of a drawer scores high even though the bowl gets no closer to the plate",

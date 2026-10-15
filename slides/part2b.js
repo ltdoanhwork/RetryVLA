@@ -1,5 +1,6 @@
 // part 2b: M3 results, M4 distillation, M5 running, honest assessment, long-term plan
 const { HEX, card, text, bullets, img, badge, stat, caption } = require("./lib");
+const V = require("./videos");
 
 module.exports = function part2b(pres, C) {
   // M3 headline result
@@ -31,6 +32,8 @@ module.exports = function part2b(pres, C) {
   card(s, C, 6.8, 5.45, 5.9, 1.3, HEX.amberTint, "wmguided");
   text(s, "Bottom: the WM picks 'lift straight up' (orange). From there SmolVLA reaches in, grasps and places the bowl. 3/16 verified.",
     { x: 7.05, y: 5.6, w: 5.4, h: 1.05, fontSize: 13, color: HEX.ink2 });
+
+  V.m3(pres, C);
 
   // WM chosen segment actions
   s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "World model" });
@@ -67,6 +70,8 @@ module.exports = function part2b(pres, C) {
   bullets(s, ["generate WM data on all 108 pilot failures (not just 53 hard)", "same trajectory count WM vs random",
     "WM-only vs random-only SFT, same init, same recipe", "measure RSR, drawer, nominal"],
     { x: 8.95, y: 2.2, w: 3.5, h: 4.3, fontSize: 14, color: HEX.ink2 });
+
+  V.distill(pres, C);
 
   // M5 running
   s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Distillation" });

@@ -26,7 +26,10 @@ def style():
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
-    plt.rcParams.update({"font.family": "DejaVu Sans", "font.size": 11, "axes.edgecolor": MUTED,
+    import matplotlib.font_manager as fm
+    for f in Path("/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/tools/fonts/liberation-fonts-ttf-2.1.5").glob("LiberationSerif-*.ttf"):
+        fm.fontManager.addfont(str(f))
+    plt.rcParams.update({"font.family": "serif", "font.serif": ["Times New Roman", "Liberation Serif", "DejaVu Serif"], "font.size": 11, "axes.edgecolor": MUTED,
                          "axes.labelcolor": INK, "xtick.color": MUTED, "ytick.color": MUTED, "axes.grid": True,
                          "grid.color": GRID, "axes.spines.top": False, "axes.spines.right": False,
                          "axes.titleweight": "bold", "axes.titlecolor": INK, "legend.frameon": False})
