@@ -3,5 +3,5 @@ defaults: [exp/m4_sft_A_base_nom_random]
 milestone: M5
 tag: sft_wm_r1
 train:
-  recovery_datasets: [data/recovery/m5_wm_r1_s0, data/recovery/m5_wm_r1_s1]
+  recovery_datasets: [data/recovery/m5_wm_r1_s0, data/recovery/m5_wm_r1_s1, data/recovery/m5_wm_r1_s2, data/recovery/m5_wm_r1_s3]
   max_recovery_trajectories: 241
