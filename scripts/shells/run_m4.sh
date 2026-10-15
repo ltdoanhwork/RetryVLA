@@ -10,7 +10,9 @@ say() { echo "$(date -Is) $*" | tee -a "$LOG"; }
 done_ok() { grep -a -q "RV_DONE rc=0" runs/_logs/rv_$1_*.log 2>/dev/null; }
 failed()  { grep -a -q -E "RV_DONE rc=[1-9]" runs/_logs/rv_$1_*.log 2>/dev/null && ! done_ok "$1"; }
 claimed() { python3 -c "import json,sys; c=json.load(open('scripts/shells/shells.json'))['claims']; sys.exit(0 if any(v['tmux']=='rv_$1' for v in c.values()) else 1)"; }
-release() { scripts/shells/remote_ctl.sh stop "$1" >/dev/null 2>&1; }
+release() {  # release the claim of ONE finished session (never kill by slot: another step may run there)
+  local key; key=$(python3 -c "import json; c=json.load(open('scripts/shells/shells.json'))['claims']; print(next((k for k,v in c.items() if v['tmux']=='rv_$1'), ''))")
+  [ -n "$key" ] && scripts/shells/remote_ctl.sh stop "$key" >/dev/null 2>&1; }
 
 # arm := name slot sft_config
 step() {  # step <session> <slot> <module> <args...>  -> 0 done, 1 in progress, 2 failed
@@ -27,17 +29,17 @@ step() {  # step <session> <slot> <module> <args...>  -> 0 done, 1 in progress, 
 arm() {  # arm <A|B> <slot> <sft_cfg> <tag>
   local a=$1 slot=$2 cfg=$3 tag=$4
   step m4_sft_$a "$slot" retryvla.train.sft "$cfg"; r=$?; [ $r -ne 0 ] && return $r
-  release "$slot"
+  release m4_sft_$a
   local ck; ck=$(ls -d runs/*_M4_${tag}/checkpoints/006000/pretrained_model 2>/dev/null | tail -1)
   [ -n "$ck" ] || { say "no checkpoint for $tag"; return 2; }
   step m4_rec_$a "$slot" retryvla.eval.eval_recover configs/exp/m0_baseline_spatial.yaml milestone=M4 \
        recover_tag=${tag}_recover_test policy.path=$ck "recover_eval.splits=[test]" eval.n_workers=14; r=$?
   [ $r -ne 0 ] && return $r
-  release "$slot"
+  release m4_rec_$a
   step m4_nom_$a "$slot" retryvla.eval.eval_nominal configs/exp/m0_baseline_spatial.yaml milestone=M4 \
        nominal_tag=${tag}_nominal policy.path=$ck eval.n_workers=14 eval.save_videos=none; r=$?
   [ $r -ne 0 ] && return $r
-  release "$slot"
+  release m4_nom_$a
   return 0
 }
 

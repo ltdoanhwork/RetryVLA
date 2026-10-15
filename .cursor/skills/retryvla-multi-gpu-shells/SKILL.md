@@ -97,6 +97,7 @@ Register them with `scripts/register_run.py` as usual.
 | sim about 250 ms/step | Mesa software EGL. `source env/activate.sh` must find `tools/nvidia-egl-<driver>`. The driver must match (all nodes 610.43.02 now) |
 | job gone, log empty | started with nohup/& inside `det shell open`. Only tmux survives |
 | quoted command arrives mangled | det re-joins argv. Pass a script path + plain args (that is what `remote_tmux.sh` is for) |
-| `pkill -f <pattern>` killed the agent's own shell | never pkill by pattern. Kill tmux sessions by exact name `-t =rv_x` or by PID |
+| `pkill -f <pattern>` killed the agent's own shell (happened twice) | never pkill by pattern. Kill tmux sessions by exact name `-t =rv_x` or by PID |
 | `tmux has-session -t foo` matches `foo2` | use `-t =name` (exact) |
 | shell disappears mid-run | reclaimed. Outputs written incrementally to /pfss survive. Re-probe and relaunch the remaining work |
+| chain script relaunches the same eval every loop (100+ partial runs) | releasing a claim **by slot** killed the next step running on that GPU. Release claims by session name only (`run_m4.sh::release`) |
