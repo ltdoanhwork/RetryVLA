@@ -119,3 +119,16 @@ DAG `configs/dag/m5.json`, runner `scripts/shells/dag_run.py <dag> --slots <shel
 4. `m5_sft_wm` / `m5_sft_rand`: SFT from pi1-nominal, WM-only vs random-only recoveries, SAME trajectory count
    (`@ntraj` = min(241, WM count)). Then test RSR + nominal for both.
 Estimated: ~6 h on 2 GPUs (R1 ~2.5 h, critic 15 min, R2 ~40 min, SFT 45 min x2, evals ~45 min x4).
+
+## M5b: scaled paired comparison of search arms (launched 2026-10-15 11:25 UTC)
+
+Question: does WM guidance give both efficiency AND better-distributed recovery data? N = 288 fresh instances
+(train scenes x object-noise trials 2..9, never seen by WM/critic) -> ~250 pi0 failures, 8 shards.
+Per instance, 4 arms each get 16 sims (paired: same instance, same continuation seeds per slot):
+`random` (pool uniform), `wm_diverse` (M5 default), `wm_noise` (CEM in SmolVLA flow-matching noise space, pCN
+moves -> on-manifold by construction), `wm_qd` (MAP-Elites over 60 strategy cells). Logged: hits/solved,
+critic calibration, jerk / roughness / distance to SmolVLA samples / pairwise spread / strategy cells of the
+verified successes. Then matched-count SFT per arm (init pi1-nominal) -> test RSR + nominal SR.
+Code: `retryvla/search/{arms,compare_arms}.py`, DAG `configs/dag/m5b.json` (also finishes the M5 evals that
+were cut when 04a5937c / aa1cf25d were reclaimed), analysis `scripts/analyze_m5b.py`.
+Smoke (5 inst, budget 4): solve random 0.4 / wm_diverse 0.8 / wm_noise 0.6 / wm_qd 0.4 (no signal, N tiny).
