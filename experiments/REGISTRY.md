@@ -25,3 +25,9 @@ Run directories (`runs/`) are gitignored; this file plus the `M*.md` docs are th
 | 20261014-120238_M2_train_critic_v1 | M2 | train_critic_v1 | done | dd2c699 | - | train_critic_v1 |
 | 20261014-121255_M3_wm_search_hard_s0of2 | M3 | wm_search_hard_s0of2 | done | dd2c699 | - | wm_search_hard_s0of2 |
 | 20261014-121313_M3_wm_search_hard_s1of2 | M3 | wm_search_hard_s1of2 | done | dd2c699 | - | wm_search_hard_s1of2 |
+| 20261014-151922_M4_sft_A_base_nom_random | M4 | sft_A_base_nom_random | done | 451ef58 | final_loss=0.512 | M4 sft_A_base_nom_random |
+| 20261014-151933_M4_sft_B_base_nom_random_wm | M4 | sft_B_base_nom_random_wm | done | 451ef58 | final_loss=0.482 | M4 sft_B_base_nom_random_wm |
+| 20261014-200803_M4_sft_A_base_nom_random_recover_test | M4 | sft_A_base_nom_random_recover_test | done | 451ef58 | rsr=0.293, rsr_close=0.254, rsr_open=0.332, n_episodes=560 | M4 sft_A_base_nom_random_recover_test |
+| 20261014-200814_M4_sft_B_base_nom_random_wm_recover_test | M4 | sft_B_base_nom_random_wm_recover_test | done | 451ef58 | rsr=0.298, rsr_close=0.257, rsr_open=0.339, n_episodes=560 | M4 sft_B_base_nom_random_wm_recover_test |
+| 20261015-035127_M4_sft_A_base_nom_random_nominal | M4 | sft_A_base_nom_random_nominal | done | e2f6a82 | success_rate=0.756, n_episodes=500 | M4 sft_A_base_nom_random_nominal |
+| 20261015-035136_M4_sft_B_base_nom_random_wm_nominal | M4 | sft_B_base_nom_random_wm_nominal | done | e2f6a82 | success_rate=0.748, n_episodes=500 | M4 sft_B_base_nom_random_wm_nominal |

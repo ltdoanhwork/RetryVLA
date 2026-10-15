@@ -99,8 +99,8 @@ init) with and without WM data, then the self-improving critic loop, then divers
 | Arm | Recovery data | test RSR | drawer (test) | nominal SR |
 |---|---|---|---|---|
 | pi1-random (init pi0) | 241 random | 0.279 (156/560) | 18/160 | 0.698 |
-| A (init pi1-nominal) | 241 random | 0.293 (164/560) | 24/160 | pending |
-| B (init pi1-nominal) | 241 random + 45 WM (hard instances) | 0.298 (167/560) | 28/160 | pending |
+| A (init pi1-nominal) | 241 random | 0.293 (164/560) | 24/160 | 0.756 |
+| B (init pi1-nominal) | 241 random + 45 WM (hard instances) | 0.298 (167/560) | 28/160 | 0.748 |
 
 Paired test episodes: B-only success 61, A-only 58 -> **no measurable overall difference** (single seed).
 Drawer +4/160, consistent with WM data being drawer-heavy (29/45), but within noise. The 45 WM trajectories are only

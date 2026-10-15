@@ -19,16 +19,5 @@
   "max_load_per_core": 0.6,
   "tmux_prefix": "rv_"
  },
- "claims": {
-  "aa1cf25d:0": {
-   "tmux": "rv_m4_nom_A",
-   "args": "retryvla.eval.eval_nominal configs/exp/m0_baseline_spatial.yaml milestone=M4 nominal_tag=sft_A_base_nom_random_nominal policy.path=runs/20261014-151922_M4_sft_A_base_nom_random/checkpoints/006000/pretrained_model eval.n_workers=14 eval.save_videos=none",
-   "since": "2026-10-15T03:51:21"
-  },
-  "aa1cf25d:1": {
-   "tmux": "rv_m4_nom_B",
-   "args": "retryvla.eval.eval_nominal configs/exp/m0_baseline_spatial.yaml milestone=M4 nominal_tag=sft_B_base_nom_random_wm_nominal policy.path=runs/20261014-151933_M4_sft_B_base_nom_random_wm/checkpoints/006000/pretrained_model eval.n_workers=14 eval.save_videos=none",
-   "since": "2026-10-15T03:51:30"
-  }
- }
+ "claims": {}
 }
