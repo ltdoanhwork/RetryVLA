@@ -25,6 +25,14 @@ function vtag(s, label, x, y, color) {
 }
 
 module.exports = {
+  // generic clickable video with a VIDEO tag in its top-left corner
+  clip(s, key, x, y, w, h, alt) {
+    const v = video(s, key, x, y, w, h, alt);
+    if (v) vtag(s, "▶ VIDEO", v.x + v.w - 1.33, v.y + 0.06, HEX.amber);
+    else text(s, "(video missing: " + key + ")", { x, y, w, h: 0.4, fontSize: 12, color: HEX.red });
+    return v;
+  },
+
   m0(pres, C) {
     const s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "M0 baseline" });
     s.addText("Video: SmolVLA on held-out failure states", { placeholder: "title" });

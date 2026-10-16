@@ -73,23 +73,4 @@ module.exports = function part2b(pres, C) {
 
   V.distill(pres, C);
 
-  // M5 running
-  s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Distillation" });
-  s.addText("M5 (running now): more, more diverse, cheaper WM data", { placeholder: "title" });
-  const m5 = [["Diverse top-k", "k-means over imagined end states, best candidate per cluster, so the budget is not spent on 16 copies of one plan"],
-    ["Adaptive budget", "verify in batches of 8; stop at 4 successes; ≤32 sims. Easy failures cost 8, hard ones get more"],
-    ["Self-improving critic", "every verification (success AND failure) is saved as a label exactly where the critic was wrong → critic v2 → re-run on 50 held-out instances"],
-    ["Matched distillation", "SFT WM-only vs random-only, same #trajectories, init pi1-nominal → test RSR + nominal"]];
-  m5.forEach(([h, d], i) => {
-    const y = 1.4 + i * 1.3;
-    badge(s, C, i + 1, 0.6, y + 0.05, HEX.amber);
-    text(s, h, { x: 1.2, y, w: 6.2, h: 0.4, fontSize: 16, bold: true });
-    text(s, d, { x: 1.2, y: y + 0.42, w: 6.2, h: 0.8, fontSize: 12, color: HEX.ink2 });
-  });
-  card(s, C, 7.8, 1.4, 4.9, 5.3, HEX.tint, "live");
-  text(s, "Round 1 so far (82 / 108 instances)", { x: 8.05, y: 1.6, w: 4.4, h: 0.4, fontSize: 15, bold: true });
-  stat(s, "~76%", "of pilot failures get ≥1 verified recovery", 8.05, 2.15, 4.4, HEX.amber);
-  stat(s, "~13%", "verified yield per simulator rollout (M3: 6.7%; random: 1.5%)", 8.05, 3.6, 4.4, HEX.ink);
-  stat(s, "216", "WM trajectories written so far (M3 had 45)", 8.05, 5.05, 4.4, HEX.teal);
-  caption(s, "Interim numbers from the live run on 4 borrowed A100s; final results tonight", 0.6, 6.6, 7.0);
 };
