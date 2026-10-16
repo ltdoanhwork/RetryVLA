@@ -144,3 +144,7 @@ Test RSR (560 ep, init pi1-nominal, paired by episode; scene-bootstrap CI):
 - M5b SFT (208 matched, score top-n): 0.252 / 0.298 / 0.270 / 0.289. BUG: the score top-n cut dropped drawer
   trajectories (wm_diverse 4 left, M5 r1 had 42), so drawer test RSR went to 0.03-0.11. Fixed: `train.subset_mode=roundrobin`.
   Rerun as DAG m5c: wm_diverse_rr, wm_qd_rr (208), wm_diverse_all (423).
+- m5c (round-robin subset, init pi1-nominal), test RSR / nominal: wm_diverse_rr 208 **0.439 / 0.808**; wm_qd_rr 208
+  0.354 / 0.754; wm_diverse_all 423 0.389 / 0.788 (more data != better; 1 seed each).
+- E2E viz (`scripts/viz_e2e.py`, 5 seeds, no search at run time), drawer: train ep031 open6: pi0 0/5, pi1-nom 0/5,
+  pi1-random 0/5, pi1-WM 2/5. TEST ep040 close1: 0/5, 0/5, 0/5, **3/5**. pi1-WM lifts out of the drawer, then regrasps.
