@@ -132,3 +132,15 @@ verified successes. Then matched-count SFT per arm (init pi1-nominal) -> test RS
 Code: `retryvla/search/{arms,compare_arms}.py`, DAG `configs/dag/m5b.json` (also finishes the M5 evals that
 were cut when 04a5937c / aa1cf25d were reclaimed), analysis `scripts/analyze_m5b.py`.
 Smoke (5 inst, budget 4): solve random 0.4 / wm_diverse 0.8 / wm_noise 0.6 / wm_qd 0.4 (no signal, N tiny).
+
+### M5 / M5b results (2026-10-16)
+Test RSR (560 ep, init pi1-nominal, paired by episode; scene-bootstrap CI):
+- M5: WM r1 241 traj **0.402** vs random 241 traj 0.286: +0.116 [+0.045, +0.191], McNemar p=4e-7. Nominal 0.78 vs 0.762.
+  Gain is drawer (0.36 vs 0.15) and on_the_ramekin (0.62 vs 0.35).
+- M5b search (N=256 paired fresh failures, 16 sims/arm): solve random 0.363 / wm_diverse **0.547** / wm_noise 0.289 /
+  wm_qd 0.453. Hit rate 0.062 / **0.171** / 0.076 / 0.113. wm_diverse > random p=4e-9 (McNemar). Drawer (83 inst):
+  0.07 / 0.43 / 0.02 / 0.16. wm_noise is the smoothest, lowest jerk and closest to SmolVLA, but it rarely solves the hard ones (it stays on
+  pi0's failing manifold). wm_qd has the most strategy cells (4.0 per solved instance).
+- M5b SFT (208 matched, score top-n): 0.252 / 0.298 / 0.270 / 0.289. BUG: the score top-n cut dropped drawer
+  trajectories (wm_diverse 4 left, M5 r1 had 42), so drawer test RSR went to 0.03-0.11. Fixed: `train.subset_mode=roundrobin`.
+  Rerun as DAG m5c: wm_diverse_rr, wm_qd_rr (208), wm_diverse_all (423).
