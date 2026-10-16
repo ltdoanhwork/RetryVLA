@@ -19,26 +19,5 @@
   "max_load_per_core": 0.6,
   "tmux_prefix": "rv_"
  },
- "claims": {
-  "local:0:a": {
-   "tmux": "rv_m5c_sft_wm_diverse_rr",
-   "args": "retryvla.train.sft configs/exp/m5b_sft_wm_diverse.yaml tag=m5c_sft_wm_diverse_rr train.max_recovery_trajectories=208 train.subset_mode=roundrobin",
-   "since": "2026-10-16T04:24:20"
-  },
-  "local:0:b": {
-   "tmux": "rv_m5c_sft_wm_qd_rr",
-   "args": "retryvla.train.sft configs/exp/m5b_sft_wm_qd.yaml tag=m5c_sft_wm_qd_rr train.max_recovery_trajectories=208 train.subset_mode=roundrobin",
-   "since": "2026-10-16T04:24:20"
-  },
-  "c8832864:0": {
-   "tmux": "rv_m5c_rec_wm_diverse_all",
-   "args": "retryvla.eval.eval_recover configs/exp/m0_baseline_spatial.yaml milestone=M5 recover_tag=m5c_sft_wm_diverse_all_recover_test policy.path=runs/20261016-042454_M5_m5c_sft_wm_diverse_all/checkpoints/006000/pretrained_model recover_eval.splits=[test] eval.n_workers=14",
-   "since": "2026-10-16T05:07:01"
-  },
-  "c8832864:1": {
-   "tmux": "rv_m5c_nom_wm_diverse_all",
-   "args": "retryvla.eval.eval_nominal configs/exp/m0_baseline_spatial.yaml milestone=M5 nominal_tag=m5c_sft_wm_diverse_all_nominal policy.path=runs/20261016-042454_M5_m5c_sft_wm_diverse_all/checkpoints/006000/pretrained_model eval.n_workers=14 eval.save_videos=none",
-   "since": "2026-10-16T05:07:12"
-  }
- }
+ "claims": {}
 }
