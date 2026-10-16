@@ -158,6 +158,26 @@ def main() -> None:
                 by = {a: [] for a in arms}
                 for (a, j), r in zip(owner, res):
                     by[a].append(r)
+                # robustness: re-verify each success under `robust_extra` more continuation seeds; a success is kept
+                # for the dataset only if it succeeds in >= robust_min of (1 + robust_extra) runs
+                n_extra = int(mb.get("robust_extra", 0))
+                robust = {a: [bool(r.success) for r in by[a]] for a in arms}
+                if n_extra:
+                    rj, rown = [], []
+                    for a in arms:
+                        for j, r in enumerate(by[a]):
+                            if r.success:
+                                for e in range(n_extra):
+                                    rj.append(Job("restore_snapshot", dict(bddl=inst.bddl, snap=inst.snapshot), task=inst.task,
+                                                  max_steps=H + cont, prefix=picked[a][0][j], record="none",
+                                                  policy_seed=(seed + j + 7777 * (e + 1)) % (2**31 - 1)))
+                                    rown.append((a, j))
+                    cnt = {}
+                    for (a, j), r in zip(rown, run_jobs(pool, policy, rj, noise_scale=float(cfg.policy.noise_scale),
+                                                        desc="robust") if rj else []):
+                        cnt[(a, j)] = cnt.get((a, j), 0) + int(r.success)
+                    need = int(mb.get("robust_min", 2))
+                    robust = {a: [bool(r.success) and 1 + cnt.get((a, j), 0) >= need for j, r in enumerate(by[a])] for a in arms}
                 # verification log (critic self-improvement data), all arms
                 enc = [encode_record(ranker.enc, r.record, H, stride) for r in res]
                 torch.save({
@@ -178,7 +198,8 @@ def main() -> None:
                     succ = np.array([r.success for r in by[a]], bool)
                     w = writers[a]
                     w.add_instance(inst.instance_id, {"scene": inst.scene_tag, "task": inst.task, "arm": a})
-                    order = [k for k in np.argsort(-cs["score"]) if succ[k]][: int(mb.max_trajs_per_instance)]
+                    rob = np.array(robust[a], bool)
+                    order = [k for k in np.argsort(-cs["score"]) if rob[k]][: int(mb.max_trajs_per_instance)]
                     for k in order:
                         w.add_trajectory(by[a][k].record, inst.task, inst.instance_id,
                                          {"score": float(cs["score"][k]), "pred_value": float(cs["value"][k]),
@@ -189,6 +210,7 @@ def main() -> None:
                         "instance_id": inst.instance_id, "task_folder": inst.meta["task_folder"],
                         "gripper_init": inst.meta["gripper_init"], "arm": a, "budget": len(cands),
                         "hits": int(succ.sum()), "solved": bool(succ.any()), "n_written": len(order),
+                        "robust_hits": int(rob.sum()), "robust_solved": bool(rob.any()),
                         "pred_mean": float(cs["value"].mean()),
                         "pred_succ": float(cs["value"][succ].mean()) if succ.any() else np.nan,
                         "pred_fail": float(cs["value"][~succ].mean()) if (~succ).any() else np.nan,
@@ -196,7 +218,7 @@ def main() -> None:
                         **{f"all_{k}": v for k, v in m_all.items()}, **{f"succ_{k}": v for k, v in m_succ.items()},
                         "succ_cells_list": sorted(set(A.descriptor(cands[succ]).tolist())) if succ.any() else [],
                     })
-                    line.append(f"{a} {int(succ.sum())}/{len(cands)}")
+                    line.append(f"{a} {int(succ.sum())}/{len(cands)} (robust {int(rob.sum())})")
                 for r in res:
                     r.record = None
                 with open(part / "done.jsonl", "a") as f:

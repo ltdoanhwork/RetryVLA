@@ -19,5 +19,8 @@
   "max_load_per_core": 0.6,
   "tmux_prefix": "rv_"
  },
- "claims": {}
+ "claims": {},
+ "allow_only": {
+  "49b70230": "vla_RetryVLA_DoanhLT_1 (the GPU the user gave; = the local machine). User 2026-10-16: run ONLY here, no more borrowing."
+ }
 }

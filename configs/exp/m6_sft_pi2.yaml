@@ -1,0 +1,9 @@
+# M6: pi2 = pi1 fine-tuned on demos + round-1 WM recoveries (same 208 round-robin) + round-2 robust recoveries.
+defaults: [exp/m5b_sft_wm_diverse]
+milestone: M6
+tag: sft_pi2
+train:
+  init_from: runs/20261016-042447_M5_m5c_sft_wm_diverse_rr/checkpoints/006000/pretrained_model
+  recovery_datasets: [data/recovery/m5b/s*/p*/wm_diverse, data/recovery/m6_r2/s*/p*/wm_diverse]
+  subset_mode: roundrobin
+  max_recovery_trajectories: 600

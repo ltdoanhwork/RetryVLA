@@ -1,0 +1,154 @@
+{
+ "name": "m6",
+ "tasks": [
+  {
+   "name": "m6_r2_s0",
+   "module": "retryvla.search.compare_arms",
+   "deps": [],
+   "args": [
+    "configs/exp/m6_r2_search.yaml",
+    "m5b.shard=0",
+    "m5b.num_shards=6",
+    "eval.n_workers=14"
+   ]
+  },
+  {
+   "name": "m6_r2_s1",
+   "module": "retryvla.search.compare_arms",
+   "deps": [],
+   "args": [
+    "configs/exp/m6_r2_search.yaml",
+    "m5b.shard=1",
+    "m5b.num_shards=6",
+    "eval.n_workers=14"
+   ]
+  },
+  {
+   "name": "m6_r2_s2",
+   "module": "retryvla.search.compare_arms",
+   "deps": [],
+   "args": [
+    "configs/exp/m6_r2_search.yaml",
+    "m5b.shard=2",
+    "m5b.num_shards=6",
+    "eval.n_workers=14"
+   ]
+  },
+  {
+   "name": "m6_r2_s3",
+   "module": "retryvla.search.compare_arms",
+   "deps": [],
+   "args": [
+    "configs/exp/m6_r2_search.yaml",
+    "m5b.shard=3",
+    "m5b.num_shards=6",
+    "eval.n_workers=14"
+   ]
+  },
+  {
+   "name": "m6_r2_s4",
+   "module": "retryvla.search.compare_arms",
+   "deps": [],
+   "args": [
+    "configs/exp/m6_r2_search.yaml",
+    "m5b.shard=4",
+    "m5b.num_shards=6",
+    "eval.n_workers=14"
+   ]
+  },
+  {
+   "name": "m6_r2_s5",
+   "module": "retryvla.search.compare_arms",
+   "deps": [],
+   "args": [
+    "configs/exp/m6_r2_search.yaml",
+    "m5b.shard=5",
+    "m5b.num_shards=6",
+    "eval.n_workers=14"
+   ]
+  },
+  {
+   "name": "m6_sft_pi1_more",
+   "module": "retryvla.train.sft",
+   "deps": [],
+   "args": [
+    "configs/exp/m6_sft_pi1_more.yaml"
+   ]
+  },
+  {
+   "name": "m6_sft_pi2",
+   "module": "retryvla.train.sft",
+   "deps": [
+    "m6_r2_s0",
+    "m6_r2_s1",
+    "m6_r2_s2",
+    "m6_r2_s3",
+    "m6_r2_s4",
+    "m6_r2_s5"
+   ],
+   "args": [
+    "configs/exp/m6_sft_pi2.yaml"
+   ]
+  },
+  {
+   "name": "m6_rec_pi2",
+   "module": "retryvla.eval.eval_recover",
+   "deps": [
+    "m6_sft_pi2"
+   ],
+   "args": [
+    "configs/exp/m0_baseline_spatial.yaml",
+    "milestone=M6",
+    "recover_tag=sft_pi2_recover_test",
+    "policy.path=@glob:runs/*_M6_sft_pi2/checkpoints/006000/pretrained_model",
+    "recover_eval.splits=[test]",
+    "eval.n_workers=14"
+   ]
+  },
+  {
+   "name": "m6_nom_pi2",
+   "module": "retryvla.eval.eval_nominal",
+   "deps": [
+    "m6_sft_pi2"
+   ],
+   "args": [
+    "configs/exp/m0_baseline_spatial.yaml",
+    "milestone=M6",
+    "nominal_tag=sft_pi2_nominal",
+    "policy.path=@glob:runs/*_M6_sft_pi2/checkpoints/006000/pretrained_model",
+    "eval.n_workers=14",
+    "eval.save_videos=none"
+   ]
+  },
+  {
+   "name": "m6_rec_pi1_more",
+   "module": "retryvla.eval.eval_recover",
+   "deps": [
+    "m6_sft_pi1_more"
+   ],
+   "args": [
+    "configs/exp/m0_baseline_spatial.yaml",
+    "milestone=M6",
+    "recover_tag=sft_pi1_more_recover_test",
+    "policy.path=@glob:runs/*_M6_sft_pi1_more/checkpoints/006000/pretrained_model",
+    "recover_eval.splits=[test]",
+    "eval.n_workers=14"
+   ]
+  },
+  {
+   "name": "m6_nom_pi1_more",
+   "module": "retryvla.eval.eval_nominal",
+   "deps": [
+    "m6_sft_pi1_more"
+   ],
+   "args": [
+    "configs/exp/m0_baseline_spatial.yaml",
+    "milestone=M6",
+    "nominal_tag=sft_pi1_more_nominal",
+    "policy.path=@glob:runs/*_M6_sft_pi1_more/checkpoints/006000/pretrained_model",
+    "eval.n_workers=14",
+    "eval.save_videos=none"
+   ]
+  }
+ ]
+}

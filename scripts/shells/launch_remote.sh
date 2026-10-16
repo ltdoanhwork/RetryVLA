@@ -12,6 +12,9 @@ PREFIX=$1; GPU=$2; SESS=$3; shift 3
 if python3 -c "import json,sys; sys.exit(0 if '${PREFIX:0:8}' in json.load(open('$HERE/shells.json'))['avoid'] else 1)"; then
   echo "REFUSED: ${PREFIX:0:8} is in shells.json:avoid"; exit 1
 fi
+if ! python3 -c "import json,sys; a=json.load(open('$HERE/shells.json')).get('allow_only'); sys.exit(0 if (not a or '${PREFIX:0:8}' in a) else 1)"; then
+  echo "REFUSED: ${PREFIX:0:8} not in shells.json:allow_only (user: no borrowing)"; exit 1
+fi
 FULL=$(det shell list | awk -F'|' -v p="$PREFIX" '$1 ~ p && $4 ~ /RUNNING/ {gsub(/ /,"",$1); print $1; exit}')
 [ -n "$FULL" ] || { echo "shell $PREFIX not RUNNING"; exit 1; }
 # guard: GPU must still be free right now

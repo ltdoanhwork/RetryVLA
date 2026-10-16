@@ -1,0 +1,9 @@
+# M6 control: pi1 trained for the same extra steps on round-1 data only (no new failures mined).
+defaults: [exp/m5b_sft_wm_diverse]
+milestone: M6
+tag: sft_pi1_more
+train:
+  init_from: runs/20261016-042447_M5_m5c_sft_wm_diverse_rr/checkpoints/006000/pretrained_model
+  recovery_datasets: [data/recovery/m5b/s*/p*/wm_diverse]
+  subset_mode: roundrobin
+  max_recovery_trajectories: 208

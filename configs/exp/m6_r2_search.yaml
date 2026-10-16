@@ -1,0 +1,18 @@
+# M6 round 2 (pi1 -> pi2): mine pi1's own failures on TRAIN scenes, WM-guided search with pi1 as the continuation
+# policy, robust verification (keep a recovery only if it succeeds in >= 2 of 3 continuation seeds).
+defaults: [exp/m5b_compare_arms]
+milestone: M6
+tag: r2_search
+policy:
+  path: runs/20261016-042447_M5_m5c_sft_wm_diverse_rr/checkpoints/006000/pretrained_model
+m5b:
+  arms: [wm_diverse]
+  exclude_trials: []
+  select_seed: 2027
+  n_select: 400
+  num_shards: 6
+  budget: 16
+  robust_extra: 2
+  robust_min: 2
+  out_root: data/recovery/m6_r2
+  verif_out: data/wm/verif_m6_r2

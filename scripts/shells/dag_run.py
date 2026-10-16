@@ -147,6 +147,11 @@ def main() -> None:
     ap.add_argument("--dry", action="store_true")
     ap.add_argument("--poll", type=int, default=120)
     a = ap.parse_args()
+    allow = json.load(open(SH / "shells.json")).get("allow_only")
+    if allow:
+        bad = [s for s in a.slots if not s.startswith("local:") and s.split(":")[0] not in allow]
+        if bad:
+            sys.exit(f"refusing slots outside shells.json:allow_only: {bad}")
     dag = json.load(open(a.dag))
     name = dag["name"]
     log = REPO / "runs" / "_logs" / f"dag_{name}.log"

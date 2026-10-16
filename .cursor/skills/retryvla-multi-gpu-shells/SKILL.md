@@ -18,6 +18,10 @@ and its **32 CPUs are shared across them**. That matters: MuJoCo sim workers are
 
 ## 0. Never touch these
 
+**Current mode (user, 2026-10-16): NO borrowing.** Run only on the GPU the user gave (`shells.json:allow_only`,
+now `49b70230` = this machine, via `local:0:a` / `local:0:b` lanes in `dag_run.py`). `launch_remote.sh` and
+`dag_run.py` refuse anything else. Only lift this when the user explicitly says borrowing is OK again.
+
 `scripts/shells/shells.json:avoid` is the contract. Re-read it each session, and extend it when the user names more:
 
 | id | why |
