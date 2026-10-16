@@ -1,0 +1,128 @@
+{
+ "name": "m5c",
+ "tasks": [
+  {
+   "name": "m5c_sft_wm_diverse_rr",
+   "module": "retryvla.train.sft",
+   "deps": [],
+   "args": [
+    "configs/exp/m5b_sft_wm_diverse.yaml",
+    "tag=m5c_sft_wm_diverse_rr",
+    "train.max_recovery_trajectories=208",
+    "train.subset_mode=roundrobin"
+   ]
+  },
+  {
+   "name": "m5c_sft_wm_qd_rr",
+   "module": "retryvla.train.sft",
+   "deps": [],
+   "args": [
+    "configs/exp/m5b_sft_wm_qd.yaml",
+    "tag=m5c_sft_wm_qd_rr",
+    "train.max_recovery_trajectories=208",
+    "train.subset_mode=roundrobin"
+   ]
+  },
+  {
+   "name": "m5c_sft_wm_diverse_all",
+   "module": "retryvla.train.sft",
+   "deps": [],
+   "args": [
+    "configs/exp/m5b_sft_wm_diverse.yaml",
+    "tag=m5c_sft_wm_diverse_all",
+    "train.max_recovery_trajectories=423",
+    "train.subset_mode=roundrobin"
+   ]
+  },
+  {
+   "name": "m5c_rec_wm_diverse_rr",
+   "module": "retryvla.eval.eval_recover",
+   "deps": [
+    "m5c_sft_wm_diverse_rr"
+   ],
+   "args": [
+    "configs/exp/m0_baseline_spatial.yaml",
+    "milestone=M5",
+    "recover_tag=m5c_sft_wm_diverse_rr_recover_test",
+    "policy.path=@glob:runs/*_M5_m5c_sft_wm_diverse_rr/checkpoints/006000/pretrained_model",
+    "recover_eval.splits=[test]",
+    "eval.n_workers=14"
+   ]
+  },
+  {
+   "name": "m5c_rec_wm_qd_rr",
+   "module": "retryvla.eval.eval_recover",
+   "deps": [
+    "m5c_sft_wm_qd_rr"
+   ],
+   "args": [
+    "configs/exp/m0_baseline_spatial.yaml",
+    "milestone=M5",
+    "recover_tag=m5c_sft_wm_qd_rr_recover_test",
+    "policy.path=@glob:runs/*_M5_m5c_sft_wm_qd_rr/checkpoints/006000/pretrained_model",
+    "recover_eval.splits=[test]",
+    "eval.n_workers=14"
+   ]
+  },
+  {
+   "name": "m5c_rec_wm_diverse_all",
+   "module": "retryvla.eval.eval_recover",
+   "deps": [
+    "m5c_sft_wm_diverse_all"
+   ],
+   "args": [
+    "configs/exp/m0_baseline_spatial.yaml",
+    "milestone=M5",
+    "recover_tag=m5c_sft_wm_diverse_all_recover_test",
+    "policy.path=@glob:runs/*_M5_m5c_sft_wm_diverse_all/checkpoints/006000/pretrained_model",
+    "recover_eval.splits=[test]",
+    "eval.n_workers=14"
+   ]
+  },
+  {
+   "name": "m5c_nom_wm_diverse_rr",
+   "module": "retryvla.eval.eval_nominal",
+   "deps": [
+    "m5c_sft_wm_diverse_rr"
+   ],
+   "args": [
+    "configs/exp/m0_baseline_spatial.yaml",
+    "milestone=M5",
+    "nominal_tag=m5c_sft_wm_diverse_rr_nominal",
+    "policy.path=@glob:runs/*_M5_m5c_sft_wm_diverse_rr/checkpoints/006000/pretrained_model",
+    "eval.n_workers=14",
+    "eval.save_videos=none"
+   ]
+  },
+  {
+   "name": "m5c_nom_wm_qd_rr",
+   "module": "retryvla.eval.eval_nominal",
+   "deps": [
+    "m5c_sft_wm_qd_rr"
+   ],
+   "args": [
+    "configs/exp/m0_baseline_spatial.yaml",
+    "milestone=M5",
+    "nominal_tag=m5c_sft_wm_qd_rr_nominal",
+    "policy.path=@glob:runs/*_M5_m5c_sft_wm_qd_rr/checkpoints/006000/pretrained_model",
+    "eval.n_workers=14",
+    "eval.save_videos=none"
+   ]
+  },
+  {
+   "name": "m5c_nom_wm_diverse_all",
+   "module": "retryvla.eval.eval_nominal",
+   "deps": [
+    "m5c_sft_wm_diverse_all"
+   ],
+   "args": [
+    "configs/exp/m0_baseline_spatial.yaml",
+    "milestone=M5",
+    "nominal_tag=m5c_sft_wm_diverse_all_nominal",
+    "policy.path=@glob:runs/*_M5_m5c_sft_wm_diverse_all/checkpoints/006000/pretrained_model",
+    "eval.n_workers=14",
+    "eval.save_videos=none"
+   ]
+  }
+ ]
+}

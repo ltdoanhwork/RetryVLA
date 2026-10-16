@@ -74,8 +74,13 @@ def expand_roots(patterns) -> list[str]:
     return out
 
 
-def recovery_episode_subsets(roots, n: int | None, min_len: int = 0) -> list[list[int] | None]:
-    """Global top-n trajectories by search score across several dataset roots (None = all).
+def recovery_episode_subsets(roots, n: int | None, min_len: int = 0, mode: str = "score",
+                             seed: int = 0) -> list[list[int] | None]:
+    """Pick n trajectories across several dataset roots (None = all).
+    mode="score": global top-n by search score. Biased: the critic scores hard tasks (e.g. drawer) low, so a
+      top-n cut silently drops them (M5b: 4 drawer trajectories left out of 208).
+    mode="roundrobin": coverage-preserving. Instances in random order; take each instance's best trajectory,
+      then each instance's 2nd best, ... until n.
     min_len drops trivial recoveries (e.g. <=15 steps: the failure state was already nearly solved)."""
     if n is None and not min_len:
         return [None] * len(roots)
@@ -84,10 +89,20 @@ def recovery_episode_subsets(roots, n: int | None, min_len: int = 0) -> list[lis
         for l in open(Path(root) / "retryvla" / "trajectories.jsonl"):
             r = json.loads(l)
             if r.get("length", 0) >= min_len:
-                rows.append((r.get("score", 0.0), k, r["episode_index"]))
-    rows.sort(key=lambda x: -x[0])
+                rows.append((r.get("score", 0.0), k, r["episode_index"], r.get("instance_id", f"{k}_{r['episode_index']}")))
+    if mode == "roundrobin":
+        by: dict[str, list] = {}
+        for row in sorted(rows, key=lambda x: -x[0]):
+            by.setdefault(row[3], []).append(row)
+        ids = sorted(by)
+        np.random.default_rng(seed).shuffle(ids)
+        rows = [by[i][r] for r in range(max(len(v) for v in by.values())) for i in ids if r < len(by[i])]
+    elif mode == "score":
+        rows.sort(key=lambda x: -x[0])
+    else:
+        raise ValueError(mode)
     keep = [[] for _ in roots]
-    for _, k, e in (rows if n is None else rows[:n]):
+    for _, k, e, _ in (rows if n is None else rows[:n]):
         keep[k].append(e)
     return [sorted(v) for v in keep]
 

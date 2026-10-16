@@ -19,36 +19,5 @@
   "max_load_per_core": 0.6,
   "tmux_prefix": "rv_"
  },
- "claims": {
-  "local:0:a": {
-   "tmux": "rv_m5_rec_wm",
-   "args": "retryvla.eval.eval_recover configs/exp/m0_baseline_spatial.yaml milestone=M5 recover_tag=sft_wm_r1_recover_test policy.path=runs/20261015-075204_M5_sft_wm_r1/checkpoints/006000/pretrained_model recover_eval.splits=[test] eval.n_workers=14",
-   "since": "2026-10-15T11:25:27"
-  },
-  "local:0:b": {
-   "tmux": "rv_m5_sft_rand",
-   "args": "retryvla.train.sft configs/exp/m5_sft_random_matched.yaml train.max_recovery_trajectories=241",
-   "since": "2026-10-15T11:25:27"
-  },
-  "c8832864:0": {
-   "tmux": "rv_m5_nom_wm",
-   "args": "retryvla.eval.eval_nominal configs/exp/m0_baseline_spatial.yaml milestone=M5 nominal_tag=sft_wm_r1_nominal policy.path=runs/20261015-075204_M5_sft_wm_r1/checkpoints/006000/pretrained_model eval.n_workers=14 eval.save_videos=none",
-   "since": "2026-10-15T11:25:38"
-  },
-  "c8832864:1": {
-   "tmux": "rv_m5b_s0",
-   "args": "retryvla.search.compare_arms configs/exp/m5b_compare_arms.yaml m5b.shard=0 m5b.num_shards=8 eval.n_workers=14",
-   "since": "2026-10-15T11:25:48"
-  },
-  "e3ee4555:0": {
-   "tmux": "rv_m5b_s1",
-   "args": "retryvla.search.compare_arms configs/exp/m5b_compare_arms.yaml m5b.shard=1 m5b.num_shards=8 eval.n_workers=14",
-   "since": "2026-10-15T11:26:00"
-  },
-  "e3ee4555:1": {
-   "tmux": "rv_m5b_s2",
-   "args": "retryvla.search.compare_arms configs/exp/m5b_compare_arms.yaml m5b.shard=2 m5b.num_shards=8 eval.n_workers=14",
-   "since": "2026-10-15T11:26:12"
-  }
- }
+ "claims": {}
 }
