@@ -1,0 +1,22 @@
+# M7: target the tasks the best policy still fails on test (stove, cookie box). ALL train trials of those scenes,
+# continuation policy = current best (M6 control, test RSR 0.480), bigger budget, 3 arms incl. 2-segment recoveries,
+# robust verification (>= 2 of 3 continuation seeds).
+defaults: [exp/m5b_compare_arms]
+milestone: M7
+tag: weak_search
+policy:
+  path: runs/20261016-153510_M6_sft_pi1_more/checkpoints/006000/pretrained_model
+m5b:
+  arms: [wm_diverse, wm_qd, wm_two_stage]
+  task_filter: [on_the_stove, cookie_box]
+  exclude_trials: []
+  select_seed: 7
+  n_select: 1000
+  num_shards: 4
+  pool_size: 384
+  budget: 24
+  robust_extra: 2
+  robust_min: 2
+  max_trajs_per_instance: 4
+  out_root: data/recovery/m7_weak
+  verif_out: data/wm/verif_m7_weak

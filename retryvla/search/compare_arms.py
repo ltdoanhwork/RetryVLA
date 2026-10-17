@@ -46,6 +46,9 @@ def select_jobs(scenes, cfg, mb) -> list[Job]:
     jobs = instance_jobs(scenes, cfg.recover, int(cfg.eval.seed), cfg.recover.instruction, part="train")
     excl = {int(k) for k in mb.exclude_trials}
     jobs = [j for j in jobs if int(j.meta["trial"]) not in excl]
+    tf = list(mb.get("task_filter") or [])
+    if tf:  # keep only scenes whose task folder contains one of these substrings
+        jobs = [j for j in jobs if any(s in j.meta["task_folder"] for s in tf)]
     rng = np.random.default_rng(int(mb.select_seed))
     keep = sorted(rng.permutation(len(jobs))[: int(mb.n_select)])
     jobs = [jobs[i] for i in keep]
@@ -143,6 +146,8 @@ def main() -> None:
                                                        n=int(mb.noise_n), iters=int(mb.noise_iters))
                     elif a == "wm_qd":
                         cand, idx, cs = A.arm_wm_qd(ranker, z0, q0, inst.task, pool_c, pool_s, B, seed % 10007)
+                    elif a == "wm_two_stage":
+                        cand, idx, cs = A.arm_wm_two_stage(ranker, z0, q0, inst.task, pool_c, pool_s, B, seed % 10007)
                     else:
                         raise ValueError(a)
                     picked[a] = (cand[idx], {k: v[idx] for k, v in cs.items() if k != "zfeat"}, len(cand),
@@ -152,7 +157,7 @@ def main() -> None:
                 for a in arms:
                     for j, c in enumerate(picked[a][0]):
                         vj.append(Job("restore_snapshot", dict(bddl=inst.bddl, snap=inst.snapshot), task=inst.task,
-                                      max_steps=H + cont, prefix=c, record="all", policy_seed=(seed + j) % (2**31 - 1)))
+                                      max_steps=len(c) + cont, prefix=c, record="all", policy_seed=(seed + j) % (2**31 - 1)))
                         owner.append((a, j))
                 res = run_jobs(pool, policy, vj, noise_scale=float(cfg.policy.noise_scale), desc="verify")
                 by = {a: [] for a in arms}
@@ -169,7 +174,7 @@ def main() -> None:
                             if r.success:
                                 for e in range(n_extra):
                                     rj.append(Job("restore_snapshot", dict(bddl=inst.bddl, snap=inst.snapshot), task=inst.task,
-                                                  max_steps=H + cont, prefix=picked[a][0][j], record="none",
+                                                  max_steps=len(picked[a][0][j]) + cont, prefix=picked[a][0][j], record="none",
                                                   policy_seed=(seed + j + 7777 * (e + 1)) % (2**31 - 1)))
                                     rown.append((a, j))
                     cnt = {}
@@ -184,7 +189,9 @@ def main() -> None:
                     "instance_id": inst.instance_id, "task": inst.task, "scene": inst.scene_tag,
                     "z": torch.stack([e["z"] for e in enc]), "q": torch.as_tensor(np.stack([e["q"] for e in enc])),
                     "valid": torch.as_tensor(np.stack([e["valid"] for e in enc])),
-                    "actions": torch.as_tensor(np.concatenate([picked[a][0] for a in arms])),
+                    "actions": (torch.as_tensor(np.concatenate([picked[a][0] for a in arms]))
+                                if len({picked[a][0].shape[1] for a in arms}) == 1
+                                else [torch.as_tensor(x) for a in arms for x in picked[a][0]]),
                     "success": torch.as_tensor([r.success for r in res]),
                     "success_step": torch.as_tensor([r.success_step if r.success else -1 for r in res]),
                     "prefix_success": torch.as_tensor([r.prefix_success for r in res]),

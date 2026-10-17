@@ -1,0 +1,9 @@
+# M7 SFT (weak): init = current best (M6 control), demos + round-1 WM data + weak-task recoveries (all 3 arms).
+defaults: [exp/m5b_sft_wm_diverse]
+milestone: M7
+tag: sft_weak
+train:
+  init_from: runs/20261016-153510_M6_sft_pi1_more/checkpoints/006000/pretrained_model
+  recovery_datasets: [data/recovery/m5b/s*/p*/wm_diverse, data/recovery/m7_weak/s*/p*/wm_diverse, data/recovery/m7_weak/s*/p*/wm_qd, data/recovery/m7_weak/s*/p*/wm_two_stage]
+  subset_mode: roundrobin
+  max_recovery_trajectories: 500

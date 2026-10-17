@@ -19,7 +19,7 @@ import torch
 from retryvla.search.cem import CEM, CEMConfig, roughness
 from retryvla.search.wm_search import diverse_ranking
 
-ARM_NAMES = ("random", "wm_diverse", "wm_noise", "wm_qd")
+ARM_NAMES = ("random", "wm_diverse", "wm_noise", "wm_qd", "wm_two_stage")
 
 
 # ---------------------------------------------------------------- descriptors & metrics
@@ -47,6 +47,7 @@ def manifold_dist(a: np.ndarray, ref: np.ndarray) -> np.ndarray:
     (mean per-step L2 over arm dims). ref = reference SmolVLA chunks [R, H, 7]."""
     if len(a) == 0:
         return np.zeros(0)
+    a = a[:, : ref.shape[1]]  # multi-segment candidates: compare the first segment
     x, r = a[..., :6].reshape(len(a), -1), ref[..., :6].reshape(len(ref), -1)
     d2 = (x ** 2).sum(1)[:, None] + (r ** 2).sum(1)[None] - 2 * x @ r.T
     return np.sqrt(np.maximum(d2, 0).min(1) / a.shape[1])
@@ -145,3 +146,17 @@ def arm_wm_qd(ranker, z0, q0, task, pool_c, pool_s, B, seed, iters=2, n=256, std
         rest = [i for i in np.argsort(-cs["score"]) if i not in set(picks)]
         picks += rest[: B - len(picks)]
     return cand, np.array(picks), cs
+
+
+def arm_wm_two_stage(ranker, z0, q0, task, pool_c, pool_s, B, seed, n_first=16, n_second=32):
+    """Two-segment (2 x H) recoveries for multi-stage fixes (e.g. get clear, THEN re-position) before handing
+    control back. First segments: diverse top-n_first of the scored pool. Second segments: drawn from the same pool
+    (state-independent primitives / perturbed chunks). All n_first x n_second concatenations are imagined end to
+    end (WM rollout over 2H, critic on the final latent, ensemble uncertainty over the whole rollout penalizes
+    extrapolation), then diverse top-B."""
+    rng = np.random.default_rng(seed)
+    first = diverse_ranking(pool_s["score"], pool_s["zfeat"], n_first, seed=seed)
+    second = rng.choice(len(pool_c), size=min(n_second, len(pool_c)), replace=False)
+    cand = np.concatenate([np.concatenate([pool_c[i], pool_c[j]], 0)[None] for i in first for j in second]).astype(np.float32)
+    cs = ranker.score(z0, q0, task, cand)
+    return cand, diverse_ranking(cs["score"], cs["zfeat"], B, seed=seed), cs

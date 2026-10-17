@@ -1,0 +1,9 @@
+# M7 SFT (base): init = current best (M6 control), demos + round-1 WM data control: round-1 data only, same steps.
+defaults: [exp/m5b_sft_wm_diverse]
+milestone: M7
+tag: sft_base
+train:
+  init_from: runs/20261016-153510_M6_sft_pi1_more/checkpoints/006000/pretrained_model
+  recovery_datasets: [data/recovery/m5b/s*/p*/wm_diverse]
+  subset_mode: roundrobin
+  max_recovery_trajectories: 208
