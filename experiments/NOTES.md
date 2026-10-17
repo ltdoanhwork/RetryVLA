@@ -148,3 +148,11 @@ Test RSR (560 ep, init pi1-nominal, paired by episode; scene-bootstrap CI):
   0.354 / 0.754; wm_diverse_all 423 0.389 / 0.788 (more data != better; 1 seed each).
 - E2E viz (`scripts/viz_e2e.py`, 5 seeds, no search at run time), drawer: train ep031 open6: pi0 0/5, pi1-nom 0/5,
   pi1-random 0/5, pi1-WM 2/5. TEST ep040 close1: 0/5, 0/5, 0/5, **3/5**. pi1-WM lifts out of the drawer, then regrasps.
+
+### M6 round 2 (pi1 -> pi2), 2026-10-17
+- Mined 219 pi1 failures (400 train trials, pi1 SR 0.45). WM diverse + pi1 continuation: solved 0.58, robust (>=2/3 seeds)
+  0.45, hits/sim 0.188, 275 robust trajectories. Cookie-box / stove failures: few and rarely robust.
+- Test RSR: pi1 0.439 | control (pi1 + 6k steps on r1 data) **0.480** | pi2 (r1+r2, 600) 0.463. Nominal 0.808 / 0.804 / 0.828.
+  pi2 vs control -0.018 (p=0.42): the loop adds nothing beyond more training; control vs pi1 +0.041 (p=0.04).
+- Likely reasons: r2 data concentrates on tasks pi1 already handles (drawer/ramekin); the test failures that remain
+  (stove 0.05-0.10, cookie box 0.00) have almost no robust recoveries in train; critic is still pi0-competence-trained.
