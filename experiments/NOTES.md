@@ -156,3 +156,12 @@ Test RSR (560 ep, init pi1-nominal, paired by episode; scene-bootstrap CI):
   pi2 vs control -0.018 (p=0.42): the loop adds nothing beyond more training; control vs pi1 +0.041 (p=0.04).
 - Likely reasons: r2 data concentrates on tasks pi1 already handles (drawer/ramekin); the test failures that remain
   (stove 0.05-0.10, cookie box 0.00) have almost no robust recoveries in train; critic is still pi0-competence-trained.
+
+### M7 weak tasks, 2026-10-18
+- Search on ALL train trials of stove / cookie-box scenes (160, best policy SR 0.36 -> 102 failures). Robust solve: stove ~0.55,
+  on_cookie_box 0.72, next_to_cookie_box ~0.05. Arms nearly tied (diverse 0.47, QD 0.50, two-stage 0.50 robust).
+- SFT with 155 weak-task trajectories: test weak tasks 8/80 vs control 7/80, overall 0.495 vs 0.504 (n.s.).
+  Search WORKS on train scenes but does not transfer to the 8 test scenes of these tasks: only 10 stove / 6 cookie-box
+  train scenes, so recoveries are scene-specific. Next: check train-split RSR of M7 weak (memorize vs not learned),
+  and more scene diversity (augment object/plate positions) for these tasks.
+- Every SFT variant hurts next_to_cookie_box vs pi0 (0.25 -> 0.05-0.15).
