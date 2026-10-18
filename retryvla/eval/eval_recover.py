@@ -74,6 +74,9 @@ def main() -> None:
     jobs: list[Job] = []
     for part in cfg.recover_eval.splits:
         scenes = scenes_for(split, part, root)
+        tf = list(cfg.recover_eval.get("task_filter") or [])
+        if tf:  # only scenes whose task folder contains one of these substrings
+            scenes = [s for s in scenes if any(x in s.task_folder for x in tf)]
         if cfg.recover_eval.get("max_scenes"):
             scenes = scenes[: int(cfg.recover_eval.max_scenes)]
         jobs += instance_jobs(scenes, cfg.recover, int(cfg.eval.seed), cfg.recover.instruction, part=part)

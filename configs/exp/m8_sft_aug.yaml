@@ -1,0 +1,7 @@
+# M8 step 2 SFT: same as M7 weak (init M6 best) + augmented weak-task recoveries.
+defaults: [exp/m7_sft_weak]
+milestone: M8
+tag: sft_aug
+train:
+  recovery_datasets: [data/recovery/m5b/s*/p*/wm_diverse, data/recovery/m7_weak/s*/p*/wm_diverse, data/recovery/m7_weak/s*/p*/wm_qd, data/recovery/m7_weak/s*/p*/wm_two_stage, data/recovery/m8_aug/s*/p*/wm_qd]
+  max_recovery_trajectories: 800

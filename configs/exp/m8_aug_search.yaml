@@ -1,0 +1,15 @@
+# M8 step 2: scene-diversity augmentation for the weak tasks. Same train scenes, but object xy noise +-5 cm (protocol: +-2)
+# and 30 trials / scene (15 close + 15 open) -> many more distinct failure states. Same continuation policy as M7.
+defaults: [exp/m7_weak_search]
+milestone: M8
+tag: aug_search
+recover:
+  obj_noise_xy: 0.05
+  num_close_trials: 15
+  num_open_trials: 15
+m5b:
+  arms: [wm_qd]
+  n_select: 480
+  num_shards: 4
+  out_root: data/recovery/m8_aug
+  verif_out: data/wm/verif_m8_aug

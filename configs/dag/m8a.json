@@ -1,0 +1,50 @@
+{
+ "name": "m8a",
+ "tasks": [
+  {
+   "name": "m8_trainweak_m7weak",
+   "module": "retryvla.eval.eval_recover",
+   "deps": [],
+   "args": [
+    "configs/exp/m0_baseline_spatial.yaml",
+    "milestone=M8",
+    "recover_tag=trainweak_m7weak",
+    "recover_eval.splits=[train]",
+    "recover_eval.task_filter=[on_the_stove,cookie_box]",
+    "policy.path=@glob:runs/*_M7_sft_weak/checkpoints/006000/pretrained_model",
+    "eval.n_workers=14",
+    "eval.save_videos=none"
+   ]
+  },
+  {
+   "name": "m8_trainweak_m7base",
+   "module": "retryvla.eval.eval_recover",
+   "deps": [],
+   "args": [
+    "configs/exp/m0_baseline_spatial.yaml",
+    "milestone=M8",
+    "recover_tag=trainweak_m7base",
+    "recover_eval.splits=[train]",
+    "recover_eval.task_filter=[on_the_stove,cookie_box]",
+    "policy.path=@glob:runs/*_M7_sft_base/checkpoints/006000/pretrained_model",
+    "eval.n_workers=14",
+    "eval.save_videos=none"
+   ]
+  },
+  {
+   "name": "m8_trainweak_pi1",
+   "module": "retryvla.eval.eval_recover",
+   "deps": [],
+   "args": [
+    "configs/exp/m0_baseline_spatial.yaml",
+    "milestone=M8",
+    "recover_tag=trainweak_pi1",
+    "recover_eval.splits=[train]",
+    "recover_eval.task_filter=[on_the_stove,cookie_box]",
+    "policy.path=@glob:runs/*_M5_m5c_sft_wm_diverse_rr/checkpoints/006000/pretrained_model",
+    "eval.n_workers=14",
+    "eval.save_videos=none"
+   ]
+  }
+ ]
+}
