@@ -19,7 +19,18 @@
   "max_load_per_core": 0.6,
   "tmux_prefix": "rv_"
  },
- "claims": {},
+ "claims": {
+  "local:0:a": {
+   "tmux": "rv_m8_aug_s0",
+   "args": "retryvla.search.compare_arms configs/exp/m8_aug_search.yaml m5b.shard=0 m5b.num_shards=4 eval.n_workers=14",
+   "since": "2026-10-18T17:37:27"
+  },
+  "local:0:b": {
+   "tmux": "rv_m8_aug_s1",
+   "args": "retryvla.search.compare_arms configs/exp/m8_aug_search.yaml m5b.shard=1 m5b.num_shards=4 eval.n_workers=14",
+   "since": "2026-10-18T17:37:27"
+  }
+ },
  "allow_only": {
   "49b70230": "vla_RetryVLA_DoanhLT_1 (the GPU the user gave; = the local machine). User 2026-10-16: run ONLY here, no more borrowing."
  }

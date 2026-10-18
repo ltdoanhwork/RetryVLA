@@ -165,3 +165,9 @@ Test RSR (560 ep, init pi1-nominal, paired by episode; scene-bootstrap CI):
   train scenes, so recoveries are scene-specific. Next: check train-split RSR of M7 weak (memorize vs not learned),
   and more scene diversity (augment object/plate positions) for these tasks.
 - Every SFT variant hurts next_to_cookie_box vs pi0 (0.25 -> 0.05-0.15).
+
+### M8 step 1: memorize vs not learned (2026-10-18)
+Train-split stove/cookie-box (160 trials): pi1 0.331, M7 base 0.431, M7 weak 0.487. On the 57 trials whose robust
+recovery is in the SFT data: 0.25 / 0.33 / 0.47; on searched-but-unsolved trials 0.00-0.04. Test weak: 0.04 / 0.09 / 0.10.
+=> partial in-scene learning that does not transfer. Also pi0 itself: pilot weak 0.26 vs test weak 0.09 (test scenes
+of these tasks are intrinsically harder). Step 2: +-5 cm, 30 trials/scene augmentation (DAG m8bc), then 3 SFT seeds.
