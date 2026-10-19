@@ -177,3 +177,16 @@ test weak 16/80 (M7 base 7/80, p=0.05; M7 weak 8/80), next_to_cookie_box 0.35, s
 Overall test 0.457 vs 0.504 (p=0.03): other tasks drop (cabinet 0.38->0.30, drawer 0.49->0.42, ramekin 0.68->0.60).
 => scene diversity DOES transfer to test for the weak tasks; the cost is data imbalance. Next: rebalance (cap weak share
 ~25-30%, or mix ratio per task) and/or start from the M8-aug data but upweight other tasks.
+
+## M9 plan (2026-10-19, after external review): mechanism > scale
+Q1 why competence, Q2 why a WM, Q3 why distill. Queue (DAG m8m9, 3 lanes on 49b70230):
+- Phase 1: 3 SFT seeds (pi1, M7 base, M7 weak) [running]; retrospective analysis of M5b logs (scripts/analyze_retro.py):
+  budget curve k=1..16, critic calibration, dG vs dV on real end states.
+- Phase 2 Exp1+2 (m9_mech, shards 0-3 of the M5b instances, paired with M5b random / wm_diverse): wm_goal (DINO-WM
+  goal-latent objective, goals = final frames of successful demos, data/wm/goal_feats.pt), wm_goal_comp, wm_top
+  (no diversity), random_diverse (no WM / critic), sim_prefix_critic (real dynamics + critic, prefix transitions charged).
+  Downstream: SFT on wm_goal vs competence recoveries, matched count (m9_sft_goal / m9_sft_comp).
+- Exp3: budget 32 for random / wm_diverse (2 shards) + sim transitions logged per arm.
+- Phase 3 Exp4: demo-only SFT with matched steps; online best-of-8 (WM + critic at every replanning step) on pi0 and pi1.
+- Exp6: data selection on the same bank: score / random / round-robin / task-balanced.
+- Not yet: RL baseline, LIBERO-Object final held-out, M8-balanced (dropped: would be tuned on test).

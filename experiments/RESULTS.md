@@ -2,7 +2,12 @@
 
 Eval protocol: test RSR = 56 held-out test scenes x 10 trials (5 close + 5 open gripper init, ±2 cm object noise),
 520 steps, no search at test time. Drawer = the 16 drawer test scenes (160 episodes). Nominal = LIBERO-Spatial
-10 tasks x 50 inits. One training seed per row unless noted. Updated 2026-10-16.
+10 tasks x 50 inits. One training seed per row unless noted. Updated 2026-10-19.
+
+**Protocol caveat (test-set adaptation):** from M7 on, stove / cookie-box test results were used to choose what to
+run next (M7, M8). The 56-scene Spatial test split is therefore a DEVELOPMENT set from M7 onward. Final claims will be
+made on a held-out evaluation that is frozen before looking at it (plan: LIBERO-Object scenes with the method frozen),
+or reported explicitly as exploratory. M8-balanced (chosen by looking at test) is not run.
 
 ## Policies (distillation)
 
