@@ -21,7 +21,10 @@ FULL=$(det shell list | awk -F'|' -v p="$PREFIX" '$1 ~ p && $4 ~ /RUNNING/ {gsub
 STATE=$(det shell open "$FULL" -- bash "$HERE/probe.sh" 2>/dev/null | awk -v g="$GPU" '$1=="GPU" && $2==g {print $3, $4, $5}')
 read -r USED TOT UTIL <<<"$STATE"
 [ -n "${USED:-}" ] || { echo "probe failed for $PREFIX gpu $GPU"; exit 1; }
-if [ $((TOT-USED)) -lt 40000 ] || [ "$UTIL" -gt 30 ]; then
+SHARE=$(python3 -c "import json; print(1 if json.load(open('$HERE/shells.json')).get('share_ok',{}).get('${PREFIX:0:8}') else 0)")
+if [ "$SHARE" = 1 ]; then  # user explicitly allowed sharing this (their own) GPU: only require free memory
+  [ $((TOT-USED)) -lt 20000 ] && { echo "REFUSED: $PREFIX gpu $GPU has <20 GB free"; exit 1; }
+elif [ $((TOT-USED)) -lt 40000 ] || [ "$UTIL" -gt 30 ]; then
   echo "REFUSED: $PREFIX gpu $GPU busy (used=${USED}MiB util=${UTIL}%)"; exit 1
 fi
 OUT=$(det shell open "$FULL" -- bash "$HERE/remote_tmux.sh" "$SESS" "$GPU" "$@" 2>&1 | grep -E "LAUNCHED|EXISTS|NO_TMUX|QUOTA|rror" || true)
