@@ -171,3 +171,9 @@ Train-split stove/cookie-box (160 trials): pi1 0.331, M7 base 0.431, M7 weak 0.4
 recovery is in the SFT data: 0.25 / 0.33 / 0.47; on searched-but-unsolved trials 0.00-0.04. Test weak: 0.04 / 0.09 / 0.10.
 => partial in-scene learning that does not transfer. Also pi0 itself: pilot weak 0.26 vs test weak 0.09 (test scenes
 of these tasks are intrinsically harder). Step 2: +-5 cm, 30 trials/scene augmentation (DAG m8bc), then 3 SFT seeds.
+### M8 step 2 (+-5 cm augmentation), 2026-10-19
+480 trials -> 340 failures, robust solve 0.36, 316 trajectories. SFT (800: 457 weak / 343 other):
+test weak 16/80 (M7 base 7/80, p=0.05; M7 weak 8/80), next_to_cookie_box 0.35, stove 0.20; train weak 0.525.
+Overall test 0.457 vs 0.504 (p=0.03): other tasks drop (cabinet 0.38->0.30, drawer 0.49->0.42, ramekin 0.68->0.60).
+=> scene diversity DOES transfer to test for the weak tasks; the cost is data imbalance. Next: rebalance (cap weak share
+~25-30%, or mix ratio per task) and/or start from the M8-aug data but upweight other tasks.
