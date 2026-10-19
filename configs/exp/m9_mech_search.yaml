@@ -1,0 +1,14 @@
+# M9 Exp1 + Exp2 (mechanism): the SAME M5b instances (select_seed 2026, 8 shards; we run shards 0-3 = half), the same
+# pi0 / WM / critic v2, 16 verifications per arm, paired continuation seeds. Only the objective / component changes:
+#   random | wm_diverse (competence, RetryVLA) | wm_goal (DINO-WM-style goal-latent distance) | wm_goal_comp
+#   wm_top (no diversity) | random_diverse (no WM, no critic) | sim_prefix_critic (REAL dynamics + critic; all
+#   prefix transitions charged). Every arm logs sim transitions (verify + extra).
+defaults: [exp/m5b_compare_arms]
+milestone: M9
+tag: mech_search
+m5b:
+  arms: [wm_goal, wm_goal_comp, wm_top, random_diverse, sim_prefix_critic]   # random + wm_diverse: reuse M5b (same instances / pools)
+  num_shards: 8
+  out_root: data/recovery/m9_mech
+  verif_out: data/wm/verif_m9_mech
+  goal_feats: data/wm/goal_feats.pt

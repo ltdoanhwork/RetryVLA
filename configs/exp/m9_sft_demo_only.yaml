@@ -1,0 +1,7 @@
+# M9 Exp4 baseline: same init (pi1-nominal) and same 6k steps as pi1, but demos only (no recovery data).
+defaults: [exp/m4_sft_A_base_nom_random]
+milestone: M9
+tag: sft_demo_only
+train:
+  recovery_datasets: []
+  recovery_ratio: 0.0

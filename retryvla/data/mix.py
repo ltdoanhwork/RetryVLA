@@ -97,6 +97,26 @@ def recovery_episode_subsets(roots, n: int | None, min_len: int = 0, mode: str =
         ids = sorted(by)
         np.random.default_rng(seed).shuffle(ids)
         rows = [by[i][r] for r in range(max(len(v) for v in by.values())) for i in ids if r < len(by[i])]
+    elif mode == "random":
+        rng = np.random.default_rng(seed)
+        rows = [rows[i] for i in rng.permutation(len(rows))]
+    elif mode == "task_balanced":
+        # round robin over TASKS (task = instance id prefix), inside a task round robin over its instances
+        rng = np.random.default_rng(seed)
+        by_t: dict[str, dict[str, list]] = {}
+        for row in sorted(rows, key=lambda x: -x[0]):
+            t_ = str(row[3]).split("__")[0]
+            by_t.setdefault(t_, {}).setdefault(row[3], []).append(row)
+        queues = {}
+        for t_, insts in by_t.items():
+            ids = sorted(insts)
+            rng.shuffle(ids)
+            queues[t_] = [insts[i][r] for r in range(max(len(v) for v in insts.values())) for i in ids if r < len(insts[i])]
+        rows, k = [], 0
+        while any(queues.values()):
+            for t_ in sorted(queues):
+                if queues[t_]:
+                    rows.append(queues[t_].pop(0))
     elif mode == "score":
         rows.sort(key=lambda x: -x[0])
     else:

@@ -89,6 +89,17 @@ def main() -> None:
     with tracking.start(cfg) as run:
         run.summary["split_sha"] = split_sha(split_path)
         policy = SmolVLAWrapper(cfg.policy.path, cfg.policy.device, cfg.policy.n_action_steps)
+        bon = cfg.get("bon") or {}
+        if int(bon.get("n", 0)) > 1:  # online best-of-N planning with WM + critic (baseline)
+            import torch
+
+            from retryvla.policy.bon import BestOfNPolicy
+            from retryvla.search.wm_search import WMCriticRanker
+
+            ranker = WMCriticRanker((REPO_ROOT / bon.wm_link).read_text().strip(), (REPO_ROOT / bon.critic_link).read_text().strip(),
+                                    "facebook/dinov2-small", 6, torch.device(cfg.policy.device), 0.5, 1.0)
+            policy = BestOfNPolicy(policy, ranker, int(bon.n))
+            run.summary["bon"] = {"n": int(bon.n), "critic": bon.critic_link}
         rows = []
 
         def on_result(r):

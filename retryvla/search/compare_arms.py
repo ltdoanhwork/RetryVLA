@@ -113,6 +113,10 @@ def main() -> None:
     vdir = REPO_ROOT / mb.verif_out
     vdir.mkdir(parents=True, exist_ok=True)
     jobs = select_jobs(scenes, cfg, mb)
+    canon = {s.tag: s.language_canonical for s in scenes}
+    goal_feats = None
+    if any(a in ("wm_goal", "wm_goal_comp") for a in arms):
+        goal_feats = torch.load(REPO_ROOT / mb.get("goal_feats", "data/wm/goal_feats.pt"), weights_only=False)
     with tracking.start(cfg) as run:
         run.summary.update({"wm_ckpt": wm_ck, "critic_ckpt": cr_ck, "part": str(part), "resumed_done": len(done)})
         policy = SmolVLAWrapper(cfg.policy.path, cfg.policy.device, cfg.policy.n_action_steps)
@@ -134,8 +138,12 @@ def main() -> None:
                 ref = pool_c[[s.startswith("vla_") for s in src]]
                 z0, q0 = ranker.encode(inst.obs0)
                 pool_s = ranker.score(z0, q0, inst.task, pool_c)
-                picked = {}
+                picked, extra_steps = {}, {}
+                goal = None
+                if goal_feats is not None:
+                    goal = ranker.norm.z(goal_feats[canon[inst.scene_tag]].to(dev).float())
                 for a in arms:
+                    extra_steps[a] = 0
                     ta = time.time()
                     if a == "random":
                         cand, idx, cs = (*A.arm_random(pool_c, pool_s, B, rng)[:2], pool_s)
@@ -146,12 +154,39 @@ def main() -> None:
                                                        n=int(mb.noise_n), iters=int(mb.noise_iters))
                     elif a == "wm_qd":
                         cand, idx, cs = A.arm_wm_qd(ranker, z0, q0, inst.task, pool_c, pool_s, B, seed % 10007)
+                    elif a in ("wm_goal", "wm_goal_comp", "wm_top"):
+                        mode = {"wm_goal": "goal", "wm_goal_comp": "goal_comp", "wm_top": "comp"}[a]
+                        cand, idx, cs = A.arm_wm_obj(ranker, z0, q0, inst.task, pool_c, B, seed % 10007, mode,
+                                                     goal=goal, diverse=(a != "wm_top"))
+                    elif a == "random_diverse":
+                        cand, idx, cs = pool_c, A.arm_random_diverse(pool_c, B, rng), pool_s
+                    elif a == "sim_prefix_critic":
+                        # real dynamics instead of the WM: simulate every pool segment (no continuation), critic on the
+                        # REAL end state, diverse top-B. All prefix transitions are charged to this arm.
+                        pj = [Job("restore_snapshot", dict(bddl=inst.bddl, snap=inst.snapshot), task=inst.task, max_steps=H,
+                                  prefix=c, record="all", record_cfg={"stride": H}) for c in pool_c]
+                        pr = run_jobs(pool, policy, pj, desc="prefix")
+                        zs, qs = [], []
+                        for r in pr:
+                            e = encode_record(ranker.enc, r.record, H, H)
+                            k_ = int(e["valid"].sum()) - 1
+                            zs.append(e["z"][k_]); qs.append(torch.as_tensor(e["q"][k_]))
+                            extra_steps[a] += int(r.steps)
+                            r.record = None
+                        zr = ranker.norm.z(torch.stack(zs).to(dev).float())
+                        qr = ranker.norm.q(torch.stack(qs).to(dev).float())
+                        V = ranker.score_real(zr, qr, inst.task)
+                        R = A.roughness(pool_c) if hasattr(A, "roughness") else 0.0
+                        s = V - float(mb.beta_rough) * R
+                        zf = torch.cat([zr.mean(1), qr], 1).cpu().numpy()
+                        cs = {"value": V, "score": s, "rough": R, "zfeat": zf}
+                        cand, idx = pool_c, A.diverse_ranking(s, zf, B, seed=seed % 10007)
                     elif a == "wm_two_stage":
                         cand, idx, cs = A.arm_wm_two_stage(ranker, z0, q0, inst.task, pool_c, pool_s, B, seed % 10007)
                     else:
                         raise ValueError(a)
-                    picked[a] = (cand[idx], {k: v[idx] for k, v in cs.items() if k != "zfeat"}, len(cand),
-                                 time.time() - ta)
+                    picked[a] = (cand[idx], {k: v[idx] for k, v in cs.items() if k not in ("zfeat",) and np.ndim(v) == 1},
+                                 len(cand), time.time() - ta)
                 # one verification batch for all arms; slot j gets the same continuation seed in every arm
                 vj, owner = [], []
                 for a in arms:
@@ -222,6 +257,8 @@ def main() -> None:
                         "pred_succ": float(cs["value"][succ].mean()) if succ.any() else np.nan,
                         "pred_fail": float(cs["value"][~succ].mean()) if (~succ).any() else np.nan,
                         "n_scored": n_scored, "t_arm_s": t_arm,
+                        "sim_steps_verify": int(sum(int(r.steps) for r in by[a])), "sim_steps_extra": int(extra_steps[a]),
+                        "order_success": [bool(x) for x in succ],
                         **{f"all_{k}": v for k, v in m_all.items()}, **{f"succ_{k}": v for k, v in m_succ.items()},
                         "succ_cells_list": sorted(set(A.descriptor(cands[succ]).tolist())) if succ.any() else [],
                     })

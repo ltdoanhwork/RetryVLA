@@ -2,63 +2,6 @@
  "name": "m8bc",
  "tasks": [
   {
-   "name": "m8_aug_s0",
-   "module": "retryvla.search.compare_arms",
-   "deps": [],
-   "args": [
-    "configs/exp/m8_aug_search.yaml",
-    "m5b.shard=0",
-    "m5b.num_shards=4",
-    "eval.n_workers=14"
-   ]
-  },
-  {
-   "name": "m8_aug_s1",
-   "module": "retryvla.search.compare_arms",
-   "deps": [],
-   "args": [
-    "configs/exp/m8_aug_search.yaml",
-    "m5b.shard=1",
-    "m5b.num_shards=4",
-    "eval.n_workers=14"
-   ]
-  },
-  {
-   "name": "m8_aug_s2",
-   "module": "retryvla.search.compare_arms",
-   "deps": [],
-   "args": [
-    "configs/exp/m8_aug_search.yaml",
-    "m5b.shard=2",
-    "m5b.num_shards=4",
-    "eval.n_workers=14"
-   ]
-  },
-  {
-   "name": "m8_aug_s3",
-   "module": "retryvla.search.compare_arms",
-   "deps": [],
-   "args": [
-    "configs/exp/m8_aug_search.yaml",
-    "m5b.shard=3",
-    "m5b.num_shards=4",
-    "eval.n_workers=14"
-   ]
-  },
-  {
-   "name": "m8_sft_aug",
-   "module": "retryvla.train.sft",
-   "deps": [
-    "m8_aug_s0",
-    "m8_aug_s1",
-    "m8_aug_s2",
-    "m8_aug_s3"
-   ],
-   "args": [
-    "configs/exp/m8_sft_aug.yaml"
-   ]
-  },
-  {
    "name": "m8_rec_aug",
    "module": "retryvla.eval.eval_recover",
    "deps": [
@@ -104,76 +47,6 @@
     "policy.path=@glob:runs/*_M8_sft_aug/checkpoints/006000/pretrained_model",
     "eval.n_workers=14",
     "eval.save_videos=none"
-   ]
-  },
-  {
-   "name": "m8_sft_pi1_s1",
-   "module": "retryvla.train.sft",
-   "deps": [],
-   "args": [
-    "configs/exp/m5b_sft_wm_diverse.yaml",
-    "milestone=M8",
-    "tag=seed_pi1_s1",
-    "train.seed=1",
-    "train.subset_mode=roundrobin",
-    "train.max_recovery_trajectories=208"
-   ]
-  },
-  {
-   "name": "m8_sft_pi1_s2",
-   "module": "retryvla.train.sft",
-   "deps": [],
-   "args": [
-    "configs/exp/m5b_sft_wm_diverse.yaml",
-    "milestone=M8",
-    "tag=seed_pi1_s2",
-    "train.seed=2",
-    "train.subset_mode=roundrobin",
-    "train.max_recovery_trajectories=208"
-   ]
-  },
-  {
-   "name": "m8_sft_base_s1",
-   "module": "retryvla.train.sft",
-   "deps": [],
-   "args": [
-    "configs/exp/m7_sft_base.yaml",
-    "milestone=M8",
-    "tag=seed_base_s1",
-    "train.seed=1"
-   ]
-  },
-  {
-   "name": "m8_sft_base_s2",
-   "module": "retryvla.train.sft",
-   "deps": [],
-   "args": [
-    "configs/exp/m7_sft_base.yaml",
-    "milestone=M8",
-    "tag=seed_base_s2",
-    "train.seed=2"
-   ]
-  },
-  {
-   "name": "m8_sft_weak_s1",
-   "module": "retryvla.train.sft",
-   "deps": [],
-   "args": [
-    "configs/exp/m7_sft_weak.yaml",
-    "milestone=M8",
-    "tag=seed_weak_s1",
-    "train.seed=1"
-   ]
-  },
-  {
-   "name": "m8_sft_weak_s2",
-   "module": "retryvla.train.sft",
-   "deps": [],
-   "args": [
-    "configs/exp/m7_sft_weak.yaml",
-    "milestone=M8",
-    "tag=seed_weak_s2",
-    "train.seed=2"
    ]
   },
   {
@@ -360,6 +233,133 @@
     "policy.path=@glob:runs/*_M8_seed_weak_s2/checkpoints/006000/pretrained_model",
     "eval.n_workers=14",
     "eval.save_videos=none"
+   ]
+  },
+  {
+   "name": "m8_aug_s0",
+   "module": "retryvla.search.compare_arms",
+   "deps": [],
+   "args": [
+    "configs/exp/m8_aug_search.yaml",
+    "m5b.shard=0",
+    "m5b.num_shards=4",
+    "eval.n_workers=14"
+   ]
+  },
+  {
+   "name": "m8_aug_s1",
+   "module": "retryvla.search.compare_arms",
+   "deps": [],
+   "args": [
+    "configs/exp/m8_aug_search.yaml",
+    "m5b.shard=1",
+    "m5b.num_shards=4",
+    "eval.n_workers=14"
+   ]
+  },
+  {
+   "name": "m8_aug_s2",
+   "module": "retryvla.search.compare_arms",
+   "deps": [],
+   "args": [
+    "configs/exp/m8_aug_search.yaml",
+    "m5b.shard=2",
+    "m5b.num_shards=4",
+    "eval.n_workers=14"
+   ]
+  },
+  {
+   "name": "m8_aug_s3",
+   "module": "retryvla.search.compare_arms",
+   "deps": [],
+   "args": [
+    "configs/exp/m8_aug_search.yaml",
+    "m5b.shard=3",
+    "m5b.num_shards=4",
+    "eval.n_workers=14"
+   ]
+  },
+  {
+   "name": "m8_sft_aug",
+   "module": "retryvla.train.sft",
+   "deps": [
+    "m8_aug_s0",
+    "m8_aug_s1",
+    "m8_aug_s2",
+    "m8_aug_s3"
+   ],
+   "args": [
+    "configs/exp/m8_sft_aug.yaml"
+   ]
+  },
+  {
+   "name": "m8_sft_pi1_s1",
+   "module": "retryvla.train.sft",
+   "deps": [],
+   "args": [
+    "configs/exp/m5b_sft_wm_diverse.yaml",
+    "milestone=M8",
+    "tag=seed_pi1_s1",
+    "train.seed=1",
+    "train.subset_mode=roundrobin",
+    "train.max_recovery_trajectories=208"
+   ]
+  },
+  {
+   "name": "m8_sft_pi1_s2",
+   "module": "retryvla.train.sft",
+   "deps": [],
+   "args": [
+    "configs/exp/m5b_sft_wm_diverse.yaml",
+    "milestone=M8",
+    "tag=seed_pi1_s2",
+    "train.seed=2",
+    "train.subset_mode=roundrobin",
+    "train.max_recovery_trajectories=208"
+   ]
+  },
+  {
+   "name": "m8_sft_base_s1",
+   "module": "retryvla.train.sft",
+   "deps": [],
+   "args": [
+    "configs/exp/m7_sft_base.yaml",
+    "milestone=M8",
+    "tag=seed_base_s1",
+    "train.seed=1"
+   ]
+  },
+  {
+   "name": "m8_sft_base_s2",
+   "module": "retryvla.train.sft",
+   "deps": [],
+   "args": [
+    "configs/exp/m7_sft_base.yaml",
+    "milestone=M8",
+    "tag=seed_base_s2",
+    "train.seed=2"
+   ]
+  },
+  {
+   "name": "m8_sft_weak_s1",
+   "module": "retryvla.train.sft",
+   "deps": [],
+   "args": [
+    "configs/exp/m7_sft_weak.yaml",
+    "milestone=M8",
+    "tag=seed_weak_s1",
+    "train.seed=1"
+   ]
+  },
+  {
+   "name": "m8_sft_weak_s2",
+   "module": "retryvla.train.sft",
+   "deps": [],
+   "args": [
+    "configs/exp/m7_sft_weak.yaml",
+    "milestone=M8",
+    "tag=seed_weak_s2",
+    "train.seed=2"
    ]
   }
  ]

@@ -13,13 +13,35 @@ the SAME simulator verification budget B, so arms differ only in WHICH B candida
 
 from __future__ import annotations
 
+from collections import defaultdict
+
 import numpy as np
 import torch
 
 from retryvla.search.cem import CEM, CEMConfig, roughness
 from retryvla.search.wm_search import diverse_ranking
 
-ARM_NAMES = ("random", "wm_diverse", "wm_noise", "wm_qd", "wm_two_stage")
+ARM_NAMES = ("random", "wm_diverse", "wm_noise", "wm_qd", "wm_two_stage", "wm_goal", "wm_goal_comp", "wm_top",
+             "random_diverse", "sim_prefix_critic")
+
+
+def _z(x: np.ndarray) -> np.ndarray:
+    return (x - x.mean()) / (x.std() + 1e-8)
+
+
+def objective(cs: dict, mode: str, lam: float = 0.5, beta: float = 1.0) -> np.ndarray:
+    """Search objective on WM-scored candidates. comp = RetryVLA (continuation value V of the frozen policy);
+    goal = latent distance of the imagined end state to successful-demo goal frames (DINO-WM style);
+    goal_comp = z-scored sum. Same uncertainty / roughness penalties for all (scaled to each objective's spread)."""
+    if mode == "comp":
+        return cs["score"]
+    g = cs["goal"]
+    if mode == "goal":
+        return g - lam * cs["unc_n"] * g.std() - beta * cs["rough"]
+    if mode == "goal_comp":
+        s = _z(cs["value"]) + _z(g)
+        return s - lam * cs["unc_n"] * s.std() - beta * cs["rough"]
+    raise ValueError(mode)
 
 
 # ---------------------------------------------------------------- descriptors & metrics
@@ -160,3 +182,36 @@ def arm_wm_two_stage(ranker, z0, q0, task, pool_c, pool_s, B, seed, n_first=16, 
     cand = np.concatenate([np.concatenate([pool_c[i], pool_c[j]], 0)[None] for i in first for j in second]).astype(np.float32)
     cs = ranker.score(z0, q0, task, cand)
     return cand, diverse_ranking(cs["score"], cs["zfeat"], B, seed=seed), cs
+
+
+def arm_wm_obj(ranker, z0, q0, task, pool_c, B, seed, mode, goal=None, diverse=True, iters=2, elites=16, std=0.25):
+    """Identical to arm_wm_diverse (pool + elite-local latent CEM + diverse top-B) except the objective."""
+    cs = ranker.score(z0, q0, task, pool_c, goal=goal)
+    cand = pool_c
+    cem = CEM(pool_c.shape[1], 7, CEMConfig(n_samples=len(pool_c), init_std=std, smooth_kernel=5), seed=seed)
+    for it in range(1, iters + 1):
+        s = objective(cs, mode)
+        el = np.argsort(-s)[:elites]
+        if mode == "comp":  # exactly the M5 setting
+            new = cem.sample_local(cand[el], s[el], it, temperature=0.05, decay=0.6)
+        else:  # other objectives live on other scales: z-score elites (T=0.33 ~ the comp setting on z-scale)
+            new = cem.sample_local(cand[el], _z(s[el]), it, temperature=0.33, decay=0.6)
+        ns = ranker.score(z0, q0, task, new, goal=goal)
+        cand = np.concatenate([cand, new])
+        cs = {k: np.concatenate([cs[k], ns[k]]) for k in cs}
+    s = objective(cs, mode)
+    cs = dict(cs, score=s)
+    picks = diverse_ranking(s, cs["zfeat"], B, seed=seed) if diverse else np.argsort(-s)[:B]
+    return cand, picks, cs
+
+
+def arm_random_diverse(pool_c, B, rng):
+    """No WM, no critic: action-space diversity only (one random candidate per strategy cell, round robin)."""
+    cell = descriptor(pool_c)
+    by = defaultdict(list)
+    for i in rng.permutation(len(pool_c)):
+        by[int(cell[i])].append(int(i))
+    order = list(by)
+    rng.shuffle(order)
+    picks = [by[c][r] for r in range(max(len(v) for v in by.values())) for c in order if r < len(by[c])][:B]
+    return np.array(picks)

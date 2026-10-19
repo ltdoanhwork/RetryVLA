@@ -20,15 +20,20 @@
   "tmux_prefix": "rv_"
  },
  "claims": {
+  "local:0:c": {
+   "tmux": "rv_m8_sft_weak_s1",
+   "args": "retryvla.train.sft configs/exp/m7_sft_weak.yaml milestone=M8 tag=seed_weak_s1 train.seed=1",
+   "since": "2026-10-19T05:23:24"
+  },
   "local:0:b": {
-   "tmux": "rv_m8_sft_base_s1",
-   "args": "retryvla.train.sft configs/exp/m7_sft_base.yaml milestone=M8 tag=seed_base_s1 train.seed=1",
-   "since": "2026-10-19T01:51:36"
+   "tmux": "rv_m8_sft_weak_s2",
+   "args": "retryvla.train.sft configs/exp/m7_sft_weak.yaml milestone=M8 tag=seed_weak_s2 train.seed=2",
+   "since": "2026-10-19T05:30:28"
   },
   "local:0:a": {
-   "tmux": "rv_m8_sft_base_s2",
-   "args": "retryvla.train.sft configs/exp/m7_sft_base.yaml milestone=M8 tag=seed_base_s2 train.seed=2",
-   "since": "2026-10-19T02:09:37"
+   "tmux": "rv_m9_mech_s0",
+   "args": "retryvla.search.compare_arms configs/exp/m9_mech_search.yaml m5b.shard=0 m5b.num_shards=8 eval.n_workers=14",
+   "since": "2026-10-19T06:37:29"
   }
  },
  "allow_only": {

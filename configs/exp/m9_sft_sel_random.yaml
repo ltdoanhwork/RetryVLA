@@ -1,0 +1,7 @@
+# M9 Exp6: same verified bank (M5b wm_diverse, 423) and budget (208) as M5b/M5c; selection = random.
+defaults: [exp/m5b_sft_wm_diverse]
+milestone: M9
+tag: sft_sel_random
+train:
+  subset_mode: random
+  max_recovery_trajectories: 208

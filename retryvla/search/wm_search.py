@@ -63,9 +63,21 @@ class WMCriticRanker:
         return self.norm.z(z), self.norm.q(torch.as_tensor(obs["state"], device=self.dev)[None])
 
     @torch.no_grad()
-    def score(self, z0, q0, task: str, cands: np.ndarray, bs: int = 256) -> dict[str, np.ndarray]:
+    def score_real(self, zH, qH, task: str) -> np.ndarray:
+        """Critic on REAL (simulated) end states (normalized latents) -> V [N]."""
         tid = self.vocab.get(task, 0)
-        V, U, ZF = [], [], []
+        n = len(zH)
+        with torch.autocast("cuda", dtype=torch.bfloat16, enabled=self.dev.type == "cuda"):
+            v = torch.sigmoid(self.critic.logits(zH.float(), qH.float(),
+                                                 torch.full((n,), tid, device=self.dev, dtype=torch.long)))
+        return v.float().cpu().numpy()
+
+    @torch.no_grad()
+    def score(self, z0, q0, task: str, cands: np.ndarray, bs: int = 256, goal=None) -> dict[str, np.ndarray]:
+        """goal: optional [G, P, D] normalized goal latents (final frames of successful demos of this task) ->
+        adds "goal" = -min_g mean-squared latent distance of the imagined end state (DINO-WM-style objective)."""
+        tid = self.vocab.get(task, 0)
+        V, U, ZF, GD = [], [], [], []
         for i in range(0, len(cands), bs):
             a = torch.as_tensor(cands[i: i + bs], device=self.dev)
             n = len(a)
@@ -75,11 +87,17 @@ class WMCriticRanker:
                                                      torch.full((n,), tid, device=self.dev, dtype=torch.long)))
             V.append(v.float().cpu().numpy()); U.append(unc.float().cpu().numpy())
             ZF.append(torch.cat([zH.float().mean(1), qH.float()], 1).cpu().numpy())  # imagined end-state feature
+            if goal is not None:
+                d = torch.stack([((zH.float() - g[None]) ** 2).mean((1, 2)) for g in goal]).min(0).values
+                GD.append((-d).cpu().numpy())
         V, U = np.concatenate(V), np.concatenate(U)
         U_n = U / (np.median(U) + 1e-8)
         R = roughness(cands)
-        return {"value": V, "unc": U, "score": V - self.lam * U_n * V.std() - self.beta * R, "rough": R,
-                "zfeat": np.concatenate(ZF)}
+        out = {"value": V, "unc": U, "score": V - self.lam * U_n * V.std() - self.beta * R, "rough": R,
+               "zfeat": np.concatenate(ZF), "unc_n": U_n}
+        if goal is not None:
+            out["goal"] = np.concatenate(GD)
+        return out
 
 
 def diverse_ranking(score: np.ndarray, feat: np.ndarray, k: int, oversample: int = 4, seed: int = 0) -> np.ndarray:

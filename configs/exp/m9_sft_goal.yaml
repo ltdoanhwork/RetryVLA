@@ -1,0 +1,8 @@
+# M9 Exp1 downstream: SFT (init pi1-nominal) on the M9 recoveries of arm 'wm_goal', count matched across goal / comp.
+defaults: [exp/m4_sft_A_base_nom_random]
+milestone: M9
+tag: sft_goal
+train:
+  recovery_datasets: [data/recovery/m9_mech/s*/p*/wm_goal]
+  subset_mode: roundrobin
+  max_recovery_trajectories: 300
