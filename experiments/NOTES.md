@@ -190,3 +190,10 @@ Q1 why competence, Q2 why a WM, Q3 why distill. Queue (DAG m8m9, 3 lanes on 49b7
 - Phase 3 Exp4: demo-only SFT with matched steps; online best-of-8 (WM + critic at every replanning step) on pi0 and pi1.
 - Exp6: data selection on the same bank: score / random / round-robin / task-balanced.
 - Not yet: RL baseline, LIBERO-Object final held-out, M8-balanced (dropped: would be tuned on test).
+
+### M9 Phase-1 retrospective (M5b logs, N=256), runs/_analysis/retro/
+- Budget: WM diverse with k=4 verifications solves 0.39 of failures > random with k=16 (0.36) -> ~4x fewer sims.
+- Critic on imagined end states: AUC 0.69-0.80 but over-confident on WM picks (mean pred 0.735 vs 0.171 verified, ECE 0.16).
+- Real end states: dV predicts verified success (AUC 0.694), goal-latent progress dG does not (AUC 0.447, below chance).
+  50% of verified recoveries moved AWAY from the goal latent while raising competence (ramekin 77%, drawer 12%).
+  Illustrative for Q1; the controlled test is the wm_goal arm in m9_mech.
