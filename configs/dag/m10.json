@@ -2,6 +2,61 @@
  "name": "m10",
  "tasks": [
   {
+   "name": "m10o_collect_s0",
+   "module": "retryvla.wm.collect",
+   "deps": [],
+   "args": [
+    "configs/exp/obj_collect.yaml",
+    "wm_collect.shard=0",
+    "wm_collect.num_shards=4",
+    "eval.n_workers=14"
+   ]
+  },
+  {
+   "name": "m10o_collect_s1",
+   "module": "retryvla.wm.collect",
+   "deps": [],
+   "args": [
+    "configs/exp/obj_collect.yaml",
+    "wm_collect.shard=1",
+    "wm_collect.num_shards=4",
+    "eval.n_workers=14"
+   ]
+  },
+  {
+   "name": "m10o_collect_s2",
+   "module": "retryvla.wm.collect",
+   "deps": [],
+   "args": [
+    "configs/exp/obj_collect.yaml",
+    "wm_collect.shard=2",
+    "wm_collect.num_shards=4",
+    "eval.n_workers=14"
+   ]
+  },
+  {
+   "name": "m10o_collect_s3",
+   "module": "retryvla.wm.collect",
+   "deps": [],
+   "args": [
+    "configs/exp/obj_collect.yaml",
+    "wm_collect.shard=3",
+    "wm_collect.num_shards=4",
+    "eval.n_workers=14"
+   ]
+  },
+  {
+   "name": "m10o_goalfeats",
+   "module": "scripts.build_goal_feats",
+   "deps": [],
+   "args": [
+    "--suite",
+    "libero_object",
+    "--out",
+    "data/wm/goal_feats_obj.pt"
+   ]
+  },
+  {
    "name": "m10_sft_goal_s1",
    "module": "retryvla.train.sft",
    "deps": [],
@@ -109,61 +164,6 @@
     "recover_eval.splits=[test]",
     "eval.n_workers=14",
     "eval.save_videos=none"
-   ]
-  },
-  {
-   "name": "m10o_collect_s0",
-   "module": "retryvla.wm.collect",
-   "deps": [],
-   "args": [
-    "configs/exp/obj_collect.yaml",
-    "wm_collect.shard=0",
-    "wm_collect.num_shards=4",
-    "eval.n_workers=14"
-   ]
-  },
-  {
-   "name": "m10o_collect_s1",
-   "module": "retryvla.wm.collect",
-   "deps": [],
-   "args": [
-    "configs/exp/obj_collect.yaml",
-    "wm_collect.shard=1",
-    "wm_collect.num_shards=4",
-    "eval.n_workers=14"
-   ]
-  },
-  {
-   "name": "m10o_collect_s2",
-   "module": "retryvla.wm.collect",
-   "deps": [],
-   "args": [
-    "configs/exp/obj_collect.yaml",
-    "wm_collect.shard=2",
-    "wm_collect.num_shards=4",
-    "eval.n_workers=14"
-   ]
-  },
-  {
-   "name": "m10o_collect_s3",
-   "module": "retryvla.wm.collect",
-   "deps": [],
-   "args": [
-    "configs/exp/obj_collect.yaml",
-    "wm_collect.shard=3",
-    "wm_collect.num_shards=4",
-    "eval.n_workers=14"
-   ]
-  },
-  {
-   "name": "m10o_goalfeats",
-   "module": "scripts.build_goal_feats",
-   "deps": [],
-   "args": [
-    "--suite",
-    "libero_object",
-    "--out",
-    "data/wm/goal_feats_obj.pt"
    ]
   },
   {
