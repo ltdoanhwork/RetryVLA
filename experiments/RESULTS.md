@@ -61,3 +61,29 @@ Analysis: `python scripts/analyze_m5b.py` -> `runs/_analysis/m5b/summary.md`.
 | M6 round 2: pi1's own train failures (pi1 SR 0.45 on 400 trials) | 219 | 16 + robust 2 | WM diverse, pi1 continues | 0.584 (robust 0.452) | 0.188 |
 | M7 weak tasks (stove, cookie box), best policy continues (SR 0.36 on 160 trials) | 102 | 24 / arm + robust 2 | WM diverse / QD / two-stage | 0.59 / 0.61 / 0.61 (robust 0.47 / 0.50 / 0.50) | 0.145 / 0.138 / 0.138 |
 | M8 augmented weak tasks (+-5 cm, 30 trials/scene), best policy SR 0.29 | 340 | 24 + robust 2 | WM QD | 0.36 robust | 0.086 |
+
+## M9: mechanism, baselines, seeds (2026-10-20). Spatial test = dev set.
+
+**3 SFT seeds** (test RSR mean ± sd): pi1 0.418 ± 0.021; M7 base 0.482 ± 0.019; M7 weak 0.468 ± 0.024.
+M7 base - pi1 +0.063 [+0.035, +0.090]; M7 weak - M7 base -0.013 [-0.036, +0.011]. Nominal 0.77-0.81.
+
+**Search ablation** (122 paired M5b instances, 16 verifications / arm; transitions per instance incl. extra sims):
+
+| arm | WM | critic | diversity | objective | solved | hits / sim | sim transitions |
+|---|---|---|---|---|---|---|---|
+| random | - | - | - | - | 0.311 | 0.050 | ~5.0k |
+| random_diverse | - | - | yes | - | 0.369 | 0.068 | 5.3k |
+| wm_goal | yes | - | yes | goal latent (DINO-WM) | 0.230 | 0.038 | 5.4k |
+| wm_goal_comp | yes | yes | yes | goal + competence | 0.451 | 0.121 | 5.1k |
+| wm_top | yes | yes | - | competence | 0.475 | 0.157 | 5.0k |
+| **wm_diverse** | yes | yes | yes | competence | **0.475** | 0.153 | ~5.0k |
+| sim_prefix_critic | REAL | yes | yes | competence | 0.443 | 0.115 | **16.5k** |
+
+wm_diverse vs wm_goal 32/2, p = 7e-8; vs random_diverse p = 0.015; vs sim_prefix_critic n.s. at 3.3x fewer transitions;
+vs wm_top identical. Budget 32 (61 instances): wm_diverse 0.541 vs random 0.393.
+
+**Downstream / baselines** (test RSR, 1 seed):
+- SFT on competence vs goal-objective recoveries (66 each): **0.427 vs 0.189**, paired 163 / 30, p = 3e-23.
+- demo-only SFT, same init + steps: 0.127 (nominal 0.82) vs pi1 0.439 (p = 1e-37).
+- online best-of-8 (WM + critic every replanning step): pi0 0.118 (= pi0), pi1 0.466 (+0.027 vs pi1, p = 0.23).
+- data selection on the same bank (208): top-score 0.298, random 0.427, round-robin 0.439, task-balanced 0.404.

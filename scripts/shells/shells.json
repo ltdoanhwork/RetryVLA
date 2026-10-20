@@ -19,28 +19,7 @@
   "max_load_per_core": 0.6,
   "tmux_prefix": "rv_"
  },
- "claims": {
-  "local:0:a": {
-   "tmux": "rv_m9_mech_s0",
-   "args": "retryvla.search.compare_arms configs/exp/m9_mech_search.yaml m5b.shard=0 m5b.num_shards=8 eval.n_workers=14",
-   "since": "2026-10-19T06:37:29"
-  },
-  "local:0:b": {
-   "tmux": "rv_m8_rec_weak_s2",
-   "args": "retryvla.eval.eval_recover configs/exp/m0_baseline_spatial.yaml milestone=M8 recover_tag=seed_weak_s2_recover_test policy.path=runs/20261019-054512_M8_seed_weak_s2/checkpoints/006000/pretrained_model recover_eval.splits=[test] eval.n_workers=14 eval.save_videos=none",
-   "since": "2026-10-19T07:53:42"
-  },
-  "local:0:c": {
-   "tmux": "rv_m8_nom_weak_s2",
-   "args": "retryvla.eval.eval_nominal configs/exp/m0_baseline_spatial.yaml milestone=M8 nominal_tag=seed_weak_s2_nominal policy.path=runs/20261019-054512_M8_seed_weak_s2/checkpoints/006000/pretrained_model eval.n_workers=14 eval.save_videos=none",
-   "since": "2026-10-19T08:26:07"
-  },
-  "8a2808f9:0": {
-   "tmux": "rv_m9_rec_bon_pi1",
-   "args": "retryvla.eval.eval_recover configs/exp/m0_baseline_spatial.yaml milestone=M9 recover_tag=bon8_pi1_recover_test policy.path=runs/20261016-042447_M5_m5c_sft_wm_diverse_rr/checkpoints/006000/pretrained_model recover_eval.splits=[test] eval.n_workers=8 eval.save_videos=none bon.n=8 bon.wm_link=data/wm/latest_wm.txt bon.critic_link=data/wm/latest_critic_v2.txt",
-   "since": "2026-10-19T09:16:55"
-  }
- },
+ "claims": {},
  "allow_only": {
   "49b70230": "vla_RetryVLA_DoanhLT_1 (the GPU the user gave; = the local machine). User 2026-10-16: run ONLY here, no more borrowing.",
   "8a2808f9": "vla_BSC_DoanhLT_1 (user's own; 2026-10-19 user: submit a few LIGHT jobs here; owner job gg_8a2808f9 uses the GPU -> share_ok, <=8 workers)"
