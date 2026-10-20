@@ -1,0 +1,4 @@
+# Object eval (nominal + recover).
+defaults: [exp/m0_baseline_spatial, obj/overlay]
+milestone: M10
+tag: obj_eval

@@ -1,0 +1,6 @@
+defaults: [exp/m2_train_wm, obj/overlay]
+milestone: M10
+tag: train_wm_obj
+wm:
+  data_roots: [data/wm/collect_obj]
+  out_link: data/wm/latest_wm_obj.txt

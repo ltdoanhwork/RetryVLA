@@ -1,0 +1,9 @@
+# Object WM/critic data (M2 recipe): train scenes, trials 0-3, 32 candidates each.
+defaults: [exp/m2_collect, obj/overlay]
+milestone: M10
+tag: collect_obj
+search_on:
+  trials_per_scene: [close, open, close, open]
+wm_collect:
+  exclude_instances_file: null
+  out_root: data/wm/collect_obj

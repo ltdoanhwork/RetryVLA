@@ -1,0 +1,14 @@
+# Object search: pi0 continuation, paired arms (random / WM competence / WM goal), 16 verifications, M5b settings.
+defaults: [exp/m5b_compare_arms, obj/overlay]
+milestone: M10
+tag: obj_search
+m5b:
+  arms: [random, wm_diverse, wm_goal]
+  exclude_trials: [0, 1, 2, 3]
+  n_select: 306
+  num_shards: 4
+  wm_link: data/wm/latest_wm_obj.txt
+  critic_link: data/wm/latest_critic_obj.txt
+  goal_feats: data/wm/goal_feats_obj.pt
+  out_root: data/recovery/obj
+  verif_out: data/wm/verif_obj

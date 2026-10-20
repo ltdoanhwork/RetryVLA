@@ -1,0 +1,7 @@
+defaults: [exp/m2_train_critic, obj/overlay]
+milestone: M10
+tag: train_critic_obj
+critic:
+  data_roots: [data/wm/collect_obj]
+  wm_link: data/wm/latest_wm_obj.txt
+  out_link: data/wm/latest_critic_obj.txt

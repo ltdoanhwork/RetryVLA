@@ -1,0 +1,115 @@
+{
+ "name": "m10seeds",
+ "tasks": [
+  {
+   "name": "m10_sft_goal_s1",
+   "module": "retryvla.train.sft",
+   "deps": [],
+   "args": [
+    "configs/exp/m9_sft_goal.yaml",
+    "train.max_recovery_trajectories=@ntrajmin:300:data/recovery/m9_mech/s*/p*/wm_goal,data/recovery/m5b/s[0-3]/p*/wm_diverse",
+    "tag=sft_goal_seed1",
+    "train.seed=1"
+   ]
+  },
+  {
+   "name": "m10_rec_goal_s1",
+   "module": "retryvla.eval.eval_recover",
+   "deps": [
+    "m10_sft_goal_s1"
+   ],
+   "args": [
+    "configs/exp/m0_baseline_spatial.yaml",
+    "milestone=M9",
+    "recover_tag=sft_goal_seed1_recover_test",
+    "policy.path=@glob:runs/*_M9_sft_goal_seed1/checkpoints/006000/pretrained_model",
+    "recover_eval.splits=[test]",
+    "eval.n_workers=14",
+    "eval.save_videos=none"
+   ]
+  },
+  {
+   "name": "m10_sft_goal_s2",
+   "module": "retryvla.train.sft",
+   "deps": [],
+   "args": [
+    "configs/exp/m9_sft_goal.yaml",
+    "train.max_recovery_trajectories=@ntrajmin:300:data/recovery/m9_mech/s*/p*/wm_goal,data/recovery/m5b/s[0-3]/p*/wm_diverse",
+    "tag=sft_goal_seed2",
+    "train.seed=2"
+   ]
+  },
+  {
+   "name": "m10_rec_goal_s2",
+   "module": "retryvla.eval.eval_recover",
+   "deps": [
+    "m10_sft_goal_s2"
+   ],
+   "args": [
+    "configs/exp/m0_baseline_spatial.yaml",
+    "milestone=M9",
+    "recover_tag=sft_goal_seed2_recover_test",
+    "policy.path=@glob:runs/*_M9_sft_goal_seed2/checkpoints/006000/pretrained_model",
+    "recover_eval.splits=[test]",
+    "eval.n_workers=14",
+    "eval.save_videos=none"
+   ]
+  },
+  {
+   "name": "m10_sft_comp_s1",
+   "module": "retryvla.train.sft",
+   "deps": [],
+   "args": [
+    "configs/exp/m9_sft_comp.yaml",
+    "train.recovery_datasets=[data/recovery/m5b/s0/p*/wm_diverse,data/recovery/m5b/s1/p*/wm_diverse,data/recovery/m5b/s2/p*/wm_diverse,data/recovery/m5b/s3/p*/wm_diverse]",
+    "train.max_recovery_trajectories=@ntrajmin:300:data/recovery/m9_mech/s*/p*/wm_goal,data/recovery/m5b/s[0-3]/p*/wm_diverse",
+    "tag=sft_comp_seed1",
+    "train.seed=1"
+   ]
+  },
+  {
+   "name": "m10_rec_comp_s1",
+   "module": "retryvla.eval.eval_recover",
+   "deps": [
+    "m10_sft_comp_s1"
+   ],
+   "args": [
+    "configs/exp/m0_baseline_spatial.yaml",
+    "milestone=M9",
+    "recover_tag=sft_comp_seed1_recover_test",
+    "policy.path=@glob:runs/*_M9_sft_comp_seed1/checkpoints/006000/pretrained_model",
+    "recover_eval.splits=[test]",
+    "eval.n_workers=14",
+    "eval.save_videos=none"
+   ]
+  },
+  {
+   "name": "m10_sft_comp_s2",
+   "module": "retryvla.train.sft",
+   "deps": [],
+   "args": [
+    "configs/exp/m9_sft_comp.yaml",
+    "train.recovery_datasets=[data/recovery/m5b/s0/p*/wm_diverse,data/recovery/m5b/s1/p*/wm_diverse,data/recovery/m5b/s2/p*/wm_diverse,data/recovery/m5b/s3/p*/wm_diverse]",
+    "train.max_recovery_trajectories=@ntrajmin:300:data/recovery/m9_mech/s*/p*/wm_goal,data/recovery/m5b/s[0-3]/p*/wm_diverse",
+    "tag=sft_comp_seed2",
+    "train.seed=2"
+   ]
+  },
+  {
+   "name": "m10_rec_comp_s2",
+   "module": "retryvla.eval.eval_recover",
+   "deps": [
+    "m10_sft_comp_s2"
+   ],
+   "args": [
+    "configs/exp/m0_baseline_spatial.yaml",
+    "milestone=M9",
+    "recover_tag=sft_comp_seed2_recover_test",
+    "policy.path=@glob:runs/*_M9_sft_comp_seed2/checkpoints/006000/pretrained_model",
+    "recover_eval.splits=[test]",
+    "eval.n_workers=14",
+    "eval.save_videos=none"
+   ]
+  }
+ ]
+}

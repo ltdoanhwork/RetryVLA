@@ -1,0 +1,8 @@
+# Object SFT on 'wm_diverse' recoveries (round-robin, count matched across arms at launch), init = Object pi1-nominal.
+defaults: [exp/m4_sft_A_base_nom_random, obj/overlay]
+milestone: M10
+tag: sft_comp_obj
+train:
+  recovery_datasets: [data/recovery/obj/s*/p*/wm_diverse]
+  subset_mode: roundrobin
+  max_recovery_trajectories: 300

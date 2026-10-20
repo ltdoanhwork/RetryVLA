@@ -1,0 +1,4 @@
+# Object pi1-nominal: pi0 + 6k steps on Object demos (same recipe as Spatial pi1-nominal).
+defaults: [exp/m1_sft_nominal, obj/overlay]
+milestone: M10
+tag: sft_nominal_obj

@@ -19,13 +19,19 @@ sys.path.insert(0, str(REPO))
 
 
 def main() -> None:
+    import argparse
+
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--suite", default="libero_spatial")
+    ap.add_argument("--out", default="data/wm/goal_feats.pt")
+    args = ap.parse_args()
     from lerobot.datasets.lerobot_dataset import LeRobotDataset
 
     from retryvla.data.mix import patch_lerobot_index_mapping, spatial_episode_ids
     from retryvla.wm.encoder_dino import DinoEncoder
 
     patch_lerobot_index_mapping()
-    eps = spatial_episode_ids("lerobot/libero", "libero_spatial")
+    eps = spatial_episode_ids("lerobot/libero", args.suite)
     ds = LeRobotDataset("lerobot/libero", episodes=eps)
     enc = DinoEncoder("facebook/dinov2-small", pool_grid=6, device="cuda")
     by_task = defaultdict(list)
@@ -43,7 +49,7 @@ def main() -> None:
     out = {t: torch.stack(v) for t, v in by_task.items()}
     for t, v in out.items():
         print(len(v), t)
-    torch.save(out, REPO / "data/wm/goal_feats.pt")
+    torch.save(out, REPO / args.out)
 
 
 if __name__ == "__main__":

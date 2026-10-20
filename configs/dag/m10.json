@@ -1,0 +1,540 @@
+{
+ "name": "m10",
+ "tasks": [
+  {
+   "name": "m10_sft_goal_s1",
+   "module": "retryvla.train.sft",
+   "deps": [],
+   "args": [
+    "configs/exp/m9_sft_goal.yaml",
+    "train.max_recovery_trajectories=@ntrajmin:300:data/recovery/m9_mech/s*/p*/wm_goal,data/recovery/m5b/s[0-3]/p*/wm_diverse",
+    "tag=sft_goal_seed1",
+    "train.seed=1"
+   ]
+  },
+  {
+   "name": "m10_rec_goal_s1",
+   "module": "retryvla.eval.eval_recover",
+   "deps": [
+    "m10_sft_goal_s1"
+   ],
+   "args": [
+    "configs/exp/m0_baseline_spatial.yaml",
+    "milestone=M9",
+    "recover_tag=sft_goal_seed1_recover_test",
+    "policy.path=@glob:runs/*_M9_sft_goal_seed1/checkpoints/006000/pretrained_model",
+    "recover_eval.splits=[test]",
+    "eval.n_workers=14",
+    "eval.save_videos=none"
+   ]
+  },
+  {
+   "name": "m10_sft_goal_s2",
+   "module": "retryvla.train.sft",
+   "deps": [],
+   "args": [
+    "configs/exp/m9_sft_goal.yaml",
+    "train.max_recovery_trajectories=@ntrajmin:300:data/recovery/m9_mech/s*/p*/wm_goal,data/recovery/m5b/s[0-3]/p*/wm_diverse",
+    "tag=sft_goal_seed2",
+    "train.seed=2"
+   ]
+  },
+  {
+   "name": "m10_rec_goal_s2",
+   "module": "retryvla.eval.eval_recover",
+   "deps": [
+    "m10_sft_goal_s2"
+   ],
+   "args": [
+    "configs/exp/m0_baseline_spatial.yaml",
+    "milestone=M9",
+    "recover_tag=sft_goal_seed2_recover_test",
+    "policy.path=@glob:runs/*_M9_sft_goal_seed2/checkpoints/006000/pretrained_model",
+    "recover_eval.splits=[test]",
+    "eval.n_workers=14",
+    "eval.save_videos=none"
+   ]
+  },
+  {
+   "name": "m10_sft_comp_s1",
+   "module": "retryvla.train.sft",
+   "deps": [],
+   "args": [
+    "configs/exp/m9_sft_comp.yaml",
+    "train.recovery_datasets=[data/recovery/m5b/s0/p*/wm_diverse,data/recovery/m5b/s1/p*/wm_diverse,data/recovery/m5b/s2/p*/wm_diverse,data/recovery/m5b/s3/p*/wm_diverse]",
+    "train.max_recovery_trajectories=@ntrajmin:300:data/recovery/m9_mech/s*/p*/wm_goal,data/recovery/m5b/s[0-3]/p*/wm_diverse",
+    "tag=sft_comp_seed1",
+    "train.seed=1"
+   ]
+  },
+  {
+   "name": "m10_rec_comp_s1",
+   "module": "retryvla.eval.eval_recover",
+   "deps": [
+    "m10_sft_comp_s1"
+   ],
+   "args": [
+    "configs/exp/m0_baseline_spatial.yaml",
+    "milestone=M9",
+    "recover_tag=sft_comp_seed1_recover_test",
+    "policy.path=@glob:runs/*_M9_sft_comp_seed1/checkpoints/006000/pretrained_model",
+    "recover_eval.splits=[test]",
+    "eval.n_workers=14",
+    "eval.save_videos=none"
+   ]
+  },
+  {
+   "name": "m10_sft_comp_s2",
+   "module": "retryvla.train.sft",
+   "deps": [],
+   "args": [
+    "configs/exp/m9_sft_comp.yaml",
+    "train.recovery_datasets=[data/recovery/m5b/s0/p*/wm_diverse,data/recovery/m5b/s1/p*/wm_diverse,data/recovery/m5b/s2/p*/wm_diverse,data/recovery/m5b/s3/p*/wm_diverse]",
+    "train.max_recovery_trajectories=@ntrajmin:300:data/recovery/m9_mech/s*/p*/wm_goal,data/recovery/m5b/s[0-3]/p*/wm_diverse",
+    "tag=sft_comp_seed2",
+    "train.seed=2"
+   ]
+  },
+  {
+   "name": "m10_rec_comp_s2",
+   "module": "retryvla.eval.eval_recover",
+   "deps": [
+    "m10_sft_comp_s2"
+   ],
+   "args": [
+    "configs/exp/m0_baseline_spatial.yaml",
+    "milestone=M9",
+    "recover_tag=sft_comp_seed2_recover_test",
+    "policy.path=@glob:runs/*_M9_sft_comp_seed2/checkpoints/006000/pretrained_model",
+    "recover_eval.splits=[test]",
+    "eval.n_workers=14",
+    "eval.save_videos=none"
+   ]
+  },
+  {
+   "name": "m10o_collect_s0",
+   "module": "retryvla.wm.collect",
+   "deps": [],
+   "args": [
+    "configs/exp/obj_collect.yaml",
+    "wm_collect.shard=0",
+    "wm_collect.num_shards=4",
+    "eval.n_workers=14"
+   ]
+  },
+  {
+   "name": "m10o_collect_s1",
+   "module": "retryvla.wm.collect",
+   "deps": [],
+   "args": [
+    "configs/exp/obj_collect.yaml",
+    "wm_collect.shard=1",
+    "wm_collect.num_shards=4",
+    "eval.n_workers=14"
+   ]
+  },
+  {
+   "name": "m10o_collect_s2",
+   "module": "retryvla.wm.collect",
+   "deps": [],
+   "args": [
+    "configs/exp/obj_collect.yaml",
+    "wm_collect.shard=2",
+    "wm_collect.num_shards=4",
+    "eval.n_workers=14"
+   ]
+  },
+  {
+   "name": "m10o_collect_s3",
+   "module": "retryvla.wm.collect",
+   "deps": [],
+   "args": [
+    "configs/exp/obj_collect.yaml",
+    "wm_collect.shard=3",
+    "wm_collect.num_shards=4",
+    "eval.n_workers=14"
+   ]
+  },
+  {
+   "name": "m10o_goalfeats",
+   "module": "scripts.build_goal_feats",
+   "deps": [],
+   "args": [
+    "--suite",
+    "libero_object",
+    "--out",
+    "data/wm/goal_feats_obj.pt"
+   ]
+  },
+  {
+   "name": "m10o_train_wm",
+   "module": "retryvla.wm.train_wm",
+   "deps": [
+    "m10o_collect_s0",
+    "m10o_collect_s1",
+    "m10o_collect_s2",
+    "m10o_collect_s3"
+   ],
+   "args": [
+    "configs/exp/obj_train_wm.yaml"
+   ]
+  },
+  {
+   "name": "m10o_train_critic",
+   "module": "retryvla.critic.train_critic",
+   "deps": [
+    "m10o_train_wm"
+   ],
+   "args": [
+    "configs/exp/obj_train_critic.yaml"
+   ]
+  },
+  {
+   "name": "m10o_search_s0",
+   "module": "retryvla.search.compare_arms",
+   "deps": [
+    "m10o_train_critic",
+    "m10o_goalfeats"
+   ],
+   "args": [
+    "configs/exp/obj_search.yaml",
+    "m5b.shard=0",
+    "m5b.num_shards=4",
+    "eval.n_workers=14"
+   ]
+  },
+  {
+   "name": "m10o_search_s1",
+   "module": "retryvla.search.compare_arms",
+   "deps": [
+    "m10o_train_critic",
+    "m10o_goalfeats"
+   ],
+   "args": [
+    "configs/exp/obj_search.yaml",
+    "m5b.shard=1",
+    "m5b.num_shards=4",
+    "eval.n_workers=14"
+   ]
+  },
+  {
+   "name": "m10o_search_s2",
+   "module": "retryvla.search.compare_arms",
+   "deps": [
+    "m10o_train_critic",
+    "m10o_goalfeats"
+   ],
+   "args": [
+    "configs/exp/obj_search.yaml",
+    "m5b.shard=2",
+    "m5b.num_shards=4",
+    "eval.n_workers=14"
+   ]
+  },
+  {
+   "name": "m10o_search_s3",
+   "module": "retryvla.search.compare_arms",
+   "deps": [
+    "m10o_train_critic",
+    "m10o_goalfeats"
+   ],
+   "args": [
+    "configs/exp/obj_search.yaml",
+    "m5b.shard=3",
+    "m5b.num_shards=4",
+    "eval.n_workers=14"
+   ]
+  },
+  {
+   "name": "m10o_sft_nominal",
+   "module": "retryvla.train.sft",
+   "deps": [],
+   "args": [
+    "configs/exp/obj_sft_nominal.yaml"
+   ]
+  },
+  {
+   "name": "m10o_sft_demo_only",
+   "module": "retryvla.train.sft",
+   "deps": [
+    "m10o_sft_nominal"
+   ],
+   "args": [
+    "configs/exp/obj_sft_demo_only.yaml",
+    "train.init_from=@glob:runs/*_M10_sft_nominal_obj/checkpoints/006000/pretrained_model"
+   ]
+  },
+  {
+   "name": "m10o_sft_random",
+   "module": "retryvla.train.sft",
+   "deps": [
+    "m10o_search_s0",
+    "m10o_search_s1",
+    "m10o_search_s2",
+    "m10o_search_s3",
+    "m10o_sft_nominal"
+   ],
+   "args": [
+    "configs/exp/obj_sft_random.yaml",
+    "train.init_from=@glob:runs/*_M10_sft_nominal_obj/checkpoints/006000/pretrained_model",
+    "train.max_recovery_trajectories=@ntrajmin:300:data/recovery/obj/s*/p*/random,data/recovery/obj/s*/p*/wm_diverse,data/recovery/obj/s*/p*/wm_goal"
+   ]
+  },
+  {
+   "name": "m10o_sft_comp",
+   "module": "retryvla.train.sft",
+   "deps": [
+    "m10o_search_s0",
+    "m10o_search_s1",
+    "m10o_search_s2",
+    "m10o_search_s3",
+    "m10o_sft_nominal"
+   ],
+   "args": [
+    "configs/exp/obj_sft_comp.yaml",
+    "train.init_from=@glob:runs/*_M10_sft_nominal_obj/checkpoints/006000/pretrained_model",
+    "train.max_recovery_trajectories=@ntrajmin:300:data/recovery/obj/s*/p*/random,data/recovery/obj/s*/p*/wm_diverse,data/recovery/obj/s*/p*/wm_goal"
+   ]
+  },
+  {
+   "name": "m10o_sft_goal",
+   "module": "retryvla.train.sft",
+   "deps": [
+    "m10o_search_s0",
+    "m10o_search_s1",
+    "m10o_search_s2",
+    "m10o_search_s3",
+    "m10o_sft_nominal"
+   ],
+   "args": [
+    "configs/exp/obj_sft_goal.yaml",
+    "train.init_from=@glob:runs/*_M10_sft_nominal_obj/checkpoints/006000/pretrained_model",
+    "train.max_recovery_trajectories=@ntrajmin:300:data/recovery/obj/s*/p*/random,data/recovery/obj/s*/p*/wm_diverse,data/recovery/obj/s*/p*/wm_goal"
+   ]
+  },
+  {
+   "name": "m10o_test_pi0",
+   "module": "retryvla.eval.eval_recover",
+   "deps": [
+    "m10o_sft_comp",
+    "m10o_sft_demo_only",
+    "m10o_sft_goal",
+    "m10o_sft_random"
+   ],
+   "args": [
+    "configs/exp/obj_eval.yaml",
+    "milestone=M10",
+    "recover_tag=obj_pi0_recover_test",
+    "policy.path=HuggingFaceVLA/smolvla_libero",
+    "recover_eval.splits=[test]",
+    "eval.n_workers=14",
+    "eval.save_videos=none"
+   ]
+  },
+  {
+   "name": "m10o_nom_pi0",
+   "module": "retryvla.eval.eval_nominal",
+   "deps": [
+    "m10o_sft_comp",
+    "m10o_sft_demo_only",
+    "m10o_sft_goal",
+    "m10o_sft_random"
+   ],
+   "args": [
+    "configs/exp/obj_eval.yaml",
+    "milestone=M10",
+    "nominal_tag=obj_pi0_nominal",
+    "policy.path=HuggingFaceVLA/smolvla_libero",
+    "eval.n_workers=14",
+    "eval.save_videos=none"
+   ]
+  },
+  {
+   "name": "m10o_test_pi1nom",
+   "module": "retryvla.eval.eval_recover",
+   "deps": [
+    "m10o_sft_comp",
+    "m10o_sft_demo_only",
+    "m10o_sft_goal",
+    "m10o_sft_nominal",
+    "m10o_sft_random"
+   ],
+   "args": [
+    "configs/exp/obj_eval.yaml",
+    "milestone=M10",
+    "recover_tag=obj_pi1nom_recover_test",
+    "policy.path=@glob:runs/*_M10_sft_nominal_obj/checkpoints/006000/pretrained_model",
+    "recover_eval.splits=[test]",
+    "eval.n_workers=14",
+    "eval.save_videos=none"
+   ]
+  },
+  {
+   "name": "m10o_nom_pi1nom",
+   "module": "retryvla.eval.eval_nominal",
+   "deps": [
+    "m10o_sft_comp",
+    "m10o_sft_demo_only",
+    "m10o_sft_goal",
+    "m10o_sft_nominal",
+    "m10o_sft_random"
+   ],
+   "args": [
+    "configs/exp/obj_eval.yaml",
+    "milestone=M10",
+    "nominal_tag=obj_pi1nom_nominal",
+    "policy.path=@glob:runs/*_M10_sft_nominal_obj/checkpoints/006000/pretrained_model",
+    "eval.n_workers=14",
+    "eval.save_videos=none"
+   ]
+  },
+  {
+   "name": "m10o_test_demo_only",
+   "module": "retryvla.eval.eval_recover",
+   "deps": [
+    "m10o_sft_comp",
+    "m10o_sft_demo_only",
+    "m10o_sft_goal",
+    "m10o_sft_random"
+   ],
+   "args": [
+    "configs/exp/obj_eval.yaml",
+    "milestone=M10",
+    "recover_tag=obj_demo_only_recover_test",
+    "policy.path=@glob:runs/*_M10_sft_demo_only_obj/checkpoints/006000/pretrained_model",
+    "recover_eval.splits=[test]",
+    "eval.n_workers=14",
+    "eval.save_videos=none"
+   ]
+  },
+  {
+   "name": "m10o_nom_demo_only",
+   "module": "retryvla.eval.eval_nominal",
+   "deps": [
+    "m10o_sft_comp",
+    "m10o_sft_demo_only",
+    "m10o_sft_goal",
+    "m10o_sft_random"
+   ],
+   "args": [
+    "configs/exp/obj_eval.yaml",
+    "milestone=M10",
+    "nominal_tag=obj_demo_only_nominal",
+    "policy.path=@glob:runs/*_M10_sft_demo_only_obj/checkpoints/006000/pretrained_model",
+    "eval.n_workers=14",
+    "eval.save_videos=none"
+   ]
+  },
+  {
+   "name": "m10o_test_random",
+   "module": "retryvla.eval.eval_recover",
+   "deps": [
+    "m10o_sft_comp",
+    "m10o_sft_demo_only",
+    "m10o_sft_goal",
+    "m10o_sft_random"
+   ],
+   "args": [
+    "configs/exp/obj_eval.yaml",
+    "milestone=M10",
+    "recover_tag=obj_random_recover_test",
+    "policy.path=@glob:runs/*_M10_sft_random_obj/checkpoints/006000/pretrained_model",
+    "recover_eval.splits=[test]",
+    "eval.n_workers=14",
+    "eval.save_videos=none"
+   ]
+  },
+  {
+   "name": "m10o_nom_random",
+   "module": "retryvla.eval.eval_nominal",
+   "deps": [
+    "m10o_sft_comp",
+    "m10o_sft_demo_only",
+    "m10o_sft_goal",
+    "m10o_sft_random"
+   ],
+   "args": [
+    "configs/exp/obj_eval.yaml",
+    "milestone=M10",
+    "nominal_tag=obj_random_nominal",
+    "policy.path=@glob:runs/*_M10_sft_random_obj/checkpoints/006000/pretrained_model",
+    "eval.n_workers=14",
+    "eval.save_videos=none"
+   ]
+  },
+  {
+   "name": "m10o_test_comp",
+   "module": "retryvla.eval.eval_recover",
+   "deps": [
+    "m10o_sft_comp",
+    "m10o_sft_demo_only",
+    "m10o_sft_goal",
+    "m10o_sft_random"
+   ],
+   "args": [
+    "configs/exp/obj_eval.yaml",
+    "milestone=M10",
+    "recover_tag=obj_comp_recover_test",
+    "policy.path=@glob:runs/*_M10_sft_comp_obj/checkpoints/006000/pretrained_model",
+    "recover_eval.splits=[test]",
+    "eval.n_workers=14",
+    "eval.save_videos=none"
+   ]
+  },
+  {
+   "name": "m10o_nom_comp",
+   "module": "retryvla.eval.eval_nominal",
+   "deps": [
+    "m10o_sft_comp",
+    "m10o_sft_demo_only",
+    "m10o_sft_goal",
+    "m10o_sft_random"
+   ],
+   "args": [
+    "configs/exp/obj_eval.yaml",
+    "milestone=M10",
+    "nominal_tag=obj_comp_nominal",
+    "policy.path=@glob:runs/*_M10_sft_comp_obj/checkpoints/006000/pretrained_model",
+    "eval.n_workers=14",
+    "eval.save_videos=none"
+   ]
+  },
+  {
+   "name": "m10o_test_goal",
+   "module": "retryvla.eval.eval_recover",
+   "deps": [
+    "m10o_sft_comp",
+    "m10o_sft_demo_only",
+    "m10o_sft_goal",
+    "m10o_sft_random"
+   ],
+   "args": [
+    "configs/exp/obj_eval.yaml",
+    "milestone=M10",
+    "recover_tag=obj_goal_recover_test",
+    "policy.path=@glob:runs/*_M10_sft_goal_obj/checkpoints/006000/pretrained_model",
+    "recover_eval.splits=[test]",
+    "eval.n_workers=14",
+    "eval.save_videos=none"
+   ]
+  },
+  {
+   "name": "m10o_nom_goal",
+   "module": "retryvla.eval.eval_nominal",
+   "deps": [
+    "m10o_sft_comp",
+    "m10o_sft_demo_only",
+    "m10o_sft_goal",
+    "m10o_sft_random"
+   ],
+   "args": [
+    "configs/exp/obj_eval.yaml",
+    "milestone=M10",
+    "nominal_tag=obj_goal_nominal",
+    "policy.path=@glob:runs/*_M10_sft_goal_obj/checkpoints/006000/pretrained_model",
+    "eval.n_workers=14",
+    "eval.save_videos=none"
+   ]
+  }
+ ]
+}

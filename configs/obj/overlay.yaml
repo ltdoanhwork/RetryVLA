@@ -1,0 +1,11 @@
+# LIBERO-Object overlay (Setting A: same algorithm + hyper-parameters as Spatial, new suite). Recipe frozen 2026-10-20
+# BEFORE any Object test result was seen; the Object test split (26 scenes) is evaluated once, at the end.
+env:
+  suite: libero_object
+  nominal_max_steps: 280      # lerobot TASK_SUITE_MAX_STEPS[libero_object]
+recover:
+  scene_root: data/assets/scenes/scenes/selected_bddl_scenes_object
+split:
+  file: data/splits/object_v1.json
+train:
+  original_suite_filter: libero_object
