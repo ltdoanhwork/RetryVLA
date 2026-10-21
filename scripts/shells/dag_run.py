@@ -163,6 +163,9 @@ def main() -> None:
         if stop.exists():
             say(log, "stopped by STOP file")
             return
+        for k, v in list(claims().items()):  # local lanes whose tmux died (crash / kill) must not block their task
+            if k.startswith("local:") and k in a.slots and not local_alive(v["tmux"]):
+                pop_claim(k)
         st = {n: status(n) for n in tasks}
         for n, s in st.items():
             if s == "done" and running(n):

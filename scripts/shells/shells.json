@@ -23,22 +23,22 @@
   "local:0:a": {
    "tmux": "rv_m10o_search_s0",
    "args": "retryvla.search.compare_arms configs/exp/obj_search.yaml m5b.shard=0 m5b.num_shards=4 eval.n_workers=14",
-   "since": "2026-10-20T20:46:32"
+   "since": "2026-10-21T03:57:28"
   },
   "local:0:b": {
    "tmux": "rv_m10o_search_s1",
    "args": "retryvla.search.compare_arms configs/exp/obj_search.yaml m5b.shard=1 m5b.num_shards=4 eval.n_workers=14",
-   "since": "2026-10-20T20:46:32"
+   "since": "2026-10-21T03:57:28"
   },
   "local:0:c": {
    "tmux": "rv_m10o_search_s2",
    "args": "retryvla.search.compare_arms configs/exp/obj_search.yaml m5b.shard=2 m5b.num_shards=4 eval.n_workers=14",
-   "since": "2026-10-20T20:46:32"
+   "since": "2026-10-21T03:57:28"
   },
   "local:0:d": {
    "tmux": "rv_m10o_search_s3",
    "args": "retryvla.search.compare_arms configs/exp/obj_search.yaml m5b.shard=3 m5b.num_shards=4 eval.n_workers=14",
-   "since": "2026-10-20T20:46:32"
+   "since": "2026-10-21T03:57:28"
   }
  },
  "allow_only": {
