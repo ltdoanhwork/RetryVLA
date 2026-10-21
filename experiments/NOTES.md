@@ -197,3 +197,6 @@ Q1 why competence, Q2 why a WM, Q3 why distill. Queue (DAG m8m9, 3 lanes on 49b7
 - Real end states: dV predicts verified success (AUC 0.694), goal-latent progress dG does not (AUC 0.447, below chance).
   50% of verified recoveries moved AWAY from the goal latent while raising competence (ramekin 77%, drawer 12%).
   Illustrative for Q1; the controlled test is the wm_goal arm in m9_mech.
+- 2026-10-21: Object search shards all crashed at ~01:00 UTC on a /pfss write error (torch.save of the verif log).
+  Salvaged parts (152 instances done, datasets readable) marked CLOSED, verif-log save now retries; resumed 95 remaining.
+  dag_run left stale local claims after the crash (deadlock) -> now drops dead local-lane claims every poll.
