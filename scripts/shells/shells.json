@@ -21,24 +21,24 @@
  },
  "claims": {
   "local:0:a": {
-   "tmux": "rv_m10_sft_goal_s1",
-   "args": "retryvla.train.sft configs/exp/m9_sft_goal.yaml train.max_recovery_trajectories=66 tag=sft_goal_seed1 train.seed=1",
-   "since": "2026-10-20T11:27:56"
+   "tmux": "rv_m10o_search_s0",
+   "args": "retryvla.search.compare_arms configs/exp/obj_search.yaml m5b.shard=0 m5b.num_shards=4 eval.n_workers=14",
+   "since": "2026-10-20T20:46:32"
   },
   "local:0:b": {
-   "tmux": "rv_m10_sft_goal_s2",
-   "args": "retryvla.train.sft configs/exp/m9_sft_goal.yaml train.max_recovery_trajectories=66 tag=sft_goal_seed2 train.seed=2",
-   "since": "2026-10-20T11:27:56"
+   "tmux": "rv_m10o_search_s1",
+   "args": "retryvla.search.compare_arms configs/exp/obj_search.yaml m5b.shard=1 m5b.num_shards=4 eval.n_workers=14",
+   "since": "2026-10-20T20:46:32"
   },
   "local:0:c": {
-   "tmux": "rv_m10_sft_comp_s1",
-   "args": "retryvla.train.sft configs/exp/m9_sft_comp.yaml train.recovery_datasets=[data/recovery/m5b/s0/p*/wm_diverse,data/recovery/m5b/s1/p*/wm_diverse,data/recovery/m5b/s2/p*/wm_diverse,data/recovery/m5b/s3/p*/wm_diverse] train.max_recovery_trajectories=66 tag=sft_comp_seed1 train.seed=1",
-   "since": "2026-10-20T11:37:40"
+   "tmux": "rv_m10o_search_s2",
+   "args": "retryvla.search.compare_arms configs/exp/obj_search.yaml m5b.shard=2 m5b.num_shards=4 eval.n_workers=14",
+   "since": "2026-10-20T20:46:32"
   },
   "local:0:d": {
-   "tmux": "rv_m10o_collect_s0",
-   "args": "retryvla.wm.collect configs/exp/obj_collect.yaml wm_collect.shard=0 wm_collect.num_shards=4 eval.n_workers=14",
-   "since": "2026-10-20T11:38:44"
+   "tmux": "rv_m10o_search_s3",
+   "args": "retryvla.search.compare_arms configs/exp/obj_search.yaml m5b.shard=3 m5b.num_shards=4 eval.n_workers=14",
+   "since": "2026-10-20T20:46:32"
   }
  },
  "allow_only": {

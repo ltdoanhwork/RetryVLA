@@ -83,6 +83,20 @@ def precheck(pool, policy, jobs, skip: set[str]) -> tuple[list[Instance], list[d
     return insts, rows
 
 
+def _save_retry(obj, path, log, tries: int = 5) -> None:
+    """/pfss occasionally fails writes (2026-10-21: all 4 shards at once). Retry, then skip the (optional) verif log."""
+    for k in range(tries):
+        try:
+            tmp = Path(str(path) + ".tmp")
+            torch.save(obj, tmp)
+            tmp.replace(path)
+            return
+        except (RuntimeError, OSError) as e:
+            log.warning("save %s failed (%s), retry %d/%d", path.name, str(e)[:80], k + 1, tries)
+            time.sleep(30 * (k + 1))
+    log.error("giving up on verif log %s", path.name)
+
+
 def closed_done(root: Path) -> set[str]:
     done = set()
     for p in sorted(root.glob("p*")):
@@ -220,7 +234,7 @@ def main() -> None:
                     robust = {a: [bool(r.success) and 1 + cnt.get((a, j), 0) >= need for j, r in enumerate(by[a])] for a in arms}
                 # verification log (critic self-improvement data), all arms
                 enc = [encode_record(ranker.enc, r.record, H, stride) for r in res]
-                torch.save({
+                _save_retry({
                     "instance_id": inst.instance_id, "task": inst.task, "scene": inst.scene_tag,
                     "z": torch.stack([e["z"] for e in enc]), "q": torch.as_tensor(np.stack([e["q"] for e in enc])),
                     "valid": torch.as_tensor(np.stack([e["valid"] for e in enc])),
@@ -233,7 +247,7 @@ def main() -> None:
                     "source": [a for a, _ in owner],
                     "pred_value": torch.as_tensor(np.concatenate([picked[a][1]["value"] for a in arms])),
                     "arm": "m5b_all",
-                }, vdir / f"{inst.instance_id}.pt")
+                }, vdir / f"{inst.instance_id}.pt", log)
                 line = []
                 for a in arms:
                     cands, cs, n_scored, t_arm = picked[a]
