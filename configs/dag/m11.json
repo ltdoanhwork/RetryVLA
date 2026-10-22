@@ -1,0 +1,168 @@
+{
+ "name": "m11",
+ "tasks": [
+  {
+   "name": "m11_collect_wide_s0",
+   "module": "retryvla.wm.collect",
+   "deps": [],
+   "args": [
+    "configs/exp/m11_collect_wide.yaml",
+    "wm_collect.shard=0",
+    "wm_collect.num_shards=4",
+    "eval.n_workers=14"
+   ]
+  },
+  {
+   "name": "m11_search_a_s0",
+   "module": "retryvla.search.compare_arms",
+   "deps": [],
+   "args": [
+    "configs/exp/m11_search_a.yaml",
+    "m5b.shard=0",
+    "m5b.num_shards=8",
+    "eval.n_workers=14"
+   ]
+  },
+  {
+   "name": "m11_collect_wide_s1",
+   "module": "retryvla.wm.collect",
+   "deps": [],
+   "args": [
+    "configs/exp/m11_collect_wide.yaml",
+    "wm_collect.shard=1",
+    "wm_collect.num_shards=4",
+    "eval.n_workers=14"
+   ]
+  },
+  {
+   "name": "m11_search_a_s1",
+   "module": "retryvla.search.compare_arms",
+   "deps": [],
+   "args": [
+    "configs/exp/m11_search_a.yaml",
+    "m5b.shard=1",
+    "m5b.num_shards=8",
+    "eval.n_workers=14"
+   ]
+  },
+  {
+   "name": "m11_collect_wide_s2",
+   "module": "retryvla.wm.collect",
+   "deps": [],
+   "args": [
+    "configs/exp/m11_collect_wide.yaml",
+    "wm_collect.shard=2",
+    "wm_collect.num_shards=4",
+    "eval.n_workers=14"
+   ]
+  },
+  {
+   "name": "m11_search_a_s2",
+   "module": "retryvla.search.compare_arms",
+   "deps": [],
+   "args": [
+    "configs/exp/m11_search_a.yaml",
+    "m5b.shard=2",
+    "m5b.num_shards=8",
+    "eval.n_workers=14"
+   ]
+  },
+  {
+   "name": "m11_collect_wide_s3",
+   "module": "retryvla.wm.collect",
+   "deps": [],
+   "args": [
+    "configs/exp/m11_collect_wide.yaml",
+    "wm_collect.shard=3",
+    "wm_collect.num_shards=4",
+    "eval.n_workers=14"
+   ]
+  },
+  {
+   "name": "m11_search_a_s3",
+   "module": "retryvla.search.compare_arms",
+   "deps": [],
+   "args": [
+    "configs/exp/m11_search_a.yaml",
+    "m5b.shard=3",
+    "m5b.num_shards=8",
+    "eval.n_workers=14"
+   ]
+  },
+  {
+   "name": "m11_train_wm_v2",
+   "module": "retryvla.wm.train_wm",
+   "deps": [
+    "m11_collect_wide_s0",
+    "m11_collect_wide_s1",
+    "m11_collect_wide_s2",
+    "m11_collect_wide_s3"
+   ],
+   "args": [
+    "configs/exp/m11_train_wm_v2.yaml"
+   ]
+  },
+  {
+   "name": "m11_train_critic_v3",
+   "module": "retryvla.critic.train_critic",
+   "deps": [
+    "m11_train_wm_v2"
+   ],
+   "args": [
+    "configs/exp/m11_train_critic_v3.yaml"
+   ]
+  },
+  {
+   "name": "m11_search_b_s0",
+   "module": "retryvla.search.compare_arms",
+   "deps": [
+    "m11_train_critic_v3"
+   ],
+   "args": [
+    "configs/exp/m11_search_b.yaml",
+    "m5b.shard=0",
+    "m5b.num_shards=8",
+    "eval.n_workers=14"
+   ]
+  },
+  {
+   "name": "m11_search_b_s1",
+   "module": "retryvla.search.compare_arms",
+   "deps": [
+    "m11_train_critic_v3"
+   ],
+   "args": [
+    "configs/exp/m11_search_b.yaml",
+    "m5b.shard=1",
+    "m5b.num_shards=8",
+    "eval.n_workers=14"
+   ]
+  },
+  {
+   "name": "m11_search_b_s2",
+   "module": "retryvla.search.compare_arms",
+   "deps": [
+    "m11_train_critic_v3"
+   ],
+   "args": [
+    "configs/exp/m11_search_b.yaml",
+    "m5b.shard=2",
+    "m5b.num_shards=8",
+    "eval.n_workers=14"
+   ]
+  },
+  {
+   "name": "m11_search_b_s3",
+   "module": "retryvla.search.compare_arms",
+   "deps": [
+    "m11_train_critic_v3"
+   ],
+   "args": [
+    "configs/exp/m11_search_b.yaml",
+    "m5b.shard=3",
+    "m5b.num_shards=8",
+    "eval.n_workers=14"
+   ]
+  }
+ ]
+}

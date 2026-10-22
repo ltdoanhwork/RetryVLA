@@ -136,6 +136,11 @@ def main() -> None:
         policy = SmolVLAWrapper(cfg.policy.path, cfg.policy.device, cfg.policy.n_action_steps)
         ranker = WMCriticRanker(wm_ck, cr_ck, cfg.wm_collect.encoder, int(cfg.wm_collect.pool_grid), dev,
                                 float(mb.lambda_unc), float(mb.beta_rough))
+        ranker2 = None
+        if any(a.endswith("_v2") for a in arms):  # second WM / critic (e.g. retrained on broad-action data)
+            ranker2 = WMCriticRanker((REPO_ROOT / mb.wm_link2).read_text().strip(), (REPO_ROOT / mb.critic_link2).read_text().strip(),
+                                     cfg.wm_collect.encoder, int(cfg.wm_collect.pool_grid), dev,
+                                     float(mb.lambda_unc), float(mb.beta_rough))
         writers = {a: RecoveryWriter(part / a, overwrite=True) for a in arms}
         rows, t0 = [], time.time()
         with SimPool(int(cfg.eval.n_workers), int(cfg.env.resolution)) as pool:
@@ -195,6 +200,18 @@ def main() -> None:
                         zf = torch.cat([zr.mean(1), qr], 1).cpu().numpy()
                         cs = {"value": V, "score": s, "rough": R, "zfeat": zf}
                         cand, idx = pool_c, A.diverse_ranking(s, zf, B, seed=seed % 10007)
+                    elif a == "wm_no_prim":  # same as wm_diverse but the pool has NO primitives / perturbations
+                        vla_only = pool_c[[s.startswith("vla_") for s in src]]
+                        extra = policy.sample_chunks(inst.obs0, inst.task, NP - len(vla_only), noise_scale=1.25,
+                                                     seed=seed % 100003)[:, :H]
+                        pc = np.clip(np.concatenate([vla_only, extra]), -1, 1).astype(np.float32)
+                        cand, idx, cs = A.arm_wm_diverse(ranker, z0, q0, inst.task, pc, ranker.score(z0, q0, inst.task, pc),
+                                                         B, seed % 10007)
+                    elif a in ("wm_plan", "wm_plan_v2"):
+                        rk = ranker2 if a.endswith("_v2") else ranker
+                        za, qa = rk.encode(inst.obs0) if a.endswith("_v2") else (z0, q0)
+                        cand, idx, cs = A.arm_wm_plan(rk, za, qa, inst.task, H, B, seed % 10007,
+                                                      iters=int(mb.get("plan_iters", 5)))
                     elif a == "wm_two_stage":
                         cand, idx, cs = A.arm_wm_two_stage(ranker, z0, q0, inst.task, pool_c, pool_s, B, seed % 10007)
                     else:

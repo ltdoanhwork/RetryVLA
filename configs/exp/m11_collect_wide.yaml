@@ -1,0 +1,8 @@
+# M11: broad, primitive-free action data for the WM (same instances as collect_v1), so a WM PLANNER can be trusted
+# outside the proposal distribution.
+defaults: [exp/m2_collect]
+milestone: M11
+tag: collect_wide
+wm_collect:
+  proposal_mode: wide
+  out_root: data/wm/collect_wide

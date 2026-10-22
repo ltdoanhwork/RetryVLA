@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import logging
 import time
+import zlib
 from pathlib import Path
 
 import numpy as np
@@ -100,7 +101,12 @@ def main() -> None:
                 fn = out / f"{inst.instance_id}.pt"
                 if fn.exists():
                     continue
-                cands, src = proposals(inst, K)
+                if str(wc.get("proposal_mode", "default")) == "wide":   # primitive-free broad exploration data
+                    from retryvla.search.arms import wide_actions
+                    cands = wide_actions(np.random.default_rng(zlib.crc32(inst.instance_id.encode())), K, H)
+                    src = ["wide"] * K
+                else:
+                    cands, src = proposals(inst, K)
                 jobs = [Job("restore_snapshot", dict(bddl=inst.bddl, snap=inst.snapshot), task=inst.task,
                             max_steps=H + int(cfg.search.continuation_max_steps), prefix=c, record="all",
                             record_cfg={"stride": stride, "img_until": H}, policy_seed=k + 7919 * n_done)

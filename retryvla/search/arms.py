@@ -22,7 +22,7 @@ from retryvla.search.cem import CEM, CEMConfig, roughness
 from retryvla.search.wm_search import diverse_ranking
 
 ARM_NAMES = ("random", "wm_diverse", "wm_noise", "wm_qd", "wm_two_stage", "wm_goal", "wm_goal_comp", "wm_top",
-             "random_diverse", "sim_prefix_critic")
+             "random_diverse", "sim_prefix_critic", "wm_no_prim", "wm_plan", "wm_plan_v2")
 
 
 def _z(x: np.ndarray) -> np.ndarray:
@@ -215,3 +215,38 @@ def arm_random_diverse(pool_c, B, rng):
     rng.shuffle(order)
     picks = [by[c][r] for r in range(max(len(v) for v in by.values())) for c in order if r < len(by[c])][:B]
     return np.array(picks)
+
+
+def wide_actions(rng: np.random.Generator, n: int, h: int, std: float = 0.5, kernel: int = 7) -> np.ndarray:
+    """Broad, primitive-free exploration sequences: temporally smooth Gaussian deltas over the WHOLE arm action range
+    (pos + rot), gripper = random piecewise-constant schedule with 0-2 switches. Used (a) as extra WM training data so
+    the WM is accurate outside the proposal distribution, (b) as the planner's initial population."""
+    from retryvla.search.cem import smooth_noise
+
+    rs = np.random.RandomState(int(rng.integers(1 << 30)))
+    a = smooth_noise(rs, n, h, 7, kernel) * std
+    a[..., 3:6] *= 0.5                                         # rotations: half the range
+    g = np.where(rng.random(n) < 0.5, 1.0, -1.0)[:, None].repeat(h, 1)
+    for i in range(n):
+        for _ in range(int(rng.integers(0, 3))):
+            t0 = int(rng.integers(1, h))
+            g[i, t0:] *= -1
+    a[..., 6] = g
+    return np.clip(a, -1, 1).astype(np.float32)
+
+
+def arm_wm_plan(ranker, z0, q0, task, H, B, seed, n=256, iters=5, elites=24, std0=0.35, decay=0.7):
+    """WM as the PLANNER (no proposal library, no VLA samples, no primitives): start from broad noise, then
+    elite-local CEM in imagination for `iters` rounds (each elite perturbed separately, gripper schedule kept; no
+    Gaussian mode averaging), objective = competence critic - uncertainty - roughness. Final picks: diverse top-B."""
+    rng = np.random.default_rng(seed)
+    cand = wide_actions(rng, n, H)
+    cs = ranker.score(z0, q0, task, cand)
+    cem = CEM(H, 7, CEMConfig(n_samples=n, init_std=std0, smooth_kernel=5), seed=seed)
+    for it in range(1, iters + 1):
+        el = np.argsort(-cs["score"])[:elites]
+        new = cem.sample_local(cand[el], cs["score"][el], it, temperature=0.05, decay=decay, gripper_flip_p=0.1)
+        ns = ranker.score(z0, q0, task, new)
+        cand = np.concatenate([cand, new])
+        cs = {k: np.concatenate([cs[k], ns[k]]) for k in cs}
+    return cand, diverse_ranking(cs["score"], cs["zfeat"], B, seed=seed), cs

@@ -1,0 +1,6 @@
+defaults: [exp/m2_train_wm]
+milestone: M11
+tag: train_wm_v2
+wm:
+  data_roots: [data/wm/collect_v1, data/wm/collect_wide]
+  out_link: data/wm/latest_wm_v2.txt

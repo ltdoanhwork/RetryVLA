@@ -1,0 +1,14 @@
+# M11 WM-as-planner on the SAME M5b instances (shards 0-3 of 8), paired with M5b random / wm_diverse and M9 arms.
+#   wm_no_prim: current pipeline without primitives / perturbations (VLA samples only)
+#   wm_plan:    planning from broad noise (5 rounds elite-local CEM in imagination), old WM + critic v2
+#   wm_plan_v2: same planner, WM v2 + critic v3 trained with broad-action data
+defaults: [exp/m9_mech_search]
+milestone: M11
+tag: plan_search_a
+m5b:
+  arms: [wm_no_prim, wm_plan]
+  wm_link2: data/wm/latest_wm_v2.txt
+  critic_link2: data/wm/latest_critic_v3.txt
+  plan_iters: 5
+  out_root: data/recovery/m11_a
+  verif_out: data/wm/verif_m11_a

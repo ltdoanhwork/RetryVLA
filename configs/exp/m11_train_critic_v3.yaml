@@ -1,0 +1,8 @@
+# critic v3 = critic v2 data (C1 + round-1 verifications) + broad-action data, on WM v2. Same exclusions as v2.
+defaults: [exp/m5_train_critic_v2]
+milestone: M11
+tag: train_critic_v3
+critic:
+  data_roots: [data/wm/collect_v1, data/wm/collect_wide, data/wm/verif_r1]
+  wm_link: data/wm/latest_wm_v2.txt
+  out_link: data/wm/latest_critic_v3.txt
