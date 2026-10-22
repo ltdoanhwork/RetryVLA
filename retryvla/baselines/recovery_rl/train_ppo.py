@@ -70,7 +70,7 @@ def append_jsonl(path: Path, row: dict) -> None:
     _retry(go, f"append {path.name}")
 
 
-def build_instances(cfg, pool) -> list[dict]:
+def build_instances(cfg, pool, out: Path) -> list[dict]:
     rl = cfg.rl
     split = load_split(REPO_ROOT / cfg.split.file)
     scenes = scenes_for(split, "train", REPO_ROOT / cfg.recover.scene_root)
@@ -84,13 +84,18 @@ def build_instances(cfg, pool) -> list[dict]:
     if int(rl.get("max_instances", 0)):
         jobs = jobs[: int(rl.max_instances)]
     log.info("%d failure instances (M5b ids found: %d)", len(jobs), len(ids))
-    lj = [Job(**{**j.__dict__, "max_steps": 0, "return_snapshot": True}) for j in jobs]
-    res = run_jobs(pool, None, lj, desc="snapshots")
-    out = []
-    for j, r in zip(jobs, res):
-        out.append({"instance_id": iid(j.meta), "bddl": j.load_kwargs["bddl"], "snap": r.load_out["snapshot"],
-                    "task": j.task, "task_folder": j.meta["task_folder"], "scene": j.meta["scene"]})
-    return out
+    part = out / "instances_partial.pt"  # incremental: a worker crash must not lose the snapshots built so far
+    done = _retry(lambda: torch.load(part, weights_only=False), "load partial") if part.exists() else {}
+    todo = [j for j in jobs if iid(j.meta) not in done]
+    for s in range(0, len(todo), 32):
+        chunk = todo[s: s + 32]
+        lj = [Job(**{**j.__dict__, "max_steps": 0, "return_snapshot": True}) for j in chunk]
+        for j, r in zip(chunk, run_jobs(pool, None, lj, desc="snapshots")):
+            done[iid(j.meta)] = {"instance_id": iid(j.meta), "bddl": j.load_kwargs["bddl"], "snap": r.load_out["snapshot"],
+                                 "task": j.task, "task_folder": j.meta["task_folder"], "scene": j.meta["scene"]}
+        save_atomic(done, part)
+        log.info("snapshots: %d/%d", len(done), len(jobs))
+    return [done[iid(j.meta)] for j in jobs]
 
 
 def rewards(ep: dict, rc) -> list[float]:
@@ -187,14 +192,20 @@ def main() -> None:
         if last.exists():
             ck = torch.load(last, map_location=dev, weights_only=False)
             model.load_state_dict(ck["model"]); opt.load_state_dict(ck["opt"]); st = ck["state"]
-            rng.bit_generator.state = ck["np_rng"]; gen.set_state(ck["torch_gen"])
+            rng.bit_generator.state = ck["np_rng"]; gen.set_state(ck["torch_gen"].cpu())
             log.info("resumed from %s: it %d, %d transitions", last, st["it"], st["trans"])
         bridge = ResidualBridge(model, feats, int(rl.horizon), n_act, float(rl.scale), cfg.policy.device)
-        with SimPool(int(cfg.eval.n_workers), int(cfg.env.resolution)) as pool:
+        def reload() -> None:  # in place, so the closures below keep working
+            ck = torch.load(last, map_location=dev, weights_only=False)
+            model.load_state_dict(ck["model"]); opt.load_state_dict(ck["opt"])
+            st.clear(); st.update(ck["state"])
+            rng.bit_generator.state = ck["np_rng"]; gen.set_state(ck["torch_gen"].cpu())
+
+        def session(pool):
             cache = out / "instances.pt"
             insts = _retry(lambda: torch.load(cache, weights_only=False), "load instances") if cache.exists() else None
             if insts is None:
-                insts = build_instances(cfg, pool)
+                insts = build_instances(cfg, pool, out)
                 save_atomic(insts, cache)
             n_i = len(insts)
             if "perm" not in st:
@@ -285,6 +296,25 @@ def main() -> None:
                 evaluate("final")
                 st["evals_done"].append(f"final{budget}")
             save("final")
+
+        # MuJoCo workers occasionally segfault on this node (2026-10-22, inside env reset): restart the pool and
+        # continue from ckpt_last (the crashed iteration is re-collected; its transitions are not charged).
+        n_restart = 0
+        while True:
+            try:
+                with SimPool(int(cfg.eval.n_workers), int(cfg.env.resolution)) as pool:
+                    session(pool)
+                break
+            except (EOFError, BrokenPipeError, ConnectionResetError, RuntimeError) as e:
+                n_restart += 1
+                log.error("sim pool failure #%d (%s: %s); restarting from ckpt_last", n_restart, type(e).__name__,
+                          str(e)[:200])
+                if n_restart > int(rl.get("max_restarts", 30)):
+                    raise
+                if last.exists():
+                    reload()
+                time.sleep(30)
+        run.summary["pool_restarts"] = n_restart
         run.summary.update({"transitions": st["trans"], "eval_transitions": st["trans_eval"], "iterations": st["it"],
                             "episodes": st["eps"], "final_ckpt": str(out / "final.pt"), "config": to_dict(cfg)})
 
