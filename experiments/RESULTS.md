@@ -99,3 +99,22 @@ Replaces the earlier episode-level McNemar p-values (which treated the 10 trials
   random / round-robin / task-balanced are within noise of each other -> lesson = failure-level coverage.
 - **3 seeds, competence vs goal SFT (66 traj each)**: comp 0.417 ± 0.011, goal 0.187 ± 0.002; diff +0.230
   [+0.161, +0.298] (scene x seed bootstrap), sign-flip p < 1e-4; comp > goal on 47 / 56 test scenes, < on 7.
+
+## M10: LIBERO-Object, Setting A (recipe frozen before any Object test number), 2026-10-22
+Split object_v1: 77 scenes, train 51 / test 26 (frozen). WM + critic retrained on Object train data (M2 recipe).
+Search on train trials 4-9 (247 pi0 failures, 16 verifications / arm), SFT init = Object pi1-nominal, 123 traj each
+(= size of the smallest bank, wm_goal), round-robin. Test evaluated ONCE (26 scenes x 10), 1 training seed.
+
+| policy | test RSR | nominal |
+|---|---|---|
+| pi0 | 0.219 | 0.886 |
+| pi1-nominal (Object demos) | 0.200 | 0.944 |
+| demo-only (+6k steps) | 0.173 | 0.932 |
+| + 123 random-search recoveries | **0.362** | 0.946 |
+| + 123 WM competence recoveries | **0.354** | 0.942 |
+| + 123 WM goal recoveries | 0.242 | 0.906 |
+
+Scene-level paired (26 scenes): comp - demo-only +0.181 [+0.092, +0.277] p = 0.001; comp - random -0.008
+[-0.104, +0.088] p = 0.93; comp - goal +0.112 [-0.004, +0.227] p = 0.08; random - demo-only +0.188 p < 1e-4.
+Search: WM competence solved 0.462 vs random 0.405 (30/16, p = 0.054) vs WM goal 0.227 (66/8, p = 2e-12);
+hits / sim 0.134 / 0.060 / 0.038. Goal bank covers only 56 unique failures (comp 114, random 100).

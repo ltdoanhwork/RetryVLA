@@ -200,3 +200,10 @@ Q1 why competence, Q2 why a WM, Q3 why distill. Queue (DAG m8m9, 3 lanes on 49b7
 - 2026-10-21: Object search shards all crashed at ~01:00 UTC on a /pfss write error (torch.save of the verif log).
   Salvaged parts (152 instances done, datasets readable) marked CLOSED, verif-log save now retries; resumed 95 remaining.
   dag_run left stale local claims after the crash (deadlock) -> now drops dead local-lane claims every poll.
+
+### M10 Object outcome (held-out, frozen recipe)
+Replicates: recovery distillation >> demo-only (+0.18); competence >> goal in SEARCH (66/8) and directionally in SFT
+(+0.11, p=0.08, 26 scenes). Does NOT replicate: WM competence data > random data for the VLA (0.354 vs 0.362, n.s.).
+On Object random search is already strong (pi0 continuation good: solved 0.405 vs Spatial 0.31) and WM search gain is
+small (0.46 vs 0.41). With equal count (123) the extra WM recoveries (340 vs 215 bank) are unused. Claim to drop or
+reframe: "WM data quality > random"; keep: WM = more recoveries per sim (2.2x hits/sim), competence > goal.

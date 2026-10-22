@@ -19,28 +19,7 @@
   "max_load_per_core": 0.6,
   "tmux_prefix": "rv_"
  },
- "claims": {
-  "local:0:a": {
-   "tmux": "rv_m10o_search_s0",
-   "args": "retryvla.search.compare_arms configs/exp/obj_search.yaml m5b.shard=0 m5b.num_shards=4 eval.n_workers=14",
-   "since": "2026-10-21T03:57:28"
-  },
-  "local:0:b": {
-   "tmux": "rv_m10o_search_s1",
-   "args": "retryvla.search.compare_arms configs/exp/obj_search.yaml m5b.shard=1 m5b.num_shards=4 eval.n_workers=14",
-   "since": "2026-10-21T03:57:28"
-  },
-  "local:0:c": {
-   "tmux": "rv_m10o_search_s2",
-   "args": "retryvla.search.compare_arms configs/exp/obj_search.yaml m5b.shard=2 m5b.num_shards=4 eval.n_workers=14",
-   "since": "2026-10-21T03:57:28"
-  },
-  "local:0:d": {
-   "tmux": "rv_m10o_search_s3",
-   "args": "retryvla.search.compare_arms configs/exp/obj_search.yaml m5b.shard=3 m5b.num_shards=4 eval.n_workers=14",
-   "since": "2026-10-21T03:57:28"
-  }
- },
+ "claims": {},
  "allow_only": {
   "49b70230": "vla_RetryVLA_DoanhLT_1 (the GPU the user gave; = the local machine). User 2026-10-16: run ONLY here, no more borrowing.",
   "8a2808f9": "vla_BSC_DoanhLT_1 (user's own; 2026-10-19 user: submit a few LIGHT jobs here; owner job gg_8a2808f9 uses the GPU -> share_ok, <=8 workers)"
