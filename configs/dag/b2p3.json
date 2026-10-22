@@ -1,0 +1,374 @@
+{
+ "name": "b2p3",
+ "tasks": [
+  {
+   "name": "b2_crit_progress",
+   "module": "retryvla.retry_oom",
+   "deps": [],
+   "args": [
+    "--min_free_gb",
+    "8",
+    "retryvla.critic.train_value_baseline",
+    "configs/exp/b2_train_progress.yaml"
+   ]
+  },
+  {
+   "name": "b2_crit_success",
+   "module": "retryvla.retry_oom",
+   "deps": [],
+   "args": [
+    "--min_free_gb",
+    "8",
+    "retryvla.critic.train_value_baseline",
+    "configs/exp/b2_train_success.yaml"
+   ]
+  },
+  {
+   "name": "b2_search_s0",
+   "module": "retryvla.retry_oom",
+   "deps": [
+    "b2_crit_progress",
+    "b2_crit_success"
+   ],
+   "args": [
+    "--min_free_gb",
+    "10",
+    "retryvla.search.compare_arms",
+    "configs/exp/b2_value_search.yaml",
+    "m5b.shard=0",
+    "m5b.num_shards=8",
+    "eval.n_workers=8"
+   ]
+  },
+  {
+   "name": "b2_search_s1",
+   "module": "retryvla.retry_oom",
+   "deps": [
+    "b2_crit_progress",
+    "b2_crit_success"
+   ],
+   "args": [
+    "--min_free_gb",
+    "10",
+    "retryvla.search.compare_arms",
+    "configs/exp/b2_value_search.yaml",
+    "m5b.shard=1",
+    "m5b.num_shards=8",
+    "eval.n_workers=8"
+   ]
+  },
+  {
+   "name": "b2_search_s2",
+   "module": "retryvla.retry_oom",
+   "deps": [
+    "b2_crit_progress",
+    "b2_crit_success"
+   ],
+   "args": [
+    "--min_free_gb",
+    "10",
+    "retryvla.search.compare_arms",
+    "configs/exp/b2_value_search.yaml",
+    "m5b.shard=2",
+    "m5b.num_shards=8",
+    "eval.n_workers=8"
+   ]
+  },
+  {
+   "name": "b2_search_s3",
+   "module": "retryvla.retry_oom",
+   "deps": [
+    "b2_crit_progress",
+    "b2_crit_success"
+   ],
+   "args": [
+    "--min_free_gb",
+    "10",
+    "retryvla.search.compare_arms",
+    "configs/exp/b2_value_search.yaml",
+    "m5b.shard=3",
+    "m5b.num_shards=8",
+    "eval.n_workers=8"
+   ]
+  },
+  {
+   "name": "b2_sft_progress_s0",
+   "module": "retryvla.retry_oom",
+   "deps": [
+    "b2_search_s0",
+    "b2_search_s1",
+    "b2_search_s2",
+    "b2_search_s3"
+   ],
+   "args": [
+    "--min_free_gb",
+    "32",
+    "retryvla.train.sft",
+    "configs/exp/b2_sft_progress.yaml",
+    "tag=sft_progress",
+    "train.seed=0",
+    "train.max_recovery_trajectories=@ntrajmin:66:data/recovery/b2_value/s*/p*/wm_progress,data/recovery/m5b/s[0-3]/p*/wm_diverse"
+   ]
+  },
+  {
+   "name": "b2_rec_progress_s0",
+   "module": "retryvla.retry_oom",
+   "deps": [
+    "b2_sft_progress_s0"
+   ],
+   "args": [
+    "--min_free_gb",
+    "10",
+    "retryvla.eval.eval_recover",
+    "configs/exp/m0_baseline_spatial.yaml",
+    "milestone=B2",
+    "recover_tag=sft_progress_recover_test",
+    "policy.path=@glob:runs/*_B2_sft_progress/checkpoints/006000/pretrained_model",
+    "recover_eval.splits=[test]",
+    "eval.n_workers=8",
+    "eval.save_videos=none"
+   ]
+  },
+  {
+   "name": "p3_preserve_seed0_sft",
+   "module": "retryvla.retry_oom",
+   "deps": [],
+   "args": [
+    "--min_free_gb",
+    "38",
+    "retryvla.train.sft",
+    "configs/exp/p3_sft_preserve.yaml",
+    "tag=p3_preserve_seed0",
+    "train.seed=0"
+   ]
+  },
+  {
+   "name": "p3_preserve_seed0_rec",
+   "module": "retryvla.retry_oom",
+   "deps": [
+    "p3_preserve_seed0_sft"
+   ],
+   "args": [
+    "--min_free_gb",
+    "10",
+    "retryvla.eval.eval_recover",
+    "configs/exp/m0_baseline_spatial.yaml",
+    "milestone=P3",
+    "recover_tag=p3_preserve_seed0_recover_test",
+    "policy.path=@glob:runs/*_P3_p3_preserve_seed0/checkpoints/006000/pretrained_model",
+    "recover_eval.splits=[test]",
+    "eval.n_workers=8",
+    "eval.save_videos=none"
+   ]
+  },
+  {
+   "name": "p3_preserve_seed0_nom",
+   "module": "retryvla.retry_oom",
+   "deps": [
+    "p3_preserve_seed0_sft"
+   ],
+   "args": [
+    "--min_free_gb",
+    "10",
+    "retryvla.eval.eval_nominal",
+    "configs/exp/m0_baseline_spatial.yaml",
+    "milestone=P3",
+    "nominal_tag=p3_preserve_seed0_nominal",
+    "policy.path=@glob:runs/*_P3_p3_preserve_seed0/checkpoints/006000/pretrained_model",
+    "eval.n_workers=8",
+    "eval.save_videos=none"
+   ]
+  },
+  {
+   "name": "p3_r01_seed0_sft",
+   "module": "retryvla.retry_oom",
+   "deps": [],
+   "args": [
+    "--min_free_gb",
+    "32",
+    "retryvla.train.sft",
+    "configs/exp/p3_sft_ratio.yaml",
+    "tag=p3_r01_seed0",
+    "train.seed=0",
+    "train.recovery_ratio=0.1"
+   ]
+  },
+  {
+   "name": "p3_r01_seed0_rec",
+   "module": "retryvla.retry_oom",
+   "deps": [
+    "p3_r01_seed0_sft"
+   ],
+   "args": [
+    "--min_free_gb",
+    "10",
+    "retryvla.eval.eval_recover",
+    "configs/exp/m0_baseline_spatial.yaml",
+    "milestone=P3",
+    "recover_tag=p3_r01_seed0_recover_test",
+    "policy.path=@glob:runs/*_P3_p3_r01_seed0/checkpoints/006000/pretrained_model",
+    "recover_eval.splits=[test]",
+    "eval.n_workers=8",
+    "eval.save_videos=none"
+   ]
+  },
+  {
+   "name": "p3_r01_seed0_nom",
+   "module": "retryvla.retry_oom",
+   "deps": [
+    "p3_r01_seed0_sft"
+   ],
+   "args": [
+    "--min_free_gb",
+    "10",
+    "retryvla.eval.eval_nominal",
+    "configs/exp/m0_baseline_spatial.yaml",
+    "milestone=P3",
+    "nominal_tag=p3_r01_seed0_nominal",
+    "policy.path=@glob:runs/*_P3_p3_r01_seed0/checkpoints/006000/pretrained_model",
+    "eval.n_workers=8",
+    "eval.save_videos=none"
+   ]
+  },
+  {
+   "name": "p3_r07_seed0_sft",
+   "module": "retryvla.retry_oom",
+   "deps": [],
+   "args": [
+    "--min_free_gb",
+    "32",
+    "retryvla.train.sft",
+    "configs/exp/p3_sft_ratio.yaml",
+    "tag=p3_r07_seed0",
+    "train.seed=0",
+    "train.recovery_ratio=0.7"
+   ]
+  },
+  {
+   "name": "p3_r07_seed0_rec",
+   "module": "retryvla.retry_oom",
+   "deps": [
+    "p3_r07_seed0_sft"
+   ],
+   "args": [
+    "--min_free_gb",
+    "10",
+    "retryvla.eval.eval_recover",
+    "configs/exp/m0_baseline_spatial.yaml",
+    "milestone=P3",
+    "recover_tag=p3_r07_seed0_recover_test",
+    "policy.path=@glob:runs/*_P3_p3_r07_seed0/checkpoints/006000/pretrained_model",
+    "recover_eval.splits=[test]",
+    "eval.n_workers=8",
+    "eval.save_videos=none"
+   ]
+  },
+  {
+   "name": "p3_r07_seed0_nom",
+   "module": "retryvla.retry_oom",
+   "deps": [
+    "p3_r07_seed0_sft"
+   ],
+   "args": [
+    "--min_free_gb",
+    "10",
+    "retryvla.eval.eval_nominal",
+    "configs/exp/m0_baseline_spatial.yaml",
+    "milestone=P3",
+    "nominal_tag=p3_r07_seed0_nominal",
+    "policy.path=@glob:runs/*_P3_p3_r07_seed0/checkpoints/006000/pretrained_model",
+    "eval.n_workers=8",
+    "eval.save_videos=none"
+   ]
+  },
+  {
+   "name": "p3_r03_seed0_sft",
+   "module": "retryvla.retry_oom",
+   "deps": [],
+   "args": [
+    "--min_free_gb",
+    "32",
+    "retryvla.train.sft",
+    "configs/exp/p3_sft_ratio.yaml",
+    "tag=p3_r03_seed0",
+    "train.seed=0",
+    "train.recovery_ratio=0.3"
+   ]
+  },
+  {
+   "name": "p3_r03_seed0_rec",
+   "module": "retryvla.retry_oom",
+   "deps": [
+    "p3_r03_seed0_sft"
+   ],
+   "args": [
+    "--min_free_gb",
+    "10",
+    "retryvla.eval.eval_recover",
+    "configs/exp/m0_baseline_spatial.yaml",
+    "milestone=P3",
+    "recover_tag=p3_r03_seed0_recover_test",
+    "policy.path=@glob:runs/*_P3_p3_r03_seed0/checkpoints/006000/pretrained_model",
+    "recover_eval.splits=[test]",
+    "eval.n_workers=8",
+    "eval.save_videos=none"
+   ]
+  },
+  {
+   "name": "p3_r03_seed0_nom",
+   "module": "retryvla.retry_oom",
+   "deps": [
+    "p3_r03_seed0_sft"
+   ],
+   "args": [
+    "--min_free_gb",
+    "10",
+    "retryvla.eval.eval_nominal",
+    "configs/exp/m0_baseline_spatial.yaml",
+    "milestone=P3",
+    "nominal_tag=p3_r03_seed0_nominal",
+    "policy.path=@glob:runs/*_P3_p3_r03_seed0/checkpoints/006000/pretrained_model",
+    "eval.n_workers=8",
+    "eval.save_videos=none"
+   ]
+  },
+  {
+   "name": "b2_sft_success_s0",
+   "module": "retryvla.retry_oom",
+   "deps": [
+    "b2_search_s0",
+    "b2_search_s1",
+    "b2_search_s2",
+    "b2_search_s3"
+   ],
+   "args": [
+    "--min_free_gb",
+    "32",
+    "retryvla.train.sft",
+    "configs/exp/b2_sft_success.yaml",
+    "tag=sft_success",
+    "train.seed=0",
+    "train.max_recovery_trajectories=@ntrajmin:66:data/recovery/b2_value/s*/p*/wm_success,data/recovery/m5b/s[0-3]/p*/wm_diverse"
+   ]
+  },
+  {
+   "name": "b2_rec_success_s0",
+   "module": "retryvla.retry_oom",
+   "deps": [
+    "b2_sft_success_s0"
+   ],
+   "args": [
+    "--min_free_gb",
+    "10",
+    "retryvla.eval.eval_recover",
+    "configs/exp/m0_baseline_spatial.yaml",
+    "milestone=B2",
+    "recover_tag=sft_success_recover_test",
+    "policy.path=@glob:runs/*_B2_sft_success/checkpoints/006000/pretrained_model",
+    "recover_eval.splits=[test]",
+    "eval.n_workers=8",
+    "eval.save_videos=none"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,12 @@
+# P3 L_preserve variant: pi1 recipe (ratio 0.5) + on NOMINAL demo samples a distillation term toward the frozen init
+# policy (pi1-nominal): same noise + time, MSE between student and teacher flow-matching velocities, beta = 1.0.
+# beta = 1: the term lives in the same units as the FM loss (velocity MSE) and starts at 0; the FM target u_t = eps - a
+# has per-sample variance >> teacher-student gap, so beta = 1 regularizes without dominating; it matches the weight of
+# the nominal FM term itself (no tuning on test, single pre-registered value).
+defaults: [exp/p3_sft_ratio]
+tag: p3_sft_preserve
+train:
+  recovery_ratio: 0.5
+  preserve_beta: 1.0
+  preserve_on: nominal
+  preserve_teacher: null      # null = train.init_from (pi1-nominal)

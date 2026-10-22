@@ -22,7 +22,8 @@ from retryvla.search.cem import CEM, CEMConfig, roughness
 from retryvla.search.wm_search import diverse_ranking
 
 ARM_NAMES = ("random", "wm_diverse", "wm_noise", "wm_qd", "wm_two_stage", "wm_goal", "wm_goal_comp", "wm_top",
-             "random_diverse", "sim_prefix_critic", "wm_no_prim", "wm_plan", "wm_plan_v2")
+             "random_diverse", "sim_prefix_critic", "wm_no_prim", "wm_plan", "wm_plan_v2",
+             "wm_progress", "wm_success")
 
 
 def _z(x: np.ndarray) -> np.ndarray:
@@ -203,6 +204,30 @@ def arm_wm_obj(ranker, z0, q0, task, pool_c, B, seed, mode, goal=None, diverse=T
     cs = dict(cs, score=s)
     picks = diverse_ranking(s, cs["zfeat"], B, seed=seed) if diverse else np.argsort(-s)[:B]
     return cand, picks, cs
+
+
+def arm_wm_value(value_ranker, z0, q0, task, pool_c, B, seed, iters=2, elites=16, std=0.25):
+    """P2 baselines (wm_progress / wm_success): EXACTLY wm_diverse / arm_wm_obj(mode='comp') -- same pool, same WM,
+    2 elite-local latent-CEM rounds (same seed, T=0.05), same uncertainty / roughness penalties, diverse top-B --
+    except that the value in S = V - lam U - beta R comes from a policy-agnostic critic (value_ranker = a
+    WMCriticRanker sharing the WM / encoder, critic swapped; see value_ranker_from)."""
+    return arm_wm_obj(value_ranker, z0, q0, task, pool_c, B, seed, "comp", diverse=True, iters=iters, elites=elites,
+                      std=std)
+
+
+def value_ranker_from(ranker, critic_ckpt: str):
+    """Shallow copy of a WMCriticRanker (same WM, normalizer, DINO encoder, lam / beta) with another critic."""
+    import copy
+
+    from retryvla.critic.value_model import RecoveryValue
+
+    ck = torch.load(critic_ckpt, map_location="cpu", weights_only=False)
+    rk = copy.copy(ranker)
+    rk.vocab = ck["vocab"]
+    rk.critic = RecoveryValue(dim=ck["dim"], n_patch=ck["n_patch"], n_tasks=max(16, len(rk.vocab)),
+                              width=int(ck["cfg"]["width"]), depth=int(ck["cfg"]["depth"]), dropout=0.0).to(ranker.dev).eval()
+    rk.critic.load_state_dict(ck["model"])
+    return rk
 
 
 def arm_random_diverse(pool_c, B, rng):

@@ -1,0 +1,5 @@
+# P2 downstream: same as b2_sft_progress, arm wm_success.
+defaults: [exp/b2_sft_progress]
+tag: sft_success
+train:
+  recovery_datasets: [data/recovery/b2_value/s*/p*/wm_success]

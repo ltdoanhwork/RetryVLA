@@ -1,0 +1,16 @@
+# P2: policy-agnostic value critics as the search objective, on the SAME 122 paired M5b instances (select_seed 2026,
+# shards 0-3 of 8), same pi0 / WM v1 / pool / budget 16 / continuation seeds as M5b (random, wm_diverse) and M9
+# (wm_goal, ...). The arms are wm_diverse with the critic swapped (retryvla/search/arms.py::arm_wm_value):
+#   wm_progress  B3 progress critic P_phi(s, g)  (data/wm/latest_critic_progress.txt; no continuation labels)
+#   wm_success   B4 policy-mixture task-success value (data/wm/latest_critic_success.txt)
+defaults: [exp/m9_mech_search]
+milestone: B2
+tag: value_search
+eval:
+  n_workers: 8            # <= 8 while M11 runs (shared node)
+m5b:
+  arms: [wm_progress, wm_success]
+  progress_critic_link: data/wm/latest_critic_progress.txt
+  success_critic_link: data/wm/latest_critic_success.txt
+  out_root: data/recovery/b2_value
+  verif_out: data/wm/verif_b2_value

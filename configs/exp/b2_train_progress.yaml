@@ -1,0 +1,39 @@
+# P2 / B3: policy-agnostic PROGRESS critic P_phi(s, g) (RISE-style task progress), same RecoveryValue architecture and
+# same WM (v1, latest_wm.txt) as the competence critic C^pi v2. Trained WITHOUT any continuation label:
+#   demo    lerobot/libero libero_spatial demo frames, soft label t/(T-1) (real + WM-imagined via the demo actions)
+#   fail    LIBERO-Recover benchmark failure states (frame 0 of collect_v1 / verif_r1 instances), label fail_label=0:
+#           off the demo manifold; without them the regressor extrapolates arbitrarily on failure-like states
+#   prefix  end states of collect_v1 / verif_r1 segments that completed the task BY THEMSELVES (sim success during the
+#           50-step segment, no policy continuation), label 1
+# Validation: 15% held-out demo episodes, WM-val failure episodes; diagnostic AUC vs pi0 labels on the C^pi val set.
+defaults: [env/libero_spatial, policy/smolvla_libero, eval/default]
+milestone: B2
+tag: train_progress
+vcritic:
+  kind: progress
+  wm_link: data/wm/latest_wm.txt
+  demo_latents: data/wm/demo_latents_spatial.pt
+  demo_val_frac: 0.15
+  demo_horizon: 50
+  fail_roots: [data/wm/collect_v1, data/wm/verif_r1]
+  fail_label: 0.0
+  segment_sources:
+    - {root: data/wm/collect_v1, policy: pi0}
+    - {root: data/wm/verif_r1, policy: pi0}
+  mix: {demo: 0.80, fail: 0.15, prefix: 0.05}
+  exclude_eval_instances: true
+  diag_root: data/wm/collect_v1
+  reference_critic_link: data/wm/latest_critic_v2.txt
+  width: 256
+  depth: 3
+  dropout: 0.1
+  lr: 2.0e-4
+  weight_decay: 0.05
+  batch_size: 128
+  steps: 8000
+  imagined_frac: 0.5
+  topk: 4
+  log_every: 100
+  eval_every: 1000
+  seed: 0
+  out_link: data/wm/latest_critic_progress.txt

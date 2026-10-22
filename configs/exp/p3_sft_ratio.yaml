@@ -1,0 +1,10 @@
+# P3: recovery-nominal Pareto frontier. EXACTLY the pi1 recipe (m5c_sft_wm_diverse_rr: init pi1-nominal, 6k steps,
+# bs 32, lr 5e-5, same verified bank data/recovery/m5b/s*/p*/wm_diverse, round-robin subset of 208 trajectories),
+# only train.recovery_ratio changes (override per point: 0.1 / 0.3 / 0.7; 0.5 = pi1, reused).
+defaults: [exp/m5b_sft_wm_diverse]
+milestone: P3
+tag: p3_sft_ratio
+train:
+  max_recovery_trajectories: 208
+  subset_mode: roundrobin
+  recovery_ratio: 0.5

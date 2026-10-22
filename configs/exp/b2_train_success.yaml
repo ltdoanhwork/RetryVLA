@@ -1,0 +1,23 @@
+# P2 / B4: generic TASK-SUCCESS value V(s, g) = P(task completed from s | policy mixture), same architecture + WM as
+# C^pi. Labels pooled over FOUR continuation policies, drawn with equal weight per policy (mix):
+#   pi0      collect_v1 + verif_r1 (= the C^pi v2 data; pi0 continuation)                      weight 0.25
+#   pi1      verif_m6_r2 (continuation = M5c pi1, runs/20261016-042447_M5_m5c_sft_wm_diverse_rr)  weight 0.25
+#   pi1more  verif_m7_weak + verif_m8_aug (continuation = M6 control, runs/20261016-153510_M6_sft_pi1_more) 0.25
+#   demo     expert demo states, label 1 (the expert completes the task from every demo state)  weight 0.25
+# => 75% of every batch carries labels that are NOT pi0 outcomes, so this is not C^pi re-trained.
+# Exposure kept equal to C^pi: +-2 cm logs keep only object-noise trials {0, 1} (C^pi saw trials 0, 1 of the train
+# scenes; the search instances are trials 2..9), and every M5b / M9 search instance id is excluded from all sources.
+# Two-stage (2H) M7 candidates are dropped (their latents stop at H).
+defaults: [exp/b2_train_progress]
+tag: train_success
+vcritic:
+  kind: success
+  fail_roots: []
+  segment_sources:
+    - {root: data/wm/collect_v1, policy: pi0}
+    - {root: data/wm/verif_r1, policy: pi0}
+    - {root: data/wm/verif_m6_r2, policy: pi1, keep_trials: [0, 1]}
+    - {root: data/wm/verif_m7_weak, policy: pi1more, keep_trials: [0, 1]}
+    - {root: data/wm/verif_m8_aug, policy: pi1more}
+  mix: {pi0: 0.25, pi1: 0.25, pi1more: 0.25, demo: 0.25}
+  out_link: data/wm/latest_critic_success.txt

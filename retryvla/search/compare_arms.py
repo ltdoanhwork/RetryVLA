@@ -141,6 +141,12 @@ def main() -> None:
             ranker2 = WMCriticRanker((REPO_ROOT / mb.wm_link2).read_text().strip(), (REPO_ROOT / mb.critic_link2).read_text().strip(),
                                      cfg.wm_collect.encoder, int(cfg.wm_collect.pool_grid), dev,
                                      float(mb.lambda_unc), float(mb.beta_rough))
+        value_rk = {}  # P2: policy-agnostic critics on the SAME WM (optional keys, only loaded when the arm is used)
+        for a_, key in (("wm_progress", "progress_critic_link"), ("wm_success", "success_critic_link")):
+            if a_ in arms:
+                ck_ = (REPO_ROOT / mb[key]).read_text().strip()
+                value_rk[a_] = A.value_ranker_from(ranker, ck_)
+                run.summary[f"{a_}_critic_ckpt"] = ck_
         writers = {a: RecoveryWriter(part / a, overwrite=True) for a in arms}
         rows, t0 = [], time.time()
         with SimPool(int(cfg.eval.n_workers), int(cfg.env.resolution)) as pool:
@@ -214,10 +220,14 @@ def main() -> None:
                                                       iters=int(mb.get("plan_iters", 5)))
                     elif a == "wm_two_stage":
                         cand, idx, cs = A.arm_wm_two_stage(ranker, z0, q0, inst.task, pool_c, pool_s, B, seed % 10007)
+                    elif a in ("wm_progress", "wm_success"):
+                        cand, idx, cs = A.arm_wm_value(value_rk[a], z0, q0, inst.task, pool_c, B, seed % 10007)
                     else:
                         raise ValueError(a)
                     picked[a] = (cand[idx], {k: v[idx] for k, v in cs.items() if k not in ("zfeat",) and np.ndim(v) == 1},
                                  len(cand), time.time() - ta)
+                    if a in value_rk:  # C^pi's prediction for the picks of a policy-agnostic arm (analysis only)
+                        picked[a][1]["value_cpi"] = ranker.score(z0, q0, inst.task, cand[idx])["value"]
                 # one verification batch for all arms; slot j gets the same continuation seed in every arm
                 vj, owner = [], []
                 for a in arms:
@@ -287,6 +297,10 @@ def main() -> None:
                         "pred_mean": float(cs["value"].mean()),
                         "pred_succ": float(cs["value"][succ].mean()) if succ.any() else np.nan,
                         "pred_fail": float(cs["value"][~succ].mean()) if (~succ).any() else np.nan,
+                        **({"pred_cpi_mean": float(cs["value_cpi"].mean()),
+                            "pred_cpi_succ": float(cs["value_cpi"][succ].mean()) if succ.any() else np.nan,
+                            "pred_cpi_fail": float(cs["value_cpi"][~succ].mean()) if (~succ).any() else np.nan}
+                           if "value_cpi" in cs else {}),
                         "n_scored": n_scored, "t_arm_s": t_arm,
                         "sim_steps_verify": int(sum(int(r.steps) for r in by[a])), "sim_steps_extra": int(extra_steps[a]),
                         "order_success": [bool(x) for x in succ],

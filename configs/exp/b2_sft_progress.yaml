@@ -1,0 +1,9 @@
+# P2 downstream: SFT (init pi1-nominal, pi1 recipe as M9 comp / goal) on the verified recoveries of arm wm_progress,
+# count matched to the competence (M5b wm_diverse shards 0-3) data via @ntrajmin in configs/dag/b2p3.json.
+defaults: [exp/m9_sft_goal]
+milestone: B2
+tag: sft_progress
+train:
+  recovery_datasets: [data/recovery/b2_value/s*/p*/wm_progress]
+  subset_mode: roundrobin
+  max_recovery_trajectories: 300

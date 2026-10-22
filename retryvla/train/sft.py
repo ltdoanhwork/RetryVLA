@@ -67,6 +67,52 @@ def build_datasets(cfg, policy_cfg):
     return orig, recs
 
 
+def build_preserve(tc, policy, device):
+    """Optional L_preserve (P3, default OFF: train.preserve_beta = 0). Frozen teacher = the init policy
+    (train.preserve_teacher, default train.init_from). On NOMINAL demo samples of each batch the student's predicted
+    flow-matching velocity is pulled toward the teacher's at the SAME (noise, time, x_t, observation):
+        L = L_FM(all samples) + beta * mean_{nominal, valid steps, real action dims} || v_student - v_teacher ||^2
+    (a distillation term in the native output space of the flow-matching head, not a KL on sampled actions)."""
+    beta = float(tc.get("preserve_beta", 0.0) or 0.0)
+    if beta <= 0:
+        return None
+    from lerobot.policies.smolvla.modeling_smolvla import SmolVLAPolicy
+
+    path = tc.get("preserve_teacher") or tc.init_from
+    teacher = SmolVLAPolicy.from_pretrained(path)
+    teacher.config.device = str(device)
+    teacher.to(device).eval().requires_grad_(False)
+    cap: dict[str, torch.Tensor] = {}
+    hs = [policy.model.action_out_proj.register_forward_hook(lambda m, i, o: cap.__setitem__("s", o)),
+          teacher.model.action_out_proj.register_forward_hook(lambda m, i, o: cap.__setitem__("t", o))]
+    on = str(tc.get("preserve_on", "nominal"))
+    log.info("L_preserve on: beta %.3g, teacher %s, samples=%s", beta, path, on)
+    return {"beta": beta, "teacher": teacher, "cap": cap, "hooks": hs, "on": on}
+
+
+def preserve_forward(pres, policy, batch, src):
+    """Student FM loss + L_preserve with shared noise / time (see build_preserve)."""
+    cfg = policy.config
+    B = batch["action"].shape[0]
+    dev = batch["action"].device
+    noise = policy.model.sample_noise((B, cfg.chunk_size, cfg.max_action_dim), dev)
+    t = policy.model.sample_time(B, dev)
+    loss, out = policy.forward(batch, noise=noise, time=t)
+    v_s = pres["cap"].pop("s")
+    with torch.no_grad():
+        pres["teacher"].forward(batch, noise=noise, time=t)
+    v_t = pres["cap"].pop("t").detach()
+    d = cfg.action_feature.shape[0]
+    se = ((v_s[..., :d].float() - v_t[..., :d].float()) ** 2).mean(-1)            # [B, chunk]
+    m = torch.ones_like(se)
+    if batch.get("action_is_pad") is not None:
+        m = m * (~batch["action_is_pad"]).float()
+    if pres["on"] == "nominal":
+        m = m * (src == 0).float()[:, None]
+    lp = (se * m).sum() / m.sum().clamp_min(1.0)
+    return loss, out, lp
+
+
 def main() -> None:
     setup_logging()
     cfg = cli_config()
@@ -98,6 +144,7 @@ def main() -> None:
                                 weight_decay=float(tc.weight_decay))
         sched = torch.optim.lr_scheduler.LambdaLR(opt, lr_lambda(int(tc.warmup_steps), int(tc.steps)))
         amp = {"bfloat16": torch.bfloat16, "float16": torch.float16}.get(str(tc.amp_dtype))
+        pres = build_preserve(tc, policy, device)
         policy.train()
         t0, loss_ema = time.time(), None
         ckpt_dir = None
@@ -105,7 +152,12 @@ def main() -> None:
             src = batch.pop("source")
             batch = pre(batch)
             with torch.autocast(device_type=device.type, dtype=amp, enabled=amp is not None):
-                loss, out = policy.forward(batch)
+                if pres is None:
+                    loss, out = policy.forward(batch)
+                    lp = None
+                else:
+                    loss, out, lp = preserve_forward(pres, policy, batch, src.to(device))
+                    loss = loss + pres["beta"] * lp
             opt.zero_grad(set_to_none=True)
             loss.backward()
             gn = torch.nn.utils.clip_grad_norm_(params, float(tc.grad_clip))
@@ -116,9 +168,11 @@ def main() -> None:
             if step % int(tc.log_every) == 0 or step == 1:
                 run.log({"train/loss": lv, "train/loss_ema": loss_ema, "train/grad_norm": float(gn),
                          "train/lr": sched.get_last_lr()[0], "train/recovery_frac": float(src.float().mean()),
-                         "train/steps_per_s": step / (time.time() - t0)}, step=step)
-                log.info("step %d/%d loss %.4f (ema %.4f) gn %.2f lr %.2e | %.2f it/s", step, int(tc.steps), lv,
-                         loss_ema, float(gn), sched.get_last_lr()[0], step / (time.time() - t0))
+                         "train/steps_per_s": step / (time.time() - t0),
+                         **({"train/preserve_loss": float(lp.detach())} if lp is not None else {})}, step=step)
+                log.info("step %d/%d loss %.4f (ema %.4f) gn %.2f lr %.2e | %.2f it/s%s", step, int(tc.steps), lv,
+                         loss_ema, float(gn), sched.get_last_lr()[0], step / (time.time() - t0),
+                         f" | L_preserve {float(lp.detach()):.4f}" if lp is not None else "")
             if step % int(tc.save_every) == 0 or step == int(tc.steps):
                 ckpt_dir = run.path("checkpoints", f"{step:06d}", "pretrained_model")
                 ckpt_dir.mkdir(parents=True, exist_ok=True)
