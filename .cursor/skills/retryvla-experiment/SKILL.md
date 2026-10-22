@@ -5,6 +5,14 @@ description: Run, track and document RetryVLA experiments (milestones M0-M6). Us
 
 # RetryVLA Experiment Protocol
 
+## Research plan (read first)
+
+`experiments/PLAN.md` is the agreed framing (2026-10-22): two independently evaluated modules, the policy-aware
+recovery planner (WM + competence critic C^pi, verified bridges) and recovery-preserving distillation (constraint:
+NSR(pi') >= NSR(pi) - 2 pts over >= 3 seeds). It lists the evidence table, the PoC experiments P1-P5, the scale plan,
+and which claims NOT to make. Results go to `experiments/RESULTS.md`, narrative / incidents to `experiments/NOTES.md`.
+Spatial test is a dev set from M7 on; held-out splits (Object test) are evaluated once with a frozen recipe.
+
 ## Milestones
 
 | M | Question | Entry points |
