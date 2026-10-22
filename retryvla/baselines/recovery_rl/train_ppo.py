@@ -191,7 +191,11 @@ def main() -> None:
             log.info("resumed from %s: it %d, %d transitions", last, st["it"], st["trans"])
         bridge = ResidualBridge(model, feats, int(rl.horizon), n_act, float(rl.scale), cfg.policy.device)
         with SimPool(int(cfg.eval.n_workers), int(cfg.env.resolution)) as pool:
-            insts = build_instances(cfg, pool)
+            cache = out / "instances.pt"
+            insts = _retry(lambda: torch.load(cache, weights_only=False), "load instances") if cache.exists() else None
+            if insts is None:
+                insts = build_instances(cfg, pool)
+                save_atomic(insts, cache)
             n_i = len(insts)
             if "perm" not in st:
                 st["perm"] = np.random.default_rng(int(rl.seed) + 1).permutation(n_i).tolist()
@@ -237,13 +241,15 @@ def main() -> None:
                 ti = time.time()
                 model.eval()
                 eps = []
-                for _ in range(int(rl.episodes_per_iter)):
+                G = max(1, int(rl.get("group_size", 1)))  # episodes per instance per iteration (fewer env rebuilds)
+                for _ in range(max(1, int(rl.episodes_per_iter) // G)):
                     i = int(st["perm"][st["ptr"] % n_i])
                     st["ptr"] += 1
                     if st["ptr"] % n_i == 0:
                         st["perm"] = rng.permutation(n_i).tolist()
-                    eps.append({**{k: insts[i][k] for k in ("bddl", "snap", "task", "instance_id")},
-                                "policy_seed": int(rng.integers(0, 1_000_000_000)), "max_steps": int(rl.max_steps)})
+                    for _g in range(G):
+                        eps.append({**{k: insts[i][k] for k in ("bddl", "snap", "task", "instance_id")},
+                                    "policy_seed": int(rng.integers(0, 1_000_000_000)), "max_steps": int(rl.max_steps)})
                 res = run_episodes(pool, base, bridge, eps, sample=True, gen=gen,
                                    noise_scale=float(cfg.policy.noise_scale), desc=f"it{st['it']}")
                 s = ep_summary(res)

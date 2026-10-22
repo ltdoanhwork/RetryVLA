@@ -22,6 +22,7 @@ rl:
   init_log_std: -1.0   # executed exploration noise ~0.18 per arm dim
   seed: 0
   episodes_per_iter: 32
+  group_size: 4           # 8 instances x 4 pi0 seeds per PPO iteration
   ppo_epochs: 4
   minibatch: 64
   lr: 3.0e-4

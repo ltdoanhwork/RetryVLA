@@ -37,12 +37,21 @@ def run_episodes(pool: SimPool, base, bridge: ResidualBridge, episodes: list[dic
     pending = collections.deque(range(len(episodes)))
     ws = [_W() for _ in range(pool.n)]
     out: dict[int, dict] = {}
+    last_bddl: list[str | None] = [None] * pool.n
     t0, last = time.time(), 0.0
     while pending or any(w.phase != "idle" for w in ws):
         for i, w in enumerate(ws):
             if w.phase == "idle" and pending:
-                w.eid = pending.popleft()
+                # worker affinity: prefer an episode on the scene this worker already has built (restore_snapshot
+                # rebuilds the env when the bddl changes, ~5-30 s on a loaded node)
+                pick = next((e for e in pending if episodes[e]["bddl"] == last_bddl[i]), None)
+                if pick is None:
+                    taken = {last_bddl[k] for k, x in enumerate(ws) if x.phase != "idle" or k > i}
+                    pick = next((e for e in pending if episodes[e]["bddl"] not in taken), pending[0])
+                pending.remove(pick)
+                w.eid = pick
                 w.ep = episodes[w.eid]
+                last_bddl[i] = w.ep["bddl"]
                 w.steps, w.n_calls, w.success, w.decs, w.bridge_success = 0, 0, False, [], False
                 pool.send(i, "restore_snapshot", w.ep["bddl"], w.ep["snap"])
                 w.phase = "loading"
