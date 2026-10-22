@@ -250,3 +250,64 @@ DAG `configs/dag/b32_rise.json` (lane local:0:e, tmux rv_dag_b32): datagen pool 
 AWR SFT + evals -> datagen vla -> cond(vla) SFT + evals. Analysis: `python scripts/analyze_b32.py` (scene-level paired
 bootstrap vs pi1 seed 0 and the 3 pi1 seeds, vs demo-only; nominal; precision of imagined labels on the chunks the
 PoC verified -- analysis only, never used for training).
+
+## B3.3 residual recovery RL baseline (ReCoVLA-inspired), 2026-10-22
+
+Name in the paper: **residual recovery RL baseline (ReCoVLA-inspired)**. Simple level: task-success (+ optional shaped)
+reward, no VLM reward compiler, not a ReCoVLA reproduction. Systems-level comparison: it needs an extra controller at
+test time (DINOv2-small 22M frozen + 2.4M trainable MLP); pi1 has no extra module.
+
+**Architecture** (`retryvla/baselines/recovery_rl/`). Frozen pi0 (smolvla_libero, n_action_steps 10, noise 1.0) +
+residual BRIDGE controller, active only for the first H = 50 env steps of an episode (= RetryVLA's bridge length),
+then pi0 alone until success or 520 steps. Chosen over an always-on residual because it matches RetryVLA's structure
+(bridge, then hand back to the unchanged policy) and cannot hurt pi0 after the window; always-on is the obvious
+alternative (not run). One decision per pi0 chunk (5 per episode, closed loop at chunk boundaries like pi0 itself).
+Input: DINOv2-small patch tokens of both cameras pooled 2x2 (3072), 8-D state, hashed bag of uni/bi-grams of the
+instruction (256-D, fixed; test instructions are paraphrases), pi0's planned 10x7 chunk, decision index. Output:
+6-D Gaussian arm residual, executed as 0.5 * clip(a, -1, 1) added to every step of pi0's chunk, and a 3-way gripper
+head {follow pi0, force open, force close}. Init: residual mean ~0, gripper biased to follow (p 0.79), so the
+untrained controller == pi0 at eval (deterministic: mean / argmax). Separate actor / critic MLPs.
+Eval hook: `residual.ckpt=<ckpt>` in eval_recover / eval_nominal (wrapper `ResidualBridgePolicy`; episode step decoded
+from the run_jobs seed convention, rollout.py untouched). In nominal eval the bridge is also active for the first 50
+steps (a deployed system does not know whether it starts in a failure state).
+
+**RL.** PPO, gamma 1, GAE 0.95, clip 0.2, 4 epochs, minibatch 64, lr 3e-4, ent 0.003, 32 episodes / iteration
+(8 instances x 4 pi0 seeds, worker-scene affinity: an env rebuild costs 5-30 s on this node). Reward on the last
+bridge decision: +1 if the episode succeeds (in the bridge or during pi0's continuation); `b33_rl_shaped` adds
+2.0 x progress() delta per decision - 0.05 x mean(delta^2) (configured, not queued: not cheap on this node).
+Episodes start from the SAME 256 M5b train failure states pi1's data came from (select_jobs of compare_arms, all
+8 shards, filtered to the M5b instance ids; exact load_scene snapshot restored with `restore_snapshot`, as in the
+compare_arms verification jobs). Training pi0 seeds in [0, 1e9); learning-curve eval: 128 of the train instances,
+held-out pi0 seeds (1.5e9 + i), deterministic residual, at 0 and every 350k transitions (not charged).
+
+**Budget accounting** (`scripts/b33_budget.py` -> `runs/_analysis/b33/budget.json`; env transitions after the
+failure state, gripper settle excluded, exact from logged success_step except the precheck):
+
+| component | rollouts | transitions | note |
+|---|---|---|---|
+| WM v1 + critic v1 data (`collect_v1`, 144 train inst x 32, cap 350) | 4,608 | 1,390,909 | amortized, charged fully |
+| critic v2 extra data (`verif_r1`, 108 pilot inst, 8-32 sims) | 2,552 | 815,119 | critic v2 is the M5b critic |
+| verification, wm_diverse arm (`verif_m5b`, 256 failures x 16) | 4,096 | 1,262,993 | 4.93k / failure (log: ~5.0k) |
+| **PoC total = RL budget** | | **3,469,021** | 13.6k / failure |
+| precheck (find pi0 failures, 288 x <=520) | 288 | ~135k (estimated) | shared by both, not matched |
+| RL residual PPO | | 3,469,021 (25% = 867,255 first) | all bridge + continuation steps |
+
+M5b per_instance.jsonl has no `sim_steps_verify` (only newer arms): verification was recomputed from the verif logs.
+Charging all WM data to pi1 is conservative in favour of RL (collect_v1 also served M3, M5, M5b's 4 arms, M9, M11).
+The curve also marks the verify-only budget (1.26M).
+
+**Matched:** frozen pi0 + its sampling, the 256 failure states and restore protocol, bridge length 50, transition
+counting. **Not matched:** RL continuation cap 520 (official RSR cap) vs 350 in PoC verification (charged anyway);
+GPU compute (WM / critic / SFT training vs PPO updates + DINO at every bridge decision) not equalized; pi1 also
+trains on nominal demos (pi1-nominal init), RL never changes pi0's weights; RL needs the controller + DINOv2 at test;
+the RL learning curve is on train instances (held-out seeds), the test RSR measures transfer to unseen failures.
+
+**Smoke (2026-10-22):** 3 instances, ~1.4k transitions PPO (cap 120): snapshots, eval, 6 PPO iterations,
+milestone / final checkpoints, resume state OK; `eval_recover residual.ckpt=...` on 1 test scene: RSR 8/10, bridge
+applied exactly on decisions 0-4 (unit check). Throughput on the loaded node (load 100-140 on 32 cores): 5-10 env
+steps/s with 3 workers; snapshot building for 256 instances ~15 min (cached in `rl.out_dir/instances.pt`).
+
+**Queued:** DAG `configs/dag/b33_rl.json` on lane local:0:f (tmux rv_dag_b33): PPO to 25% of the budget ->
+test RSR (`B33_b33_rl_sparse_p25_recover_test`, save_videos none) + nominal with residual -> resume PPO to 100% ->
+test RSR + nominal. Analysis: `python scripts/analyze_b33.py --tag B33_b33_rl_sparse_p25 --rl_dir data/rl/b33_rl_sparse`
+(scene-level paired bootstrap vs pi1 M5c wm_diverse rr (+ seeds) and vs pi0 M0_recover_bddl test part; curve plot).
