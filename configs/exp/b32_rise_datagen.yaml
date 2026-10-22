@@ -1,0 +1,16 @@
+# B3.2 RISE-inspired baseline, step 1: imagination-only advantage data on the SAME 256 M5b pi0 failures as the PoC
+# bank (selection keys + WM v1 / critic v2 / lambda / beta / pool size inherited from the M5b config).
+# No simulator rollout of any candidate; failure states re-created with the official restore (0 policy steps).
+defaults: [exp/m5b_compare_arms]
+milestone: B32
+tag: rise_datagen
+eval:
+  n_workers: 8
+rise:
+  proposal: pool               # pool = the PoC wm_diverse candidate set (pool 232 + 2 x 232 latent CEM) | vla = 696 SmolVLA samples
+  n_wm_calls: 696              # WM rollouts / failure state = PoC wm_diverse search: Proposals(n_total=256) yields 232
+                               # candidates (96 SmolVLA + 96 perturbations + 40 primitives) + 2 x 232 latent-CEM = 696
+  precheck_glob: runs/*_M5_m5b_compare_arms_s*of8/precheck.csv
+  poc_verif_dir: data/wm/verif_m5b   # analysis only: real outcomes of PoC-verified chunks (never used for training)
+  out_root: data/recovery/b32_rise
+  max_instances: 0             # 0 = all 256

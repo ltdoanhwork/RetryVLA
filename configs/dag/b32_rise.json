@@ -1,0 +1,155 @@
+{
+ "name": "b32_rise",
+ "tasks": [
+  {
+   "name": "b32_datagen_pool",
+   "module": "retryvla.baselines.rise_lite",
+   "deps": [],
+   "args": [
+    "configs/exp/b32_rise_datagen.yaml",
+    "rise.proposal=pool"
+   ]
+  },
+  {
+   "name": "b32_sft_cond_pool",
+   "module": "retryvla.baselines.sft_rise",
+   "deps": [
+    "b32_datagen_pool"
+   ],
+   "args": [
+    "configs/exp/b32_rise_sft_cond.yaml",
+    "train.seed=0"
+   ]
+  },
+  {
+   "name": "b32_rec_cond_pool",
+   "module": "retryvla.baselines.eval_cond",
+   "deps": [
+    "b32_sft_cond_pool"
+   ],
+   "args": [
+    "recover",
+    "configs/exp/m0_baseline_spatial.yaml",
+    "milestone=B32",
+    "eval.n_workers=8",
+    "eval.save_videos=none",
+    "recover_tag=rise_cond_pool_recover_test",
+    "policy.path=@glob:runs/*_B32_rise_sft_cond_pool/checkpoints/006000/pretrained_model",
+    "recover_eval.splits=[test]"
+   ]
+  },
+  {
+   "name": "b32_nom_cond_pool",
+   "module": "retryvla.baselines.eval_cond",
+   "deps": [
+    "b32_sft_cond_pool"
+   ],
+   "args": [
+    "nominal",
+    "configs/exp/m0_baseline_spatial.yaml",
+    "milestone=B32",
+    "eval.n_workers=8",
+    "eval.save_videos=none",
+    "nominal_tag=rise_cond_pool_nominal",
+    "policy.path=@glob:runs/*_B32_rise_sft_cond_pool/checkpoints/006000/pretrained_model"
+   ]
+  },
+  {
+   "name": "b32_sft_awr_pool",
+   "module": "retryvla.baselines.sft_rise",
+   "deps": [
+    "b32_datagen_pool"
+   ],
+   "args": [
+    "configs/exp/b32_rise_sft_awr.yaml",
+    "train.seed=0"
+   ]
+  },
+  {
+   "name": "b32_rec_awr_pool",
+   "module": "retryvla.eval.eval_recover",
+   "deps": [
+    "b32_sft_awr_pool"
+   ],
+   "args": [
+    "configs/exp/m0_baseline_spatial.yaml",
+    "milestone=B32",
+    "eval.n_workers=8",
+    "eval.save_videos=none",
+    "recover_tag=rise_awr_pool_recover_test",
+    "policy.path=@glob:runs/*_B32_rise_sft_awr_pool/checkpoints/006000/pretrained_model",
+    "recover_eval.splits=[test]"
+   ]
+  },
+  {
+   "name": "b32_nom_awr_pool",
+   "module": "retryvla.eval.eval_nominal",
+   "deps": [
+    "b32_sft_awr_pool"
+   ],
+   "args": [
+    "configs/exp/m0_baseline_spatial.yaml",
+    "milestone=B32",
+    "eval.n_workers=8",
+    "eval.save_videos=none",
+    "nominal_tag=rise_awr_pool_nominal",
+    "policy.path=@glob:runs/*_B32_rise_sft_awr_pool/checkpoints/006000/pretrained_model"
+   ]
+  },
+  {
+   "name": "b32_datagen_vla",
+   "module": "retryvla.baselines.rise_lite",
+   "deps": [],
+   "args": [
+    "configs/exp/b32_rise_datagen.yaml",
+    "rise.proposal=vla"
+   ]
+  },
+  {
+   "name": "b32_sft_cond_vla",
+   "module": "retryvla.baselines.sft_rise",
+   "deps": [
+    "b32_datagen_vla"
+   ],
+   "args": [
+    "configs/exp/b32_rise_sft_cond.yaml",
+    "tag=rise_sft_cond_vla",
+    "rise_train.data_roots=[data/recovery/b32_rise/vla]",
+    "train.seed=0"
+   ]
+  },
+  {
+   "name": "b32_rec_cond_vla",
+   "module": "retryvla.baselines.eval_cond",
+   "deps": [
+    "b32_sft_cond_vla"
+   ],
+   "args": [
+    "recover",
+    "configs/exp/m0_baseline_spatial.yaml",
+    "milestone=B32",
+    "eval.n_workers=8",
+    "eval.save_videos=none",
+    "recover_tag=rise_cond_vla_recover_test",
+    "policy.path=@glob:runs/*_B32_rise_sft_cond_vla/checkpoints/006000/pretrained_model",
+    "recover_eval.splits=[test]"
+   ]
+  },
+  {
+   "name": "b32_nom_cond_vla",
+   "module": "retryvla.baselines.eval_cond",
+   "deps": [
+    "b32_sft_cond_vla"
+   ],
+   "args": [
+    "nominal",
+    "configs/exp/m0_baseline_spatial.yaml",
+    "milestone=B32",
+    "eval.n_workers=8",
+    "eval.save_videos=none",
+    "nominal_tag=rise_cond_vla_nominal",
+    "policy.path=@glob:runs/*_B32_rise_sft_cond_vla/checkpoints/006000/pretrained_model"
+   ]
+  }
+ ]
+}

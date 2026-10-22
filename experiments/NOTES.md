@@ -207,3 +207,46 @@ Replicates: recovery distillation >> demo-only (+0.18); competence >> goal in SE
 On Object random search is already strong (pi0 continuation good: solved 0.405 vs Spatial 0.31) and WM search gain is
 small (0.46 vs 0.41). With equal count (123) the extra WM recoveries (340 vs 215 bank) are unused. Claim to drop or
 reframe: "WM data quality > random"; keep: WM = more recoveries per sim (2.2x hits/sim), competence > goal.
+
+## B3.2 RISE-inspired baseline (2026-10-22): WM + advantage learning, NO search verification
+
+Question: can the same WM + critic improve the VLA directly from IMAGINED outcomes (RISE, RSS 2026 style:
+advantage from a learned value on imagined rollouts, no per-sample real verification), instead of the PoC's
+verify-in-sim-then-distill? Inspired by RISE, not a reproduction.
+
+Adaptation (and the KEY limitation): our WM predicts DINOv2 latents (6x6 patches x 2 cams + state), not RGB, so
+SmolVLA cannot act closed-loop inside the WM. The baseline is therefore CHUNK-LEVEL and one-step: at each real
+failure state s_0, candidate 50-step chunks are imagined open-loop, A = S(chunk) - V(s_0) with
+S = V(s_hat_50) - lambda U_n std(V) - beta roughness (the PoC search objective, critic v2 on the imagined end state;
+V(s_0) = critic on the real failure latent), and the VLA is trained on (obs_0, chunk) pairs. Training never sees an
+intermediate observation (no rendering of imagined states) and no continuation frames.
+- Data (`retryvla/baselines/rise_lite.py`, `configs/exp/b32_rise_datagen.yaml`): the 256 M5b pi0 failures
+  (compare_arms.select_jobs with the M5b keys; pi0-failure labels from the M5b pre-check; states re-created with the
+  official restore, 0 policy steps). `proposal=pool` replays the PoC Proposals RNG in M5b shard order and runs the
+  same arm_wm_diverse latent CEM, i.e. EXACTLY the PoC candidate set (smoke: 94-100% of the 16 PoC wm_diverse picks
+  reproduced bit-for-bit). `proposal=vla` = 696 SmolVLA samples (scales 1.0 / 1.5), closer to RISE (policy's own samples).
+- Main variant = advantage CONDITIONING (`retryvla/baselines/sft_rise.py mode=cond`): per failure state, top 30% of A
+  with A > 0 -> "<task> Advantage: positive.", bottom 50% -> "... negative."; failure states sampled uniformly,
+  50/50 pos/neg; nominal demos tagged positive; at test time every instruction gets the positive suffix
+  (`retryvla/baselines/eval_cond.py`, reads `<ckpt>/rise_condition.json`). Chosen because it is what RISE / RECAP do,
+  and because it also learns from the NEGATIVE imagined outcomes (the information imagination adds over best-of).
+- Second variant = AWR (`mode=awr`): w = exp(clip(A_hat, +-2.5) / 0.5), A_hat standardized within the failure state,
+  implemented as importance sampling of the chunk (same expected gradient, lower variance); plain eval.
+- Imagined chunks are clipped to [-1, 1] for training (latent-CEM samples reach +-2; the env clips anyway).
+
+Matched to the PoC (pi1 = M5c wm_diverse_rr): init pi1-nominal; 6k optimizer steps; effective batch 32 (16 x 2
+grad accumulation, shared GPU); lr 5e-5 cosine, warmup 300; 50% nominal LIBERO-Spatial demo replay; same 256 failure
+states; same frozen pi0, WM v1, critic v2, lambda / beta; same WM budget per failure state = 696 rollouts (the M5b
+Proposals(n_total=256) pool is 232 = 96 SmolVLA + 96 perturbations + 40 primitives, + 2 x 232 latent CEM; NOT 768);
+same eval (56 test scenes x 10, nominal 10 x 50). Not matched / different by design: ZERO simulator transitions for
+candidates (the PoC spends 16 verifications / failure, ~5k transitions incl. continuation, ~1.3M for the bank) and no
+pi0 pre-check (reused); recovery samples are single (obs_0, chunk) pairs, not trajectories with continuation; every
+failure state is used (the PoC only distils the ~55% it solved). Not done: the multi-step on-policy variant (execute
+the best imagined chunk in the sim, re-plan from the next real state), skipped because the node is CPU-saturated.
+Smoke (3 failures -> 50-step SFT -> eval_cond on 1 test scene, 10 ep): runs end to end. Per-source loss of pi1-nominal:
+demos 0.36, SmolVLA samples 0.66-1.74, primitives 0.76, perturbations 14.7, latent-CEM 6.9; positives are ~93%
+latent-CEM chunks, i.e. imagination-only positives are off the policy manifold (RISE-faithful `vla` arm tests this).
+DAG `configs/dag/b32_rise.json` (lane local:0:e, tmux rv_dag_b32): datagen pool -> cond SFT -> test RSR + nominal ->
+AWR SFT + evals -> datagen vla -> cond(vla) SFT + evals. Analysis: `python scripts/analyze_b32.py` (scene-level paired
+bootstrap vs pi1 seed 0 and the 3 pi1 seeds, vs demo-only; nominal; precision of imagined labels on the chunks the
+PoC verified -- analysis only, never used for training).

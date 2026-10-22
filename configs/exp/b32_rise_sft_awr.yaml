@@ -1,0 +1,7 @@
+# B3.2 second variant: AWR on imagined data (no conditioning; plain eval), same recipe as the main variant.
+defaults: [exp/b32_rise_sft_cond]
+tag: rise_sft_awr_pool
+rise_train:
+  mode: awr
+  awr_beta: 0.5                  # w = exp(clip(A_hat, -c, c) / beta), A_hat standardized within the failure state
+  awr_clip: 2.5
