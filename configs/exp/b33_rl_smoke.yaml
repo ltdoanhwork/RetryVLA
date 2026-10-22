@@ -1,0 +1,17 @@
+# B3.3 smoke test: 3 instances, a few hundred env steps of PPO, tiny eval.
+defaults: [exp/b33_rl_sparse]
+tag: b33_rl_smoke
+eval:
+  n_workers: 3
+rl:
+  max_instances: 3
+  budget_transitions: 1200
+  budget_fraction: 1.0
+  milestones: [600]
+  max_steps: 120
+  episodes_per_iter: 3
+  minibatch: 8
+  eval:
+    n_instances: 3
+    every: 600
+  out_dir: data/rl/b33_rl_smoke

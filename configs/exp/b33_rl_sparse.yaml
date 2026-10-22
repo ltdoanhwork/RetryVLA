@@ -1,0 +1,41 @@
+# B3.3 residual recovery RL baseline (ReCoVLA-inspired; NOT a ReCoVLA reproduction), sparse task-success reward.
+# Frozen pi0 (smolvla_libero) + residual bridge controller (first 50 steps, then pi0 alone), PPO in sim from the SAME
+# 256 M5b train failure states that pi1's data came from. Sim budget matched to the PoC (scripts/b33_budget.py):
+# WM data 1,390,909 + critic-v2 data 815,119 + wm_diverse verification 1,262,993 = 3,469,021 transitions.
+defaults: [exp/m5b_compare_arms]
+milestone: B33
+tag: b33_rl_sparse
+eval:
+  n_workers: 8            # <= 8 while M11 runs (node shared)
+rl:
+  instances_from: runs/*_M5_m5b_compare_arms_s*of8/per_instance.jsonl
+  max_instances: 0        # 0 = all 256
+  budget_transitions: 3469021
+  budget_fraction: 1.0    # the DAG may run a first fraction
+  milestones: [867255, 1262993, 1734510, 2601766, 3469021]   # 25%, verify-only budget, 50%, 75%, 100%
+  horizon: 50             # bridge window = RetryVLA recovery segment length
+  max_steps: 520          # pi0 continues to the official RSR cap
+  scale: 0.5              # executed residual = scale * clip(a, -1, 1) on the 6 arm dims
+  encoder: facebook/dinov2-small
+  pool_grid: 2
+  hidden: 256
+  init_log_std: -1.0   # executed exploration noise ~0.18 per arm dim
+  seed: 0
+  episodes_per_iter: 32
+  ppo_epochs: 4
+  minibatch: 64
+  lr: 3.0e-4
+  clip: 0.2
+  ent_coef: 0.003
+  vf_coef: 0.5
+  max_grad_norm: 0.5
+  gae_lambda: 0.95
+  reward:
+    success_bonus: 1.0
+    progress_coef: 0.0
+    action_pen: 0.0
+  eval:
+    n_instances: 128      # learning curve: train instances, held-out pi0 seeds, deterministic residual
+    seed_base: 1500000000 # training seeds are drawn from [0, 1e9)
+    every: 350000
+  out_dir: data/rl/b33_rl_sparse

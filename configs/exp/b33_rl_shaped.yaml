@@ -1,0 +1,10 @@
+# B3.3 variant: same as b33_rl_sparse + potential-style progress shaping (env progress() delta during the bridge,
+# progress = -xy distance between the two objects of interest) and a small residual-magnitude penalty.
+defaults: [exp/b33_rl_sparse]
+tag: b33_rl_shaped
+rl:
+  reward:
+    success_bonus: 1.0
+    progress_coef: 2.0
+    action_pen: 0.05
+  out_dir: data/rl/b33_rl_shaped

@@ -100,6 +100,10 @@ def main() -> None:
                                     "facebook/dinov2-small", 6, torch.device(cfg.policy.device), 0.5, 1.0)
             policy = BestOfNPolicy(policy, ranker, int(bon.n))
             run.summary["bon"] = {"n": int(bon.n), "critic": bon.critic_link}
+        if (cfg.get("residual") or {}).get("ckpt"):  # B3.3 residual bridge controller (RL baseline); no-op if unset
+            from retryvla.baselines.recovery_rl.bridge import maybe_wrap
+
+            policy = maybe_wrap(cfg, policy, run)
         rows = []
 
         def on_result(r):

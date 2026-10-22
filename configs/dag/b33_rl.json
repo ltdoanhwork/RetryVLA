@@ -1,0 +1,47 @@
+{
+ "name": "b33_rl",
+ "tasks": [
+  {
+   "name": "b33_rl_sparse_p25",
+   "module": "retryvla.baselines.recovery_rl.train_ppo",
+   "deps": [],
+   "args": ["configs/exp/b33_rl_sparse.yaml", "rl.budget_fraction=0.25", "eval.n_workers=8"]
+  },
+  {
+   "name": "b33_rl_sparse_p25_rec",
+   "module": "retryvla.eval.eval_recover",
+   "deps": ["b33_rl_sparse_p25"],
+   "args": ["configs/exp/m0_baseline_spatial.yaml", "milestone=B33", "recover_tag=b33_rl_sparse_p25_recover_test",
+            "recover_eval.splits=[test]", "eval.save_videos=none", "eval.n_workers=8",
+            "residual.ckpt=data/rl/b33_rl_sparse/ckpt_m867255.pt"]
+  },
+  {
+   "name": "b33_rl_sparse_p25_nom",
+   "module": "retryvla.eval.eval_nominal",
+   "deps": ["b33_rl_sparse_p25"],
+   "args": ["configs/exp/m0_baseline_spatial.yaml", "milestone=B33", "nominal_tag=b33_rl_sparse_p25_nominal",
+            "eval.save_videos=none", "eval.n_workers=8", "residual.ckpt=data/rl/b33_rl_sparse/ckpt_m867255.pt"]
+  },
+  {
+   "name": "b33_rl_sparse_full",
+   "module": "retryvla.baselines.recovery_rl.train_ppo",
+   "deps": ["b33_rl_sparse_p25_rec", "b33_rl_sparse_p25_nom"],
+   "args": ["configs/exp/b33_rl_sparse.yaml", "rl.budget_fraction=1.0", "eval.n_workers=8"]
+  },
+  {
+   "name": "b33_rl_sparse_full_rec",
+   "module": "retryvla.eval.eval_recover",
+   "deps": ["b33_rl_sparse_full"],
+   "args": ["configs/exp/m0_baseline_spatial.yaml", "milestone=B33", "recover_tag=b33_rl_sparse_full_recover_test",
+            "recover_eval.splits=[test]", "eval.save_videos=none", "eval.n_workers=8",
+            "residual.ckpt=data/rl/b33_rl_sparse/ckpt_m3469021.pt"]
+  },
+  {
+   "name": "b33_rl_sparse_full_nom",
+   "module": "retryvla.eval.eval_nominal",
+   "deps": ["b33_rl_sparse_full"],
+   "args": ["configs/exp/m0_baseline_spatial.yaml", "milestone=B33", "nominal_tag=b33_rl_sparse_full_nominal",
+            "eval.save_videos=none", "eval.n_workers=8", "residual.ckpt=data/rl/b33_rl_sparse/ckpt_m3469021.pt"]
+  }
+ ]
+}

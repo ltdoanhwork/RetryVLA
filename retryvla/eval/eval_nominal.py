@@ -46,6 +46,10 @@ def main() -> None:
 
     with tracking.start(cfg) as run:
         policy = SmolVLAWrapper(cfg.policy.path, cfg.policy.device, cfg.policy.n_action_steps)
+        if (cfg.get("residual") or {}).get("ckpt"):  # B3.3 residual bridge controller (RL baseline); no-op if unset
+            from retryvla.baselines.recovery_rl.bridge import maybe_wrap
+
+            policy = maybe_wrap(cfg, policy, run)
         rows = []
 
         def on_result(r):
