@@ -387,3 +387,17 @@ Analysis:
 - P2 SFT: scene-level paired bootstrap vs comp / goal SFT (3 seeds), `scripts/stats_cluster.py` style.
 - P3: RSR vs nominal scatter (one point per ratio / preserve, seeds as error bars) with the eps band
   [0.776, inf) around pi1-nominal 0.796 and pi0 0.656 marked; RSR differences scene-bootstrapped vs pi1 (0.5).
+
+## M11 incident 2026-10-22: workspace quota (EDQUOT) ~11:39-12:03 UTC
+- Root cause: the shared `/pfss` workspace fileset hit its quota (`[Errno 122] Disk quota exceeded` in the lerobot image
+  writer; torch.save -> `iostream error` / `unexpected pos 2048`). Not a code bug, but `wm.collect` wrote straight to
+  the final `.pt`: collect_wide_s2 and _s3 died and each left a 2 KB truncated `.pt` that a resume would have SKIPPED.
+  search_a_s3 died in `save_episode` (PNG write failed); search_a_s2 survived via `_save_retry` (4th try).
+  dag_run only reported collect_wide_s2 (it exits on the first failure; s3 / search_a_s3 failed after it had exited).
+- Fix (`retryvla/wm/collect.py`): tmp+rename writes with retry (8 tries, 60 s linear backoff, then raise), resume
+  deletes stale `.tmp` and re-collects any existing `.pt` whose zip directory is unreadable.
+- Cleanup: deleted the 2 truncated collect_wide `.pt` (114 valid kept; all 99 verif_m11_a files load). Salvaged
+  `data/recovery/m11_a/s3/p0` (16 done instances, all 5938 frames decode): dropped wm_no_prim episodes 11-13 of the
+  unfinished 17th instance (lerobot `delete_episodes`, side jsonl filtered), marked CLOSED -> resumed with 20 left.
+- Relaunched DAG m11 12:24 (failed logs -> `failed_*`). Quota headroom is unknown (no quota tool in the container):
+  if EDQUOT recurs, prune intermediate SFT checkpoints (runs/*/checkpoints/00[0-9]000, ~2.3 GB/run x ~25 runs).

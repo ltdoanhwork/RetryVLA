@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import logging
 import time
+import zipfile
 import zlib
 from pathlib import Path
 
@@ -73,6 +74,37 @@ def encode_record(enc: DinoEncoder, rec: dict, horizon: int, stride: int) -> dic
     return {"z": zf, "q": qf, "valid": v}
 
 
+def save_atomic(obj, path: Path, tries: int = 8, wait_s: float = 60.0) -> None:
+    """torch.save to <path>.tmp then rename, retrying on /pfss write errors.
+
+    2026-10-22 (M11): the shared workspace fileset hit its quota (EDQUOT) for ~25 min; torch.save straight to
+    `path` died mid-write and left a 2 KB truncated .pt that a resumed run would have skipped as done.
+    Writing via tmp+rename means `path` exists only when complete; quota windows are waited out (~36 min total
+    backoff) before giving up with an exception (the shard then fails and resumes cleanly)."""
+    tmp = Path(str(path) + ".tmp")
+    for k in range(tries):
+        try:
+            torch.save(obj, tmp)
+            tmp.replace(path)
+            return
+        except (RuntimeError, OSError) as e:
+            tmp.unlink(missing_ok=True)
+            if k == tries - 1:
+                raise
+            log.warning("save %s failed (%s), retry %d/%d in %.0fs", path.name, str(e)[:80], k + 1, tries,
+                        wait_s * (k + 1))
+            time.sleep(wait_s * (k + 1))
+
+
+def is_complete(path: Path) -> bool:
+    """Cheap integrity check of an existing torch .pt (zip central directory readable)."""
+    try:
+        with zipfile.ZipFile(path) as zf:
+            return len(zf.namelist()) > 0
+    except (zipfile.BadZipFile, OSError):
+        return False
+
+
 def main() -> None:
     setup_logging()
     cfg = cli_config()
@@ -99,8 +131,12 @@ def main() -> None:
             insts, _ = build_instances(pool, policy, scenes, cfg, wc.split)
             for inst in insts:
                 fn = out / f"{inst.instance_id}.pt"
+                Path(str(fn) + ".tmp").unlink(missing_ok=True)   # leftover of a killed write
                 if fn.exists():
-                    continue
+                    if is_complete(fn):
+                        continue
+                    log.warning("corrupt/partial %s (%d B) -> re-collecting", fn.name, fn.stat().st_size)
+                    fn.unlink()
                 if str(wc.get("proposal_mode", "default")) == "wide":   # primitive-free broad exploration data
                     from retryvla.search.arms import wide_actions
                     cands = wide_actions(np.random.default_rng(zlib.crc32(inst.instance_id.encode())), K, H)
@@ -113,7 +149,7 @@ def main() -> None:
                         for k, c in enumerate(cands)]
                 res = run_jobs(pool, policy, jobs, desc="collect")
                 enc_rows = [encode_record(enc, r.record, H, stride) for r in res]
-                torch.save({
+                save_atomic({
                     "instance_id": inst.instance_id, "task": inst.task, "scene": inst.scene_tag,
                     "z": torch.stack([e["z"] for e in enc_rows]),
                     "q": torch.as_tensor(np.stack([e["q"] for e in enc_rows])),
