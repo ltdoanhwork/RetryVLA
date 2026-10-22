@@ -311,3 +311,79 @@ steps/s with 3 workers; snapshot building for 256 instances ~15 min (cached in `
 test RSR (`B33_b33_rl_sparse_p25_recover_test`, save_videos none) + nominal with residual -> resume PPO to 100% ->
 test RSR + nominal. Analysis: `python scripts/analyze_b33.py --tag B33_b33_rl_sparse_p25 --rl_dir data/rl/b33_rl_sparse`
 (scene-level paired bootstrap vs pi1 M5c wm_diverse rr (+ seeds) and vs pi0 M0_recover_bddl test part; curve plot).
+
+## P2 policy-agnostic value critics (2026-10-22, DAG b2p3, lane local:0:g)
+Question: is the search gain from POLICY-GROUNDING (C^pi) or from "any learned value"? Two critics with the SAME
+architecture (RecoveryValue, width 256, depth 3), the SAME WM (v1, latest_wm.txt), the same token space (DINOv2-small
+6x6 x 2 cams + 8-d state, WM normalizer), the same train recipe (8k steps, bs 128, lr 2e-4, imagined_frac 0.5), swapped
+into the search objective S = V - 0.5 U - 1.0 R. Code: `retryvla/critic/{value_data,train_value_baseline}.py`,
+demo latents `scripts/build_demo_latents.py` -> `data/wm/demo_latents_spatial.pt` (432 Spatial demos, every 5th frame +
+last, 11,112 frames). Arms `wm_progress` / `wm_success` = `arm_wm_value` = wm_diverse with the critic swapped
+(same pool, 2 latent-CEM rounds, T = 0.05, diverse top-16, same seeds). Every M5b / M9 search instance id (259) is
+excluded from every critic's training data.
+
+Exact supervision:
+| critic | samples (train+val) | label | continuation-policy labels? |
+|---|---|---|---|
+| C^pi v2 (reference) | collect_v1 + verif_r1 segments (pi0 continuation) | pi0 finished after the segment | yes, pi0 only |
+| **B3 progress P_phi** | demo frames 11,112 (80% of each batch); failure states 221 (15%); prefix-success end states 585 (5%) | demo: t/(T-1), soft BCE; failure state (frame 0 of the LIBERO-Recover train instances): 0; segment that finished the task ITSELF (sim success during the 50 steps, no continuation): 1 | **none** |
+| **B4 success V_mix** | pi0 7,160 (collect_v1 + verif_r1), pi1 880 (verif_m6_r2, trials 0-1), pi1more 8,904 (verif_m7_weak trials 0-1 + verif_m8_aug), demo 11,112 | task finished after the segment under the policy that continued (pi0 / M5c pi1 / M6 pi1-more); demo states: 1 (the expert finishes from each) | pooled; batches 25% per source, so 75% of labels are NOT pi0 outcomes |
+
+Why failure states in B3: demos alone never show off-manifold states; the regressor then extrapolates arbitrarily on
+exactly the states search scores. Labelling benchmark failure states 0 is policy-free (they are failure states by
+construction of LIBERO-Recover). Prefix successes give a 1-anchor off the demo manifold, also without a continuation.
+Why B4 differs from C^pi: same pi0 data is only 25% of each batch; the rest are other continuation policies (stronger,
+pi1-family) and the expert. Real / imagined inputs for all critics (demo: WM rollout of the 50 demo actions that led to
+frame t). Smoke (300 steps) rank agreement with C^pi on imagined val candidates: Spearman 0.55 (B3), 0.58 (B4): the
+critics do differ from C^pi. +-2 cm logs keep trials 0-1 only (C^pi exposure), M8 (+-5 cm) is a different state
+distribution so kept whole.
+
+Validation (held out: WM-val failure episodes, 15% of demo episodes; "pi0-diag" = C^pi val set: collect_v1 candidates of
+the WM-val instances, labels = pi0 continuation; "noprefix" = candidates whose segment did not finish the task itself,
+i.e. the part where competence matters):
+| critic | demo progress Spearman (real / imag) | demo-vs-failure AUC | pi0-diag AUC real / imag | pi0-diag AUC noprefix real / imag | top-4 success (mean 0.155) |
+|---|---|---|---|---|---|
+| C^pi v2 (reference) | - | - | 0.809 / 0.787 | 0.748 / 0.663 | 0.328 |
+| B3 progress (step 1000 of 8000) | 0.982 / 0.982 | 0.992 | 0.732 / 0.680 | 0.600 / 0.589 | 0.180 |
+| B4 success (smoke, 300 steps) | - | - | 0.746 / 0.688 (pi1 val 0.698 / 0.611) | 0.733 / 0.673 | 0.297 |
+Final numbers: `runs/*_B2_train_progress/summary.json`, `runs/*_B2_train_success/summary.json` (fill in when done).
+B3 already shows the expected pattern: excellent on its own target (task progress), weak at telling WHICH failure-state
+bridge pi0 can finish (noprefix AUC 0.60 vs 0.75).
+
+Smoke (`runs/20261022-080756_B2_smoke_value_search_s0of8`, 3 instances, budget 4, smoke progress critic used for both
+new arms): wm_progress 1/3 solved, wm_success 1/3, wm_diverse 1/3 (4/4 hits on the solved one vs 1/4). B3 predicts
+~1.0 for its picks while C^pi predicts 0.005 / 0.0002 / 0.25 for the same picks (logged as pred_cpi_* per arm).
+
+Queued: b2_search_s0-3 (`configs/exp/b2_value_search.yaml`, out data/recovery/b2_value, verif data/wm/verif_b2_value,
+eval.n_workers 8), then SFT on wm_progress / wm_success recoveries (`b2_sft_{progress,success}`, init pi1-nominal,
+count = @ntrajmin:66 over the arm's bank and M5b wm_diverse s0-3 = the M9 comp / goal count, round-robin) + test RSR.
+If a bank has < 66 trajectories, the count is lower than the 3-seed comp runs: then add a comp SFT at that count.
+
+## P3 recovery-nominal Pareto (2026-10-22, DAG b2p3)
+pi1 recipe (m5c_sft_wm_diverse_rr): init pi1-nominal, 6k steps, bs 32, lr 5e-5, bank data/recovery/m5b/s*/p*/wm_diverse,
+round-robin 208 trajectories. Only train.recovery_ratio changes: 0.1 / 0.3 / 0.7 (`configs/exp/p3_sft_ratio.yaml`);
+0.5 = pi1 (runs/20261016-042447_M5_m5c_sft_wm_diverse_rr: RSR 0.439, nominal 0.808; M8 seeds 1-2 exist).
+L_preserve (`configs/exp/p3_sft_preserve.yaml`, `retryvla/train/sft.py::build_preserve / preserve_forward`, default OFF):
+ratio 0.5 + on NOMINAL samples beta * MSE(v_student, v_teacher) at the SAME noise + time (velocity of the flow-matching
+head, real action dims, valid steps), teacher = frozen init (pi1-nominal). beta = 1.0, chosen a priori: same units as
+the FM loss, starts at 0, and in the smoke grows to ~0.05 after 50 steps vs FM loss ~0.6 (it regularizes, does not
+dominate); single pre-registered value, not tuned on test.
+Smoke: 50 steps bs 8 with L_preserve -> `runs/20261022-080313_P3_smoke_preserve` (rc 0; teacher costs ~6 GB, ~1.3x step).
+Each point: test RSR + nominal SR (eval.n_workers 8, save_videos none). Reference nominal: pi1-nominal 0.796, pi0 0.656;
+pre-registered eps = 2 pts: a point passes if NSR >= 0.776 (vs pi1-nominal) over >= 3 seeds.
+Seeds 1-2: `python3 scripts/make_dag_b2p3.py --seeds 0 1 2` APPENDS tasks (seed-0 names unchanged), then restart the
+runner (done tasks are skipped by their RV_DONE logs).
+
+Ops: one lane local:0:g, all tasks wrapped in `retryvla.retry_oom` (waits for free GPU memory, retries on CUDA OOM: the
+first B4 smoke died of OOM when the shared GPU was full). Order: critics -> 4 search shards -> P2 SFT progress + RSR ->
+P3 preserve, 0.1, 0.7, 0.3 (SFT, RSR, nominal) -> P2 SFT success + RSR. ETA (load ~90 on 32 cores): critics ~1.5 h,
+search ~2-2.5 h / shard (~31 instances x 2 arms x 16 sims) = ~9-10 h, SFT ~1.3 h, RSR ~1 h, nominal ~0.4 h each ->
+P3 seed 0 ~11 h; whole DAG ~25-28 h.
+
+Analysis:
+- P2 search: paired McNemar on the 122 instances (shards 0-3), wm_progress / wm_success vs M5b wm_diverse + random
+  (`runs/*_M5_m5b_compare_arms_s[0-3]of8/per_instance.jsonl`) and M9 wm_goal (`runs/*_M9_mech_search_s*`), hits / sim,
+  pred_cpi_* (does C^pi rate the policy-agnostic picks low?).
+- P2 SFT: scene-level paired bootstrap vs comp / goal SFT (3 seeds), `scripts/stats_cluster.py` style.
+- P3: RSR vs nominal scatter (one point per ratio / preserve, seeds as error bars) with the eps band
+  [0.776, inf) around pi1-nominal 0.796 and pi0 0.656 marked; RSR differences scene-bootstrapped vs pi1 (0.5).
