@@ -344,11 +344,11 @@ i.e. the part where competence matters):
 | critic | demo progress Spearman (real / imag) | demo-vs-failure AUC | pi0-diag AUC real / imag | pi0-diag AUC noprefix real / imag | top-4 success (mean 0.155) |
 |---|---|---|---|---|---|
 | C^pi v2 (reference) | - | - | 0.809 / 0.787 | 0.748 / 0.663 | 0.328 |
-| B3 progress (step 1000 of 8000) | 0.982 / 0.982 | 0.992 | 0.732 / 0.680 | 0.600 / 0.589 | 0.180 |
+| B3 progress (final, 8000 steps) | 0.984 / 0.981 | 0.915 | 0.721 / 0.716 | 0.638 / 0.683 | 0.203 |
 | B4 success (smoke, 300 steps) | - | - | 0.746 / 0.688 (pi1 val 0.698 / 0.611) | 0.733 / 0.673 | 0.297 |
 Final numbers: `runs/*_B2_train_progress/summary.json`, `runs/*_B2_train_success/summary.json` (fill in when done).
-B3 already shows the expected pattern: excellent on its own target (task progress), weak at telling WHICH failure-state
-bridge pi0 can finish (noprefix AUC 0.60 vs 0.75).
+B3 shows the expected pattern: excellent on its own target (task progress), weaker at ranking which bridge pi0 can
+finish (top-4 success 0.20 vs C^pi 0.33; real noprefix AUC 0.64 vs 0.75; Spearman vs C^pi on imagined val 0.59).
 
 Smoke (`runs/20261022-080756_B2_smoke_value_search_s0of8`, 3 instances, budget 4, smoke progress critic used for both
 new arms): wm_progress 1/3 solved, wm_success 1/3, wm_diverse 1/3 (4/4 hits on the solved one vs 1/4). B3 predicts
