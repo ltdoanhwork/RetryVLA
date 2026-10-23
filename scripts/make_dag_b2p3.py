@@ -43,6 +43,28 @@ def p2_sft(arm, seed, deps):
     return [t, rec(f"b2_rec_{arm}_s{seed}", n, "B2", tag)]
 
 
+def ntraj(pat):
+    import glob
+    return sum(1 for f in glob.glob(str(REPO / pat / "retryvla" / "trajectories.jsonl")) for _ in open(f))
+
+
+def comp_matched(arm, seed):
+    """Count-matched competence control for a P2 SFT whose bank gives fewer than the M9 comp count (66): the M9 comp
+    recipe exactly (configs/exp/m9_sft_comp.yaml: init pi1-nominal, round-robin, M5b wm_diverse s0-3 pool) with
+    max_recovery_trajectories = the SAME @ntrajmin expression as the arm's SFT, so both resolve to the same n."""
+    bank = f"data/recovery/b2_value/s*/p*/wm_{arm}"
+    n = min(66, ntraj(bank), ntraj(COMP))
+    if n == 66:  # pairs with the existing 3-seed M9 comp runs (n = 66), no extra control needed
+        return []
+    tag = f"sft_comp_n{n}" + (f"_seed{seed}" if seed else "")
+    name = f"b2_sft_comp_{arm}n_s{seed}"
+    t = {"name": name, "module": "retryvla.train.sft", "deps": [f"b2_sft_{arm}_s{seed}"],
+         "args": ["configs/exp/m9_sft_comp.yaml", "milestone=B2", f"tag={tag}", f"train.seed={seed}",
+                  "train.recovery_datasets=[" + ",".join(f"data/recovery/m5b/s{s}/p*/wm_diverse" for s in range(4)) + "]",
+                  f"train.max_recovery_trajectories=@ntrajmin:66:{bank},{COMP}"]}
+    return [t, rec(f"b2_rec_comp_{arm}n_s{seed}", name, "B2", tag)]
+
+
 def p3(point, seed):
     if point == "pres":
         cfg, extra = "configs/exp/p3_sft_preserve.yaml", []
@@ -70,9 +92,11 @@ def main() -> None:
                   "deps": ["b2_crit_progress", "b2_crit_success"],
                   "args": ["configs/exp/b2_value_search.yaml", f"m5b.shard={s}", "m5b.num_shards=8", NW]})
     T += p2_sft("progress", 0, search)
+    T += comp_matched("progress", 0)  # progress bank = 60 < 66 -> comp at n = 60 (added 2026-10-23)
     for p in ("pres", 1, 7, 3):
         T += p3(p, 0)
     T += p2_sft("success", 0, search)
+    T += comp_matched("success", 0)  # success bank final (224) -> n = 66 = M9 comp, nothing added
     for seed in a.seeds:
         if seed == 0:
             continue

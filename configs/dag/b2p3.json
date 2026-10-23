@@ -130,6 +130,43 @@
    ]
   },
   {
+   "name": "b2_sft_comp_progressn_s0",
+   "module": "retryvla.retry_oom",
+   "deps": [
+    "b2_sft_progress_s0"
+   ],
+   "args": [
+    "--min_free_gb",
+    "32",
+    "retryvla.train.sft",
+    "configs/exp/m9_sft_comp.yaml",
+    "milestone=B2",
+    "tag=sft_comp_n60",
+    "train.seed=0",
+    "train.recovery_datasets=[data/recovery/m5b/s0/p*/wm_diverse,data/recovery/m5b/s1/p*/wm_diverse,data/recovery/m5b/s2/p*/wm_diverse,data/recovery/m5b/s3/p*/wm_diverse]",
+    "train.max_recovery_trajectories=@ntrajmin:66:data/recovery/b2_value/s*/p*/wm_progress,data/recovery/m5b/s[0-3]/p*/wm_diverse"
+   ]
+  },
+  {
+   "name": "b2_rec_comp_progressn_s0",
+   "module": "retryvla.retry_oom",
+   "deps": [
+    "b2_sft_comp_progressn_s0"
+   ],
+   "args": [
+    "--min_free_gb",
+    "10",
+    "retryvla.eval.eval_recover",
+    "configs/exp/m0_baseline_spatial.yaml",
+    "milestone=B2",
+    "recover_tag=sft_comp_n60_recover_test",
+    "policy.path=@glob:runs/*_B2_sft_comp_n60/checkpoints/006000/pretrained_model",
+    "recover_eval.splits=[test]",
+    "eval.n_workers=8",
+    "eval.save_videos=none"
+   ]
+  },
+  {
    "name": "p3_preserve_seed0_sft",
    "module": "retryvla.retry_oom",
    "deps": [],

@@ -115,7 +115,7 @@ def preserve_forward(pres, policy, batch, src):
 
 def main() -> None:
     setup_logging()
-    from retryvla.baselines.sft_rise import short_tmpdir
+    from retryvla.baselines.sft_rise import safe_log, save_checkpoint, short_tmpdir  # EDQUOT-safe (B3.2 fixes)
     short_tmpdir()  # DataLoader workers die with `AF_UNIX path too long` under the inherited ~90-char TMPDIR
     cfg = cli_config()
     tc = cfg.train
@@ -168,19 +168,15 @@ def main() -> None:
             lv = float(loss.detach())
             loss_ema = lv if loss_ema is None else 0.98 * loss_ema + 0.02 * lv
             if step % int(tc.log_every) == 0 or step == 1:
-                run.log({"train/loss": lv, "train/loss_ema": loss_ema, "train/grad_norm": float(gn),
+                safe_log(run, {"train/loss": lv, "train/loss_ema": loss_ema, "train/grad_norm": float(gn),
                          "train/lr": sched.get_last_lr()[0], "train/recovery_frac": float(src.float().mean()),
                          "train/steps_per_s": step / (time.time() - t0),
-                         **({"train/preserve_loss": float(lp.detach())} if lp is not None else {})}, step=step)
+                         **({"train/preserve_loss": float(lp.detach())} if lp is not None else {})}, step)
                 log.info("step %d/%d loss %.4f (ema %.4f) gn %.2f lr %.2e | %.2f it/s%s", step, int(tc.steps), lv,
                          loss_ema, float(gn), sched.get_last_lr()[0], step / (time.time() - t0),
                          f" | L_preserve {float(lp.detach()):.4f}" if lp is not None else "")
             if step % int(tc.save_every) == 0 or step == int(tc.steps):
-                ckpt_dir = run.path("checkpoints", f"{step:06d}", "pretrained_model")
-                ckpt_dir.mkdir(parents=True, exist_ok=True)
-                policy.save_pretrained(ckpt_dir)
-                pre.save_pretrained(ckpt_dir)
-                post.save_pretrained(ckpt_dir)
+                ckpt_dir = save_checkpoint(run, step, policy, pre, post, None, {"step": step})  # tmp+rename, retries
                 log.info("saved %s", ckpt_dir)
             if step >= int(tc.steps):
                 break

@@ -539,3 +539,18 @@ long` (tmux inherited the ~90-char TMPDIR, same as the B3.2 incident). `retryvla
 bank yields only 60 trajectories (< 66): a matched comp SFT at n = 60 is still to be added.
 Queue / ETA (shared GPU): b2x s1 ~13:35, s2 ~16:05, s3 ~18:35 UTC; b2p3: SFT progress + RSR ~14:30, P3 preserve / r0.1 /
 r0.7 / r0.3 (SFT + RSR + nominal, ~2.7 h each) ~01:30 Oct 24, SFT success + RSR ~03:30 Oct 24.
+Update 12:12 UTC: count-matched comp control added to DAG b2p3 (`scripts/make_dag_b2p3.py::comp_matched`) right after
+the progress SFT + RSR, before the P3 points: `b2_sft_comp_progressn_s0` = M9 comp recipe (configs/exp/m9_sft_comp.yaml,
+init pi1-nominal, round-robin, pool data/recovery/m5b/s[0-3]/p*/wm_diverse) with max_recovery_trajectories = the same
+@ntrajmin expression as the progress SFT (-> 60), tag `sft_comp_n60`, + test RSR (`b2_rec_comp_progressn_s0`).
+Success bank is final (B2 shards 0-3 done): 224 trajectories -> success SFT n = 66 = the existing 3-seed M9 comp runs, so
+no extra comp control (comp_matched adds one automatically if the count were < 66). Runner restarted (24 tasks); the
+running progress SFT kept its lane (0.84 it/s). ETA: progress SFT ~14:00, RSR ~15:00, comp n60 SFT ~17:00, RSR ~18:00,
+P3 x4 (~3.4 h each at the current speed) ~07:30 Oct 24, success SFT + RSR ~10:30 Oct 24; b2x s1-s3 unchanged (~18:35).
+Incident 12:09-12:15 UTC: /pfss EDQUOT again (dd of 1 MB wrote 0 bytes; git could not write objects). The relaunched
+progress SFT died at step ~650 (rc 1): TensorBoard's async writer re-raised `[Errno 122]` in run.log. `sft.py` now uses
+sft_rise's `safe_log` (TB dropped on failure, training continues) and `save_checkpoint` (checkpoints/<step>.tmp ->
+rename, 8 retries, ~36 min backoff), so retryvla.train.sft (P2 + P3 SFTs) survives quota windows like B3.2. Failed log
+-> `failed_rv_b2_sft_progress_s0_..._115936.log`, run dir -> `runs/20261023-120039_B2_sft_progress_DEAD_edquot`;
+runner relaunched it 12:15:43 from step 0. ETAs shift +15 min (progress SFT ~14:15 ... success SFT + RSR ~10:45 Oct 24).
+b2x_search_s1 hit verif `.pt` save retries 1-5 in the same window (watch for rc != 0; parts resume).
