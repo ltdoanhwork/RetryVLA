@@ -312,6 +312,30 @@ test RSR (`B33_b33_rl_sparse_p25_recover_test`, save_videos none) + nominal with
 test RSR + nominal. Analysis: `python scripts/analyze_b33.py --tag B33_b33_rl_sparse_p25 --rl_dir data/rl/b33_rl_sparse`
 (scene-level paired bootstrap vs pi1 M5c wm_diverse rr (+ seeds) and vs pi0 M0_recover_bddl test part; curve plot).
 
+**p25 results (2026-10-22, ckpt `data/rl/b33_rl_sparse/ckpt_m867255.pt`, 867k transitions = 25% of PoC budget;
+`runs/_analysis/b33/summary_B33_b33_rl_sparse_p25.md`, `curve.png`).** PPO wall 8.5 h (10:17-18:50 UTC, 3 MuJoCo
+pool segfaults survived via restart + ckpt_last), 35-55 env steps/s.
+
+| system | test RSR (560 ep, 56 scenes) | diff vs RL p25, 95% CI scene bootstrap, p | nominal Spatial SR (500) |
+|---|---|---|---|
+| pi0 (M0) | 0.118 | RL - pi0 = -0.007 [-0.030, +0.016], p 0.66 | 0.656 |
+| pi1 (M5c wm_diverse rr, 1 seed found) | 0.439 | RL - pi1 = -0.308 [-0.386, -0.228], p < 1e-3 | 0.808 |
+| **RL residual p25** | **0.111** (close 0.089, open 0.132) | | **0.400** |
+
+Learning curve (128 train instances, held-out pi0 seeds, deterministic residual): SR 0.039 @0 -> 0.086 @355k ->
+0.086 @712k -> 0.055 @883k (n = 128, so +-0.05 is noise); stochastic train SR flat at 0.06-0.10. The policy is
+NOT learning recovery at this budget; what it does learn is to override the gripper more (force open/close rate
+0.21 -> 0.44 over iterations, |delta| 0.19 -> 0.21). That gripper/arm override in the first 50 steps is what hurts
+nominal: -0.256 overall, tasks 4 (0.66 -> 0.04) and 5 (0.44 -> 0.00) collapse, 1 and 8 unchanged. So with the sparse
+reward at 25% budget the residual is ~pi0 on recovery and clearly worse than pi0 on nominal. Not a final claim:
+the 100% run is still running.
+
+**Restart 2026-10-23 02:12 UTC:** container restart killed all tmux (~22:00 UTC) during `b33_rl_sparse_full`
+(it 62, 961k transitions). Partial logs renamed `failed_rv_b33_*`, dead claim local:0:f dropped, DAG relaunched
+(tmux rv_dag_b33); PPO resumes from ckpt_last (it 62, 961,081 transitions; the interrupted iteration is re-collected
+and not charged). ETA: PPO to 3.47M ~18-20 h (42 steps/s + 7 curve evals) -> ~22:00 UTC 10-23; test RSR + nominal
+~2.5 h after.
+
 ## P2 policy-agnostic value critics (2026-10-22, DAG b2p3, lane local:0:g)
 Question: is the search gain from POLICY-GROUNDING (C^pi) or from "any learned value"? Two critics with the SAME
 architecture (RecoveryValue, width 256, depth 3), the SAME WM (v1, latest_wm.txt), the same token space (DINOv2-small
