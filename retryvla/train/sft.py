@@ -176,7 +176,16 @@ def main() -> None:
                          loss_ema, float(gn), sched.get_last_lr()[0], step / (time.time() - t0),
                          f" | L_preserve {float(lp.detach()):.4f}" if lp is not None else "")
             if step % int(tc.save_every) == 0 or step == int(tc.steps):
-                ckpt_dir = save_checkpoint(run, step, policy, pre, post, None, {"step": step})  # tmp+rename, retries
+                for k in range(8):  # save_checkpoint retries OSError/RuntimeError itself; safetensors' SafetensorError
+                    try:            # (EDQUOT, 2026-10-23 13:59) is neither -> retry it here too
+                        ckpt_dir = save_checkpoint(run, step, policy, pre, post, None, {"step": step})
+                        break
+                    except Exception as e:  # noqa: BLE001
+                        if k == 7:
+                            raise
+                        log.warning("checkpoint %06d failed (%s), outer retry %d/8 in %ds", step, str(e)[:100],
+                                    k + 1, 60 * (k + 1))
+                        time.sleep(60 * (k + 1))
                 log.info("saved %s", ckpt_dir)
             if step >= int(tc.steps):
                 break

@@ -581,3 +581,16 @@ b2x_search_s1 hit verif `.pt` save retries 1-5 in the same window (watch for rc 
   respawns / skips needed; with s0 (29) + s2 (32) wm_plan_v2 covers 127 instances. `validate_recovery_part.py`
   OK on all 4 closed parts (s0 30 / s1 39 / s2 39 / s3 49 trajectories; `--decode` run on s0 + s2, all frames decode).
   Results: RESULTS.md "M11" (arm B).
+Incident 13:59-14:12 UTC: EDQUOT again; both of my runners exited (FAILED).
+- b2_sft_progress_s0 died at the step-4000 checkpoint: `safetensors SafetensorError ... Disk quota exceeded`, which is
+  neither OSError nor RuntimeError, so sft_rise.save_checkpoint did not retry it. `sft.py` now wraps save_checkpoint in
+  an outer 8-try retry on any exception (60 s linear backoff). Run dir -> `runs/20261023-121732_B2_sft_progress_DEAD_edquot`
+  (checkpoints deleted, 1.2 GB freed); log -> failed_*. Relaunched 14:35 from step 0 (no optimizer-state resume in sft.py).
+- b2x_search_s1 died at instance 29/31 in lerobot's parquet writer (`[Errno 122] Error writing bytes`). The 28 done
+  instances' search results are intact in `runs/20261023-110724_B2_valuex_search_s1of8/per_instance.jsonl` (56 rows),
+  but the part's arm datasets are not loadable (wm_cpi_pool file-005.parquet unfinalized; both arms contain episodes of the
+  undone instance). These datasets have no downstream use (b2x = search comparison only), so instead of a 2.5 h re-run
+  the part `data/recovery/b2x_value/s1/p0` was closed by hand: arm dirs -> `wm_*_BROKEN` (never train on them),
+  `DATASET_BROKEN` note, CLOSED -> resume skips the 28 done instances. Relaunched 14:35.
+Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR ~18:00, comp n60 SFT ~20:30, RSR
+~21:30; P3 x4 ~11:00 Oct 24; success SFT + RSR ~14:00 Oct 24.
