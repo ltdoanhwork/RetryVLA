@@ -264,6 +264,20 @@ PoC verified -- analysis only, never used for training).
   ~90-char TMPDIR, so DataLoader workers failed with `OSError: AF_UNIX path too long` (sockets under $TMPDIR);
   `sft_rise` / `eval_cond` now fall back to `/tmp/rv_<uid>` when TMPDIR is longer than 60 chars (smoke OK under
   that TMPDIR; plain eval_recover is unaffected, SimPool uses socketpairs). Relaunched 02:40 UTC.
+- 2026-10-23 results (pool arms; RESULTS.md B3.2, runs/_analysis/b32/summary.md): cond RSR 0.068 / NSR 0.718,
+  AWR RSR 0.082 / NSR 0.776, both BELOW pi1-nominal (0.138, scene-paired -0.070 p<1e-4 / -0.055 p=0.004) and below
+  pi0 (0.118 test part; -0.050 / -0.036), vs pi1 (3 seeds) -0.35 / -0.34. NSR: cond -7.8 pt (fails eps = 2 pt),
+  AWR -2.0 pt (exactly at the margin; 1 seed). Diagnosis, zero new sim cost (the 8740 imagined chunks that M5b
+  executed in sim carry their real chunk + pi0-continuation outcome, matched bit-for-bit): critic is badly
+  over-confident on imagined end states -- positives V 0.81 vs real 0.185, V > 0.9 -> real 0.23, AUC 0.67; argmax-A
+  chunk / state real 0.205. 18% of chunks have A > 0; positives / AWR mass are 85% / 90% latent-CEM chunks (jerk 0.090
+  vs pi0 samples 0.065; gripper flips 1.9 vs 6.0), pi0's own samples only 3%. Caveat: verified chunks are the
+  PoC-picked (high-score) subset, so precision is measured where the critic is most confident. No new sim
+  verification was run (the reused labels cover 91% of the argmax-A chunks). Interpretation: imagination-only learning
+  distils ~80% false positives that are off the policy manifold; RISE-faithful `vla` arm (positives drawn from SmolVLA
+  samples) tests whether staying on-manifold helps -- its datagen shows frac(A > 0) ~0.02 per state, so most states
+  will have almost no positives. Remaining DAG (lane local:0:e): datagen_vla (34 s / state, done ~17:00 UTC) ->
+  sft_cond_vla (~2.7 h) -> rec (~2.3 h) -> nom (~1 h); ETA ~23:00 UTC.
 
 ## B3.3 residual recovery RL baseline (ReCoVLA-inspired), 2026-10-22
 

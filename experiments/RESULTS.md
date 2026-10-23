@@ -169,3 +169,29 @@ hits/sim, +27% hits per 10k sim steps, all n.s.): the solve gap to wm_diverse sh
 manifold distance of its successes is unchanged. Broad-action WM data does NOT close the gap; the proposal library
 still carries most of the recovery-finding, and the remaining planner deficit is not mainly WM coverage of
 off-manifold actions.
+
+## B3.2 RISE-inspired imagination-only baseline (PARTIAL, 2026-10-23: pool arms done, VLA-sample arm running)
+Same WM v1 + critic v2 + 256 pi0 failures + 696 imagined 50-step chunks / failure as the PoC, but the VLA learns
+directly from IMAGINED advantage A = S(chunk) - V(s_0) (no per-sample sim verification; 0 candidate sim transitions).
+Matched recipe: init pi1-nominal, 6k steps, eff. batch 32, lr 5e-5, 50% demo replay, 1 training seed.
+`scripts/analyze_b32.py` -> runs/_analysis/b32/summary.md. Unit = test scene (56 x 10), scene (x seed) bootstrap,
+paired sign-flip p. pi0 = test part of M0_recover_bddl.
+
+| policy | test RSR | nominal | dRSR vs pi1-nominal | vs pi1 (3 seeds) | vs pi0 | dNSR vs pi1-nominal (eps 2 pt) |
+|---|---|---|---|---|---|---|
+| pi0 | 0.118 | 0.656 | | | | -0.140 |
+| pi1-nominal (init) | 0.138 | 0.796 | | | | |
+| pi1 (PoC, 3 seeds) | 0.418 ± 0.021 | 0.785 | +0.280 | | | -0.011 (ok) |
+| B3.2 cond, pool | 0.068 | 0.718 | -0.070 [-0.109, -0.037] p<1e-4 | -0.351 [-0.435, -0.270] p<1e-4 | -0.050 [-0.079, -0.023] p=9e-4 | -0.078 [-0.124, -0.036] **FAIL** |
+| B3.2 AWR, pool | 0.082 | 0.776 | -0.055 [-0.095, -0.021] p=0.004 | -0.336 [-0.418, -0.252] p<1e-4 | -0.036 [-0.061, -0.012] p=0.008 | -0.020 [-0.060, +0.016] at the margin |
+| B3.2 cond, VLA samples | running (ETA ~23:00 UTC) | | | | | |
+
+Scenes worse / better / tied vs pi1-nominal: cond 18 / 0 / 38, AWR 18 / 5 / 33. Nominal CI = 10-task bootstrap.
+Diagnosis (critic labels vs the real outcomes of the same chunks that M5b executed in sim, 8740 chunks, 0 new sim):
+positive-labelled chunks have imagined V(s_hat_50) 0.81 but real success 0.185 (precision; PoC distils only verified
+successes, precision 1.0); argmax-A chunk per state: imagined V 0.94, real 0.205; AUC(A -> real) 0.67. Only 18% of
+chunks have A > 0; 85% of cond positives and 90% of AWR mass are latent-CEM chunks (off SmolVLA's manifold: 40%
+higher jerk than pi0 samples 0.090 vs 0.065, 1.9 vs 6.0 gripper flips / chunk), pi0's own samples get 3%.
+Reading: imagination-only learning is WORSE than not training on recoveries at all (below pi1-nominal and even
+pi0); the imagined labels are ~4 / 5 wrong on the positives and push the policy towards off-manifold chunks, which
+also costs nominal SR (cond -7.8 pt). Sim verification is what makes the WM data useful.
