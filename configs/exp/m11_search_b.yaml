@@ -11,4 +11,5 @@ m5b:
   critic_link2: data/wm/latest_critic_v3.txt
   plan_iters: 5
   out_root: data/recovery/m11_b
+  write_retries: 8  # re-check + rewrite unreadable PNGs before save_episode (EDQUOT 2026-10-22); 0 = old behaviour
   verif_out: data/wm/verif_m11_b

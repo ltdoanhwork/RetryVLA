@@ -147,7 +147,8 @@ def main() -> None:
                 ck_ = (REPO_ROOT / mb[key]).read_text().strip()
                 value_rk[a_] = A.value_ranker_from(ranker, ck_)
                 run.summary[f"{a_}_critic_ckpt"] = ck_
-        writers = {a: RecoveryWriter(part / a, overwrite=True) for a in arms}
+        writers = {a: RecoveryWriter(part / a, overwrite=True, write_retries=int(mb.get("write_retries", 0)))
+                   for a in arms}
         rows, t0 = [], time.time()
         with SimPool(int(cfg.eval.n_workers), int(cfg.env.resolution)) as pool:
             insts, pre = precheck(pool, policy, jobs, done)

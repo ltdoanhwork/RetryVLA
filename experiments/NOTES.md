@@ -425,3 +425,21 @@ Analysis:
   unfinished 17th instance (lerobot `delete_episodes`, side jsonl filtered), marked CLOSED -> resumed with 20 left.
 - Relaunched DAG m11 12:24 (failed logs -> `failed_*`). Quota headroom is unknown (no quota tool in the container):
   if EDQUOT recurs, prune intermediate SFT checkpoints (runs/*/checkpoints/00[0-9]000, ~2.3 GB/run x ~25 runs).
+
+## M11 incident 2026-10-22/23: second EDQUOT hit (12:45) + tmux server loss overnight
+- 12:45:44 `m11_search_a_s3` (resumed part p1) died again on EDQUOT: lerobot's async image writer only LOGS
+  `[Errno 122] Disk quota exceeded`, leaves a truncated PNG, then `save_episode -> compute_episode_stats` raises
+  `PIL.UnidentifiedImageError` (verif `.pt` had survived via `_save_retry`). dag_run exited (FAILED); collect_wide
+  s2 / s3 kept running and finished rc=0 (13:24 / 13:56). Overnight the container's tmux server was restarted
+  (all rv_* sessions gone), so nothing ran after that. 2026-10-23 02:10: `/pfss` writable again (dd 50 MB OK).
+- Fix (opt-in, other callers unchanged): `RecoveryWriter(write_retries=N)` -> before `save_episode` every PNG of
+  the episode is `PIL.verify`-checked and any unreadable one is rewritten synchronously (tmp+rename) from the
+  in-memory frame, up to N rounds with linear backoff (60 s), then raises. compare_arms passes
+  `m5b.write_retries` (default 0 = old behaviour); set to 8 in `m11_search_a/b.yaml` only. Tested with a
+  simulated 1-in-7 truncated-PNG writer: all frames repaired and decode bit-exact.
+- Salvage: `data/recovery/m11_a/s3/p1` (1 done instance; wm_no_prim 4 eps / 501 frames, wm_plan 2 eps / 368
+  frames, all decode): removed the half-written wm_no_prim episode-000004 image dirs + the undone instance's
+  row in instances.jsonl, marked CLOSED. All 144 collect_wide and 108 verif_m11_a `.pt` pass zip tests.
+- State at relaunch (02:16 UTC, lanes local:0:a-d, tmux rv_dag_m11): done = collect_wide s0-s3, search_a s0-s2;
+  search_a_s3 resumes (17 done); train_wm_v2 started (collect_v1 + collect_wide); critic_v3 + search_b s0-s3 queued.
+  Failed log -> `failed_rv_m11_search_a_s3_..._20261022-122441.log`; dead claims for local:0:a-d removed.
