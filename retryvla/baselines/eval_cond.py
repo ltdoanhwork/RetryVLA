@@ -18,6 +18,11 @@ from retryvla import REPO_ROOT
 
 
 def main() -> None:
+    import os
+    import tempfile
+    if len(tempfile.gettempdir()) > 60:  # AF_UNIX socket paths under $TMPDIR are limited to 107 chars (see sft_rise)
+        os.makedirs(f"/tmp/rv_{os.getuid()}", exist_ok=True)
+        os.environ["TMPDIR"], tempfile.tempdir = f"/tmp/rv_{os.getuid()}", None
     target = sys.argv.pop(1)
     assert target in ("recover", "nominal"), target
     path = next((a.split("=", 1)[1] for a in sys.argv[2:] if a.startswith("policy.path=")), None)

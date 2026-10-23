@@ -15,12 +15,21 @@ No candidate was ever executed in the simulator.
       implemented as importance sampling (candidate drawn with prob ~ w, unweighted flow-matching loss), which has
       the same expected gradient as the w-weighted loss but far lower variance (most of the 696 chunks have w ~ 0).
 Both: failure states are drawn uniformly (coverage of every failure state, cf. the PoC round-robin subset).
+
+Robustness (after the 2026-10-22 /pfss EDQUOT outage killed the first cond_pool run at step 5150 via a
+TensorBoard write): metric logging failures are non-fatal (TB is disabled, jsonl skipped), checkpoints are written
+to `checkpoints/<step>.tmp/` and renamed only when complete (retry with back-off ~36 min), and the latest
+checkpoint also carries `training_state.pt` (optimizer, scheduler, step, EMA, RNG). With `train.resume=auto`
+(default) a relaunch continues the newest unfinished run dir of the same milestone/tag/seed from its last
+complete checkpoint; the sample stream is a pure function of (seed, item index), so the resumed data order is
+identical to an uninterrupted run.
 """
 
 from __future__ import annotations
 
 import json
 import logging
+import shutil
 import time
 from pathlib import Path
 
@@ -28,7 +37,7 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader, Dataset
 
-from retryvla import REPO_ROOT, tracking
+from retryvla import REPO_ROOT, RUNS_DIR, tracking
 from retryvla.config import cli_config
 from retryvla.data.mix import CORE_KEYS
 from retryvla.train.sft import build_datasets, lr_lambda
@@ -92,11 +101,13 @@ class RiseMix(Dataset):
         self.cond = bank.mode == "cond"
         self.pos_sfx, self.neg_sfx = str(rt.get("pos_suffix", "")), str(rt.get("neg_suffix", ""))
         self.demo_sfx = self.pos_sfx if (self.cond and str(rt.get("demo_label", "positive")) == "positive") else ""
+        self.offset = 0   # resume: skip the items already consumed (item i is a pure function of (seed, i))
 
     def __len__(self) -> int:
-        return self.n
+        return self.n - self.offset
 
     def __getitem__(self, i: int) -> dict:
+        i = i + self.offset
         rng = np.random.default_rng((self.seed, i))
         if rng.random() < self.ratio:
             it = self.bank.items[int(rng.integers(len(self.bank.items)))]
@@ -124,8 +135,98 @@ class RiseMix(Dataset):
         return out
 
 
+def safe_log(run, metrics: dict, step: int) -> None:
+    """run.log, but a failing write (EDQUOT on /pfss) must never kill training: drop TB, keep going."""
+    try:
+        run.log(metrics, step=step)
+    except Exception as e:  # noqa: BLE001  (TensorBoard re-raises its async worker's OSError on every call)
+        log.warning("metric logging failed at step %d (%s): TensorBoard disabled, jsonl best-effort", step,
+                    str(e)[:120])
+        run._tb = False   # also keeps Run.finish from re-raising in SummaryWriter.close()
+
+
+def save_checkpoint(run, step: int, policy, pre, post, cond, state: dict, tries: int = 8,
+                    wait_s: float = 60.0) -> Path:
+    """Write checkpoints/<step>.tmp/{pretrained_model,training_state.pt}, then rename to checkpoints/<step>.
+
+    The final directory exists only when complete (eval DAG globs on .../<step>/pretrained_model). Quota windows
+    are waited out (60, 120, ... s; ~36 min total) before raising. Only the newest checkpoint keeps the ~0.8 GB
+    optimizer state."""
+    root = run.path("checkpoints", "x").parent
+    final, tmp = root / f"{step:06d}", root / f"{step:06d}.tmp"
+    for k in range(tries):
+        try:
+            shutil.rmtree(tmp, ignore_errors=True)
+            ck = tmp / "pretrained_model"
+            ck.mkdir(parents=True, exist_ok=True)
+            policy.save_pretrained(ck)
+            pre.save_pretrained(ck)
+            post.save_pretrained(ck)
+            if cond is not None:
+                (ck / "rise_condition.json").write_text(json.dumps(cond, indent=1))
+            torch.save(state, tmp / "training_state.pt")
+            if final.exists():
+                shutil.rmtree(final)
+            tmp.rename(final)
+            break
+        except (RuntimeError, OSError) as e:
+            shutil.rmtree(tmp, ignore_errors=True)
+            if k == tries - 1:
+                raise
+            log.warning("checkpoint %06d failed (%s), retry %d/%d in %.0fs", step, str(e)[:100], k + 1, tries,
+                        wait_s * (k + 1))
+            time.sleep(wait_s * (k + 1))
+    for old in root.glob("[0-9]*/training_state.pt"):
+        if old.parent != final:
+            old.unlink(missing_ok=True)
+    return final / "pretrained_model"
+
+
+def _same_recipe(a, b) -> bool:
+    from omegaconf import OmegaConf
+    ca = OmegaConf.to_container(a, resolve=True)
+    cb = OmegaConf.to_container(b, resolve=True)
+    for c in (ca, cb):
+        c.get("train", {}).pop("resume", None)
+    return all(ca.get(k) == cb.get(k) for k in ("train", "rise_train", "policy", "split"))
+
+
+def find_resume(cfg) -> tuple[Path | None, Path | None]:
+    """Newest unfinished run dir of this milestone/tag with an identical recipe and a complete checkpoint."""
+    from omegaconf import OmegaConf
+    for d in sorted(RUNS_DIR.glob(f"*_{cfg.milestone}_{cfg.tag}"), reverse=True):
+        try:
+            if json.loads((d / "summary.json").read_text()).get("status") == "done":
+                continue
+        except (OSError, ValueError):
+            pass
+        sts = sorted(d.glob("checkpoints/[0-9][0-9][0-9][0-9][0-9][0-9]/training_state.pt"))
+        if not sts or not (d / "config.yaml").exists():
+            continue
+        if not _same_recipe(OmegaConf.load(d / "config.yaml"), cfg):
+            log.info("resume: %s has a different recipe, skipped", d.name)
+            continue
+        return d, sts[-1]
+    return None, None
+
+
+def short_tmpdir() -> None:
+    """DataLoader workers share tensors via an AF_UNIX socket under $TMPDIR (limit 107 chars). After the
+    2026-10-23 container restart the tmux server inherited a ~90-char TMPDIR from another tool and every worker
+    died with `OSError: AF_UNIX path too long`; fall back to a short private dir for this process only."""
+    import os
+    import tempfile
+    if len(tempfile.gettempdir()) > 60:
+        new = f"/tmp/rv_{os.getuid()}"
+        os.makedirs(new, exist_ok=True)
+        log.warning("TMPDIR %s too long for AF_UNIX sockets -> %s", tempfile.gettempdir(), new)
+        os.environ["TMPDIR"] = new
+        tempfile.tempdir = None
+
+
 def main() -> None:
     setup_logging()
+    short_tmpdir()
     cfg = cli_config()
     tc, rt = cfg.train, cfg.rise_train
     torch.manual_seed(int(tc.seed))
@@ -136,9 +237,16 @@ def main() -> None:
     bs = int(tc.batch_size)
     assert bs % accum == 0, (bs, accum)
     mbs = bs // accum
-    with tracking.start(cfg) as run:
+    resume_mode = str(tc.get("resume", "auto"))
+    run_dir, st_file = find_resume(cfg) if resume_mode == "auto" else (None, None)
+    with tracking.start(cfg, run_dir=run_dir) as run:
+        if run_dir is not None:
+            log.info("resume: continuing %s from %s", run_dir.name, st_file.parent.name)
+            for t in run_dir.glob("checkpoints/*.tmp"):
+                shutil.rmtree(t, ignore_errors=True)
         device = torch.device(cfg.policy.device)
-        policy = SmolVLAPolicy.from_pretrained(tc.init_from)
+        init = str(st_file.parent / "pretrained_model") if st_file is not None else tc.init_from
+        policy = SmolVLAPolicy.from_pretrained(init)
         policy.config.device = str(device)
         policy.to(device)
         pre, post = make_pre_post_processors(policy.config, pretrained_path=tc.init_from,
@@ -155,6 +263,9 @@ def main() -> None:
                     "demo_suffix": mix.demo_sfx, "apply_at_eval": "positive_suffix appended to every instruction"}
         run.summary.update({"n_original_frames": len(orig), "bank": bank.stats, "condition": cond,
                             "grad_accum": accum, "micro_batch": mbs, "sim_verification_transitions": 0})
+        state = torch.load(st_file, map_location="cpu", weights_only=False) if st_file is not None else None
+        step0 = int(state["step"]) if state is not None else 0
+        mix.offset = step0 * bs   # one optimizer step consumes exactly bs items (drop_last, shuffle=False)
         dl = DataLoader(mix, batch_size=mbs, shuffle=False, num_workers=int(tc.num_workers), pin_memory=True,
                         drop_last=True, persistent_workers=int(tc.num_workers) > 0,
                         prefetch_factor=4 if int(tc.num_workers) > 0 else None)
@@ -166,9 +277,22 @@ def main() -> None:
         amp = {"bfloat16": torch.bfloat16, "float16": torch.float16}.get(str(tc.amp_dtype))
         policy.train()
         t0, loss_ema, ckpt_dir = time.time(), None, None
-        step, lv, rf = 0, 0.0, 0.0
+        step, lv, rf = step0, 0.0, 0.0
+        if state is not None:
+            opt.load_state_dict(state["optimizer"])
+            sched.load_state_dict(state["scheduler"])
+            loss_ema = state.get("loss_ema")
+            torch.set_rng_state(state["torch_rng"])
+            if state.get("cuda_rng") is not None and device.type == "cuda":
+                torch.cuda.set_rng_state(state["cuda_rng"], device)
+            ckpt_dir = st_file.parent / "pretrained_model"
+            run.summary.setdefault("resumes", []).append({"from_step": step0,
+                                                          "at": time.strftime("%Y-%m-%dT%H:%M:%S")})
+            log.info("resumed at optimizer step %d (lr %.2e, item offset %d)", step0, sched.get_last_lr()[0],
+                     mix.offset)
+            del state
         opt.zero_grad(set_to_none=True)
-        for mi, batch in enumerate(dl, start=1):
+        for mi, batch in enumerate(dl if step < int(tc.steps) else [], start=1):
             src = batch.pop("source")
             batch = pre(batch)
             with torch.autocast(device_type=device.type, dtype=amp, enabled=amp is not None):
@@ -184,29 +308,31 @@ def main() -> None:
             sched.step()
             opt.zero_grad(set_to_none=True)
             loss_ema = lv if loss_ema is None else 0.98 * loss_ema + 0.02 * lv
-            if step % int(tc.log_every) == 0 or step == 1:
-                run.log({"train/loss": lv, "train/loss_ema": loss_ema, "train/grad_norm": float(gn),
-                         "train/lr": sched.get_last_lr()[0], "train/recovery_frac": rf,
-                         "train/steps_per_s": step / (time.time() - t0)}, step=step)
+            if step % int(tc.log_every) == 0 or step == step0 + 1:
+                sps = (step - step0) / (time.time() - t0)
+                safe_log(run, {"train/loss": lv, "train/loss_ema": loss_ema, "train/grad_norm": float(gn),
+                               "train/lr": sched.get_last_lr()[0], "train/recovery_frac": rf,
+                               "train/steps_per_s": sps}, step=step)
                 log.info("step %d/%d loss %.4f (ema %.4f) gn %.2f lr %.2e rec %.2f | %.2f it/s", step, int(tc.steps),
-                         lv, loss_ema, float(gn), sched.get_last_lr()[0], rf, step / (time.time() - t0))
+                         lv, loss_ema, float(gn), sched.get_last_lr()[0], rf, sps)
             lv, rf = 0.0, 0.0
             if step % int(tc.save_every) == 0 or step == int(tc.steps):
-                ckpt_dir = run.path("checkpoints", f"{step:06d}", "pretrained_model")
-                ckpt_dir.mkdir(parents=True, exist_ok=True)
-                policy.save_pretrained(ckpt_dir)
-                pre.save_pretrained(ckpt_dir)
-                post.save_pretrained(ckpt_dir)
-                if cond is not None:
-                    (Path(ckpt_dir) / "rise_condition.json").write_text(json.dumps(cond, indent=1))
+                st = {"step": step, "optimizer": opt.state_dict(), "scheduler": sched.state_dict(),
+                      "loss_ema": loss_ema, "torch_rng": torch.get_rng_state(),
+                      "cuda_rng": torch.cuda.get_rng_state(device) if device.type == "cuda" else None}
+                ckpt_dir = save_checkpoint(run, step, policy, pre, post, cond, st)
+                del st
                 log.info("saved %s", ckpt_dir)
             if step >= int(tc.steps):
                 break
         last = run.path("checkpoints", "last")
         if ckpt_dir is not None:
-            if last.exists() or last.is_symlink():
-                last.unlink()
-            last.symlink_to(Path(ckpt_dir).parent.name)
+            try:
+                if last.exists() or last.is_symlink():
+                    last.unlink()
+                last.symlink_to(Path(ckpt_dir).parent.name)
+            except OSError as e:
+                log.warning("could not update checkpoints/last (%s)", e)
         run.summary.update({"final_loss": loss_ema, "checkpoint": str(ckpt_dir), "optimizer_steps": step})
 
 

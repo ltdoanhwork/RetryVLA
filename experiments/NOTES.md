@@ -259,7 +259,11 @@ PoC verified -- analysis only, never used for training).
   identical recipe; data stream is a pure function of (seed, item), so a resumed run sees the same batches
   (smoke: kill after step 3 of 6, relaunch -> resumed at 3, same lr / recovery-fraction trace, status done).
   The failed run could not be resumed (no optimizer state) -> retrained from scratch; failed log -> `failed_*`;
-  its partial 2000/4000 checkpoints deleted to free quota. DAG relaunched 2026-10-23 02:25 UTC (lane local:0:e).
+  its partial 2000/4000 checkpoints deleted to free quota. DAG relaunched 2026-10-23 02:25 UTC (lane local:0:e);
+  that first relaunch died at once: after the container restart the shared tmux server carries another tool's
+  ~90-char TMPDIR, so DataLoader workers failed with `OSError: AF_UNIX path too long` (sockets under $TMPDIR);
+  `sft_rise` / `eval_cond` now fall back to `/tmp/rv_<uid>` when TMPDIR is longer than 60 chars (smoke OK under
+  that TMPDIR; plain eval_recover is unaffected, SimPool uses socketpairs). Relaunched 02:40 UTC.
 
 ## B3.3 residual recovery RL baseline (ReCoVLA-inspired), 2026-10-22
 
