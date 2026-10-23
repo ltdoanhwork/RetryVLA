@@ -191,6 +191,7 @@ def v2_section(d: pd.DataFrame, out: Path, v2_total: int = 0) -> list[str]:
     """Paired wm_plan_v2 vs wm_plan / wm_diverse / random on the instances where wm_plan_v2 AND every other arm exist
     (so a partially finished arm B never shrinks the arm-A table above)."""
     arms = [x for x in ORDER if x in set(d.arm)] + ["wm_plan_v2"]
+    v2_all = d[d.arm == "wm_plan_v2"].groupby("shard").instance_id.nunique().to_dict()  # before pairing
     paired = sorted(set.intersection(*[set(d[d.arm == x].instance_id) for x in arms]))
     d = d[d.instance_id.isin(paired)]
     n = len(paired)
@@ -243,12 +244,13 @@ def v2_section(d: pd.DataFrame, out: Path, v2_total: int = 0) -> list[str]:
     json.dump({"n_paired": n, "wm_plan_v2_instances_per_shard": per_shard, "only_wm_plan_v2_vs_library": only_lib,
                "only_wm_plan_v2_vs_all": only_all, "library_solved_not_wm_plan_v2": lib_not},
               open(out / "only_sets_v2.json", "w"), indent=1)
-    done_v2 = sum(per_shard.values())
+    done_v2 = sum(v2_all.values())
     partial = not (v2_total and done_v2 >= v2_total)
     fmt = lambda v_, k=3: "—" if v_ is None or (isinstance(v_, float) and np.isnan(v_)) else f"{v_:.{k}f}"  # noqa: E731
     L = ["", f"# M11 arm B: wm_plan_v2 (WM v2 + critic v3, broad-action data){' (PARTIAL)' if partial else ''}", "",
-         f"Paired set = instances where wm_plan_v2 AND every arm above exist: **{n}** (wm_plan_v2 instances per "
-         f"shard in this set: {per_shard}" + (f"; {done_v2}/{v2_total} expected" if v2_total else "") + "). "
+         f"wm_plan_v2 instances searched per shard: {v2_all} = {done_v2}" + (f"/{v2_total}" if v2_total else "")
+         + f". Paired set = instances where wm_plan_v2 AND every arm above exist: **{n}** (per shard: {per_shard}; "
+         "the rest lack some earlier arm because pi0's precheck outcome differs between runs). "
          "Same planner as wm_plan (5 rounds elite-local CEM from broad noise in imagination, 16 verified sims); "
          "only the WM / critic differ.", "",
          "| arm | src | solved [95% CI] | robust solved | hits/sim | sim steps verify | hits / 10k steps | succ cells | succ jerk | succ manifold | succ pairwise |",

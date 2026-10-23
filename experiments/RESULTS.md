@@ -119,27 +119,53 @@ Scene-level paired (26 scenes): comp - demo-only +0.181 [+0.092, +0.277] p = 0.0
 Search: WM competence solved 0.462 vs random 0.405 (30/16, p = 0.054) vs WM goal 0.227 (66/8, p = 2e-12);
 hits / sim 0.134 / 0.060 / 0.038. Goal bank covers only 56 unique failures (comp 114, random 100).
 
-## M11 arm A: WM as planner without the proposal library (PARTIAL, 2026-10-23: shards 0-2 + 22/~34 of s3)
-Same pi0 failures as M5b / M9 (shards 0-3 of 8), 16 verified sims / arm, paired continuation seeds, old WM + critic v2.
-wm_no_prim = WM+critic ranking of VLA samples only (no primitives / perturbations); wm_plan = 5-round elite CEM in
-imagination from broad noise. 108 paired instances (`scripts/analyze_m11.py` -> runs/_analysis/m11/summary.md).
+## M11: WM as planner without the proposal library (COMPLETE, 2026-10-23: shards 0-3, arm A 124 + arm B 127 instances)
+Same pi0 failures as M5b / M9 (shards 0-3 of 8), 16 verified sims / arm, paired continuation seeds.
+Arm A (old WM + critic v2): wm_no_prim = WM+critic ranking of VLA samples only (no primitives / perturbations);
+wm_plan = 5-round elite CEM in imagination from broad noise. Arm B: wm_plan_v2 = the SAME planner with WM v2 + critic
+v3 trained with the broad-action collect_wide data. `scripts/analyze_m11.py --s3_total 34 --v2_total 127` ->
+runs/_analysis/m11/summary.md (+ per_arm_v2.csv, paired_tests_v2.csv, only_sets_v2.json).
+
+Arm A, 120 paired instances:
 
 | arm | solved [95% CI] | hits/sim | succ jerk | succ manifold dist | succ cells |
 |---|---|---|---|---|---|
-| random (M5b) | 0.296 [0.213, 0.380] | 0.045 | 0.134 | 0.513 | 2.12 |
-| wm_diverse (M5b, library) | **0.463** [0.370, 0.556] | 0.141 | 0.104 | 0.612 | 2.00 |
-| wm_top (M9, library) | **0.463** [0.370, 0.556] | 0.145 | 0.098 | 0.593 | 1.72 |
-| sim_prefix_critic (M9) | 0.407 [0.315, 0.500] | 0.109 | 0.086 | 0.508 | 3.23 |
-| wm_noise (M5b) | 0.241 [0.167, 0.324] | 0.067 | 0.089 | 0.375 | 2.08 |
-| wm_no_prim (M11) | 0.278 [0.194, 0.361] | 0.078 | 0.127 | 0.433 | 2.97 |
-| wm_plan (M11) | 0.352 [0.269, 0.444] | 0.080 | 0.225 | 0.936 | 2.42 |
+| random (M5b) | 0.300 [0.225, 0.383] | 0.048 | 0.135 | 0.519 | 2.25 |
+| wm_diverse (M5b, library) | **0.467** [0.383, 0.558] | 0.152 | 0.104 | 0.610 | 2.20 |
+| wm_top (M9, library) | **0.467** [0.375, 0.558] | 0.152 | 0.094 | 0.584 | 1.79 |
+| sim_prefix_critic (M9) | 0.433 [0.350, 0.525] | 0.111 | 0.082 | 0.510 | 3.12 |
+| wm_noise (M5b) | 0.242 [0.167, 0.325] | 0.065 | 0.089 | 0.374 | 2.10 |
+| wm_no_prim (M11) | 0.292 [0.208, 0.375] | 0.084 | 0.126 | 0.424 | 3.00 |
+| wm_plan (M11) | 0.383 [0.300, 0.467] | 0.090 | 0.228 | 0.948 | 2.30 |
 
-Paired (unit = failure instance, exact McNemar, bootstrap CI): wm_plan - random +0.056 [-0.037, +0.148] (16/10,
-p = 0.33; hits +0.56/inst, sign-flip p = 0.001); wm_plan - wm_diverse -0.111 [-0.194, -0.028] (5/17, p = 0.017);
-wm_no_prim - wm_diverse -0.185 [-0.278, -0.093] (4/24, p = 2e-4); wm_no_prim - random -0.019 (p = 0.77).
-Outside the library: library arms jointly solve 68/108; only 2 failures are solved by wm_plan and no library arm
-(+2 by wm_no_prim) -> union 72/108; 32 library-solved failures are missed by wm_plan.
-Reading: without the library the WM+critic do NOT match library search (-0.11 to -0.19 solved); planning from
-noise beats ranking VLA samples (+0.07, directional) and finds new strategies (83% of its success cells unseen by library arms
-on the same instance) but its successes are the jerkiest and farthest from SmolVLA's manifold. The proposal
-library still carries most of the recovery-finding. wm_plan_v2 (WM v2 + critic v3, broad-action data) = arm B, running.
+Paired (unit = failure instance, exact McNemar, bootstrap CI): wm_plan - random +0.083 [-0.008, +0.175] (20/10,
+p = 0.099; hits +0.66/inst, sign-flip p < 1e-4); wm_plan - wm_diverse -0.083 [-0.158, -0.008] (7/17, p = 0.064;
+hits -0.99/inst, p < 1e-4); wm_no_prim - wm_diverse -0.175 [-0.258, -0.092] (6/27, p = 3e-4); wm_no_prim - random
+-0.008 (p = 1). Library arms jointly solve 77/120; only 2 failures are solved by wm_plan and no library arm (+3 by
+wm_no_prim) -> union 82/120; 33 library-solved failures are missed by wm_plan.
+
+Arm B, 118 paired instances (wm_plan_v2 searched all 127; 9 lack some earlier arm because pi0's precheck differs
+between runs). Sim steps = mean verify steps / instance (16 sims); M5b arms did not log steps.
+
+| arm | solved [95% CI] | hits/sim | sim steps | hits / 10k steps | succ jerk | succ manifold dist | succ cells |
+|---|---|---|---|---|---|---|---|
+| random (M5b) | 0.288 [0.212, 0.365] | 0.041 | - | - | 0.132 | 0.517 | 2.06 |
+| wm_diverse (M5b, library) | **0.458** [0.364, 0.551] | 0.145 | - | - | 0.105 | 0.618 | 2.17 |
+| wm_plan (old WM + critic v2) | 0.373 [0.288, 0.458] | 0.084 | 5257 | 2.56 | 0.229 | 0.950 | 2.23 |
+| wm_plan_v2 (WM v2 + critic v3) | 0.398 [0.305, 0.483] | 0.105 | 5159 | 3.25 | 0.222 | 0.941 | 2.55 |
+
+wm_plan_v2 - wm_plan +0.025 [-0.051, +0.102] (12/9, p = 0.66; hits +0.33/inst, sign-flip p = 0.19);
+wm_plan_v2 - wm_diverse -0.059 [-0.144, +0.025] (8/15, p = 0.21; hits -0.64/inst, p = 0.020);
+wm_plan_v2 - random +0.110 [+0.042, +0.186] (17/4, p = 0.0072; hits +1.02/inst, p < 1e-4).
+Outside the library: library arms jointly solve 75/118, + wm_plan_v2 77/118 (+ every arm 81/118); solved by
+wm_plan_v2 and no library arm: 2 (and no other arm at all: 1); library-solved but missed by wm_plan_v2: 30;
+83% of wm_plan_v2's success strategy cells are unseen by library arms on the same instance (47 solved instances).
+
+Reading: without the library the WM+critic do NOT match library search. Planning from noise beats ranking VLA
+samples (+0.09) and finds new strategy cells, but its successes are the jerkiest and farthest from SmolVLA's
+manifold. Retraining WM + critic on broad-action data helps the planner only directionally (+0.025 solved, +25%
+hits/sim, +27% hits per 10k sim steps, all n.s.): the solve gap to wm_diverse shrinks from -0.085 to -0.059
+(still -0.64 hits / instance, p = 0.02), the union with the library gains just 2 failures, and the jerk /
+manifold distance of its successes is unchanged. Broad-action WM data does NOT close the gap; the proposal library
+still carries most of the recovery-finding, and the remaining planner deficit is not mainly WM coverage of
+off-manifold actions.

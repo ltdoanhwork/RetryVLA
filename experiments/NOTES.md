@@ -577,3 +577,7 @@ b2x_search_s1 hit verif `.pt` save retries 1-5 in the same window (watch for rc 
   dag_run relaunched both at 12:15). Their parts s1/p1, s3/p0 had 0 instances -> `ABANDONED`; logs -> `failed_*`.
   Fix: `remote_tmux.sh` restarts the grep filter on the same pipe when it exits 2 (write error), so a job survives
   an EDQUOT window (log lines during the window are lost); tested against /dev/full (producer rc 0) + a real launch.
+- 14:29 UTC: m11 DAG ALL DONE. search_b s1 (p2, 32) and s3 (p1, 34) finished rc=0, no OOM retries / worker
+  respawns / skips needed; with s0 (29) + s2 (32) wm_plan_v2 covers 127 instances. `validate_recovery_part.py`
+  OK on all 4 closed parts (s0 30 / s1 39 / s2 39 / s3 49 trajectories; `--decode` run on s0 + s2, all frames decode).
+  Results: RESULTS.md "M11" (arm B).
