@@ -107,19 +107,34 @@ def closed_done(root: Path) -> set[str]:
     return done
 
 
-def make_safe_run(pool: SimPool, retries: int):
+def make_safe_run(pool: SimPool, retries: int, oom_retries: int = 0, oom_wait_s: float = 120.0):
     """run_jobs that survives sim-worker deaths (MuJoCo segfault in env rebuild, 2026-10-23): on WorkerDied
     respawn the pool and re-run the WHOLE batch (same jobs + seeds -> same paired results), up to `retries`
-    times, then re-raise. retries=0 = old behaviour."""
+    times, then re-raise. retries=0 = old behaviour.
+    oom_retries > 0 (M11 incident 2026-10-23 06:55): a CUDA OOM in the main process's batched policy call (shared
+    80 GB GPU filled by other lanes) is transient, not instance-specific -> free the cache, wait oom_wait_s * k,
+    respawn the pool (workers may be mid-batch, pipes must be clean) and re-run the whole batch (deterministic).
+    oom_retries=0 = old behaviour (OOM propagates)."""
     def run(*a, **k):
-        for t in range(retries + 1):
+        t_w = t_o = 0
+        while True:
             try:
                 return run_jobs(pool, *a, **k)
             except WorkerDied as e:
-                if t == retries:
+                if t_w == retries:
                     raise
+                t_w += 1
                 log.warning("%s; respawning sim pool and re-running batch '%s' (%d/%d)", e, k.get("desc", "?"),
-                            t + 1, retries)
+                            t_w, retries)
+                pool.respawn()
+            except torch.OutOfMemoryError as e:
+                if t_o == oom_retries:
+                    raise
+                t_o += 1
+                torch.cuda.empty_cache()
+                log.warning("CUDA OOM in batch '%s' (%s); waiting %.0fs, respawning sim pool, re-running (%d/%d)",
+                            k.get("desc", "?"), str(e)[:120], oom_wait_s * t_o, t_o, oom_retries)
+                time.sleep(oom_wait_s * t_o)
                 pool.respawn()
     return run
 
@@ -171,7 +186,7 @@ def main() -> None:
         rows, t0 = [], time.time()
         with SimPool(int(cfg.eval.n_workers), int(cfg.env.resolution)) as pool:
             wretries = int(mb.get("worker_retries", 0))  # 0 = old behaviour (a dead sim worker kills the run)
-            srun = make_safe_run(pool, wretries)
+            srun = make_safe_run(pool, wretries, int(mb.get("oom_retries", 0)), float(mb.get("oom_wait_s", 120)))
             insts, pre = precheck(pool, policy, jobs, done, run=srun)
             pd.DataFrame(pre).to_csv(run.path("precheck.csv"), index=False)
             log.info("shard %s: %d selected, %d already done, %d pi0 failures to search", mb.shard, len(jobs),

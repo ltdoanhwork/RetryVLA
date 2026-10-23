@@ -55,6 +55,7 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default="runs/_analysis/m11")
     ap.add_argument("--s3_total", type=int, default=0, help="pi0 failures in shard 3 (0 = unknown)")
+    ap.add_argument("--v2_total", type=int, default=0, help="expected wm_plan_v2 instances, shards 0-3 (0 = unknown)")
     a = ap.parse_args()
     out = REPO / a.out
     out.mkdir(parents=True, exist_ok=True)
@@ -162,6 +163,114 @@ def main() -> None:
           "", "Instance lists: `only_sets.json`; tables: `per_arm.csv`, `paired_tests.csv`."]
     (out / "summary.md").write_text("\n".join(L) + "\n")
     print("\n".join(L))
+    v2 = load_v2()
+    if len(v2):
+        L2 = v2_section(pd.concat([load(), v2], ignore_index=True), out, a.v2_total)
+        (out / "summary.md").write_text("\n".join(L + L2) + "\n")
+        print("\n".join(L2))
+
+
+# --- M11 arm B: wm_plan_v2 (same planner, WM v2 + critic v3 trained on broad-action data) ---------------------------
+SRC_V2 = "*_M11_plan_search_b_s*"
+V2_REFS = ["wm_plan", "wm_diverse", "random"]
+
+
+def load_v2() -> pd.DataFrame:
+    out = []
+    for f in sorted(glob.glob(str(REPO / "runs" / SRC_V2 / "per_instance.jsonl"))):
+        shard = int(re.search(r"_s(\d+)of8", f).group(1))
+        for l in open(f):
+            r = json.loads(l)
+            if r["arm"] == "wm_plan_v2":
+                out.append({**r, "src": "M11b", "shard": shard, "run": Path(f).parent.name})
+    d = pd.DataFrame(out)
+    return d.drop_duplicates(["instance_id", "arm"], keep="last") if len(d) else d
+
+
+def v2_section(d: pd.DataFrame, out: Path, v2_total: int = 0) -> list[str]:
+    """Paired wm_plan_v2 vs wm_plan / wm_diverse / random on the instances where wm_plan_v2 AND every other arm exist
+    (so a partially finished arm B never shrinks the arm-A table above)."""
+    arms = [x for x in ORDER if x in set(d.arm)] + ["wm_plan_v2"]
+    paired = sorted(set.intersection(*[set(d[d.arm == x].instance_id) for x in arms]))
+    d = d[d.instance_id.isin(paired)]
+    n = len(paired)
+    per_shard = d[d.arm == "wm_plan_v2"].groupby("shard").instance_id.nunique().to_dict()
+    S = d.pivot(index="instance_id", columns="arm", values="solved").loc[paired].astype(bool)
+    H = d.pivot(index="instance_id", columns="arm", values="hits").loc[paired].astype(float)
+    rows = []
+    for x in ["random", "wm_diverse", "wm_plan", "wm_plan_v2"]:
+        g = d[d.arm == x].set_index("instance_id").loc[paired]
+        s = g.solved.astype(bool).values
+        sg = g[g.solved.astype(bool)]
+        steps = g.sim_steps_verify if "sim_steps_verify" in g and g.sim_steps_verify.notna().all() else None
+        lo, hi = boot_ci(s.astype(float))
+        rows.append({"arm": x, "src": g.src.iloc[0], "n": n, "solved": s.mean(), "solved_ci": f"[{lo:.3f}, {hi:.3f}]",
+                     "robust_solved": float(g.robust_solved.astype(bool).mean()) if "robust_solved" in g and g.robust_solved.notna().all() else None,
+                     "hits_per_sim": float(g.hits.sum() / g.budget.sum()),
+                     "sim_steps_verify": None if steps is None else float(steps.mean()),
+                     "hits_per_10k_steps": None if steps is None else float(1e4 * g.hits.sum() / steps.sum()),
+                     "succ_cells": float(sg.succ_cells.mean()) if len(sg) else np.nan,
+                     "succ_jerk": float(sg.succ_jerk.mean()) if len(sg) else np.nan,
+                     "succ_manifold": float(sg.succ_manifold.mean()) if len(sg) else np.nan,
+                     "succ_pairwise": float(pd.to_numeric(sg.succ_pairwise, errors="coerce").mean()) if len(sg) else np.nan})
+    T = pd.DataFrame(rows)
+    T.to_csv(out / "per_arm_v2.csv", index=False)
+    tests = []
+    for ref in V2_REFS:
+        n01, n10, p = mcnemar(S[ref].values, S["wm_plan_v2"].values)
+        diff = S["wm_plan_v2"].values.astype(float) - S[ref].values.astype(float)
+        lo, hi = boot_ci(diff)
+        tests.append({"arm": "wm_plan_v2", "vs": ref, "d_solved": diff.mean(), "ci": f"[{lo:+.3f}, {hi:+.3f}]",
+                      "only_arm": n01, "only_ref": n10, "mcnemar_p": p, "d_hits": (H["wm_plan_v2"] - H[ref]).mean(),
+                      "signflip_p_hits": signflip((H["wm_plan_v2"] - H[ref]).values)})
+    P = pd.DataFrame(tests)
+    P.to_csv(out / "paired_tests_v2.csv", index=False)
+    lib = [x for x in LIBRARY if x in S]
+    lib_any = S[lib].any(axis=1)
+    others_any = S[[x for x in arms if x != "wm_plan_v2"]].any(axis=1)
+    v = S["wm_plan_v2"]
+    only_lib = sorted(S.index[v & ~lib_any])
+    only_all = sorted(S.index[v & ~others_any])
+    lib_not = sorted(S.index[lib_any & ~v])
+    v_not_plan, plan_not_v = int((v & ~S["wm_plan"]).sum()), int((S["wm_plan"] & ~v).sum())
+    cl = d.pivot(index="instance_id", columns="arm", values="succ_cells_list").loc[paired]
+    new_cells = []
+    for i in paired:
+        lc = set().union(*[set(cl.at[i, x] or []) for x in lib])
+        pc = set(cl.at[i, "wm_plan_v2"] or [])
+        if pc:
+            new_cells.append(len(pc - lc) / len(pc))
+    json.dump({"n_paired": n, "wm_plan_v2_instances_per_shard": per_shard, "only_wm_plan_v2_vs_library": only_lib,
+               "only_wm_plan_v2_vs_all": only_all, "library_solved_not_wm_plan_v2": lib_not},
+              open(out / "only_sets_v2.json", "w"), indent=1)
+    done_v2 = sum(per_shard.values())
+    partial = not (v2_total and done_v2 >= v2_total)
+    fmt = lambda v_, k=3: "—" if v_ is None or (isinstance(v_, float) and np.isnan(v_)) else f"{v_:.{k}f}"  # noqa: E731
+    L = ["", f"# M11 arm B: wm_plan_v2 (WM v2 + critic v3, broad-action data){' (PARTIAL)' if partial else ''}", "",
+         f"Paired set = instances where wm_plan_v2 AND every arm above exist: **{n}** (wm_plan_v2 instances per "
+         f"shard in this set: {per_shard}" + (f"; {done_v2}/{v2_total} expected" if v2_total else "") + "). "
+         "Same planner as wm_plan (5 rounds elite-local CEM from broad noise in imagination, 16 verified sims); "
+         "only the WM / critic differ.", "",
+         "| arm | src | solved [95% CI] | robust solved | hits/sim | sim steps verify | hits / 10k steps | succ cells | succ jerk | succ manifold | succ pairwise |",
+         "|---|---|---|---|---|---|---|---|---|---|---|"]
+    for r in T.itertuples():
+        L.append(f"| {r.arm} | {r.src} | {r.solved:.3f} {r.solved_ci} | {fmt(r.robust_solved)} | {r.hits_per_sim:.3f} | "
+                 f"{fmt(r.sim_steps_verify, 0)} | {fmt(r.hits_per_10k_steps, 2)} | {fmt(r.succ_cells, 2)} | "
+                 f"{fmt(r.succ_jerk)} | {fmt(r.succ_manifold)} | {fmt(r.succ_pairwise)} |")
+    L += ["", "| arm | vs | Δ solved [boot 95% CI] | only arm / only ref | McNemar p | Δ hits/inst | sign-flip p |",
+          "|---|---|---|---|---|---|---|"]
+    for r in P.itertuples():
+        L.append(f"| {r.arm} | {r.vs} | {r.d_solved:+.3f} {r.ci} | {r.only_arm} / {r.only_ref} | {r.mcnemar_p:.3g} | "
+                 f"{r.d_hits:+.2f} | {r.signflip_p_hits:.3g} |")
+    L += ["", f"- Library arms solve {int(lib_any.sum())}/{n} jointly; + wm_plan_v2: {int((lib_any | v).sum())}/{n}; "
+          f"+ all arms: {int((others_any | v).sum())}/{n}.",
+          f"- Solved ONLY by wm_plan_v2 vs the library: **{len(only_lib)}**; vs every other arm: **{len(only_all)}**.",
+          f"- Solved by some library arm but not wm_plan_v2: {len(lib_not)}. wm_plan_v2 not wm_plan: {v_not_plan}; "
+          f"wm_plan not wm_plan_v2: {plan_not_v}.",
+          (f"- Mean fraction of wm_plan_v2 success strategy cells not reached by any library arm on the same instance: "
+           f"{np.mean(new_cells):.2f} (over {len(new_cells)} solved instances).") if new_cells else "",
+          "", "Tables: `per_arm_v2.csv`, `paired_tests_v2.csv`, `only_sets_v2.json`."]
+    return L
 
 
 if __name__ == "__main__":

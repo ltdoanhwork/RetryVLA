@@ -114,11 +114,16 @@
   },
   {
    "name": "m11_search_b_s0",
-   "module": "retryvla.search.compare_arms",
+   "module": "retryvla.retry_oom",
    "deps": [
     "m11_train_critic_v3"
    ],
    "args": [
+    "--min_free_gb",
+    "16",
+    "--wait_s",
+    "300",
+    "retryvla.search.compare_arms",
     "configs/exp/m11_search_b.yaml",
     "m5b.shard=0",
     "m5b.num_shards=8",
@@ -127,11 +132,16 @@
   },
   {
    "name": "m11_search_b_s1",
-   "module": "retryvla.search.compare_arms",
+   "module": "retryvla.retry_oom",
    "deps": [
     "m11_train_critic_v3"
    ],
    "args": [
+    "--min_free_gb",
+    "16",
+    "--wait_s",
+    "300",
+    "retryvla.search.compare_arms",
     "configs/exp/m11_search_b.yaml",
     "m5b.shard=1",
     "m5b.num_shards=8",
@@ -140,11 +150,16 @@
   },
   {
    "name": "m11_search_b_s2",
-   "module": "retryvla.search.compare_arms",
+   "module": "retryvla.retry_oom",
    "deps": [
     "m11_train_critic_v3"
    ],
    "args": [
+    "--min_free_gb",
+    "16",
+    "--wait_s",
+    "300",
+    "retryvla.search.compare_arms",
     "configs/exp/m11_search_b.yaml",
     "m5b.shard=2",
     "m5b.num_shards=8",
@@ -153,11 +168,16 @@
   },
   {
    "name": "m11_search_b_s3",
-   "module": "retryvla.search.compare_arms",
+   "module": "retryvla.retry_oom",
    "deps": [
     "m11_train_critic_v3"
    ],
    "args": [
+    "--min_free_gb",
+    "16",
+    "--wait_s",
+    "300",
+    "retryvla.search.compare_arms",
     "configs/exp/m11_search_b.yaml",
     "m5b.shard=3",
     "m5b.num_shards=8",

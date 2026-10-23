@@ -554,3 +554,26 @@ rename, 8 retries, ~36 min backoff), so retryvla.train.sft (P2 + P3 SFTs) surviv
 -> `failed_rv_b2_sft_progress_s0_..._115936.log`, run dir -> `runs/20261023-120039_B2_sft_progress_DEAD_edquot`;
 runner relaunched it 12:15:43 from step 0. ETAs shift +15 min (progress SFT ~14:15 ... success SFT + RSR ~10:45 Oct 24).
 b2x_search_s1 hit verif `.pt` save retries 1-5 in the same window (watch for rc != 0; parts resume).
+
+## M11 incident 2026-10-23 06:55: CUDA OOM in m11_search_b_s1 precheck (shared GPU full) -> DAG stopped
+- Not a sim-worker crash (WorkerDied path not involved), not quota, not arm_wm_plan / ranker2: 3 min after launch,
+  in the FIRST `precheck` batch (pi0 rollouts), the main process's batched SmolVLA call (`run_jobs ->
+  predict_chunk -> vision_model`) raised `torch.OutOfMemoryError` (78 MiB requested, 135 MiB free of 79.3 GiB):
+  search_b s0/s1/s2 + search_a_s3 + critic_v3 + the other lanes' jobs had all just started on the one A100.
+  Nothing was written (s1/p0 has 0 instances -> marked `ABANDONED`). dag_run stops the whole DAG on any failure,
+  so m11_search_b_s3 was never launched; s0 (29) and s2 (32) finished normally (08:27 / 08:34, CLOSED).
+- Fix (additive, opt-in): compare_arms `make_safe_run(..., oom_retries, oom_wait_s)` also catches
+  `torch.OutOfMemoryError` in any sim batch: `empty_cache`, wait `oom_wait_s * k`, respawn the pool (workers may be
+  mid-batch) and re-run the whole batch (deterministic seeds -> same paired result); default `m5b.oom_retries: 0`
+  = old behaviour, 6 in m11_search_b.yaml. Process-level backstop: the m11 search_b DAG tasks now run through
+  `retryvla.retry_oom --min_free_gb 16 --wait_s 300` (as b2p3 / b2x). Tested with a fake OOM-raising run_jobs
+  (retry, re-raise after N, N=0 old behaviour). An OOM in the WM planner itself (outside sim batches) is only
+  covered by retry_oom (restart; the unclosed part is then redone).
+- Failed log -> `failed_rv_m11_search_b_s1_ee580a52a73c_20261023-065159.log`; dead claims local:0:a/b/d dropped.
+  Relaunched 12:05 UTC (tmux rv_dag_m11, lanes local:0:a-d): search_b_s1 on a, search_b_s3 on b.
+- Third /pfss EDQUOT window ~12:11-12:16 UTC (not caused by RetryVLA: runs+data ~200 GB, no >500 MB file written in
+  the workspace in the last 2 h): both fresh jobs were still loading and died because the log filter `grep` in the
+  remote_tmux job hit `write error: Disk quota exceeded`, exited, and the python pipe got SIGPIPE (no RV_DONE ->
+  dag_run relaunched both at 12:15). Their parts s1/p1, s3/p0 had 0 instances -> `ABANDONED`; logs -> `failed_*`.
+  Fix: `remote_tmux.sh` restarts the grep filter on the same pipe when it exits 2 (write error), so a job survives
+  an EDQUOT window (log lines during the window are lost); tested against /dev/full (producer rc 0) + a real launch.

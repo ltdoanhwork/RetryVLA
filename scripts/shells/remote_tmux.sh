@@ -23,7 +23,9 @@ cd $REPO
 export CUDA_VISIBLE_DEVICES=$GPU MUJOCO_EGL_DEVICE_ID=$GPU
 source env/activate.sh
 echo "[rv] host=\$(hostname) gpu=$GPU start=\$(date -Is) args: $*"
-PYTHONUNBUFFERED=1 python -u -m $* 2>&1 | grep --line-buffered -v -E 'EGLError|egl_context|binding_utils|OpenGL/error|glCheckError|Exception ignored|macro file|setup_macros|^Traceback \(most recent call last\):\$|^  File .*(egl|binding_utils|OpenGL)'
+# log filter: grep exits 2 on a write error (/pfss EDQUOT, 2026-10-23 12:12 killed 2 jobs via SIGPIPE) -> restart it
+# on the same pipe (lines during the window are lost, the job survives); exit 0/1 = EOF
+PYTHONUNBUFFERED=1 python -u -m $* 2>&1 | { while :; do grep --line-buffered -v -E 'EGLError|egl_context|binding_utils|OpenGL/error|glCheckError|Exception ignored|macro file|setup_macros|^Traceback \(most recent call last\):\$|^  File .*(egl|binding_utils|OpenGL)'; [ \$? -eq 2 ] || break; sleep 10; done; }
 echo "[rv] RV_DONE rc=\${PIPESTATUS[0]} end=\$(date -Is)"
 EOF
 chmod +x "$JOB"
