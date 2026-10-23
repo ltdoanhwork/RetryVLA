@@ -250,6 +250,16 @@ DAG `configs/dag/b32_rise.json` (lane local:0:e, tmux rv_dag_b32): datagen pool 
 AWR SFT + evals -> datagen vla -> cond(vla) SFT + evals. Analysis: `python scripts/analyze_b32.py` (scene-level paired
 bootstrap vs pi1 seed 0 and the 3 pi1 seeds, vs demo-only; nominal; precision of imagined labels on the chunks the
 PoC verified -- analysis only, never used for training).
+- 2026-10-22 incident: `b32_sft_cond_pool` died at step 5150/6000 (12:02 UTC) in the /pfss EDQUOT window
+  (11:39-12:03): root cause = TensorBoard's async event writer hit `[Errno 122] Disk quota exceeded`, and its
+  re-raised OSError from `run.log` killed training (checkpoints 2000 / 4000 were intact but had no optimizer state).
+  Fix in `sft_rise.py`: metric logging is non-fatal (TB disabled on error), checkpoints are written to
+  `<step>.tmp/` + renamed (retry 60..480 s back-off, ~36 min), newest checkpoint carries `training_state.pt`
+  (optim / sched / step / EMA / RNG), and `train.resume=auto` continues the newest unfinished run dir with an
+  identical recipe; data stream is a pure function of (seed, item), so a resumed run sees the same batches
+  (smoke: kill after step 3 of 6, relaunch -> resumed at 3, same lr / recovery-fraction trace, status done).
+  The failed run could not be resumed (no optimizer state) -> retrained from scratch; failed log -> `failed_*`;
+  its partial 2000/4000 checkpoints deleted to free quota. DAG relaunched 2026-10-23 02:25 UTC (lane local:0:e).
 
 ## B3.3 residual recovery RL baseline (ReCoVLA-inspired), 2026-10-22
 
@@ -369,10 +379,15 @@ i.e. the part where competence matters):
 |---|---|---|---|---|---|
 | C^pi v2 (reference) | - | - | 0.809 / 0.787 | 0.748 / 0.663 | 0.328 |
 | B3 progress (final, 8000 steps) | 0.984 / 0.981 | 0.915 | 0.721 / 0.716 | 0.638 / 0.683 | 0.203 |
-| B4 success (smoke, 300 steps) | - | - | 0.746 / 0.688 (pi1 val 0.698 / 0.611) | 0.733 / 0.673 | 0.297 |
-Final numbers: `runs/*_B2_train_progress/summary.json`, `runs/*_B2_train_success/summary.json` (fill in when done).
+| B4 success (final, 8000 steps) | - | demo mean pred 0.9998 | 0.623 / 0.604 (pi1 val 0.558 / 0.568) | 0.693 / 0.644 | 0.320 |
+Final numbers: `runs/20261022-085906_B2_train_progress/summary.json`, `runs/20261022-094644_B2_train_success/summary.json`
+(B4 smoke row was 0.746 / 0.688, 0.733 / 0.673, 0.297 at 300 steps). Caveat: in train_value_baseline the diag dict
+overwrites B4's OWN-val `pi0_auc_real` (same key), so the B4 pi0 own-val real AUC is not stored (own-val imag 0.639,
+ECE 0.138); the table uses diag only, so it is unaffected.
 B3 shows the expected pattern: excellent on its own target (task progress), weaker at ranking which bridge pi0 can
 finish (top-4 success 0.20 vs C^pi 0.33; real noprefix AUC 0.64 vs 0.75; Spearman vs C^pi on imagined val 0.59).
+B4 matches C^pi on top-4 (0.32 vs 0.33) despite a lower diag AUC (0.62 vs 0.81) and ranks differently from C^pi
+(Spearman on imagined val 0.34); demo states are saturated at 1.
 
 Smoke (`runs/20261022-080756_B2_smoke_value_search_s0of8`, 3 instances, budget 4, smoke progress critic used for both
 new arms): wm_progress 1/3 solved, wm_success 1/3, wm_diverse 1/3 (4/4 hits on the solved one vs 1/4). B3 predicts
@@ -382,6 +397,22 @@ Queued: b2_search_s0-3 (`configs/exp/b2_value_search.yaml`, out data/recovery/b2
 eval.n_workers 8), then SFT on wm_progress / wm_success recoveries (`b2_sft_{progress,success}`, init pi1-nominal,
 count = @ntrajmin:66 over the arm's bank and M5b wm_diverse s0-3 = the M9 comp / goal count, round-robin) + test RSR.
 If a bank has < 66 trajectories, the count is lower than the 3-seed comp runs: then add a comp SFT at that count.
+
+**Incident + restart (2026-10-22/23).** Critics done (rc 0, 09:34 / 10:19). b2_search_s0: attempt 1 hit CUDA OOM on
+the shared GPU (empty part p0, retry_oom waited), attempt 2 (part p1) ran 11:09-13:39 and died at 13:39:04 on EDQUOT:
+lerobot's async image writer only logged `[Errno 122] Disk quota exceeded` for episode 40 of wm_success (21st
+instance), then `save_episode -> compute_episode_stats` raised `PIL.UnidentifiedImageError` on a truncated PNG (the
+verif `.pt` save had retried). dag_run stopped (FAILED); the container's tmux server died later, so nothing ran until
+2026-10-23. Salvage of `data/recovery/b2_value/s0/p1`: 20 done instances; wm_progress 12 eps / 1235 frames,
+wm_success 40 eps / 4502 frames, all parquet images decode, every episode belongs to a done instance (no
+`delete_episodes` needed: episode 40 never reached the parquet); removed the half-written `images/*/episode-000040`
+dirs, the undone instance's row in both instances.jsonl and a stale verif `.pt.tmp`; marked CLOSED (+ SALVAGED).
+`b2_value_search.yaml` now sets `m5b.write_retries: 8` (RecoveryWriter PNG verify + rewrite, added for M11 in
+018b1c9). Failed log -> `failed_rv_b2_search_s0_..._20261022-102026.log`; no local:0:g claim was left. Relaunched
+2026-10-23 02:29 UTC (tmux rv_dag_b2p3, lane local:0:g; container host is now ee580a52a73c): s0 resumes with 16 left.
+Preliminary s0 (20 instances, NOT a result; paired with M5b on 19): solved wm_progress 0.25 (hit 0.07),
+wm_success 0.70 (hit 0.20) vs M5b wm_diverse 0.47 (hit 0.13), random 0.32. C^pi rates the picks low:
+pred_cpi mean 0.02 (progress picks, own pred 1.00) / 0.23 (success picks, own pred 0.71).
 
 ## P3 recovery-nominal Pareto (2026-10-22, DAG b2p3)
 pi1 recipe (m5c_sft_wm_diverse_rr): init pi1-nominal, 6k steps, bs 32, lr 5e-5, bank data/recovery/m5b/s*/p*/wm_diverse,

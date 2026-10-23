@@ -13,4 +13,5 @@ m5b:
   progress_critic_link: data/wm/latest_critic_progress.txt
   success_critic_link: data/wm/latest_critic_success.txt
   out_root: data/recovery/b2_value
+  write_retries: 8  # re-check + rewrite unreadable PNGs before save_episode (EDQUOT 2026-10-22 killed b2_search_s0)
   verif_out: data/wm/verif_b2_value
