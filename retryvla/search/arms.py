@@ -23,7 +23,11 @@ from retryvla.search.wm_search import diverse_ranking
 
 ARM_NAMES = ("random", "wm_diverse", "wm_noise", "wm_qd", "wm_two_stage", "wm_goal", "wm_goal_comp", "wm_top",
              "random_diverse", "sim_prefix_critic", "wm_no_prim", "wm_plan", "wm_plan_v2",
-             "wm_progress", "wm_success")
+             "wm_progress", "wm_success", "wm_success_nopi0", "wm_cpi_pool")
+# P2 value arms: arm -> m5b config key holding the critic-link file (wm_diverse with that critic swapped in)
+VALUE_ARMS = {"wm_progress": "progress_critic_link", "wm_success": "success_critic_link",
+              "wm_success_nopi0": "success_nopi0_critic_link",  # B4 without any pi0 label (pi1, pi1more, demo)
+              "wm_cpi_pool": "cpi_pool_critic_link"}            # only B4's 7,160 pi0 labels (pi0-grounded, B4 volume)
 
 
 def _z(x: np.ndarray) -> np.ndarray:

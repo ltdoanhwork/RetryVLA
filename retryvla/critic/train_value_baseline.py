@@ -188,7 +188,12 @@ def main() -> None:
                 pdm = predict(model, norm.z(zr[d_]), norm.q(qr[d_]), T[d_], dev)
                 m["demo_vs_fail_auc"] = auc(np.r_[pdm, pf], np.r_[np.ones(len(pdm)), np.zeros(len(pf))].astype(bool))
         dm = diag_metrics(model, vocab, diag, norm, dev, int(c.topk))
-        m.update({k: v for k, v in dm.items() if not k.startswith("_")})
+        for k, v in dm.items():
+            if k.startswith("_"):
+                continue
+            if k in m:  # own-val key collides with the diag key (pi0_auc_real): keep the own-val value as own_<k>
+                m[f"own_{k}"] = m[k]
+            m[k] = v
         model.train()
         return m, dm["_pred_imag"]
 

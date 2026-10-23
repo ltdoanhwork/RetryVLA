@@ -1,0 +1,16 @@
+# P2 control (a) B4-noPi0: B4's supervision WITHOUT any pi0 label -> a success value that is genuinely not
+# pi0-specific. Same architecture / WM v1 / steps / recipe / exclusions (every M5b / M9 search instance id) as B4 and
+# C^pi v2; only the pi0 source is removed and the remaining three sources keep EQUAL weight (1/3 each):
+#   pi1      verif_m6_r2 (M5c pi1 continuation), trials 0-1                  880
+#   pi1more  verif_m7_weak trials 0-1 + verif_m8_aug (M6 pi1-more)          8,904
+#   demo     expert demo states, label 1                                   11,112
+# The pi0 diag (C^pi val set, pi0 continuation labels) is evaluation only.
+defaults: [exp/b2_train_success]
+tag: train_success_nopi0
+vcritic:
+  segment_sources:
+    - {root: data/wm/verif_m6_r2, policy: pi1, keep_trials: [0, 1]}
+    - {root: data/wm/verif_m7_weak, policy: pi1more, keep_trials: [0, 1]}
+    - {root: data/wm/verif_m8_aug, policy: pi1more}
+  mix: {pi0: 0.0, pi1: 0.3333333, pi1more: 0.3333333, demo: 0.3333334}  # pi0: 0 explicit (dict keys merge with B4's)
+  out_link: data/wm/latest_critic_success_nopi0.txt

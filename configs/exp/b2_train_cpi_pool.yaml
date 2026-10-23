@@ -1,0 +1,14 @@
+# P2 control (b) Cpi-pool: ONLY the pi0-continuation labels of B4's pool (collect_v1 + verif_r1, 7,160 samples after
+# excluding every M5b / M9 search instance id; the SAME pi0 data B4 sees), no other policy, no demos, no failure
+# states -> pi0-grounded competence with B4's pi0 data volume. Same architecture / WM v1 / steps / recipe as B4.
+# Differs from C^pi v2 (train_critic.py, 4,848 train candidates; verif_r1 minus the M5 round-2 held-out instances) only
+# in the exclusion list / sample set and the trainer (train_value_baseline, same loss + imagined_frac 0.5).
+defaults: [exp/b2_train_success]
+tag: train_cpi_pool
+vcritic:
+  demo_latents: null
+  segment_sources:
+    - {root: data/wm/collect_v1, policy: pi0}
+    - {root: data/wm/verif_r1, policy: pi0}
+  mix: {pi0: 1.0, pi1: 0.0, pi1more: 0.0, demo: 0.0}  # explicit zeros (dict keys merge with B4's)
+  out_link: data/wm/latest_critic_cpi_pool.txt

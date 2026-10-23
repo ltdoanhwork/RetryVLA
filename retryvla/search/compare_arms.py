@@ -161,7 +161,7 @@ def main() -> None:
                                      cfg.wm_collect.encoder, int(cfg.wm_collect.pool_grid), dev,
                                      float(mb.lambda_unc), float(mb.beta_rough))
         value_rk = {}  # P2: policy-agnostic critics on the SAME WM (optional keys, only loaded when the arm is used)
-        for a_, key in (("wm_progress", "progress_critic_link"), ("wm_success", "success_critic_link")):
+        for a_, key in A.VALUE_ARMS.items():
             if a_ in arms:
                 ck_ = (REPO_ROOT / mb[key]).read_text().strip()
                 value_rk[a_] = A.value_ranker_from(ranker, ck_)
@@ -243,7 +243,7 @@ def main() -> None:
                                                           iters=int(mb.get("plan_iters", 5)))
                         elif a == "wm_two_stage":
                             cand, idx, cs = A.arm_wm_two_stage(ranker, z0, q0, inst.task, pool_c, pool_s, B, seed % 10007)
-                        elif a in ("wm_progress", "wm_success"):
+                        elif a in A.VALUE_ARMS:
                             cand, idx, cs = A.arm_wm_value(value_rk[a], z0, q0, inst.task, pool_c, B, seed % 10007)
                         else:
                             raise ValueError(a)

@@ -1,0 +1,95 @@
+{
+ "name": "b2x",
+ "tasks": [
+  {
+   "name": "b2x_crit_success_nopi0",
+   "module": "retryvla.retry_oom",
+   "deps": [],
+   "args": [
+    "--min_free_gb",
+    "8",
+    "retryvla.critic.train_value_baseline",
+    "configs/exp/b2_train_success_nopi0.yaml"
+   ]
+  },
+  {
+   "name": "b2x_crit_cpi_pool",
+   "module": "retryvla.retry_oom",
+   "deps": [],
+   "args": [
+    "--min_free_gb",
+    "8",
+    "retryvla.critic.train_value_baseline",
+    "configs/exp/b2_train_cpi_pool.yaml"
+   ]
+  },
+  {
+   "name": "b2x_search_s0",
+   "module": "retryvla.retry_oom",
+   "deps": [
+    "b2x_crit_success_nopi0",
+    "b2x_crit_cpi_pool"
+   ],
+   "args": [
+    "--min_free_gb",
+    "10",
+    "retryvla.search.compare_arms",
+    "configs/exp/b2x_value_search.yaml",
+    "m5b.shard=0",
+    "m5b.num_shards=8",
+    "eval.n_workers=8"
+   ]
+  },
+  {
+   "name": "b2x_search_s1",
+   "module": "retryvla.retry_oom",
+   "deps": [
+    "b2x_crit_success_nopi0",
+    "b2x_crit_cpi_pool"
+   ],
+   "args": [
+    "--min_free_gb",
+    "10",
+    "retryvla.search.compare_arms",
+    "configs/exp/b2x_value_search.yaml",
+    "m5b.shard=1",
+    "m5b.num_shards=8",
+    "eval.n_workers=8"
+   ]
+  },
+  {
+   "name": "b2x_search_s2",
+   "module": "retryvla.retry_oom",
+   "deps": [
+    "b2x_crit_success_nopi0",
+    "b2x_crit_cpi_pool"
+   ],
+   "args": [
+    "--min_free_gb",
+    "10",
+    "retryvla.search.compare_arms",
+    "configs/exp/b2x_value_search.yaml",
+    "m5b.shard=2",
+    "m5b.num_shards=8",
+    "eval.n_workers=8"
+   ]
+  },
+  {
+   "name": "b2x_search_s3",
+   "module": "retryvla.retry_oom",
+   "deps": [
+    "b2x_crit_success_nopi0",
+    "b2x_crit_cpi_pool"
+   ],
+   "args": [
+    "--min_free_gb",
+    "10",
+    "retryvla.search.compare_arms",
+    "configs/exp/b2x_value_search.yaml",
+    "m5b.shard=3",
+    "m5b.num_shards=8",
+    "eval.n_workers=8"
+   ]
+  }
+ ]
+}
