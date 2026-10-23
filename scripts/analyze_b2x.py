@@ -37,7 +37,10 @@ SRC = {"M5b": ("*_M5_m5b_compare_arms_s[0-3]of8", ["random", "wm_diverse"]),
 NAME = {"random": "random", "wm_diverse": "C^pi v2", "wm_goal": "goal", "wm_progress": "B3 progress",
         "wm_success": "B4 success", "wm_success_nopi0": "B4-noPi0", "wm_cpi_pool": "Cpi-pool"}
 PAIRS = [("wm_success", "wm_diverse"), ("wm_success_nopi0", "wm_diverse"), ("wm_cpi_pool", "wm_diverse"),
-         ("wm_success", "wm_cpi_pool"), ("wm_success", "wm_success_nopi0"), ("wm_progress", "wm_diverse")]
+         ("wm_success", "wm_cpi_pool"), ("wm_success", "wm_success_nopi0"), ("wm_progress", "wm_diverse"),
+         # secondary (not pre-registered): every value arm vs random and vs M9 goal
+         *[(x, y) for y in ("random", "wm_goal")
+           for x in ("wm_progress", "wm_success", "wm_success_nopi0", "wm_cpi_pool", "wm_diverse")]]
 
 
 def load() -> pd.DataFrame:

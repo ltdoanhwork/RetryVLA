@@ -115,6 +115,8 @@ def preserve_forward(pres, policy, batch, src):
 
 def main() -> None:
     setup_logging()
+    from retryvla.baselines.sft_rise import short_tmpdir
+    short_tmpdir()  # DataLoader workers die with `AF_UNIX path too long` under the inherited ~90-char TMPDIR
     cfg = cli_config()
     tc = cfg.train
     torch.manual_seed(int(tc.seed))

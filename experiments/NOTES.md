@@ -497,3 +497,45 @@ Analysis:
   (only a final save) -> a killed WM run restarts from step 0.
 - Relaunched 06:31 UTC (tmux rv_dag_m11, lanes local:0:a-d): search_a_s3 resumes (22 done), critic_v3 started.
   If an instance is skipped it will appear in s3/p*/skipped.jsonl (none so far).
+
+## P2 controls for B4 (B4-noPi0, Cpi-pool), partial results 2026-10-23 12:05 UTC (DAG b2x lane local:0:h, b2p3 lane g)
+Critic validation (same held-out sets as the P2 table; C^pi val set = pi0-diag; final 8000 steps):
+| critic | supervision | pi0-diag AUC real / imag | noprefix real / imag | top-4 success (mean 0.155) | Spearman vs C^pi (imag) |
+|---|---|---|---|---|---|
+| C^pi v2 | pi0 continuation (train_critic) | 0.809 / 0.787 | 0.748 / 0.663 | 0.328 | 1 |
+| B3 progress | demos + failure 0 + prefix 1 | 0.721 / 0.716 | 0.637 / 0.683 | 0.203 | 0.589 |
+| B4 success | pi0 + pi1 + pi1more + demo (1/4 each) | 0.623 / 0.604 | 0.693 / 0.644 | 0.320 | 0.345 |
+| B4-noPi0 | pi1 + pi1more + demo (1/3 each) | 0.633 / 0.564 | 0.612 / 0.577 | 0.234 | 0.308 |
+| Cpi-pool | B4's pi0 labels only (7,160) | 0.766 / 0.655 (own val 0.785 real) | 0.725 / 0.640 | 0.312 | 0.519 |
+Runs: `runs/20261023-075605_B2_train_success_nopi0`, `runs/20261023-082325_B2_train_cpi_pool` (B4-noPi0 own pi1 val AUC
+0.48 / 0.53 on 128 samples: no signal on its own held-out continuation labels).
+
+Search (`python scripts/analyze_b2x.py` -> runs/_analysis/b2x; solved = >= 1 of 16 verified sims; exact McNemar).
+B2 shards 0-3 COMPLETE (127 instances); B2x PARTIAL (s0 31 + s1 12 = 43 instances; s1-s3 running).
+| arm | n | solved | hits/sim | mean C^pi pred of picks |
+|---|---|---|---|---|
+| random (M5b) | 127 | 0.339 | 0.061 | - |
+| C^pi v2 wm_diverse (M5b) | 127 | 0.480 | 0.156 | - |
+| goal (M9) | 125 | 0.240 | 0.046 | - |
+| B3 wm_progress | 127 | 0.213 | 0.038 | 0.038 |
+| B4 wm_success | 127 | 0.559 | 0.182 | 0.262 |
+| B4-noPi0 (partial) | 43 | 0.465 | 0.077 | 0.081 |
+| Cpi-pool (partial) | 43 | 0.535 | 0.132 | 0.228 |
+Paired (arm vs reference, pair n, only-arm / only-ref, exact McNemar p):
+- B4 vs C^pi v2: n 123, 0.545 vs 0.463, 14/4, p 0.031 (hits sign-flip p 0.038). Final for B2.
+- B3 vs C^pi v2: n 123, 0.187 vs 0.463, 1/35, p < 1e-4; B3 vs random 2/18 p 0.0004 (worse than random).
+- B4 vs random 30/2 p < 1e-4; B4 vs goal 40/1 p < 1e-4.
+- PARTIAL n 42-43: B4-noPi0 vs C^pi 7/4 p 0.55; Cpi-pool vs C^pi 7/1 p 0.070; B4 vs Cpi-pool 4/3 p 1.0;
+  B4 vs B4-noPi0 6/2 p 0.29 (hits +1.44 / instance, sign-flip p 0.0004).
+Interim reading (not a claim until n = 127): Cpi-pool (pi0 labels only, B4's pool + trainer) already tracks B4
+(0.535 vs 0.558, 4/3) while B4-noPi0 loses most of the hit-rate advantage (0.077 vs 0.182 hits/sim) and C^pi rates its
+picks low (0.08 vs 0.26). So far the B4 gain looks like "more / differently-filtered pi0 continuation labels with the
+value-baseline trainer", NOT policy-agnostic value; B3 (no continuation labels) is below random.
+
+Ops 2026-10-23: b2_sft_progress_s0 (launched 11:07) hung: every DataLoader worker died with `OSError: AF_UNIX path too
+long` (tmux inherited the ~90-char TMPDIR, same as the B3.2 incident). `retryvla/train/sft.py::main` now calls
+`sft_rise.short_tmpdir()` (also covers the P3 SFTs). Killed the session, log -> `*.log.dead_tmpdir`, run dir ->
+`runs/20261023-110817_B2_sft_progress_DEAD_tmpdir`; dag_run relaunched it 11:59 (training, 6k steps). Note the progress
+bank yields only 60 trajectories (< 66): a matched comp SFT at n = 60 is still to be added.
+Queue / ETA (shared GPU): b2x s1 ~13:35, s2 ~16:05, s3 ~18:35 UTC; b2p3: SFT progress + RSR ~14:30, P3 preserve / r0.1 /
+r0.7 / r0.3 (SFT + RSR + nominal, ~2.7 h each) ~01:30 Oct 24, SFT success + RSR ~03:30 Oct 24.
