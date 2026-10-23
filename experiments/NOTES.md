@@ -478,3 +478,22 @@ Analysis:
 - State at relaunch (02:16 UTC, lanes local:0:a-d, tmux rv_dag_m11): done = collect_wide s0-s3, search_a s0-s2;
   search_a_s3 resumes (17 done); train_wm_v2 started (collect_v1 + collect_wide); critic_v3 + search_b s0-s3 queued.
   Failed log -> `failed_rv_m11_search_a_s3_..._20261022-122441.log`; dead claims for local:0:a-d removed.
+
+## M11 incident 2026-10-23 02:52: MuJoCo segfault in a sim worker (m11_search_a_s3, part p2)
+- Not quota / OOM / write_retries: during the `verify` batch of the 6th instance of p2 one SimPool worker died with
+  `Fatal Python error: Segmentation fault` inside robosuite `_reset_internal` (LiberoSim.restore_snapshot -> _build,
+  env re-construction); the main process got a bare `EOFError` from the pipe -> rc=1 -> dag_run FAILED. 5 instances
+  of p2 were complete; nothing of the 6th was written (writers add after all sim batches). RAM 1.6 TB free.
+- Fix (additive): `SimPool` raises `WorkerDied` (subclass of EOFError, so old callers unchanged) with pid +
+  exitcode, and has `respawn()`. compare_arms `m5b.worker_retries` (default 0 = old behaviour; 2 in
+  m11_search_a/b.yaml): on WorkerDied respawn the pool and re-run the whole batch (same jobs + seeds -> same paired
+  result); if it still dies, the instance is SKIPPED, logged to `<part>/skipped.jsonl` with the reason, and never
+  retried on resume. Tested with a SIGSEGV-killed worker (respawn OK, retry/re-raise logic OK).
+- Salvage `data/recovery/m11_a/s3/p2`: 5 done; wm_no_prim 9 eps / 528 frames, wm_plan 12 eps / 1453 frames, all
+  decode (`scripts/validate_recovery_part.py --decode`, new), no orphan rows / images -> CLOSED + SALVAGED.
+  Failed log -> `failed_rv_m11_search_a_s3_ee580a52a73c_20261023-021635.log`; dead claim local:0:b
+  (rv_m11_train_wm_v2, finished rc=0 06:14) dropped. m11_train_wm_v2 was NOT affected: finished 20k steps, val
+  open-loop WM/copy 0.35-0.49, linked in data/wm/latest_wm_v2.txt. Note: retryvla/wm/train_wm.py has NO resume
+  (only a final save) -> a killed WM run restarts from step 0.
+- Relaunched 06:31 UTC (tmux rv_dag_m11, lanes local:0:a-d): search_a_s3 resumes (22 done), critic_v3 started.
+  If an instance is skipped it will appear in s3/p*/skipped.jsonl (none so far).

@@ -118,3 +118,28 @@ Scene-level paired (26 scenes): comp - demo-only +0.181 [+0.092, +0.277] p = 0.0
 [-0.104, +0.088] p = 0.93; comp - goal +0.112 [-0.004, +0.227] p = 0.08; random - demo-only +0.188 p < 1e-4.
 Search: WM competence solved 0.462 vs random 0.405 (30/16, p = 0.054) vs WM goal 0.227 (66/8, p = 2e-12);
 hits / sim 0.134 / 0.060 / 0.038. Goal bank covers only 56 unique failures (comp 114, random 100).
+
+## M11 arm A: WM as planner without the proposal library (PARTIAL, 2026-10-23: shards 0-2 + 22/~34 of s3)
+Same pi0 failures as M5b / M9 (shards 0-3 of 8), 16 verified sims / arm, paired continuation seeds, old WM + critic v2.
+wm_no_prim = WM+critic ranking of VLA samples only (no primitives / perturbations); wm_plan = 5-round elite CEM in
+imagination from broad noise. 108 paired instances (`scripts/analyze_m11.py` -> runs/_analysis/m11/summary.md).
+
+| arm | solved [95% CI] | hits/sim | succ jerk | succ manifold dist | succ cells |
+|---|---|---|---|---|---|
+| random (M5b) | 0.296 [0.213, 0.380] | 0.045 | 0.134 | 0.513 | 2.12 |
+| wm_diverse (M5b, library) | **0.463** [0.370, 0.556] | 0.141 | 0.104 | 0.612 | 2.00 |
+| wm_top (M9, library) | **0.463** [0.370, 0.556] | 0.145 | 0.098 | 0.593 | 1.72 |
+| sim_prefix_critic (M9) | 0.407 [0.315, 0.500] | 0.109 | 0.086 | 0.508 | 3.23 |
+| wm_noise (M5b) | 0.241 [0.167, 0.324] | 0.067 | 0.089 | 0.375 | 2.08 |
+| wm_no_prim (M11) | 0.278 [0.194, 0.361] | 0.078 | 0.127 | 0.433 | 2.97 |
+| wm_plan (M11) | 0.352 [0.269, 0.444] | 0.080 | 0.225 | 0.936 | 2.42 |
+
+Paired (unit = failure instance, exact McNemar, bootstrap CI): wm_plan - random +0.056 [-0.037, +0.148] (16/10,
+p = 0.33; hits +0.56/inst, sign-flip p = 0.001); wm_plan - wm_diverse -0.111 [-0.194, -0.028] (5/17, p = 0.017);
+wm_no_prim - wm_diverse -0.185 [-0.278, -0.093] (4/24, p = 2e-4); wm_no_prim - random -0.019 (p = 0.77).
+Outside the library: library arms jointly solve 68/108; only 2 failures are solved by wm_plan and no library arm
+(+2 by wm_no_prim) -> union 72/108; 32 library-solved failures are missed by wm_plan.
+Reading: without the library the WM+critic do NOT match library search (-0.11 to -0.19 solved); planning from
+noise beats ranking VLA samples (+0.07, directional) and finds new strategies (83% of its success cells unseen by library arms
+on the same instance) but its successes are the jerkiest and farthest from SmolVLA's manifold. The proposal
+library still carries most of the recovery-finding. wm_plan_v2 (WM v2 + critic v3, broad-action data) = arm B, running.

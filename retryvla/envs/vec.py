@@ -143,21 +143,50 @@ def _worker(conn: Connection, resolution: int, env: dict[str, str]) -> None:
             conn.send(("err", f"{type(e).__name__}: {e}\n{traceback.format_exc()}"))
 
 
+class WorkerDied(EOFError):
+    """A sim worker process died (e.g. MuJoCo segfault, exitcode -11). Subclass of EOFError, so callers that
+    caught the old bare EOFError keep working. Recover with ``SimPool.respawn()``."""
+
+
 class SimPool:
     def __init__(self, n_workers: int, resolution: int = 256):
+        self._n_workers, self._resolution = int(n_workers), int(resolution)
+        self._spawn()
+
+    def _spawn(self) -> None:
         ctx = mp.get_context("spawn")
         env = {k: v for k, v in os.environ.items()
                if k.startswith(("MUJOCO", "PYOPENGL", "__EGL", "LD_LIBRARY", "LIBERO", "PYTHONPATH"))}
         self.conns: list[Connection] = []
         self.procs = []
-        for _ in range(n_workers):
+        for _ in range(self._n_workers):
             parent, child = ctx.Pipe()
-            p = ctx.Process(target=_worker, args=(child, resolution, env), daemon=True)
+            p = ctx.Process(target=_worker, args=(child, self._resolution, env), daemon=True)
             p.start()
             child.close()
             self.conns.append(parent)
             self.procs.append(p)
-        self._busy = [False] * n_workers
+        self._busy = [False] * self._n_workers
+
+    def respawn(self) -> None:
+        """Hard-kill every worker (busy ones included) and start a fresh pool of the same size. All
+        in-flight jobs are lost; the caller re-runs them."""
+        for p in self.procs:
+            if p.is_alive():
+                p.kill()
+        for p in self.procs:
+            p.join(timeout=10)
+        for c in self.conns:
+            try:
+                c.close()
+            except Exception:
+                pass
+        self._spawn()
+
+    def _died(self, i: int, e: BaseException) -> WorkerDied:
+        p = self.procs[i]
+        p.join(timeout=2)
+        return WorkerDied(f"sim worker {i} (pid {p.pid}) died, exitcode {p.exitcode}: {type(e).__name__}")
 
     @property
     def n(self) -> int:
@@ -165,11 +194,17 @@ class SimPool:
 
     def send(self, i: int, cmd: str, *args, **kwargs) -> None:
         assert not self._busy[i], f"worker {i} busy"
-        self.conns[i].send((cmd, args, kwargs))
+        try:
+            self.conns[i].send((cmd, args, kwargs))
+        except (BrokenPipeError, ConnectionResetError) as e:
+            raise self._died(i, e) from e
         self._busy[i] = True
 
     def recv(self, i: int) -> Any:
-        status, out = self.conns[i].recv()
+        try:
+            status, out = self.conns[i].recv()
+        except (EOFError, ConnectionResetError) as e:
+            raise self._died(i, e) from e
         self._busy[i] = False
         if status == "err":
             raise RuntimeError(f"worker {i}: {out}")

@@ -12,4 +12,5 @@ m5b:
   plan_iters: 5
   out_root: data/recovery/m11_a
   write_retries: 8  # re-check + rewrite unreadable PNGs before save_episode (EDQUOT 2026-10-22); 0 = old behaviour
+  worker_retries: 2  # sim worker died (MuJoCo segfault in env rebuild, 2026-10-23): respawn pool + re-run batch, then skip instance; 0 = old behaviour
   verif_out: data/wm/verif_m11_a

@@ -28,7 +28,7 @@ from retryvla import REPO_ROOT, tracking
 from retryvla.config import cli_config, to_dict
 from retryvla.data.recovery_writer import RecoveryWriter
 from retryvla.envs.splits import assert_allowed, load_split, scenes_for
-from retryvla.envs.vec import SimPool
+from retryvla.envs.vec import SimPool, WorkerDied
 from retryvla.eval.eval_recover import instance_jobs
 from retryvla.eval.rollout import Job, run_jobs
 from retryvla.policy import SmolVLAWrapper
@@ -59,7 +59,7 @@ def iid(meta: dict) -> str:
     return f"{meta['scene']}__{meta['gripper_init']}{meta['trial']}"
 
 
-def precheck(pool, policy, jobs, skip: set[str]) -> tuple[list[Instance], list[dict]]:
+def precheck(pool, policy, jobs, skip: set[str], run=None) -> tuple[list[Instance], list[dict]]:
     """One pi0 rollout per instance from the failure state; keep the ones pi0 fails (+ exact snapshot)."""
     todo = []
     for j in jobs:
@@ -68,7 +68,7 @@ def precheck(pool, policy, jobs, skip: set[str]) -> tuple[list[Instance], list[d
         jj = Job(**{**j.__dict__})
         jj.return_snapshot = True
         todo.append(jj)
-    res = run_jobs(pool, policy, todo, desc="precheck")
+    res = (run or (lambda *a, **k: run_jobs(pool, *a, **k)))(policy, todo, desc="precheck")
     insts, rows = [], []
     s_by = {}
     for j in todo:
@@ -102,7 +102,26 @@ def closed_done(root: Path) -> set[str]:
     for p in sorted(root.glob("p*")):
         if (p / "CLOSED").exists() and (p / "done.jsonl").exists():
             done |= {json.loads(l)["instance_id"] for l in open(p / "done.jsonl")}
+        if (p / "skipped.jsonl").exists():  # deterministic sim-worker crashes: never retried on resume
+            done |= {json.loads(l)["instance_id"] for l in open(p / "skipped.jsonl")}
     return done
+
+
+def make_safe_run(pool: SimPool, retries: int):
+    """run_jobs that survives sim-worker deaths (MuJoCo segfault in env rebuild, 2026-10-23): on WorkerDied
+    respawn the pool and re-run the WHOLE batch (same jobs + seeds -> same paired results), up to `retries`
+    times, then re-raise. retries=0 = old behaviour."""
+    def run(*a, **k):
+        for t in range(retries + 1):
+            try:
+                return run_jobs(pool, *a, **k)
+            except WorkerDied as e:
+                if t == retries:
+                    raise
+                log.warning("%s; respawning sim pool and re-running batch '%s' (%d/%d)", e, k.get("desc", "?"),
+                            t + 1, retries)
+                pool.respawn()
+    return run
 
 
 def main() -> None:
@@ -151,175 +170,187 @@ def main() -> None:
                    for a in arms}
         rows, t0 = [], time.time()
         with SimPool(int(cfg.eval.n_workers), int(cfg.env.resolution)) as pool:
-            insts, pre = precheck(pool, policy, jobs, done)
+            wretries = int(mb.get("worker_retries", 0))  # 0 = old behaviour (a dead sim worker kills the run)
+            srun = make_safe_run(pool, wretries)
+            insts, pre = precheck(pool, policy, jobs, done, run=srun)
             pd.DataFrame(pre).to_csv(run.path("precheck.csv"), index=False)
             log.info("shard %s: %d selected, %d already done, %d pi0 failures to search", mb.shard, len(jobs),
                      len(done), len(insts))
             proposals = Proposals(policy, sc, H, int(cfg.eval.seed) + 77 * int(mb.shard))
             for n, inst in enumerate(insts):
-                seed = zlib.crc32(inst.instance_id.encode()) % (2**31)  # stable across processes
-                rng = np.random.default_rng(seed)
-                ti = time.time()
-                pool_c, src = proposals(inst, NP)
-                ref = pool_c[[s.startswith("vla_") for s in src]]
-                z0, q0 = ranker.encode(inst.obs0)
-                pool_s = ranker.score(z0, q0, inst.task, pool_c)
-                picked, extra_steps = {}, {}
-                goal = None
-                if goal_feats is not None:
-                    goal = ranker.norm.z(goal_feats[canon[inst.scene_tag]].to(dev).float())
-                for a in arms:
-                    extra_steps[a] = 0
-                    ta = time.time()
-                    if a == "random":
-                        cand, idx, cs = (*A.arm_random(pool_c, pool_s, B, rng)[:2], pool_s)
-                    elif a == "wm_diverse":
-                        cand, idx, cs = A.arm_wm_diverse(ranker, z0, q0, inst.task, pool_c, pool_s, B, seed % 10007)
-                    elif a == "wm_noise":
-                        cand, idx, cs = A.arm_wm_noise(policy, ranker, inst.obs0, z0, q0, inst.task, H, B, seed % 10007,
-                                                       n=int(mb.noise_n), iters=int(mb.noise_iters))
-                    elif a == "wm_qd":
-                        cand, idx, cs = A.arm_wm_qd(ranker, z0, q0, inst.task, pool_c, pool_s, B, seed % 10007)
-                    elif a in ("wm_goal", "wm_goal_comp", "wm_top"):
-                        mode = {"wm_goal": "goal", "wm_goal_comp": "goal_comp", "wm_top": "comp"}[a]
-                        cand, idx, cs = A.arm_wm_obj(ranker, z0, q0, inst.task, pool_c, B, seed % 10007, mode,
-                                                     goal=goal, diverse=(a != "wm_top"))
-                    elif a == "random_diverse":
-                        cand, idx, cs = pool_c, A.arm_random_diverse(pool_c, B, rng), pool_s
-                    elif a == "sim_prefix_critic":
-                        # real dynamics instead of the WM: simulate every pool segment (no continuation), critic on the
-                        # REAL end state, diverse top-B. All prefix transitions are charged to this arm.
-                        pj = [Job("restore_snapshot", dict(bddl=inst.bddl, snap=inst.snapshot), task=inst.task, max_steps=H,
-                                  prefix=c, record="all", record_cfg={"stride": H}) for c in pool_c]
-                        pr = run_jobs(pool, policy, pj, desc="prefix")
-                        zs, qs = [], []
-                        for r in pr:
-                            e = encode_record(ranker.enc, r.record, H, H)
-                            k_ = int(e["valid"].sum()) - 1
-                            zs.append(e["z"][k_]); qs.append(torch.as_tensor(e["q"][k_]))
-                            extra_steps[a] += int(r.steps)
-                            r.record = None
-                        zr = ranker.norm.z(torch.stack(zs).to(dev).float())
-                        qr = ranker.norm.q(torch.stack(qs).to(dev).float())
-                        V = ranker.score_real(zr, qr, inst.task)
-                        R = A.roughness(pool_c) if hasattr(A, "roughness") else 0.0
-                        s = V - float(mb.beta_rough) * R
-                        zf = torch.cat([zr.mean(1), qr], 1).cpu().numpy()
-                        cs = {"value": V, "score": s, "rough": R, "zfeat": zf}
-                        cand, idx = pool_c, A.diverse_ranking(s, zf, B, seed=seed % 10007)
-                    elif a == "wm_no_prim":  # same as wm_diverse but the pool has NO primitives / perturbations
-                        vla_only = pool_c[[s.startswith("vla_") for s in src]]
-                        extra = policy.sample_chunks(inst.obs0, inst.task, NP - len(vla_only), noise_scale=1.25,
-                                                     seed=seed % 100003)[:, :H]
-                        pc = np.clip(np.concatenate([vla_only, extra]), -1, 1).astype(np.float32)
-                        cand, idx, cs = A.arm_wm_diverse(ranker, z0, q0, inst.task, pc, ranker.score(z0, q0, inst.task, pc),
-                                                         B, seed % 10007)
-                    elif a in ("wm_plan", "wm_plan_v2"):
-                        rk = ranker2 if a.endswith("_v2") else ranker
-                        za, qa = rk.encode(inst.obs0) if a.endswith("_v2") else (z0, q0)
-                        cand, idx, cs = A.arm_wm_plan(rk, za, qa, inst.task, H, B, seed % 10007,
-                                                      iters=int(mb.get("plan_iters", 5)))
-                    elif a == "wm_two_stage":
-                        cand, idx, cs = A.arm_wm_two_stage(ranker, z0, q0, inst.task, pool_c, pool_s, B, seed % 10007)
-                    elif a in ("wm_progress", "wm_success"):
-                        cand, idx, cs = A.arm_wm_value(value_rk[a], z0, q0, inst.task, pool_c, B, seed % 10007)
-                    else:
-                        raise ValueError(a)
-                    picked[a] = (cand[idx], {k: v[idx] for k, v in cs.items() if k not in ("zfeat",) and np.ndim(v) == 1},
-                                 len(cand), time.time() - ta)
-                    if a in value_rk:  # C^pi's prediction for the picks of a policy-agnostic arm (analysis only)
-                        picked[a][1]["value_cpi"] = ranker.score(z0, q0, inst.task, cand[idx])["value"]
-                # one verification batch for all arms; slot j gets the same continuation seed in every arm
-                vj, owner = [], []
-                for a in arms:
-                    for j, c in enumerate(picked[a][0]):
-                        vj.append(Job("restore_snapshot", dict(bddl=inst.bddl, snap=inst.snapshot), task=inst.task,
-                                      max_steps=len(c) + cont, prefix=c, record="all", policy_seed=(seed + j) % (2**31 - 1)))
-                        owner.append((a, j))
-                res = run_jobs(pool, policy, vj, noise_scale=float(cfg.policy.noise_scale), desc="verify")
-                by = {a: [] for a in arms}
-                for (a, j), r in zip(owner, res):
-                    by[a].append(r)
-                # robustness: re-verify each success under `robust_extra` more continuation seeds; a success is kept
-                # for the dataset only if it succeeds in >= robust_min of (1 + robust_extra) runs
-                n_extra = int(mb.get("robust_extra", 0))
-                robust = {a: [bool(r.success) for r in by[a]] for a in arms}
-                if n_extra:
-                    rj, rown = [], []
+                try:
+                    seed = zlib.crc32(inst.instance_id.encode()) % (2**31)  # stable across processes
+                    rng = np.random.default_rng(seed)
+                    ti = time.time()
+                    pool_c, src = proposals(inst, NP)
+                    ref = pool_c[[s.startswith("vla_") for s in src]]
+                    z0, q0 = ranker.encode(inst.obs0)
+                    pool_s = ranker.score(z0, q0, inst.task, pool_c)
+                    picked, extra_steps = {}, {}
+                    goal = None
+                    if goal_feats is not None:
+                        goal = ranker.norm.z(goal_feats[canon[inst.scene_tag]].to(dev).float())
                     for a in arms:
-                        for j, r in enumerate(by[a]):
-                            if r.success:
-                                for e in range(n_extra):
-                                    rj.append(Job("restore_snapshot", dict(bddl=inst.bddl, snap=inst.snapshot), task=inst.task,
-                                                  max_steps=len(picked[a][0][j]) + cont, prefix=picked[a][0][j], record="none",
-                                                  policy_seed=(seed + j + 7777 * (e + 1)) % (2**31 - 1)))
-                                    rown.append((a, j))
-                    cnt = {}
-                    for (a, j), r in zip(rown, run_jobs(pool, policy, rj, noise_scale=float(cfg.policy.noise_scale),
-                                                        desc="robust") if rj else []):
-                        cnt[(a, j)] = cnt.get((a, j), 0) + int(r.success)
-                    need = int(mb.get("robust_min", 2))
-                    robust = {a: [bool(r.success) and 1 + cnt.get((a, j), 0) >= need for j, r in enumerate(by[a])] for a in arms}
-                # verification log (critic self-improvement data), all arms
-                enc = [encode_record(ranker.enc, r.record, H, stride) for r in res]
-                _save_retry({
-                    "instance_id": inst.instance_id, "task": inst.task, "scene": inst.scene_tag,
-                    "z": torch.stack([e["z"] for e in enc]), "q": torch.as_tensor(np.stack([e["q"] for e in enc])),
-                    "valid": torch.as_tensor(np.stack([e["valid"] for e in enc])),
-                    "actions": (torch.as_tensor(np.concatenate([picked[a][0] for a in arms]))
-                                if len({picked[a][0].shape[1] for a in arms}) == 1
-                                else [torch.as_tensor(x) for a in arms for x in picked[a][0]]),
-                    "success": torch.as_tensor([r.success for r in res]),
-                    "success_step": torch.as_tensor([r.success_step if r.success else -1 for r in res]),
-                    "prefix_success": torch.as_tensor([r.prefix_success for r in res]),
-                    "source": [a for a, _ in owner],
-                    "pred_value": torch.as_tensor(np.concatenate([picked[a][1]["value"] for a in arms])),
-                    "arm": "m5b_all",
-                }, vdir / f"{inst.instance_id}.pt", log)
-                line = []
-                for a in arms:
-                    cands, cs, n_scored, t_arm = picked[a]
-                    succ = np.array([r.success for r in by[a]], bool)
-                    w = writers[a]
-                    w.add_instance(inst.instance_id, {"scene": inst.scene_tag, "task": inst.task, "arm": a})
-                    rob = np.array(robust[a], bool)
-                    order = [k for k in np.argsort(-cs["score"]) if rob[k]][: int(mb.max_trajs_per_instance)]
-                    for k in order:
-                        w.add_trajectory(by[a][k].record, inst.task, inst.instance_id,
-                                         {"score": float(cs["score"][k]), "pred_value": float(cs["value"][k]),
-                                          "arm": a, "scene": inst.scene_tag,
-                                          "success_step": -1 if by[a][k].success_step is None else int(by[a][k].success_step)})
-                    m_all, m_succ = A.set_metrics(cands, ref), A.set_metrics(cands[succ], ref)
-                    rows.append({
-                        "instance_id": inst.instance_id, "task_folder": inst.meta["task_folder"],
-                        "gripper_init": inst.meta["gripper_init"], "arm": a, "budget": len(cands),
-                        "hits": int(succ.sum()), "solved": bool(succ.any()), "n_written": len(order),
-                        "robust_hits": int(rob.sum()), "robust_solved": bool(rob.any()),
-                        "pred_mean": float(cs["value"].mean()),
-                        "pred_succ": float(cs["value"][succ].mean()) if succ.any() else np.nan,
-                        "pred_fail": float(cs["value"][~succ].mean()) if (~succ).any() else np.nan,
-                        **({"pred_cpi_mean": float(cs["value_cpi"].mean()),
-                            "pred_cpi_succ": float(cs["value_cpi"][succ].mean()) if succ.any() else np.nan,
-                            "pred_cpi_fail": float(cs["value_cpi"][~succ].mean()) if (~succ).any() else np.nan}
-                           if "value_cpi" in cs else {}),
-                        "n_scored": n_scored, "t_arm_s": t_arm,
-                        "sim_steps_verify": int(sum(int(r.steps) for r in by[a])), "sim_steps_extra": int(extra_steps[a]),
-                        "order_success": [bool(x) for x in succ],
-                        **{f"all_{k}": v for k, v in m_all.items()}, **{f"succ_{k}": v for k, v in m_succ.items()},
-                        "succ_cells_list": sorted(set(A.descriptor(cands[succ]).tolist())) if succ.any() else [],
-                    })
-                    line.append(f"{a} {int(succ.sum())}/{len(cands)} (robust {int(rob.sum())})")
-                for r in res:
-                    r.record = None
-                with open(part / "done.jsonl", "a") as f:
-                    f.write(json.dumps({"instance_id": inst.instance_id}) + "\n")
-                d = pd.DataFrame(rows)
-                d.to_json(run.path("per_instance.jsonl"), orient="records", lines=True)
-                g = d.groupby("arm")
-                run.log({**{f"m5b/solve_{a}": float(v) for a, v in g.solved.mean().items()},
-                         **{f"m5b/hit_{a}": float(v) for a, v in (g.hits.sum() / g.budget.sum()).items()}}, step=n)
-                log.info("[%d/%d] %s | %s | %.0fs (total %.0fs)", n + 1, len(insts), inst.instance_id[-38:],
-                         " | ".join(line), time.time() - ti, time.time() - t0)
+                        extra_steps[a] = 0
+                        ta = time.time()
+                        if a == "random":
+                            cand, idx, cs = (*A.arm_random(pool_c, pool_s, B, rng)[:2], pool_s)
+                        elif a == "wm_diverse":
+                            cand, idx, cs = A.arm_wm_diverse(ranker, z0, q0, inst.task, pool_c, pool_s, B, seed % 10007)
+                        elif a == "wm_noise":
+                            cand, idx, cs = A.arm_wm_noise(policy, ranker, inst.obs0, z0, q0, inst.task, H, B, seed % 10007,
+                                                           n=int(mb.noise_n), iters=int(mb.noise_iters))
+                        elif a == "wm_qd":
+                            cand, idx, cs = A.arm_wm_qd(ranker, z0, q0, inst.task, pool_c, pool_s, B, seed % 10007)
+                        elif a in ("wm_goal", "wm_goal_comp", "wm_top"):
+                            mode = {"wm_goal": "goal", "wm_goal_comp": "goal_comp", "wm_top": "comp"}[a]
+                            cand, idx, cs = A.arm_wm_obj(ranker, z0, q0, inst.task, pool_c, B, seed % 10007, mode,
+                                                         goal=goal, diverse=(a != "wm_top"))
+                        elif a == "random_diverse":
+                            cand, idx, cs = pool_c, A.arm_random_diverse(pool_c, B, rng), pool_s
+                        elif a == "sim_prefix_critic":
+                            # real dynamics instead of the WM: simulate every pool segment (no continuation), critic on the
+                            # REAL end state, diverse top-B. All prefix transitions are charged to this arm.
+                            pj = [Job("restore_snapshot", dict(bddl=inst.bddl, snap=inst.snapshot), task=inst.task, max_steps=H,
+                                      prefix=c, record="all", record_cfg={"stride": H}) for c in pool_c]
+                            pr = srun(policy, pj, desc="prefix")
+                            zs, qs = [], []
+                            for r in pr:
+                                e = encode_record(ranker.enc, r.record, H, H)
+                                k_ = int(e["valid"].sum()) - 1
+                                zs.append(e["z"][k_]); qs.append(torch.as_tensor(e["q"][k_]))
+                                extra_steps[a] += int(r.steps)
+                                r.record = None
+                            zr = ranker.norm.z(torch.stack(zs).to(dev).float())
+                            qr = ranker.norm.q(torch.stack(qs).to(dev).float())
+                            V = ranker.score_real(zr, qr, inst.task)
+                            R = A.roughness(pool_c) if hasattr(A, "roughness") else 0.0
+                            s = V - float(mb.beta_rough) * R
+                            zf = torch.cat([zr.mean(1), qr], 1).cpu().numpy()
+                            cs = {"value": V, "score": s, "rough": R, "zfeat": zf}
+                            cand, idx = pool_c, A.diverse_ranking(s, zf, B, seed=seed % 10007)
+                        elif a == "wm_no_prim":  # same as wm_diverse but the pool has NO primitives / perturbations
+                            vla_only = pool_c[[s.startswith("vla_") for s in src]]
+                            extra = policy.sample_chunks(inst.obs0, inst.task, NP - len(vla_only), noise_scale=1.25,
+                                                         seed=seed % 100003)[:, :H]
+                            pc = np.clip(np.concatenate([vla_only, extra]), -1, 1).astype(np.float32)
+                            cand, idx, cs = A.arm_wm_diverse(ranker, z0, q0, inst.task, pc, ranker.score(z0, q0, inst.task, pc),
+                                                             B, seed % 10007)
+                        elif a in ("wm_plan", "wm_plan_v2"):
+                            rk = ranker2 if a.endswith("_v2") else ranker
+                            za, qa = rk.encode(inst.obs0) if a.endswith("_v2") else (z0, q0)
+                            cand, idx, cs = A.arm_wm_plan(rk, za, qa, inst.task, H, B, seed % 10007,
+                                                          iters=int(mb.get("plan_iters", 5)))
+                        elif a == "wm_two_stage":
+                            cand, idx, cs = A.arm_wm_two_stage(ranker, z0, q0, inst.task, pool_c, pool_s, B, seed % 10007)
+                        elif a in ("wm_progress", "wm_success"):
+                            cand, idx, cs = A.arm_wm_value(value_rk[a], z0, q0, inst.task, pool_c, B, seed % 10007)
+                        else:
+                            raise ValueError(a)
+                        picked[a] = (cand[idx], {k: v[idx] for k, v in cs.items() if k not in ("zfeat",) and np.ndim(v) == 1},
+                                     len(cand), time.time() - ta)
+                        if a in value_rk:  # C^pi's prediction for the picks of a policy-agnostic arm (analysis only)
+                            picked[a][1]["value_cpi"] = ranker.score(z0, q0, inst.task, cand[idx])["value"]
+                    # one verification batch for all arms; slot j gets the same continuation seed in every arm
+                    vj, owner = [], []
+                    for a in arms:
+                        for j, c in enumerate(picked[a][0]):
+                            vj.append(Job("restore_snapshot", dict(bddl=inst.bddl, snap=inst.snapshot), task=inst.task,
+                                          max_steps=len(c) + cont, prefix=c, record="all", policy_seed=(seed + j) % (2**31 - 1)))
+                            owner.append((a, j))
+                    res = srun(policy, vj, noise_scale=float(cfg.policy.noise_scale), desc="verify")
+                    by = {a: [] for a in arms}
+                    for (a, j), r in zip(owner, res):
+                        by[a].append(r)
+                    # robustness: re-verify each success under `robust_extra` more continuation seeds; a success is kept
+                    # for the dataset only if it succeeds in >= robust_min of (1 + robust_extra) runs
+                    n_extra = int(mb.get("robust_extra", 0))
+                    robust = {a: [bool(r.success) for r in by[a]] for a in arms}
+                    if n_extra:
+                        rj, rown = [], []
+                        for a in arms:
+                            for j, r in enumerate(by[a]):
+                                if r.success:
+                                    for e in range(n_extra):
+                                        rj.append(Job("restore_snapshot", dict(bddl=inst.bddl, snap=inst.snapshot), task=inst.task,
+                                                      max_steps=len(picked[a][0][j]) + cont, prefix=picked[a][0][j], record="none",
+                                                      policy_seed=(seed + j + 7777 * (e + 1)) % (2**31 - 1)))
+                                        rown.append((a, j))
+                        cnt = {}
+                        for (a, j), r in zip(rown, srun(policy, rj, noise_scale=float(cfg.policy.noise_scale),
+                                                            desc="robust") if rj else []):
+                            cnt[(a, j)] = cnt.get((a, j), 0) + int(r.success)
+                        need = int(mb.get("robust_min", 2))
+                        robust = {a: [bool(r.success) and 1 + cnt.get((a, j), 0) >= need for j, r in enumerate(by[a])] for a in arms}
+                    # verification log (critic self-improvement data), all arms
+                    enc = [encode_record(ranker.enc, r.record, H, stride) for r in res]
+                    _save_retry({
+                        "instance_id": inst.instance_id, "task": inst.task, "scene": inst.scene_tag,
+                        "z": torch.stack([e["z"] for e in enc]), "q": torch.as_tensor(np.stack([e["q"] for e in enc])),
+                        "valid": torch.as_tensor(np.stack([e["valid"] for e in enc])),
+                        "actions": (torch.as_tensor(np.concatenate([picked[a][0] for a in arms]))
+                                    if len({picked[a][0].shape[1] for a in arms}) == 1
+                                    else [torch.as_tensor(x) for a in arms for x in picked[a][0]]),
+                        "success": torch.as_tensor([r.success for r in res]),
+                        "success_step": torch.as_tensor([r.success_step if r.success else -1 for r in res]),
+                        "prefix_success": torch.as_tensor([r.prefix_success for r in res]),
+                        "source": [a for a, _ in owner],
+                        "pred_value": torch.as_tensor(np.concatenate([picked[a][1]["value"] for a in arms])),
+                        "arm": "m5b_all",
+                    }, vdir / f"{inst.instance_id}.pt", log)
+                    line = []
+                    for a in arms:
+                        cands, cs, n_scored, t_arm = picked[a]
+                        succ = np.array([r.success for r in by[a]], bool)
+                        w = writers[a]
+                        w.add_instance(inst.instance_id, {"scene": inst.scene_tag, "task": inst.task, "arm": a})
+                        rob = np.array(robust[a], bool)
+                        order = [k for k in np.argsort(-cs["score"]) if rob[k]][: int(mb.max_trajs_per_instance)]
+                        for k in order:
+                            w.add_trajectory(by[a][k].record, inst.task, inst.instance_id,
+                                             {"score": float(cs["score"][k]), "pred_value": float(cs["value"][k]),
+                                              "arm": a, "scene": inst.scene_tag,
+                                              "success_step": -1 if by[a][k].success_step is None else int(by[a][k].success_step)})
+                        m_all, m_succ = A.set_metrics(cands, ref), A.set_metrics(cands[succ], ref)
+                        rows.append({
+                            "instance_id": inst.instance_id, "task_folder": inst.meta["task_folder"],
+                            "gripper_init": inst.meta["gripper_init"], "arm": a, "budget": len(cands),
+                            "hits": int(succ.sum()), "solved": bool(succ.any()), "n_written": len(order),
+                            "robust_hits": int(rob.sum()), "robust_solved": bool(rob.any()),
+                            "pred_mean": float(cs["value"].mean()),
+                            "pred_succ": float(cs["value"][succ].mean()) if succ.any() else np.nan,
+                            "pred_fail": float(cs["value"][~succ].mean()) if (~succ).any() else np.nan,
+                            **({"pred_cpi_mean": float(cs["value_cpi"].mean()),
+                                "pred_cpi_succ": float(cs["value_cpi"][succ].mean()) if succ.any() else np.nan,
+                                "pred_cpi_fail": float(cs["value_cpi"][~succ].mean()) if (~succ).any() else np.nan}
+                               if "value_cpi" in cs else {}),
+                            "n_scored": n_scored, "t_arm_s": t_arm,
+                            "sim_steps_verify": int(sum(int(r.steps) for r in by[a])), "sim_steps_extra": int(extra_steps[a]),
+                            "order_success": [bool(x) for x in succ],
+                            **{f"all_{k}": v for k, v in m_all.items()}, **{f"succ_{k}": v for k, v in m_succ.items()},
+                            "succ_cells_list": sorted(set(A.descriptor(cands[succ]).tolist())) if succ.any() else [],
+                        })
+                        line.append(f"{a} {int(succ.sum())}/{len(cands)} (robust {int(rob.sum())})")
+                    for r in res:
+                        r.record = None
+                    with open(part / "done.jsonl", "a") as f:
+                        f.write(json.dumps({"instance_id": inst.instance_id}) + "\n")
+                    d = pd.DataFrame(rows)
+                    d.to_json(run.path("per_instance.jsonl"), orient="records", lines=True)
+                    g = d.groupby("arm")
+                    run.log({**{f"m5b/solve_{a}": float(v) for a, v in g.solved.mean().items()},
+                             **{f"m5b/hit_{a}": float(v) for a, v in (g.hits.sum() / g.budget.sum()).items()}}, step=n)
+                    log.info("[%d/%d] %s | %s | %.0fs (total %.0fs)", n + 1, len(insts), inst.instance_id[-38:],
+                             " | ".join(line), time.time() - ti, time.time() - t0)
+                except WorkerDied as e:  # same instance kept killing a sim worker after `worker_retries` respawns
+                    if not wretries:
+                        raise
+                    log.error("[%d/%d] SKIP %s: sim worker crashed %d times (%s)", n + 1, len(insts), inst.instance_id,
+                              wretries + 1, e)
+                    pool.respawn()
+                    with open(part / "skipped.jsonl", "a") as f:
+                        f.write(json.dumps({"instance_id": inst.instance_id, "reason": f"sim worker crash x{wretries + 1}: {e}",
+                                            "time": time.strftime("%Y-%m-%dT%H:%M:%S")}) + "\n")
         for w in writers.values():
             w.close()
         (part / "CLOSED").write_text(time.strftime("%Y-%m-%dT%H:%M:%S"))
