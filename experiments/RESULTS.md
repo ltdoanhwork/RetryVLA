@@ -170,7 +170,7 @@ manifold distance of its successes is unchanged. Broad-action WM data does NOT c
 still carries most of the recovery-finding, and the remaining planner deficit is not mainly WM coverage of
 off-manifold actions.
 
-## B3.2 RISE-inspired imagination-only baseline (PARTIAL, 2026-10-23: pool arms done, VLA-sample arm running)
+## B3.2 RISE-inspired imagination-only baseline (COMPLETE 2026-10-24: pool arms + VLA-sample arm)
 Same WM v1 + critic v2 + 256 pi0 failures + 696 imagined 50-step chunks / failure as the PoC, but the VLA learns
 directly from IMAGINED advantage A = S(chunk) - V(s_0) (no per-sample sim verification; 0 candidate sim transitions).
 Matched recipe: init pi1-nominal, 6k steps, eff. batch 32, lr 5e-5, 50% demo replay, 1 training seed.
@@ -184,9 +184,12 @@ paired sign-flip p. pi0 = test part of M0_recover_bddl.
 | pi1 (PoC, 3 seeds) | 0.418 ± 0.021 | 0.785 | +0.280 | | | -0.011 (ok) |
 | B3.2 cond, pool | 0.068 | 0.718 | -0.070 [-0.109, -0.037] p<1e-4 | -0.351 [-0.435, -0.270] p<1e-4 | -0.050 [-0.079, -0.023] p=9e-4 | -0.078 [-0.124, -0.036] **FAIL** |
 | B3.2 AWR, pool | 0.082 | 0.776 | -0.055 [-0.095, -0.021] p=0.004 | -0.336 [-0.418, -0.252] p<1e-4 | -0.036 [-0.061, -0.012] p=0.008 | -0.020 [-0.060, +0.016] at the margin |
-| B3.2 cond, VLA samples | running (interim 0.140 at 422/560, 14:42 UTC; ETA ~15:30) | 0.770 | | | | -0.026 [-0.068, +0.018] (point < -eps, CI covers it) |
+| B3.2 cond, VLA samples | 0.113 (63/560; close 0.114, open 0.111) | 0.770 | -0.025 [-0.052, +0.000] p=0.10 | -0.306 [-0.386, -0.227] p<1e-4 | -0.005 [-0.021, +0.011] p=0.67 | -0.026 [-0.068, +0.018] (point < -eps, CI covers it) |
 
-Scenes worse / better / tied vs pi1-nominal: cond 18 / 0 / 38, AWR 18 / 5 / 33. Nominal CI = 10-task bootstrap.
+Scenes worse / better / tied vs pi1-nominal: cond 18 / 0 / 38, AWR 18 / 5 / 33. VLA-sample cond: 13 / 6 / 37 vs pi1-nominal, 7 / 5 / 44 vs pi0;
+it beats the pool cond arm (+0.045 [+0.021, +0.073], p = 6e-4) and AWR pool (+0.030, p = 0.035): restricting the
+imagined-advantage data to pi0's own samples removes most of the off-manifold damage, but it still only matches pi0
+(no recovery learned, -0.31 vs pi1) and does not beat pi1-nominal. Nominal CI = 10-task bootstrap.
 Diagnosis (critic labels vs the real outcomes of the same chunks that M5b executed in sim, 8740 chunks, 0 new sim):
 positive-labelled chunks have imagined V(s_hat_50) 0.81 but real success 0.185 (precision; PoC distils only verified
 successes, precision 1.0); argmax-A chunk per state: imagined V 0.94, real 0.205; AUC(A -> real) 0.67. Only 18% of
@@ -333,7 +336,7 @@ transitions spent to produce the training signal (PoC accounting, runs/_analysis
 | online best-of-8 on pi0 | 1 | 0.118 | not run | -0.301 [-0.383, -0.221], p < 1e-4 | - | same | 2.21M |
 | RISE-inspired cond (imagined adv., pool) | 1 | 0.068 | 0.718 | -0.351 [-0.433, -0.270], p < 1e-4 | -0.078 [-0.124, -0.034] **< -eps** | none | 2.21M (0 verify) |
 | RISE-inspired AWR (imagined adv., pool) | 1 | 0.082 | 0.776 | -0.336 [-0.421, -0.255], p < 1e-4 | -0.020 [-0.060, +0.018] | none | 2.21M (0 verify) |
-| RISE-inspired cond (imagined adv., VLA samples) | 1 | running (0.140 at 422/560) | 0.770 | pending | -0.026 [-0.068, +0.018] **< -eps** | none | 2.21M (0 verify) |
+| RISE-inspired cond (imagined adv., VLA samples) | 1 | 0.113 | 0.770 | -0.306 [-0.386, -0.227], p < 1e-4 | -0.026 [-0.068, +0.018] **< -eps** | none | 2.21M (0 verify) |
 | residual RL p25 (PPO bridge on frozen pi0) | 1 | 0.111 | 0.400 | -0.308 [-0.388, -0.229], p < 1e-4 | -0.396 [-0.534, -0.266] **< -eps** | DINOv2-small + MLP, first 50 steps | 0.87M |
 | residual RL full (PPO bridge on frozen pi0) | 1 | 0.295 | **0.022** | -0.124 [-0.201, -0.056], p = 6e-4 | -0.774 [-0.840, -0.712] **< -eps** | DINOv2-small + MLP, first 50 steps | 3.47M (= PoC) |
 

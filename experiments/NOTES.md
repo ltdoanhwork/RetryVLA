@@ -680,3 +680,6 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
   ~20:00 + RSR ~21:30.
 - `scripts/analyze_baselines.py` (new): compact baseline table + B2 SFT paired tests; rows whose newest eval is still
   running (episodes.jsonl missing / < 560 or < 500 rows) are reported as pending / running, never as partial numbers.
+- 15:39 UTC: DAG b32_rise ALL DONE (cond_vla RSR 0.113, nominal 0.770) -> lane e free; rv_dag_b2p3 restarted 15:42
+  with lanes g, a, b, c, d + e (done tasks skipped, running sessions kept) -> p3_r03_seed0_rec started on e at once
+  (p3_r03_nom follows on the next free lane).
