@@ -195,3 +195,25 @@ higher jerk than pi0 samples 0.090 vs 0.065, 1.9 vs 6.0 gripper flips / chunk), 
 Reading: imagination-only learning is WORSE than not training on recoveries at all (below pi1-nominal and even
 pi0); the imagined labels are ~4 / 5 wrong on the positives and push the policy towards off-manifold chunks, which
 also costs nominal SR (cond -7.8 pt). Sim verification is what makes the WM data useful.
+
+## B3.3 residual recovery RL baseline, full budget (2026-10-24; nominal eval RUNNING)
+Frozen pi0 + residual bridge controller (first 50 steps; DINOv2-small + MLP, PPO, sparse task-success reward) trained
+on the same 256 M5b train failure states with the PoC's full sim budget (3.47M env transitions; ckpt
+`data/rl/b33_rl_sparse/ckpt_m3469021.pt`). Setup / budget accounting: NOTES "B3.3". `python scripts/analyze_b33.py
+--tag B33_b33_rl_sparse_full --rl_dir data/rl/b33_rl_sparse` -> runs/_analysis/b33/summary_B33_b33_rl_sparse_full.md.
+Unit = test scene (56 x 10 trials), scene (x seed) bootstrap 95% CI, paired sign-flip p (10k flips; 0 -> < 1e-4).
+pi0 = test part of M0_recover_bddl.
+
+| system | test RSR (560 ep) | RL - system [95% CI], p | scenes RL worse / better / tied | nominal Spatial SR (500) |
+|---|---|---|---|---|
+| pi0 (M0) | 0.118 | +0.177 [+0.102, +0.259], p < 1e-4 | 4 / 20 / 32 | 0.656 |
+| pi1-nominal (M1, pi1's init) | 0.138 | +0.157 [+0.075, +0.245], p = 4e-4 | 8 / 21 / 27 | 0.796 |
+| pi1 (PoC, 3 seeds: M5c + M8 s1 / s2) | 0.418 ± 0.021 | -0.124 [-0.196, -0.053], p = 7e-4 | 28 / 11 / 17 (vs seed 0) | 0.785 |
+| RL residual p25 (867k transitions) | 0.111 | | | 0.400 |
+| **RL residual full (3.47M)** | **0.295** (165/560; close 0.289, open 0.300) | | | running |
+
+Learning curve (128 train instances, held-out pi0 seeds, deterministic): 0.039 @0 -> 0.094 @1.06M -> 0.133 @2.1M ->
+0.172 @2.45M -> 0.227 @3.48M (still rising at the matched budget). Reading: with the full matched sim budget the
+residual RL controller learns real recovery (+0.18 over pi0, +0.16 over pi1-nominal) but stays clearly below
+verified-search distillation (-0.12 vs pi1, 3 seeds), needs an extra controller + DINOv2 at test time, and (p25)
+hurt nominal badly; the full-budget nominal number decides whether it is a recovery-vs-nominal trade-off.

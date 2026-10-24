@@ -40,10 +40,14 @@ def main() -> None:
     pi1 = [e for e in (eps(t) for t in ["M5_m5c_sft_wm_diverse_rr_recover_test", "M8_seed_pi1_s1_recover_test",
                                         "M8_seed_pi1_s2_recover_test"]) if e]
     pi0 = eps("M0_recover_bddl")
+    pi1nom = eps("M1_pi1nom_recover_test")
     if rl:
         L += [f"test RSR = {np.mean(list(rl.values())):.3f} over {len(rl)} episodes", "",
               "| comparison | diff | 95% CI (scene bootstrap) | p (sign-flip) |", "|---|---|---|---|"]
-        for name, Bm in [("RL vs pi1 (seeds)", pi1), ("RL vs pi0", [{k: v for k, v in pi0.items() if k in rl}])]:
+        refs = [("RL vs pi1 (seeds)", pi1), ("RL vs pi0", [{k: v for k, v in pi0.items() if k in rl}])]
+        if pi1nom:
+            refs.append(("RL vs pi1-nominal", [pi1nom]))
+        for name, Bm in refs:
             d, ci, p, ns, sa, sb = compare([rl], Bm, rng)
             L.append(f"| {name} ({sa}/{sb} seeds, {ns} scenes) | {d:+.3f} | [{ci[0]:+.3f}, {ci[1]:+.3f}] | {p:.2g} |")
     else:
@@ -51,6 +55,16 @@ def main() -> None:
     nom = sorted(glob.glob(str(REPO / "runs" / f"*_{a.tag}_nominal" / "summary.json")))
     if nom:
         L += ["", f"nominal SR = {json.load(open(nom[-1]))['results'].get('success_rate')}"]
+        # 2026-10-24: nominal vs references, CI = 10-task cluster bootstrap (as analyze_b32.nom_delta)
+        from analyze_b32 import nom_delta, nom_tasks  # noqa: E402
+        a_n = nom_tasks([f"{a.tag}_nominal"])
+        if a_n is not None:
+            L += ["", "| nominal comparison | diff | 95% CI (task bootstrap) |", "|---|---|---|"]
+            for name, tags in [("RL vs pi0", ["M0_baseline_spatial_nominal"]), ("RL vs pi1-nominal", ["M1_pi1nom_nominal"]),
+                               ("RL vs pi1 (seeds)", ["M5_m5c_sft_wm_diverse_rr_nominal", "M8_seed_pi1_s1_nominal",
+                                                      "M8_seed_pi1_s2_nominal"])]:
+                d, lo, hi = nom_delta(a_n, nom_tasks(tags), rng)
+                L.append(f"| {name} | {d:+.3f} | [{lo:+.3f}, {hi:+.3f}] |")
     rl_dir = REPO / (a.rl_dir or f"data/rl/{a.tag.split('_', 1)[1]}")
     cf = rl_dir / "curve.jsonl"
     bud = REPO / "runs/_analysis/b33/budget.json"

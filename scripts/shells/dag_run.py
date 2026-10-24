@@ -31,10 +31,33 @@ os.environ.pop("LD_LIBRARY_PATH", None)
 
 
 def say(log: Path, msg: str) -> None:
+    # /pfss EDQUOT (2026-10-23 16:49 / 10-24 00:52) killed two runners here with a bare OSError on the log write:
+    # a lost log line must not stop the DAG
     line = f"{time.strftime('%Y-%m-%dT%H:%M:%S')} {msg}"
-    print(line, flush=True)
-    with open(log, "a") as f:
-        f.write(line + "\n")
+    try:
+        print(line, flush=True)
+    except OSError:
+        pass
+    try:
+        with open(log, "a") as f:
+            f.write(line + "\n")
+    except OSError:
+        pass
+
+
+def _write_json(p: Path, d: dict) -> None:
+    """tmp + rename: an EDQUOT mid-write leaves the old shells.json intact instead of a truncated one."""
+    tmp = p.with_name(f".{p.name}.{os.getpid()}.tmp")
+    for k in range(8):
+        try:
+            with open(tmp, "w") as f:
+                json.dump(d, f, indent=1)
+            os.replace(tmp, p)
+            return
+        except OSError:
+            tmp.unlink(missing_ok=True)
+            time.sleep(15 * (k + 1))
+    raise OSError(f"could not write {p}")
 
 
 def logs(name: str) -> list[str]:
@@ -67,14 +90,14 @@ def set_claim(key: str, sess: str, args: str) -> None:
     p = SH / "shells.json"
     d = json.load(open(p))
     d.setdefault("claims", {})[key] = {"tmux": sess, "args": args, "since": time.strftime("%Y-%m-%dT%H:%M:%S")}
-    json.dump(d, open(p, "w"), indent=1)
+    _write_json(p, d)
 
 
 def pop_claim(key: str) -> None:
     p = SH / "shells.json"
     d = json.load(open(p))
     d.get("claims", {}).pop(key, None)
-    json.dump(d, open(p, "w"), indent=1)
+    _write_json(p, d)
 
 
 def release(name: str) -> None:

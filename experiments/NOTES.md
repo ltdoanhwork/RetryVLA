@@ -608,3 +608,31 @@ Incident 13:59-14:12 UTC: EDQUOT again; both of my runners exited (FAILED).
   `DATASET_BROKEN` note, CLOSED -> resume skips the 28 done instances. Relaunched 14:35.
 Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR ~18:00, comp n60 SFT ~20:30, RSR
 ~21:30; P3 x4 ~11:00 Oct 24; success SFT + RSR ~14:00 Oct 24.
+
+## Incident 2026-10-23 ~15:39-2026-10-24 ~03:20 UTC: fourth /pfss EDQUOT window + tmux server loss -> relaunch 03:24
+- 15:39 lerobot image writer `[Errno 122]` in b2x_search_s2 (write_retries repaired the PNGs), 15:46 b32_datagen_vla
+  died in `save_retry` (6 tries) on `inst/<id>.pt` (99th instance), 16:45 b2x_search_s2 died in pyarrow
+  (`Error writing bytes ... Disk quota exceeded`, 15th instance). b2_sft_progress_s0 had finished (rc 0 16:25, 006000
+  checkpoint loads: 788 tensors) but `remote_tmux.sh` refused b2_rec_progress_s0 every poll (`QUOTA_EXCEEDED`), same
+  for b33_rl_sparse_full_nom from 00:22 (test RSR had finished 00:22, rc 0). The b2p3 (16:49) and b33 (00:52) runners
+  then died on a bare `OSError` from `dag_run.say` writing their own log (EDQUOT). The container's tmux server (pid
+  399, up since 10-18) was found defunct at ~03:20 (other users' sessions also gone).
+- 03:18 dd 64 MB: only 36 MiB written (EDQUOT); 03:20-03:24 64 MB x 3, 512 MB, 1 GB, 2 GB writes OK (headroom came back
+  without deleting anything; it is shared workspace-wide, cause outside RetryVLA, RetryVLA = runs 61 GB + data 145 GB).
+- Fix (additive): `dag_run.say` ignores OSError on print / log write; shells.json claim writes go through tmp +
+  `os.replace` with 8 retries (an EDQUOT mid-`json.dump` can no longer truncate shells.json for all runners).
+- Salvage: b32 `data/recovery/b32_rise/vla/inst`: 98 `.pt` all pass zip test, index.jsonl = the same 98 ids; removed the
+  192-byte `.pt.tmp` of the 99th. b2x `s2/p0`: 14 instances in done.jsonl = 28 rows in
+  `runs/20261023-145912_B2_valuex_search_s2of8/per_instance.jsonl`; `validate_recovery_part.py`: wm_cpi_pool OK
+  (28 eps / 4605 frames), wm_success_nopi0 NOT loadable (file-002.parquet unfinalized + episode 13 of the undone
+  15th instance) -> renamed `wm_success_nopi0_BROKEN` + `DATASET_BROKEN` note + CLOSED (b2x datasets have no
+  downstream use, as for s1/p0). Failed logs -> `failed_rv_b32_datagen_vla_..._20261023-143121.log`,
+  `failed_rv_b2x_search_s2_..._20261023-145904.log`. No dead claims were left (claims already empty).
+- Relaunch 03:24-03:25 UTC (same session names; the new tmux server was started by another user's agent, its global env
+  has another conda env on PATH; jobs `source env/activate.sh`, checked: retryvla python, torch cu128, CUDA OK):
+  rv_dag_b33 (lane f) -> b33_rl_sparse_full_nom; rv_dag_b32 (e) -> b32_datagen_vla resumes (98 done, 158 left);
+  rv_dag_b2x (h + c, c added) -> search_s2 resumes (14 done, new part p1) and search_s3 in parallel;
+  rv_dag_b2p3 (g + a + b, a / b added) -> b2_rec_progress_s0, b2_sft_comp_progressn_s0, p3_preserve_seed0_sft in
+  parallel; the next P3 SFTs start on free lanes through retry_oom (--min_free_gb 32 / 38 gates them while the GPU is
+  full). Done tasks were all skipped (status from RV_DONE logs). GPU 03:31: 65 GB used (ours ~36 GB, rest = other
+  containers on the same A100), load ~120 on 32 cores -> SFT 0.38 it/s (~4.4 h / 6k steps).
