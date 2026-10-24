@@ -68,7 +68,7 @@ class ResidualBridge:
 class ResidualBridgePolicy:
     """`predict_chunk` wrapper for evaluation (deterministic residual: Gaussian mean, gripper argmax)."""
 
-    def __init__(self, base, ckpt: str, device: str = "cuda"):
+    def __init__(self, base, ckpt: str, device: str = "cuda", no_grip: bool = False, cont_mult: float = 1.0):
         model, ck = load_actor(ckpt, device)
         rc = ck["rl_cfg"]
         feats = FeatureEncoder(rc.get("encoder", "facebook/dinov2-small"), int(rc.get("pool_grid", 2)), device)
@@ -77,6 +77,21 @@ class ResidualBridgePolicy:
         assert model.n_act == base.n_action_steps, "residual was trained with a different n_action_steps"
         self.calls = 0
         self.ckpt = ckpt
+        # diagnostics (2026-10-24, B3.3 nominal collapse): opt-in ablations, defaults = trained controller
+        self.no_grip, self.cont_mult = bool(no_grip), float(cont_mult)
+        self._st = {"n": 0, "grip": [0, 0, 0], "grip_flip": 0, "abs_delta": [], "l2_delta": [], "by_dec": {}}
+
+    def stats(self) -> dict:
+        s = self._st
+        out = {"decisions": s["n"], "grip_follow_open_close": s["grip"], "grip_overrides_changing_base": s["grip_flip"],
+               "no_grip": self.no_grip, "cont_mult": self.cont_mult}
+        if s["abs_delta"]:
+            ad = np.concatenate(s["abs_delta"])
+            out["mean_abs_delta_per_dim"] = [round(float(x), 4) for x in ad.mean(0)]
+            out["mean_l2_delta"] = float(np.mean(np.concatenate(s["l2_delta"])))
+        out["by_decision"] = {k: {"n": v[0], "mean_l2": v[1] / max(v[0], 1), "grip_override": v[2] / max(v[0], 1)}
+                              for k, v in sorted(s["by_dec"].items())}
+        return out
 
     @property
     def n_action_steps(self) -> int:
@@ -93,8 +108,30 @@ class ResidualBridgePolicy:
         dec = [int(s) % SEED_MOD for s in seeds]
         rows = [i for i, d in enumerate(dec) if d * self.n_action_steps < self.bridge.horizon]
         if rows:
-            mod, _ = self.bridge.decide([obs[i] for i in rows], [tasks[i] for i in rows], ch[rows],
-                                        [dec[i] for i in rows], sample=False)
+            mod, info = self.bridge.decide([obs[i] for i in rows], [tasks[i] for i in rows], ch[rows],
+                                           [dec[i] for i in rows], sample=False)
+            ac, ag = info["a_cont"].numpy(), info["a_grip"].numpy()
+            if self.no_grip or self.cont_mult != 1.0:
+                ag_eff = np.zeros_like(ag) if self.no_grip else ag
+                mod = apply_residual(ch[rows], ac * self.cont_mult, ag_eff, self.bridge.scale)
+            else:
+                ag_eff = ag
+            base_g = np.sign(np.asarray(ch[rows])[:, 0, 6])
+            st = self._st
+            st["n"] += len(rows)
+            for i, (g, bg, d) in enumerate(zip(ag_eff, base_g, [dec[r] for r in rows])):
+                st["grip"][int(g)] += 1
+                ov = int((g == 1 and bg > 0) or (g == 2 and bg < 0))
+                st["grip_flip"] += ov
+                l2 = float(np.linalg.norm(np.asarray(mod)[i, :, :6] - np.asarray(ch[rows])[i, :, :6], axis=-1).mean())
+                v = st["by_dec"].setdefault(int(d), [0, 0.0, 0])
+                v[0] += 1
+                v[1] += l2
+                v[2] += ov
+            dl = np.abs(np.asarray(mod)[:, :, :6] - np.asarray(ch[rows])[:, :, :6]).mean(1)
+            st["abs_delta"].append(dl)
+            st["l2_delta"].append(np.linalg.norm(np.asarray(mod)[:, :, :6] - np.asarray(ch[rows])[:, :, :6],
+                                                 axis=-1).mean(1))
             ch = np.array(ch, copy=True)
             ch[rows] = mod
             self.calls += len(rows)
@@ -116,7 +153,8 @@ def maybe_wrap(cfg, policy, run=None):
         p = REPO_ROOT / p
     if p.suffix == ".txt":  # link file
         p = Path(p.read_text().strip())
-    wrapped = ResidualBridgePolicy(policy, str(p), str(cfg.policy.device))
+    wrapped = ResidualBridgePolicy(policy, str(p), str(cfg.policy.device), no_grip=bool(rc.get("no_grip", False)),
+                                   cont_mult=float(rc.get("cont_mult", 1.0)))
     if run is not None:
         run.summary["residual"] = {"ckpt": str(p), "horizon": wrapped.bridge.horizon, "scale": wrapped.bridge.scale}
     return wrapped

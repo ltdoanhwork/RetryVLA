@@ -636,3 +636,47 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
   parallel; the next P3 SFTs start on free lanes through retry_oom (--min_free_gb 32 / 38 gates them while the GPU is
   full). Done tasks were all skipped (status from RV_DONE logs). GPU 03:31: 65 GB used (ours ~36 GB, rest = other
   containers on the same A100), load ~120 on 32 cores -> SFT 0.38 it/s (~4.4 h / 6k steps).
+
+## Incident 2026-10-24 ~08:36-09:30+ UTC: fifth /pfss EDQUOT window -> 4 SFTs lost, both runners FAILED; relaunch 09:47
+- Root cause = quota again (not code, not OOM / segfault / TMPDIR): every failure is a checkpoint write
+  `safetensors SafetensorError: Error while serializing: I/O error: Disk quota exceeded (os error 122)`.
+  * b32_sft_cond_vla (sft_rise) died AT ONCE at step 4000 (08:36): `sft_rise.save_checkpoint` retried only
+    OSError / RuntimeError, and SafetensorError is neither (the 10-23 outer-retry fix was only in train/sft.py).
+  * p3_preserve_seed0 (step 6000 = training finished!), p3_r01_seed0 (step 4000), p3_r07_seed0 (step 2000):
+    sft.py's outer retry (8 tries, 60..420 s, ~36 min) ran out at 09:08 / 09:10 / 09:30 -> the window lasted
+    > 55 min. Runners: b32 FAILED 08:39, b2p3 FAILED 09:09 (rv_p3_r07 kept running until it died 09:30).
+  * evals were unaffected (b2_rec_comp_progressn_s0 finished rc 0 08:42). /pfss writable again at 09:44
+    (dd 64 MB / 512 MB / 2 GB OK; nothing deleted to get there; not caused by RetryVLA).
+- Fixes (additive):
+  * `sft_rise.save_checkpoint` retries ANY exception and waits out long windows: >= `tries` attempts, then every
+    <= 10 min until `max_wait_s` (default env `RV_CKPT_MAX_WAIT_H` = 12 h) has elapsed (the 10-23 window was ~12 h);
+    model stays in memory meanwhile. Covers sft.py (P2 / P3 SFTs) too. Tested with a fake writer (3 failures ->
+    saved; endless failures -> raises after the budget, no partial dir left).
+  * `retry_oom`: free-memory gate shared by all retry_oom processes (flock on /tmp/rv_gpu_gate_<uid>; a waiter
+    passes only if no other passed in the last `--gate_hold_s`, default 240 s when --min_free_gb > 0): before, several
+    waiting SFTs passed together the moment memory freed (the new job allocates only after 1-2 min) and overshot.
+  * `dag_run --stagger_s N` (default 0 = old): sleep between launches in one poll.
+- Salvage / cleanup: b32 `runs/20261024-061541_B32_rise_sft_cond_vla` KEPT (sft_rise auto-resume: complete
+  checkpoints/002000 with training_state.pt; removed 004000.tmp) -> resumed at optimizer step 2000 (lr 4.03e-05,
+  item offset 64000), verified in the log. sft.py has no optimizer-state resume (its training_state is only
+  {"step"}), so the 3 P3 runs restart from step 0 with the exact recipe (resuming from a weights-only checkpoint
+  with a fresh AdamW would change the recipe): run dirs -> `*_DEAD_edquot`, their checkpoints deleted (3.5 GB).
+  Failed logs -> `failed_rv_{b32_sft_cond_vla,p3_preserve,p3_r01,p3_r07}_seed0..._2026102[4]-*.log`. Dead claims
+  local:0:a (rv_p3_r07) / local:0:b (rv_p3_preserve) dropped (tmux sessions gone).
+- Relaunch: rv_dag_b32 09:47 (lane e; restarted 09:55 with lanes e + f so rec + nom run in parallel),
+  rv_dag_b2p3 09:50 (lanes g, a, b, c, d; c / d added; `--stagger_s 240`). Running: b32_sft_cond_vla (resumed),
+  p3_preserve, p3_r01; p3_r07 / p3_r03 / b2_sft_success wait in retry_oom (--min_free_gb 32) for GPU memory.
+  GPU 10:27: 73 GB used incl. ~13 GB of other containers; per-job: SFT 12-14 GB (bs32), eval 2-7 GB.
+- B3.3 nominal diagnostics (not DAG tasks; tmux rv_b33diag_*, no lane claims, 6 sim workers each, 10 inits per
+  task = first 10 of the 50 used by the full nominal eval): `residual.no_grip` / `residual.cont_mult` (opt-in
+  ablations in `ResidualBridgePolicy`, defaults = trained controller) + `residual_stats` in the eval summaries.
+  Results: RESULTS "B3.3".
+- Ops check 2026-10-24 14:45 UTC (no new failures since the 09:47 / 09:50 relaunch; dag logs have no FAILED after
+  it): b32 sft_cond_vla finished (resumed from 2000), nom_cond_vla done 13:25 (0.770), rec_cond_vla 422/560.
+  b2p3: p3_r01 SFT done 13:29 -> rec 280/560 + nom running; p3_r03 SFT done 14:42 -> evals next; p3_r07 SFT 3950/6000
+  (0.43 it/s); p3_preserve SFT 4600/6000 (0.27 it/s); b2_sft_success_s0 still gated in retry_oom (--min_free_gb 32,
+  10-15 GB free since 10:06; GPU 56-73 GB used incl. other containers) -> starts when a P3 SFT finishes.
+  ETAs (UTC): RISE VLA RSR ~15:30; P3 r0.1 ~16:00; r0.3 ~17:00; r0.7 / preserve ~17:30-18:00; B2 success SFT
+  ~20:00 + RSR ~21:30.
+- `scripts/analyze_baselines.py` (new): compact baseline table + B2 SFT paired tests; rows whose newest eval is still
+  running (episodes.jsonl missing / < 560 or < 500 rows) are reported as pending / running, never as partial numbers.

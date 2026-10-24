@@ -145,16 +145,33 @@ def safe_log(run, metrics: dict, step: int) -> None:
         run._tb = False   # also keeps Run.finish from re-raising in SummaryWriter.close()
 
 
+def ckpt_max_wait_s() -> float:
+    """How long a checkpoint save waits out a /pfss quota window before giving up (env RV_CKPT_MAX_WAIT_H, default
+    12 h). The 2026-10-24 08:36 window lasted > 55 min and killed 4 SFTs after the old ~36 min budget; the
+    2026-10-23 window lasted ~12 h. Waiting with the model in memory costs only GPU idle time."""
+    import os
+    try:
+        return float(os.environ.get("RV_CKPT_MAX_WAIT_H", "12")) * 3600
+    except ValueError:
+        return 12 * 3600.0
+
+
 def save_checkpoint(run, step: int, policy, pre, post, cond, state: dict, tries: int = 8,
-                    wait_s: float = 60.0) -> Path:
+                    wait_s: float = 60.0, max_wait_s: float | None = None) -> Path:
     """Write checkpoints/<step>.tmp/{pretrained_model,training_state.pt}, then rename to checkpoints/<step>.
 
     The final directory exists only when complete (eval DAG globs on .../<step>/pretrained_model). Quota windows
-    are waited out (60, 120, ... s; ~36 min total) before raising. Only the newest checkpoint keeps the ~0.8 GB
-    optimizer state."""
+    are waited out: at least `tries` attempts (60, 120, ... s) and, after that, retries every <= 10 min until
+    `max_wait_s` (default ckpt_max_wait_s() = 12 h) has elapsed, then raise. Any exception is retried (safetensors
+    raises SafetensorError on EDQUOT, which is neither OSError nor RuntimeError: killed b32_sft_cond_vla at once on
+    2026-10-24). Only the newest checkpoint keeps the ~0.8 GB optimizer state."""
     root = run.path("checkpoints", "x").parent
     final, tmp = root / f"{step:06d}", root / f"{step:06d}.tmp"
-    for k in range(tries):
+    max_wait_s = ckpt_max_wait_s() if max_wait_s is None else float(max_wait_s)
+    t_start = time.time()
+    k = -1
+    while True:
+        k += 1
         try:
             shutil.rmtree(tmp, ignore_errors=True)
             ck = tmp / "pretrained_model"
@@ -169,13 +186,15 @@ def save_checkpoint(run, step: int, policy, pre, post, cond, state: dict, tries:
                 shutil.rmtree(final)
             tmp.rename(final)
             break
-        except (RuntimeError, OSError) as e:
+        except Exception as e:  # noqa: BLE001
             shutil.rmtree(tmp, ignore_errors=True)
-            if k == tries - 1:
+            waited = time.time() - t_start
+            if k >= tries - 1 and waited >= max_wait_s:
                 raise
-            log.warning("checkpoint %06d failed (%s), retry %d/%d in %.0fs", step, str(e)[:100], k + 1, tries,
-                        wait_s * (k + 1))
-            time.sleep(wait_s * (k + 1))
+            dt = min(wait_s * (k + 1), 600.0)
+            log.warning("checkpoint %06d failed (%s), retry %d (waited %.0f of %.0f s) in %.0fs", step,
+                        str(e)[:100], k + 1, waited, max_wait_s, dt)
+            time.sleep(dt)
     for old in root.glob("[0-9]*/training_state.pt"):
         if old.parent != final:
             old.unlink(missing_ok=True)

@@ -63,6 +63,8 @@ def main() -> None:
         with SimPool(int(cfg.eval.n_workers), int(cfg.env.resolution)) as pool:
             run_jobs(pool, policy, jobs, noise_scale=float(cfg.policy.noise_scale), on_result=on_result,
                      desc="nominal")
+        if callable(getattr(type(policy), "stats", None)):  # B3.3 residual diagnostics (bridge.py)
+            run.summary["residual_stats"] = policy.stats()
         write_jsonl(run.path("episodes.jsonl"), rows)
         per_task = rate_table(rows, "task_id")
         sr = float(np.mean([r["success"] for r in rows]))

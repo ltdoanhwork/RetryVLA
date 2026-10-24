@@ -169,6 +169,9 @@ def main() -> None:
     ap.add_argument("--slots", nargs="+", required=True)
     ap.add_argument("--dry", action="store_true")
     ap.add_argument("--poll", type=int, default=120)
+    ap.add_argument("--stagger_s", type=int, default=0,
+                    help="sleep between launches in one poll, so retry_oom's free-memory gate sees the GPU memory "
+                         "of the job launched just before (default 0 = old behaviour)")
     a = ap.parse_args()
     allow = json.load(open(SH / "shells.json")).get("allow_only")
     if allow:
@@ -227,6 +230,8 @@ def main() -> None:
                     set_claim(slot, f"rv_{n}", " ".join([t["module"], *args]))
                 ok = next((l for l in out.splitlines() if "LAUNCHED" in l or "REFUSED" in l or "fail" in l), out[-200:])
                 say(log, f"launch {n} on {slot}: {ok}")
+                if a.stagger_s > 0 and ready and "LAUNCHED" in out:
+                    time.sleep(a.stagger_s)
             if a.dry:
                 return
         time.sleep(a.poll)
