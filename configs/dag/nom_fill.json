@@ -1,0 +1,134 @@
+{
+ "name": "nom_fill",
+ "_doc": "2026-10-24: missing nominal evals (10 tasks x 50 inits) for the B2 / M9 SFT baselines; M9 demo-only nominal already exists (runs/20261019-174117_M9_sft_demo_only_nominal). retry_oom gate 14 GB free keeps total GPU < ~74 GB.",
+ "tasks": [
+  {
+   "name": "nom_b2_sft_progress",
+   "module": "retryvla.retry_oom",
+   "deps": [],
+   "args": [
+    "--min_free_gb",
+    "14",
+    "retryvla.eval.eval_nominal",
+    "configs/exp/m0_baseline_spatial.yaml",
+    "milestone=B2",
+    "nominal_tag=sft_progress_nominal",
+    "policy.path=@glob:runs/*_B2_sft_progress/checkpoints/006000/pretrained_model",
+    "eval.n_workers=8",
+    "eval.save_videos=none"
+   ]
+  },
+  {
+   "name": "nom_b2_sft_comp_n60",
+   "module": "retryvla.retry_oom",
+   "deps": [],
+   "args": [
+    "--min_free_gb",
+    "14",
+    "retryvla.eval.eval_nominal",
+    "configs/exp/m0_baseline_spatial.yaml",
+    "milestone=B2",
+    "nominal_tag=sft_comp_n60_nominal",
+    "policy.path=@glob:runs/*_B2_sft_comp_n60/checkpoints/006000/pretrained_model",
+    "eval.n_workers=8",
+    "eval.save_videos=none"
+   ]
+  },
+  {
+   "name": "nom_m9_sft_goal",
+   "module": "retryvla.retry_oom",
+   "deps": [],
+   "args": [
+    "--min_free_gb",
+    "14",
+    "retryvla.eval.eval_nominal",
+    "configs/exp/m0_baseline_spatial.yaml",
+    "milestone=M9",
+    "nominal_tag=sft_goal_nominal",
+    "policy.path=@glob:runs/*_M9_sft_goal/checkpoints/006000/pretrained_model",
+    "eval.n_workers=8",
+    "eval.save_videos=none"
+   ]
+  },
+  {
+   "name": "nom_m9_sft_goal_seed1",
+   "module": "retryvla.retry_oom",
+   "deps": [],
+   "args": [
+    "--min_free_gb",
+    "14",
+    "retryvla.eval.eval_nominal",
+    "configs/exp/m0_baseline_spatial.yaml",
+    "milestone=M9",
+    "nominal_tag=sft_goal_seed1_nominal",
+    "policy.path=@glob:runs/*_M9_sft_goal_seed1/checkpoints/006000/pretrained_model",
+    "eval.n_workers=8",
+    "eval.save_videos=none"
+   ]
+  },
+  {
+   "name": "nom_m9_sft_goal_seed2",
+   "module": "retryvla.retry_oom",
+   "deps": [],
+   "args": [
+    "--min_free_gb",
+    "14",
+    "retryvla.eval.eval_nominal",
+    "configs/exp/m0_baseline_spatial.yaml",
+    "milestone=M9",
+    "nominal_tag=sft_goal_seed2_nominal",
+    "policy.path=@glob:runs/*_M9_sft_goal_seed2/checkpoints/006000/pretrained_model",
+    "eval.n_workers=8",
+    "eval.save_videos=none"
+   ]
+  },
+  {
+   "name": "nom_m9_sft_comp",
+   "module": "retryvla.retry_oom",
+   "deps": [],
+   "args": [
+    "--min_free_gb",
+    "14",
+    "retryvla.eval.eval_nominal",
+    "configs/exp/m0_baseline_spatial.yaml",
+    "milestone=M9",
+    "nominal_tag=sft_comp_nominal",
+    "policy.path=@glob:runs/*_M9_sft_comp/checkpoints/006000/pretrained_model",
+    "eval.n_workers=8",
+    "eval.save_videos=none"
+   ]
+  },
+  {
+   "name": "nom_m9_sft_comp_seed1",
+   "module": "retryvla.retry_oom",
+   "deps": [],
+   "args": [
+    "--min_free_gb",
+    "14",
+    "retryvla.eval.eval_nominal",
+    "configs/exp/m0_baseline_spatial.yaml",
+    "milestone=M9",
+    "nominal_tag=sft_comp_seed1_nominal",
+    "policy.path=@glob:runs/*_M9_sft_comp_seed1/checkpoints/006000/pretrained_model",
+    "eval.n_workers=8",
+    "eval.save_videos=none"
+   ]
+  },
+  {
+   "name": "nom_m9_sft_comp_seed2",
+   "module": "retryvla.retry_oom",
+   "deps": [],
+   "args": [
+    "--min_free_gb",
+    "14",
+    "retryvla.eval.eval_nominal",
+    "configs/exp/m0_baseline_spatial.yaml",
+    "milestone=M9",
+    "nominal_tag=sft_comp_seed2_nominal",
+    "policy.path=@glob:runs/*_M9_sft_comp_seed2/checkpoints/006000/pretrained_model",
+    "eval.n_workers=8",
+    "eval.save_videos=none"
+   ]
+  }
+ ]
+}

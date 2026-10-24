@@ -683,3 +683,8 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
 - 15:39 UTC: DAG b32_rise ALL DONE (cond_vla RSR 0.113, nominal 0.770) -> lane e free; rv_dag_b2p3 restarted 15:42
   with lanes g, a, b, c, d + e (done tasks skipped, running sessions kept) -> p3_r03_seed0_rec started on e at once
   (p3_r03_nom follows on the next free lane).
+- 16:24 UTC: new DAG `configs/dag/nom_fill.json` (tmux rv_dag_nomfill, lanes local:0:f + local:0:h, stagger 240 s):
+  missing nominal evals for B2 progress / comp n=60 SFT and M9 goal / comp SFT x 3 seeds (8 evals; M9 demo-only
+  nominal already exists). Each goes through retry_oom --min_free_gb 14 (shared gate) so total GPU stays < ~74 GB.
+  b2_sft_success_s0 finally started 16:08 (0.41 it/s -> 6k steps ~20:10, RSR ~21:30). analyze_baselines picks up
+  the new nominal tags, the B2 success SFT row and a P3 Pareto section automatically.

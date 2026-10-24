@@ -27,6 +27,9 @@ PI1 = ["M5_m5c_sft_wm_diverse_rr_recover_test", "M8_seed_pi1_s1_recover_test", "
 PI1_NOM = ["M5_m5c_sft_wm_diverse_rr_nominal", "M8_seed_pi1_s1_nominal", "M8_seed_pi1_s2_nominal"]
 COMP3 = ["M9_sft_comp_recover_test", "M9_sft_comp_seed1_recover_test", "M9_sft_comp_seed2_recover_test"]
 GOAL3 = ["M9_sft_goal_recover_test", "M9_sft_goal_seed1_recover_test", "M9_sft_goal_seed2_recover_test"]
+# nominal of the SFT baselines: DAG configs/dag/nom_fill.json (2026-10-24)
+COMP3_NOM = ["M9_sft_comp_nominal", "M9_sft_comp_seed1_nominal", "M9_sft_comp_seed2_nominal"]
+GOAL3_NOM = ["M9_sft_goal_nominal", "M9_sft_goal_seed1_nominal", "M9_sft_goal_seed2_nominal"]
 
 # method, recover tags (seeds), nominal tags, extra test-time cost, sim budget (transitions; PoC accounting)
 ROWS = [
@@ -36,13 +39,17 @@ ROWS = [
      ["M9_sft_demo_only_nominal"], "none", "0"),
     ("random-data SFT (208 random-search recoveries)", ["M5_m5b_sft_random_recover_test"],
      ["M5_m5b_sft_random_nominal"], "none", "1.40M (256 failures: verify 1.26M + precheck 0.13M)"),
-    ("goal-data SFT (66 WM latent-goal recoveries, 3 seeds)", GOAL3, [], "none",
+    ("goal-data SFT (66 WM latent-goal recoveries, 3 seeds)", GOAL3, GOAL3_NOM, "none",
      "2.09M (WM data 1.39M + ~0.70M verify / precheck, 127 failures; no critic)"),
-    ("progress-data SFT (60 WM + B3-progress recoveries)", ["B2_sft_progress_recover_test"], [], "none",
+    ("progress-data SFT (60 WM + B3-progress recoveries)", ["B2_sft_progress_recover_test"], ["B2_sft_progress_nominal"],
+     "none",
      "2.09M (WM data 1.39M + ~0.70M verify / precheck, 127 failures; critic: demos, 0 sim)"),
-    ("competence SFT, count-matched n=60 (M9 comp recipe)", ["B2_sft_comp_n60_recover_test"], [], "none",
+    ("competence SFT, count-matched n=60 (M9 comp recipe)", ["B2_sft_comp_n60_recover_test"], ["B2_sft_comp_n60_nominal"],
+     "none",
      "2.90M (WM 1.39M + critic 0.82M + ~0.70M verify / precheck, 127 failures)"),
-    ("competence SFT n=66 (M9 comp, 3 seeds)", COMP3, [], "none",
+    ("success-data SFT (66 WM + B4-success recoveries)", ["B2_sft_success_recover_test"], [], "none",
+     "2.90M + B4 critic labels (pi0 / pi1 / pi1more continuations, already in the PoC data)"),
+    ("competence SFT n=66 (M9 comp, 3 seeds)", COMP3, COMP3_NOM, "none",
      "2.90M (WM 1.39M + critic 0.82M + ~0.70M verify / precheck, 127 failures)"),
     ("**RetryVLA pi1 (208 verified WM recoveries, 3 seeds)**", PI1, PI1_NOM, "none",
      "3.47M (PoC: WM 1.39M + critic 0.82M + verify 1.26M + precheck 0.13M, 256 failures)"),
@@ -166,6 +173,22 @@ def main() -> None:
             continue
         d, ci, p, ns, sa, sb = compare(A, Bm, rng)
         L.append(f"| {nm} | {sa} / {sb} | {fmt(d, ci, p)} | {wbt(A, Bm)} |")
+    # P3 recovery-nominal Pareto (seed 0; r = recovery ratio of the SFT mix; pi1 = r 0.5, 3 seeds)
+    L += ["", "## P3 recovery-nominal Pareto (seed 0 points; pi1 = r 0.5)", "",
+          "| point | test RSR | dRSR vs pi1 (3 seeds) [95% CI], p | nominal | dNSR vs pi1-nominal [95% CI] (eps 2 pt) |",
+          "|---|---|---|---|---|"]
+    for nm, tg in [("r 0.1", "p3_r01_seed0"), ("r 0.3", "p3_r03_seed0"), ("r 0.5 (= pi1, 3 seeds)", None),
+                   ("r 0.7", "p3_r07_seed0"), ("r 0.5 + L_preserve (beta 1, nominal samples)", "p3_preserve_seed0")]:
+        A = pi1 if tg is None else load_rec([f"P3_{tg}_recover_test"], keys)
+        nn = nom_done(PI1_NOM) if tg is None else nom_done([f"P3_{tg}_nominal"])
+        rsr = "running" if not A else f"{np.mean([np.mean(list(e.values())) for e in A]):.3f}"
+        dv = "(reference)" if tg is None else (fmt(*compare(A, pi1, rng)[:3]) if A else "")
+        if nn is None:
+            nom, dns = "running", ""
+        else:
+            dn, lo, hi = nom_delta(nn, pi1nom_n, rng)
+            nom, dns = f"{nn.mean():.3f}", f"{dn:+.3f} [{lo:+.3f}, {hi:+.3f}]" + (" **< -eps**" if dn < -0.02 - 1e-9 else "")
+        L.append(f"| {nm} | {rsr} | {dv} | {nom} | {dns} |")
     (out / "summary.md").write_text("\n".join(L) + "\n")
     (out / "rows.json").write_text(json.dumps(js, indent=1))
     print("\n".join(L))

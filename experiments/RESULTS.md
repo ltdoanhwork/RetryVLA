@@ -348,7 +348,15 @@ imagination-only (RISE-inspired) is below pi0; the only baseline that learns rea
 (residual RL, +0.18 vs pi0) is still -0.12 below pi1 and destroys nominal (0.022) because its controller fires on
 every episode start (B3.3 diagnosis).
 
-## P3 recovery-nominal Pareto (RUNNING, 2026-10-24 14:50 UTC; seed 0, no finished point yet)
-Points: recovery ratio r = 0.1 / 0.3 / 0.7 and an L_preserve variant (SFT + test RSR + nominal each; DAG b2p3).
-r = 0.1: SFT done, test RSR running (interim 0.33 at 280/560 -- interim, not a result), nominal running.
-r = 0.3: SFT done 14:42, evals queued. r = 0.7: SFT at step 3950 / 6000. preserve: SFT at step 4600 / 6000.
+## P3 recovery-nominal Pareto (RUNNING, 2026-10-24 16:30 UTC; seed 0; 1 of 4 points done)
+Points: recovery ratio r of the SFT mix = 0.1 / 0.3 / 0.7 and an L_preserve variant (r 0.5 + distillation to the frozen
+init on nominal samples, beta 1); pi1 = r 0.5 (3 seeds). Table: `scripts/analyze_baselines.py` (P3 section).
+
+| point | test RSR | dRSR vs pi1 (3 seeds) [95% CI], p | nominal | dNSR vs pi1-nominal [95% CI] |
+|---|---|---|---|---|
+| r 0.1 | 0.323 | -0.095 [-0.138, -0.053], p < 1e-4 | 0.788 | -0.008 [-0.050, +0.038] |
+| r 0.5 (= pi1) | 0.418 | (reference) | 0.785 | -0.011 [-0.046, +0.024] |
+| r 0.3 / r 0.7 / preserve | running | | running | |
+
+Interim reading (1 point): lowering the recovery share to 0.1 costs ~0.1 RSR and buys no nominal (pi1 is already
+within eps at r 0.5), i.e. so far no trade-off to resolve on the nominal side.
