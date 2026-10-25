@@ -30,3 +30,6 @@ dist/
 # machine-local LIBERO config
 .libero/
 third_party/LIBERO-Recovery/
+
+# related-work source PDFs (large, re-downloadable from arXiv)
+docs/related_work/pdfs/
