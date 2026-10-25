@@ -126,7 +126,8 @@
     "policy.path=@glob:runs/*_B2_sft_progress/checkpoints/006000/pretrained_model",
     "recover_eval.splits=[test]",
     "eval.n_workers=8",
-    "eval.save_videos=none"
+    "eval.save_videos=none",
+    "eval.worker_retries=2"
    ]
   },
   {
@@ -163,7 +164,8 @@
     "policy.path=@glob:runs/*_B2_sft_comp_n60/checkpoints/006000/pretrained_model",
     "recover_eval.splits=[test]",
     "eval.n_workers=8",
-    "eval.save_videos=none"
+    "eval.save_videos=none",
+    "eval.worker_retries=2"
    ]
   },
   {
@@ -195,7 +197,8 @@
     "policy.path=@glob:runs/*_P3_p3_preserve_seed0/checkpoints/006000/pretrained_model",
     "recover_eval.splits=[test]",
     "eval.n_workers=8",
-    "eval.save_videos=none"
+    "eval.save_videos=none",
+    "eval.worker_retries=2"
    ]
   },
   {
@@ -213,7 +216,8 @@
     "nominal_tag=p3_preserve_seed0_nominal",
     "policy.path=@glob:runs/*_P3_p3_preserve_seed0/checkpoints/006000/pretrained_model",
     "eval.n_workers=8",
-    "eval.save_videos=none"
+    "eval.save_videos=none",
+    "eval.worker_retries=2"
    ]
   },
   {
@@ -246,7 +250,8 @@
     "policy.path=@glob:runs/*_P3_p3_r01_seed0/checkpoints/006000/pretrained_model",
     "recover_eval.splits=[test]",
     "eval.n_workers=8",
-    "eval.save_videos=none"
+    "eval.save_videos=none",
+    "eval.worker_retries=2"
    ]
   },
   {
@@ -264,7 +269,8 @@
     "nominal_tag=p3_r01_seed0_nominal",
     "policy.path=@glob:runs/*_P3_p3_r01_seed0/checkpoints/006000/pretrained_model",
     "eval.n_workers=8",
-    "eval.save_videos=none"
+    "eval.save_videos=none",
+    "eval.worker_retries=2"
    ]
   },
   {
@@ -297,7 +303,8 @@
     "policy.path=@glob:runs/*_P3_p3_r07_seed0/checkpoints/006000/pretrained_model",
     "recover_eval.splits=[test]",
     "eval.n_workers=8",
-    "eval.save_videos=none"
+    "eval.save_videos=none",
+    "eval.worker_retries=2"
    ]
   },
   {
@@ -315,7 +322,8 @@
     "nominal_tag=p3_r07_seed0_nominal",
     "policy.path=@glob:runs/*_P3_p3_r07_seed0/checkpoints/006000/pretrained_model",
     "eval.n_workers=8",
-    "eval.save_videos=none"
+    "eval.save_videos=none",
+    "eval.worker_retries=2"
    ]
   },
   {
@@ -348,7 +356,8 @@
     "policy.path=@glob:runs/*_P3_p3_r03_seed0/checkpoints/006000/pretrained_model",
     "recover_eval.splits=[test]",
     "eval.n_workers=8",
-    "eval.save_videos=none"
+    "eval.save_videos=none",
+    "eval.worker_retries=2"
    ]
   },
   {
@@ -366,7 +375,8 @@
     "nominal_tag=p3_r03_seed0_nominal",
     "policy.path=@glob:runs/*_P3_p3_r03_seed0/checkpoints/006000/pretrained_model",
     "eval.n_workers=8",
-    "eval.save_videos=none"
+    "eval.save_videos=none",
+    "eval.worker_retries=2"
    ]
   },
   {
@@ -404,7 +414,27 @@
     "policy.path=@glob:runs/*_B2_sft_success/checkpoints/006000/pretrained_model",
     "recover_eval.splits=[test]",
     "eval.n_workers=8",
-    "eval.save_videos=none"
+    "eval.save_videos=none",
+    "eval.worker_retries=2"
+   ]
+  },
+  {
+   "name": "b2_nom_success_s0",
+   "module": "retryvla.retry_oom",
+   "deps": [
+    "b2_sft_success_s0"
+   ],
+   "args": [
+    "--min_free_gb",
+    "10",
+    "retryvla.eval.eval_nominal",
+    "configs/exp/m0_baseline_spatial.yaml",
+    "milestone=B2",
+    "nominal_tag=sft_success_nominal",
+    "policy.path=@glob:runs/*_B2_sft_success/checkpoints/006000/pretrained_model",
+    "eval.n_workers=8",
+    "eval.save_videos=none",
+    "eval.worker_retries=2"
    ]
   }
  ]

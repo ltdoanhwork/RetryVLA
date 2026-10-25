@@ -160,3 +160,36 @@ def run_jobs(pool: SimPool, policy, jobs: list[Job], noise_scale: float = 1.0,
             sr = np.mean([r.success for r in results.values()]) if results else float("nan")
             log.info("[%s] %d/%d done | SR %.3f | %.0fs", desc, done, len(jobs), sr, now - t0)
     return [results[j] for j in range(len(jobs))]
+
+
+def run_jobs_resilient(pool: SimPool, policy, jobs: list[Job], retries: int = 0,
+                       on_result: Callable[[Result], None] | None = None, **kw) -> list[Result]:
+    """``run_jobs`` that survives sim-worker deaths (MuJoCo segfault in robosuite ``_reset_internal``,
+    2026-10-23 M11 search, 2026-10-24 P3 r0.3 nominal eval). On ``WorkerDied`` the pool is respawned and
+    only the jobs WITHOUT a delivered result are re-run (each job's outcome is a function of its own load /
+    policy seeds, so finished results stay valid). ``retries=0`` = old behaviour (re-raise). ``job_id`` of
+    the returned / callback results is the index into ``jobs``."""
+    from retryvla.envs.vec import WorkerDied
+
+    results: dict[int, Result] = {}
+    todo = list(range(len(jobs)))
+    for attempt in range(int(retries) + 1):
+        sub = [jobs[j] for j in todo]
+
+        def _cb(r: Result, _map=list(todo)) -> None:
+            r.job_id = _map[r.job_id]
+            results[r.job_id] = r
+            if on_result is not None:
+                on_result(r)
+
+        try:
+            run_jobs(pool, policy, sub, on_result=_cb, **kw)
+            break
+        except WorkerDied as e:
+            todo = [j for j in todo if j not in results]
+            if attempt >= int(retries):
+                raise
+            log.warning("%s; respawning sim pool, re-running %d unfinished jobs (retry %d/%d)",
+                        e, len(todo), attempt + 1, retries)
+            pool.respawn()
+    return [results[j] for j in range(len(jobs))]

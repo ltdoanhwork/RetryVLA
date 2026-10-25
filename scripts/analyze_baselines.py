@@ -47,7 +47,8 @@ ROWS = [
     ("competence SFT, count-matched n=60 (M9 comp recipe)", ["B2_sft_comp_n60_recover_test"], ["B2_sft_comp_n60_nominal"],
      "none",
      "2.90M (WM 1.39M + critic 0.82M + ~0.70M verify / precheck, 127 failures)"),
-    ("success-data SFT (66 WM + B4-success recoveries)", ["B2_sft_success_recover_test"], [], "none",
+    ("success-data SFT (66 WM + B4-success recoveries)", ["B2_sft_success_recover_test"], ["B2_sft_success_nominal"],
+     "none",
      "2.90M + B4 critic labels (pi0 / pi1 / pi1more continuations, already in the PoC data)"),
     ("competence SFT n=66 (M9 comp, 3 seeds)", COMP3, COMP3_NOM, "none",
      "2.90M (WM 1.39M + critic 0.82M + ~0.70M verify / precheck, 127 failures)"),
@@ -181,17 +182,84 @@ def main() -> None:
                    ("r 0.7", "p3_r07_seed0"), ("r 0.5 + L_preserve (beta 1, nominal samples)", "p3_preserve_seed0")]:
         A = pi1 if tg is None else load_rec([f"P3_{tg}_recover_test"], keys)
         nn = nom_done(PI1_NOM) if tg is None else nom_done([f"P3_{tg}_nominal"])
-        rsr = "running" if not A else f"{np.mean([np.mean(list(e.values())) for e in A]):.3f}"
+        rsr = "pending" if not A else f"{np.mean([np.mean(list(e.values())) for e in A]):.3f}"
         dv = "(reference)" if tg is None else (fmt(*compare(A, pi1, rng)[:3]) if A else "")
         if nn is None:
-            nom, dns = "running", ""
+            nom, dns = "pending", ""
         else:
             dn, lo, hi = nom_delta(nn, pi1nom_n, rng)
             nom, dns = f"{nn.mean():.3f}", f"{dn:+.3f} [{lo:+.3f}, {hi:+.3f}]" + (" **< -eps**" if dn < -0.02 - 1e-9 else "")
         L.append(f"| {nm} | {rsr} | {dv} | {nom} | {dns} |")
     (out / "summary.md").write_text("\n".join(L) + "\n")
     (out / "rows.json").write_text(json.dumps(js, indent=1))
+    p3_plot(out, pi1, keys, pi1nom_rec, pi1nom_n)
     print("\n".join(L))
+
+
+P3_POINTS = [("r 0.1", "p3_r01_seed0", 0.1), ("r 0.3", "p3_r03_seed0", 0.3), ("r 0.7", "p3_r07_seed0", 0.7),
+             ("r 0.5 + L_preserve", "p3_preserve_seed0", None)]
+
+
+def p3_plot(out, pi1, keys, pi1nom_rec, pi1nom_n, eps_nom=0.02, fig_copy=REPO / "experiments" / "figs" / "p3_pareto.png"):
+    """P3 Pareto figure: test RSR vs nominal SR. Ratio sweep r 0.1 / 0.3 / 0.5 (= pi1, 3 seeds) / 0.7, the L_preserve
+    point, pi1-nominal and pi0; shaded = nominal within the pre-registered eps (2 pt) of pi1-nominal. Points whose
+    nominal eval is not finished are drawn hollow on the left axis ('nominal pending')."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    def rsr(A):
+        return [float(np.mean(list(e.values()))) for e in A]
+
+    pi1_r, pi1_n = rsr(pi1), nom_tasks(PI1_NOM).mean(1)
+    ref_n = float(pi1nom_n.mean())
+    pi0_r, pi0_n = rsr(load_rec(["@pi0"], keys))[0], float(nom_tasks(["M0_baseline_spatial_nominal"]).mean())
+    fig, ax = plt.subplots(figsize=(6.4, 4.6))
+    xlo = min(pi0_n, ref_n - 0.06) - 0.02
+    ax.axvspan(ref_n - eps_nom, 1.0, color="tab:green", alpha=0.08, lw=0)
+    ax.axvline(ref_n - eps_nom, color="tab:green", ls="--", lw=1)
+    ax.text(ref_n - eps_nom, 0.02, f" nominal >= pi1-nominal - {eps_nom * 100:.0f} pt", color="tab:green", fontsize=7,
+            rotation=90, va="bottom", ha="right")
+    ax.scatter(pi1_n, pi1_r, s=14, color="tab:blue", alpha=0.5)
+    ax.errorbar(pi1_n.mean(), np.mean(pi1_r), xerr=pi1_n.std(ddof=1), yerr=np.std(pi1_r, ddof=1), fmt="o",
+                color="tab:blue", ms=8, capsize=3, label="pi1 = r 0.5 (3 seeds, mean ± sd)")
+    ax.scatter([ref_n], rsr(pi1nom_rec), marker="s", s=60, color="0.3", label="pi1-nominal (init)", zorder=3)
+    ax.scatter([pi0_n], [pi0_r], marker="X", s=70, color="tab:red", label="pi0 (SmolVLA base)", zorder=3)
+    curve = [(0.5, float(pi1_n.mean()), float(np.mean(pi1_r)))]
+    for nm, tg, r in P3_POINTS:
+        A = load_rec([f"P3_{tg}_recover_test"], keys)
+        nn = nom_done([f"P3_{tg}_nominal"])
+        if not A:
+            continue
+        y = rsr(A)[0]
+        mk, col = ("D", "tab:purple") if r is None else ("o", "tab:orange")
+        if nn is None:
+            ax.scatter([xlo + 0.005], [y], marker=mk, s=50, facecolors="none", edgecolors=col, zorder=3)
+            ax.annotate(f"{nm} (nominal pending)", (xlo + 0.005, y), xytext=(6, -3), textcoords="offset points",
+                        fontsize=7, color=col)
+            continue
+        x = float(nn.mean())
+        ax.scatter([x], [y], marker=mk, s=55, color=col, zorder=3)
+        ax.annotate(nm, (x, y), xytext=(6, 3), textcoords="offset points", fontsize=8, color=col)
+        if r is not None:
+            curve.append((r, x, y))
+    curve.sort()
+    if len(curve) > 1:
+        ax.plot([c[1] for c in curve], [c[2] for c in curve], color="tab:orange", lw=1, alpha=0.6,
+                label="recovery-ratio sweep (seed 0)")
+    ax.set_xlim(xlo, max(0.86, float(pi1_n.max()) + 0.03))
+    ax.set_ylim(0, 0.52)
+    ax.set_xlabel("nominal SR (LIBERO-Spatial, 10 tasks x 50)")
+    ax.set_ylabel("test RSR (LIBERO-Recover Spatial, 56 x 10)")
+    ax.set_title("P3 recovery-nominal trade-off", fontsize=10)
+    ax.legend(fontsize=7, loc="center left", bbox_to_anchor=(0.0, 0.52))
+    ax.grid(alpha=0.25)
+    fig.tight_layout()
+    fig.savefig(out / "p3_pareto.png", dpi=150)
+    if fig_copy is not None:
+        Path(fig_copy).parent.mkdir(parents=True, exist_ok=True)
+        fig.savefig(fig_copy, dpi=150)
+    plt.close(fig)
 
 
 if __name__ == "__main__":

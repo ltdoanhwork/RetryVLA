@@ -13,7 +13,7 @@ from retryvla import tracking
 from retryvla.config import cli_config, to_dict
 from retryvla.envs.vec import SimPool
 from retryvla.eval.metrics import rate_table, save_video, write_jsonl
-from retryvla.eval.rollout import Job, run_jobs
+from retryvla.eval.rollout import Job, run_jobs, run_jobs_resilient
 from retryvla.policy import SmolVLAWrapper
 from retryvla.utils import setup_logging
 
@@ -61,8 +61,9 @@ def main() -> None:
             r.record = None
 
         with SimPool(int(cfg.eval.n_workers), int(cfg.env.resolution)) as pool:
-            run_jobs(pool, policy, jobs, noise_scale=float(cfg.policy.noise_scale), on_result=on_result,
-                     desc="nominal")
+            # eval.worker_retries (default 0 = old behaviour): respawn on a sim-worker segfault, re-run unfinished jobs
+            run_jobs_resilient(pool, policy, jobs, retries=int(cfg.eval.get("worker_retries", 0) or 0),
+                               noise_scale=float(cfg.policy.noise_scale), on_result=on_result, desc="nominal")
         if callable(getattr(type(policy), "stats", None)):  # B3.3 residual diagnostics (bridge.py)
             run.summary["residual_stats"] = policy.stats()
         write_jsonl(run.path("episodes.jsonl"), rows)

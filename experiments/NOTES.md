@@ -688,3 +688,24 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
   nominal already exists). Each goes through retry_oom --min_free_gb 14 (shared gate) so total GPU stays < ~74 GB.
   b2_sft_success_s0 finally started 16:08 (0.41 it/s -> 6k steps ~20:10, RSR ~21:30). analyze_baselines picks up
   the new nominal tags, the B2 success SFT row and a P3 Pareto section automatically.
+
+## Incident 2026-10-24 16:44 UTC: MuJoCo segfault in a nominal-eval sim worker -> b2p3 runner FAILED; relaunch 2026-10-25 12:00
+- `p3_r03_seed0_nom` died at 316/500 episodes (SR so far 0.813): one SimPool worker hit `Fatal Python error: Segmentation
+  fault` in robosuite `_reset_internal` (LiberoSim._reset <- load_nominal), the main process got `WorkerDied ... exitcode
+  -11` -> rc=1 -> dag_run stopped (FAILED). Same failure mode as the M11 search segfault (2026-10-23 02:52), not quota /
+  OOM. Because the runner stopped, `p3_r07_seed0_nom` (dep done 12:09) and `b2_rec_success_s0` (SFT finished rc 0
+  20:01, `runs/20261024-160616_B2_sft_success/checkpoints/006000`) were never launched; everything else in b2p3 had
+  finished (P3 rec r0.3 0.375 / r0.7 0.436 / preserve 0.429; preserve nominal 0.806).
+- Fix (additive): `retryvla.eval.rollout.run_jobs_resilient` (on WorkerDied: respawn the pool, re-run ONLY the jobs
+  without a delivered result; each job's outcome depends only on its own load / policy seeds) used by eval_nominal and
+  eval_recover via `eval.worker_retries` (default 0 = old behaviour). `make_dag_b2p3.py` passes `eval.worker_retries=2`
+  to every rec / nom eval. Tested: SIGSEGV to a worker mid-run (40 nominal loads, 2 workers) -> respawn, the 23
+  unfinished jobs re-run, all 40 results delivered once with the original job ids.
+- Also added `b2_nom_success_s0` (nominal of the B2 success SFT; the other B2 / M9 SFT nominals ran in nom_fill).
+- Cleanup: failed log -> `failed_rv_p3_r03_seed0_nom_ee580a52a73c_20261024-154825.log`, partial run dir ->
+  `runs/20261024-154925_P3_p3_r03_seed0_nominal_DEAD_segv`; dead claims local:0:a/b/d/e/g dropped (tmux sessions gone).
+- Relaunch 2026-10-25 12:00 UTC: rv_dag_b2p3 on lanes local:0:a-h (`--stagger_s 60`); the first try at 11:58 hit a
+  sixth short /pfss EDQUOT window (`remote_tmux.sh` quota probe refused; headroom back by 12:00, nothing deleted).
+  Running: p3_r07_seed0_nom, p3_r03_seed0_nom, b2_rec_success_s0, b2_nom_success_s0 (8 sim workers each).
+- `analyze_baselines.py`: P3 pending points are labelled 'pending' (not 'running'), the B2 success row reads
+  `B2_sft_success_nominal`, and `p3_plot` writes `p3_pareto.png` (runs/_analysis/baselines + experiments/figs).

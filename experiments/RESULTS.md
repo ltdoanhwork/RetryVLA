@@ -312,51 +312,67 @@ Reading: at equal trajectory count, recoveries found with the competence critic 
 recoveries found with the progress critic; progress data is barely better than not training on recoveries
 (+0.04 vs pi1-nominal, p = 0.05) and equal to goal-objective data. Count matching does not change the M9 result
 (n = 60 is within noise of n = 66 and of pi1). Both the search (B3 below random) and the distillation step agree.
-Nominal for these two SFTs was not run (not in the DAG; same recipe as M9 comp, nominal 0.77-0.81).
+Nominal for these two SFTs (DAG nom_fill, 2026-10-24): progress 0.774, competence n=60 0.798 (pi1-nominal 0.796).
 
-## Baseline summary (Spatial test = dev split; 2026-10-24 14:50 UTC)
-`python scripts/analyze_baselines.py` -> runs/_analysis/baselines/summary.md (re-run when pending rows finish; it
-skips evals that are still running). RSR: 56 test scenes x 10 trials; dRSR vs pi1 = scene (x seed) bootstrap 95% CI,
+## Baseline summary (Spatial test = dev split; regenerated 2026-10-25 12:00 UTC)
+`python scripts/analyze_baselines.py` -> runs/_analysis/baselines/summary.md (+ p3_pareto.png; re-run when pending rows
+finish; it never reports a partial eval). RSR: 56 test scenes x 10 trials; dRSR vs pi1 = scene (x seed) bootstrap 95% CI,
 paired sign-flip p, pi1 = 3 seeds. Nominal: LIBERO-Spatial 10 tasks x 50 inits; dNSR = 10-task bootstrap vs
 pi1-nominal; pre-registered constraint eps = 2 pt (**< -eps** = point estimate violates it). Sim budget = env
 transitions spent to produce the training signal (PoC accounting, runs/_analysis/b33/budget.json).
+Pending (DAG b2p3, relaunched 2026-10-25 12:00): success-data SFT test RSR + nominal (SFT finished 2026-10-24 20:01).
 
-| method | seeds | test RSR | nominal | dRSR vs pi1 [95% CI], p | dNSR vs pi1-nominal [95% CI] | extra test-time cost | sim budget |
+| method | seeds | test RSR | nominal | dRSR vs pi1 (3 seeds) [95% CI], p | dNSR vs pi1-nominal [95% CI] (eps 2 pt) | extra test-time cost | sim budget (transitions) |
 |---|---|---|---|---|---|---|---|
 | pi0 (SmolVLA base) | 1 | 0.118 | 0.656 | -0.301 [-0.382, -0.218], p < 1e-4 | -0.140 [-0.182, -0.100] **< -eps** | none | 0 |
-| pi1-nominal (demo SFT; init of all SFT rows) | 1 | 0.138 | 0.796 | -0.281 [-0.371, -0.196], p < 1e-4 | (reference) | none | 0 |
+| pi1-nominal (demo SFT, = init of all SFT rows) | 1 | 0.138 | 0.796 | -0.281 [-0.371, -0.196], p < 1e-4 | (reference) | none | 0 |
 | demo-only (+6k steps, same init / steps as pi1) | 1 | 0.127 | 0.820 | -0.292 [-0.380, -0.207], p < 1e-4 | +0.024 [-0.028, +0.074] | none | 0 |
-| random-data SFT (208 random-search recoveries) | 1 | 0.252 | 0.752 | -0.167 [-0.236, -0.104], p < 1e-4 | -0.044 [-0.082, -0.002] **< -eps** | none | 1.40M |
-| goal-data SFT (66 WM latent-goal recoveries) | 3 | 0.187 ± 0.002 | not run | -0.232 [-0.306, -0.161], p < 1e-4 | - | none | 2.09M |
-| progress-data SFT (60 WM + B3-progress recoveries) | 1 | 0.177 | not run | -0.242 [-0.323, -0.162], p < 1e-4 | - | none | 2.09M |
-| competence SFT, count-matched n=60 | 1 | 0.430 | not run | +0.012 [-0.037, +0.062], p = 0.62 | - | none | 2.90M |
-| competence SFT n=66 (M9 comp) | 3 | 0.417 ± 0.011 | not run | -0.002 [-0.050, +0.048], p = 0.95 | - | none | 2.90M |
-| **RetryVLA pi1 (208 verified WM recoveries)** | 3 | **0.418 ± 0.021** | **0.785** | (reference) | -0.011 [-0.046, +0.024] | none | 3.47M |
-| online best-of-8 on pi1 (WM + critic every replan) | 1 | 0.466 | not run | +0.027 [-0.018, +0.070], p = 0.27 (vs pi1 seed 0) | - | 8 VLA samples + 8 WM rollouts + critic / replan | 3.47M + 0 |
-| online best-of-8 on pi0 | 1 | 0.118 | not run | -0.301 [-0.383, -0.221], p < 1e-4 | - | same | 2.21M |
-| RISE-inspired cond (imagined adv., pool) | 1 | 0.068 | 0.718 | -0.351 [-0.433, -0.270], p < 1e-4 | -0.078 [-0.124, -0.034] **< -eps** | none | 2.21M (0 verify) |
-| RISE-inspired AWR (imagined adv., pool) | 1 | 0.082 | 0.776 | -0.336 [-0.421, -0.255], p < 1e-4 | -0.020 [-0.060, +0.018] | none | 2.21M (0 verify) |
-| RISE-inspired cond (imagined adv., VLA samples) | 1 | 0.113 | 0.770 | -0.306 [-0.386, -0.227], p < 1e-4 | -0.026 [-0.068, +0.018] **< -eps** | none | 2.21M (0 verify) |
-| residual RL p25 (PPO bridge on frozen pi0) | 1 | 0.111 | 0.400 | -0.308 [-0.388, -0.229], p < 1e-4 | -0.396 [-0.534, -0.266] **< -eps** | DINOv2-small + MLP, first 50 steps | 0.87M |
-| residual RL full (PPO bridge on frozen pi0) | 1 | 0.295 | **0.022** | -0.124 [-0.201, -0.056], p = 6e-4 | -0.774 [-0.840, -0.712] **< -eps** | DINOv2-small + MLP, first 50 steps | 3.47M (= PoC) |
+| random-data SFT (208 random-search recoveries) | 1 | 0.252 | 0.752 | -0.167 [-0.236, -0.104], p < 1e-4 | -0.044 [-0.082, -0.002] **< -eps** | none | 1.40M (256 failures: verify 1.26M + precheck 0.13M) |
+| goal-data SFT (66 WM latent-goal recoveries, 3 seeds) | 3 | 0.187 ± 0.002 | 0.753 | -0.232 [-0.306, -0.161], p < 1e-4 | -0.043 [-0.095, +0.011] **< -eps** | none | 2.09M (WM data 1.39M + ~0.70M verify / precheck, 127 failures; no critic) |
+| progress-data SFT (60 WM + B3-progress recoveries) | 1 | 0.177 | 0.774 | -0.242 [-0.325, -0.161], p < 1e-4 | -0.022 [-0.064, +0.024] **< -eps** | none | 2.09M (WM data 1.39M + ~0.70M verify / precheck, 127 failures; critic: demos, 0 sim) |
+| competence SFT, count-matched n=60 (M9 comp recipe) | 1 | 0.430 | 0.798 | +0.012 [-0.038, +0.062], p 0.62 | +0.002 [-0.046, +0.050] | none | 2.90M (WM 1.39M + critic 0.82M + ~0.70M verify / precheck, 127 failures) |
+| success-data SFT (66 WM + B4-success recoveries) | - | pending |  | | | none | 2.90M + B4 critic labels (pi0 / pi1 / pi1more continuations, already in the PoC data) |
+| competence SFT n=66 (M9 comp, 3 seeds) | 3 | 0.417 ± 0.011 | 0.784 | -0.002 [-0.051, +0.049], p 0.96 | -0.012 [-0.068, +0.038] | none | 2.90M (WM 1.39M + critic 0.82M + ~0.70M verify / precheck, 127 failures) |
+| **RetryVLA pi1 (208 verified WM recoveries, 3 seeds)** | 3 | 0.418 ± 0.021 | 0.785 | (reference) | -0.011 [-0.046, +0.024] | none | 3.47M (PoC: WM 1.39M + critic 0.82M + verify 1.26M + precheck 0.13M, 256 failures) |
+| online best-of-8 on pi1 (WM + critic every replan) | 1 | 0.466 | not run | +0.027 [-0.016, +0.070], p 0.27 (vs pi1 seed 0, its base) | - | 8 VLA samples + 8 WM rollouts + critic per replan | 3.47M (pi1) + 0 (reuses WM / critic) |
+| online best-of-8 on pi0 | 1 | 0.118 | not run | -0.301 [-0.385, -0.223], p < 1e-4 | - | 8 VLA samples + 8 WM rollouts + critic per replan | 2.21M (WM / critic data) |
+| RISE-inspired cond (imagined advantage, pool) | 1 | 0.068 | 0.718 | -0.351 [-0.433, -0.270], p < 1e-4 | -0.078 [-0.124, -0.034] **< -eps** | none (instruction suffix) | 2.21M (WM / critic data, 0 verify) |
+| RISE-inspired AWR (imagined advantage, pool) | 1 | 0.082 | 0.776 | -0.336 [-0.421, -0.255], p < 1e-4 | -0.020 [-0.060, +0.016] | none | 2.21M (WM / critic data, 0 verify) |
+| RISE-inspired cond (imagined advantage, VLA samples) | 1 | 0.113 | 0.770 | -0.306 [-0.389, -0.229], p < 1e-4 | -0.026 [-0.068, +0.018] **< -eps** | none (instruction suffix) | 2.21M (WM / critic data, 0 verify) |
+| residual RL p25 (PPO bridge on frozen pi0) | 1 | 0.111 | 0.400 | -0.308 [-0.389, -0.229], p < 1e-4 | -0.396 [-0.532, -0.266] **< -eps** | DINOv2-small + MLP, first 50 steps | 0.87M (25% of PoC) |
+| residual RL full (PPO bridge on frozen pi0) | 1 | 0.295 | 0.022 | -0.124 [-0.199, -0.054], p 0.0008 | -0.774 [-0.838, -0.710] **< -eps** | DINOv2-small + MLP, first 50 steps | 3.47M (= PoC) |
 
 Budget detail: random SFT 1.40M = verify 1.26M + precheck 0.13M (256 failures); goal / progress 2.09M = WM data 1.39M +
 ~0.70M verify / precheck (127 failures; no critic sims); competence 2.90M = + critic 0.82M; PoC 3.47M = WM 1.39M +
 critic 0.82M + verify 1.26M + precheck 0.13M (256 failures). Reading: among methods with no extra test-time
-component, only competence-searched, sim-verified data reaches pi1's RSR while keeping nominal within eps;
+component, only competence-searched, sim-verified data reaches pi1's RSR while keeping nominal within eps (the
+nominal evals of goal / progress SFT, new since 10-24, are 0.753 / 0.774, both at or past -eps);
 imagination-only (RISE-inspired) is below pi0; the only baseline that learns real recovery at the same budget
 (residual RL, +0.18 vs pi0) is still -0.12 below pi1 and destroys nominal (0.022) because its controller fires on
 every episode start (B3.3 diagnosis).
 
-## P3 recovery-nominal Pareto (RUNNING, 2026-10-24 16:30 UTC; seed 0; 1 of 4 points done)
+## P3 recovery-nominal Pareto (2026-10-25 12:00 UTC; seed 0; 2 of 4 points complete, r 0.3 / r 0.7 nominal pending)
 Points: recovery ratio r of the SFT mix = 0.1 / 0.3 / 0.7 and an L_preserve variant (r 0.5 + distillation to the frozen
-init on nominal samples, beta 1); pi1 = r 0.5 (3 seeds). Table: `scripts/analyze_baselines.py` (P3 section).
+init on nominal samples, beta 1); pi1 = r 0.5 (3 seeds: RSR 0.439 / 0.396 / 0.420, nominal 0.808 / 0.766 / 0.780).
+Table + figure: `scripts/analyze_baselines.py` (P3 section, `p3_plot`).
 
-| point | test RSR | dRSR vs pi1 (3 seeds) [95% CI], p | nominal | dNSR vs pi1-nominal [95% CI] |
+| point | test RSR | dRSR vs pi1 (3 seeds) [95% CI], p | nominal | dNSR vs pi1-nominal [95% CI] (eps 2 pt) |
 |---|---|---|---|---|
-| r 0.1 | 0.323 | -0.095 [-0.138, -0.053], p < 1e-4 | 0.788 | -0.008 [-0.050, +0.038] |
-| r 0.5 (= pi1) | 0.418 | (reference) | 0.785 | -0.011 [-0.046, +0.024] |
-| r 0.3 / r 0.7 / preserve | running | | running | |
+| r 0.1 | 0.323 | -0.095 [-0.138, -0.054], p < 1e-4 | 0.788 | -0.008 [-0.050, +0.038] |
+| r 0.3 | 0.375 | -0.043 [-0.084, -0.003], p 0.014 | pending |  |
+| r 0.5 (= pi1, 3 seeds) | 0.418 | (reference) | 0.785 | -0.011 [-0.047, +0.024] |
+| r 0.7 | 0.436 | +0.017 [-0.018, +0.054], p 0.26 | pending |  |
+| r 0.5 + L_preserve (beta 1, nominal samples) | 0.429 | +0.010 [-0.018, +0.042], p 0.34 | 0.806 | +0.010 [-0.022, +0.038] |
 
-Interim reading (1 point): lowering the recovery share to 0.1 costs ~0.1 RSR and buys no nominal (pi1 is already
-within eps at r 0.5), i.e. so far no trade-off to resolve on the nominal side.
+![P3 Pareto](figs/p3_pareto.png)
+
+`experiments/figs/p3_pareto.png` (= runs/_analysis/baselines/p3_pareto.png): y = test RSR, x = nominal SR; green =
+nominal within eps (2 pt) of pi1-nominal; hollow markers on the left axis = nominal eval not finished yet.
+
+Interim reading: (1) the ratio sweep is monotone in RSR (0.323 / 0.375 / 0.418 / 0.436 for r 0.1 / 0.3 / 0.5 / 0.7;
+r 0.1 and r 0.3 are significantly below pi1, r 0.7 is +0.017, p 0.26, n.s.), while r 0.1 buys no nominal
+(0.788 vs pi1 0.785): pi1 is already inside the eps band at r 0.5, so there is no binding trade-off to resolve at the
+nominal end. (2) L_preserve is the only point at or above pi1 on both axes (RSR +0.010 [-0.018, +0.042], p 0.34;
+nominal 0.806, +0.021 [-0.014, +0.050] vs pi1, +0.010 vs pi1-nominal), but both gains are within pi1's own seed spread
+(nominal 0.766-0.808, RSR 0.396-0.439): single seed, no significant improvement. Nothing beats pi1 on the
+RSR-nominal trade-off yet; whether r 0.7 keeps nominal inside eps decides if a higher ratio is a free RSR gain.

@@ -15,6 +15,7 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
 NW = "eval.n_workers=8"
+WR = "eval.worker_retries=2"  # survive a MuJoCo sim-worker segfault (P3 r0.3 nominal died at 316/500, 2026-10-24)
 COMP = "data/recovery/m5b/s[0-3]/p*/wm_diverse"
 
 
@@ -22,14 +23,14 @@ def rec(name, dep, milestone, tag):
     return {"name": name, "module": "retryvla.eval.eval_recover", "deps": [dep],
             "args": ["configs/exp/m0_baseline_spatial.yaml", f"milestone={milestone}", f"recover_tag={tag}_recover_test",
                      f"policy.path=@glob:runs/*_{milestone}_{tag}/checkpoints/006000/pretrained_model",
-                     "recover_eval.splits=[test]", NW, "eval.save_videos=none"]}
+                     "recover_eval.splits=[test]", NW, "eval.save_videos=none", WR]}
 
 
 def nom(name, dep, milestone, tag):
     return {"name": name, "module": "retryvla.eval.eval_nominal", "deps": [dep],
             "args": ["configs/exp/m0_baseline_spatial.yaml", f"milestone={milestone}", f"nominal_tag={tag}_nominal",
                      f"policy.path=@glob:runs/*_{milestone}_{tag}/checkpoints/006000/pretrained_model", NW,
-                     "eval.save_videos=none"]}
+                     "eval.save_videos=none", WR]}
 
 
 def p2_sft(arm, seed, deps):
@@ -96,6 +97,8 @@ def main() -> None:
     for p in ("pres", 1, 7, 3):
         T += p3(p, 0)
     T += p2_sft("success", 0, search)
+    # nominal of the success SFT (progress / comp n60 nominals ran in configs/dag/nom_fill.json); added 2026-10-25
+    T.append(nom("b2_nom_success_s0", "b2_sft_success_s0", "B2", "sft_success"))
     T += comp_matched("success", 0)  # success bank final (224) -> n = 66 = M9 comp, nothing added
     for seed in a.seeds:
         if seed == 0:
