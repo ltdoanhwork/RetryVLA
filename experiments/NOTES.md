@@ -709,3 +709,13 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
   Running: p3_r07_seed0_nom, p3_r03_seed0_nom, b2_rec_success_s0, b2_nom_success_s0 (8 sim workers each).
 - `analyze_baselines.py`: P3 pending points are labelled 'pending' (not 'running'), the B2 success row reads
   `B2_sft_success_nominal`, and `p3_plot` writes `p3_pareto.png` (runs/_analysis/baselines + experiments/figs).
+
+### Disk cleanup: superseded SFT checkpoints deleted, 2026-10-25
+- Removed `checkpoints/` contents (006000 + last; M5 sft_wm_r1 also 002000/004000) of 17 finished SFT runs. All of them had
+  recover_test and nominal evals done, and no config, script, doc or slide uses them as a model to reuse. Each run keeps
+  summary/config/metrics/tb, all its eval dirs are kept, and a `DELETED_CHECKPOINTS.txt` note is added. runs/ went from 85 GB to 63 GB.
+- Deleted: M1 sft_random, sft_oracle_cem, sft_random_r25, sft_random_r25_nontrivial; M4 sft_B_base_nom_random_wm;
+  M5 sft_wm_r1, sft_random_matched; M5b sft_wm_diverse, sft_wm_noise, sft_wm_qd; M5c sft_wm_qd_rr, sft_wm_diverse_all;
+  M6 sft_pi2; M8 sft_aug; M9 sft_demo_only; M10 sft_demo_only_obj, sft_random_obj.
+- Kept on purpose: M4 sft_A (used by `scripts/viz_distill.py`), M5b sft_random (used by `scripts/viz_e2e.py`), and
+  M9 sft_sel_random / sft_sel_task_balanced (they have no nominal eval). All key models, P3, B2, B32 and M10 comp/goal/nominal are also kept.
