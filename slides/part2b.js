@@ -4,7 +4,7 @@ const V = require("./videos");
 
 module.exports = function part2b(pres, C) {
   // M3 headline result
-  let s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "World model" });
+  let s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Appx: world model" });
   s.addText("M3: 2× more recoveries on unseen hard failures", { placeholder: "title" });
   s.addChart(pres.charts.BAR, [
     { name: "WM + critic (16 sims)", labels: ["instances solved (of 53)", "verified hits (of 848)"], values: [19, 57] },
@@ -23,7 +23,7 @@ module.exports = function part2b(pres, C) {
   caption(s, "Picks are also smoother: jerk 0.017 vs 0.027", 0.6, 5.85, 6.6);
 
   // M3 side-by-side
-  s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "World model" });
+  s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Appx: world model" });
   s.addText("Same failure state: SmolVLA alone vs WM-guided", { placeholder: "title" });
   img(s, "compare_grid.png", 0.6, 1.3, 12.1, 3.95, { alt: "side by side comparison" });
   card(s, C, 0.6, 5.45, 5.9, 1.3, HEX.tint, "alone");
@@ -36,7 +36,7 @@ module.exports = function part2b(pres, C) {
   V.m3(pres, C);
 
   // WM chosen segment actions
-  s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "World model" });
+  s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Appx: world model" });
   s.addText("What the WM chose, step by step", { placeholder: "title" });
   img(s, "strip_wm_drawer.png", 0.6, 1.3, 12.1, 2.85, { alt: "WM-chosen drawer recovery strip" });
   img(s, "actions_wm_drawer.png", 0.6, 4.25, 7.2, 2.6, { align: "left", alt: "WM recovery actions" });
@@ -46,8 +46,8 @@ module.exports = function part2b(pres, C) {
     "contrast with the jerky old-CEM segment in M1"], { x: 8.35, y: 4.45, w: 4.1, h: 2.2, fontSize: 13, color: HEX.ink2 });
 
   // M4
-  pres.addSection({ title: "Distillation" });
-  s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Distillation" });
+  pres.addSection({ title: "Appx: distillation" });
+  s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Appx: distillation" });
   s.addText("M4: does WM-found data improve the VLA? Not yet measurable", { placeholder: "title" });
   const rows = [
     [{ text: "policy (init)", options: { bold: true, color: HEX.white, fill: { color: HEX.ink } } },

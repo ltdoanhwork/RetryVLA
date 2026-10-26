@@ -26,7 +26,7 @@ const HEX = { ink: "23303B", ink2: "3C4A57", muted: "6B7785", line: "D5DBE1", ti
 function makeDeck() {
   const pres = new pptxgen();
   pres.layout = "LAYOUT_WIDE"; // 13.33 x 7.5
-  pres.title = "RetryVLA: world-model-guided recovery learning";
+  pres.title = "RetryVLA: Policy-Competence-Guided Recovery Search and Distillation";
   pres.author = "ltdoanhwork";
   pres.theme = { headFontFace: THEME.headFontFace, bodyFontFace: THEME.bodyFontFace };
   const C = pres.SchemeColor;
@@ -55,7 +55,7 @@ function makeDeck() {
     objects: [
       { placeholder: { options: { name: "title", type: "title", x: 0.6, y: 0.35, w: 12.1, h: 0.75, fontSize: 30, bold: true,
         color: C.text1, valign: "middle", margin: 0 }, text: "" } },
-      { text: { text: "RetryVLA  ·  LIBERO-Recover Spatial", options: { x: 0.6, y: 7.0, w: 6, h: 0.3, fontSize: 10,
+      { text: { text: "RetryVLA  ·  progress review 2026-10-26", options: { x: 0.6, y: 7.0, w: 6, h: 0.3, fontSize: 10,
         color: C.accent5, margin: 0 } } },
     ],
     slideNumber: { x: 12.3, y: 7.0, w: 0.6, h: 0.3, fontSize: 10, color: C.accent5 },

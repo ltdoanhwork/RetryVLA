@@ -34,7 +34,7 @@ module.exports = {
   },
 
   m0(pres, C) {
-    const s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "M0 baseline" });
+    const s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Appx: M0 baseline" });
     s.addText("Video: SmolVLA on held-out failure states", { placeholder: "title" });
     const a = video(s, "m0_pi0_fail_drawer", 0.6, 1.35, 6.0, 4.5, "pi0 fails on a drawer failure");
     const b = video(s, "m0_pi0_fail_ramekin", 6.7, 1.35, 6.0, 4.5, "pi0 fails on a ramekin failure");
@@ -45,7 +45,7 @@ module.exports = {
   },
 
   m1(pres, C) {
-    const s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "M1 oracle search" });
+    const s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Appx: M1 oracle search" });
     s.addText("Video: oracle-search recoveries", { placeholder: "title" });
     video(s, "m1_trio", 0.6, 1.3, 12.1, 4.75, "two verified recoveries and a nominal demo");
     vtag(s, "VIDEO", 0.6, 1.3, HEX.ink2);
@@ -54,7 +54,7 @@ module.exports = {
   },
 
   m1bad(pres, C) {
-    const s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "M1 oracle search" });
+    const s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Appx: M1 oracle search" });
     s.addText("Video: why random-noise search proves little", { placeholder: "title" });
     video(s, "m1_cem_bad", 0.6, 1.35, 6.4, 5.2, "jerky CEM recovery");
     vtag(s, "VIDEO", 0.6, 1.4, HEX.red);
@@ -68,7 +68,7 @@ module.exports = {
   },
 
   c1(pres, C) {
-    const s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "World model" });
+    const s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Appx: world model" });
     s.addText("Video: WM data, same state, opposite labels", { placeholder: "title" });
     video(s, "c1_pair", 0.6, 1.3, 7.6, 5.4, "C1 success and failure samples");
     card(s, C, 8.6, 1.3, 4.1, 5.4, HEX.tint, "c1v");
@@ -80,14 +80,14 @@ module.exports = {
   },
 
   m3(pres, C) {
-    let s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "World model" });
+    let s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Appx: world model" });
     s.addText("Video: SmolVLA alone vs WM-guided, same failure", { placeholder: "title" });
     video(s, "m3_compare", 0.6, 1.3, 12.1, 4.9, "side by side");
     vtag(s, "VIDEO", 0.6, 1.35, HEX.amber);
     text(s, "Left: SmolVLA alone hovers at the drawer for 350 steps. Right: WM-chosen 50-step lift (orange) then SmolVLA grasps and places the bowl.",
       { x: 0.6, y: 6.3, w: 12.1, h: 0.5, fontSize: 14, color: HEX.ink2 });
 
-    s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "World model" });
+    s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Appx: world model" });
     s.addText("Video: WM-found recoveries on unseen failures", { placeholder: "title" });
     video(s, "m3_wm_pair", 0.6, 1.3, 7.6, 5.4, "two WM-guided recoveries");
     card(s, C, 8.6, 1.3, 4.1, 5.4, HEX.amberTint, "m3v");
@@ -101,7 +101,7 @@ module.exports = {
 
   distill(pres, C) {
     if (!MAN["distill_drawer"] && !MAN["distill_stove"]) return;
-    const s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Distillation" });
+    const s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Appx: distillation" });
     s.addText("Video: after distillation the VLA recovers by itself (no search)", { placeholder: "title" });
     const keys = ["distill_drawer", "distill_stove"].filter((k) => MAN[k]);
     keys.forEach((k, i) => {

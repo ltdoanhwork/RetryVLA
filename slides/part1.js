@@ -2,46 +2,8 @@
 const { HEX, card, text, bullets, img, badge, stat, caption } = require("./lib");
 const V = require("./videos");
 
-module.exports = function part1(pres, C) {
-  // ---------- 1. Title ----------
-  pres.addSection({ title: "Intro" });
-  let s = pres.addSlide({ masterName: "TITLE", sectionTitle: "Intro" });
-  s.addText("RetryVLA", { placeholder: "title" });
-  s.addText("World-model-guided synthetic recovery learning for VLAs\nProgress M0–M5 · LIBERO-Recover Spatial · Oct 2026",
-    { placeholder: "body" });
-  s.addNotes("Progress update. Question: can a world model find recoveries from real VLA failure states, and can those be distilled into the VLA so it recovers without search at test time?");
-
-  // ---------- 2. Question + pipeline ----------
-  s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Intro" });
-  s.addText("The question we are answering", { placeholder: "title" });
-  card(s, C, 0.6, 1.35, 12.1, 1.15, HEX.amberTint, "question");
-  text(s, "Can a world model discover action sequences that recover from actual VLA failure states, and can those imagined recoveries be distilled into the VLA so it recovers without search at inference?",
-    { x: 0.9, y: 1.5, w: 11.5, h: 0.9, fontSize: 17, italic: true, color: HEX.ink, fontFace: "Times New Roman" });
-  const steps = [
-    ["Failure states", "LIBERO-Recover scenes where SmolVLA failed"],
-    ["Search", "propose 50-step recovery segments, score them"],
-    ["Verify", "run best candidates in the simulator + SmolVLA continuation"],
-    ["Distill", "fine-tune SmolVLA on verified recoveries"],
-    ["Evaluate", "recovery success on held-out failures, no search"],
-  ];
-  steps.forEach(([h, d], i) => {
-    const x = 0.6 + i * 2.45;
-    card(s, C, x, 3.0, 2.2, 2.3, i === 1 ? HEX.ink : HEX.tint, "step" + i);
-    badge(s, C, i + 1, x + 0.2, 3.2, i === 1 ? HEX.amber : HEX.ink2);
-    text(s, h, { x: x + 0.2, y: 3.8, w: 1.85, h: 0.45, fontSize: 18, bold: true, color: i === 1 ? HEX.white : HEX.ink });
-    text(s, d, { x: x + 0.2, y: 4.3, w: 1.85, h: 0.95, fontSize: 13, color: i === 1 ? "DDE3E8" : HEX.ink2 });
-    if (i < 4) s.addShape("rightArrow", { x: x + 2.22, y: 4.0, w: 0.2, h: 0.3, fill: { color: HEX.line }, line: { color: HEX.line } });
-  });
-  text(s, "Search is where the world model enters: it replaces the simulator as the thing that says which candidates are good.",
-    { x: 0.6, y: 5.75, w: 12.1, h: 0.5, fontSize: 15, color: HEX.ink2 });
-  s.addNotes("Stage 1-6 from the research plan. M1 uses the simulator as the scorer (oracle). M2/M3 replace it with a latent world model + critic.");
-
-  // ---------- 2b. Pipeline overview ----------
-  s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Intro" });
-  s.addText("Pipeline overview", { placeholder: "title" });
-  img(s, "pipeline_overview.png", 0.6, 1.2, 12.1, 5.75, { alt: "RetryVLA pipeline overview diagram" });
-  s.addNotes("1 failure states, 2 search (simulator scorer in M1, world model + critic in M3), 3 verify in simulator, 4 recovery dataset, 5 distill into SmolVLA, 6 evaluate on held-out failures without search. Dashed: WM training (M2), critic self-improvement (M5), iterative loop (M6).");
-
+function setup(pres, C) {
+  let s;
   // ---------- 3. Setup ----------
   pres.addSection({ title: "Setup" });
   s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Setup" });
@@ -49,7 +11,8 @@ module.exports = function part1(pres, C) {
   const cols = [
     ["Benchmark", HEX.blue, ["LIBERO-Recover, Spatial suite", "168 failure scenes, 84 failed episodes, 9 tasks",
       "official protocol: 5 closed-gripper + 5 open-gripper trials, ±2 cm object noise, 520 steps",
-      "metric: Recovery Success Rate (RSR)"]],
+      "metric: Recovery Success Rate (RSR); nominal SR on LIBERO-Spatial 10 × 50",
+      "held-out: LIBERO-Object, 26 test scenes, recipe frozen"]],
     ["Policy", HEX.amber, ["SmolVLA, checkpoint HuggingFaceVLA/smolvla_libero (450M)",
       "chunk 50 actions, replan every 10", "7-D OSC delta actions, gripper ±1",
       "pi0 = checkpoint as-is; pi1 = after recovery fine-tuning"]],
@@ -91,9 +54,13 @@ module.exports = function part1(pres, C) {
   text(s, "step_0180 and step_0200 of one failed episode are near-duplicates, so they always stay in the same split. Code asserts test scenes never enter search or training.",
     { x: 0.6, y: 6.3, w: 12.1, h: 0.6, fontSize: 13, color: HEX.ink2 });
 
+}
+
+function history(pres, C) {
+  let s;
   // ---------- 6. M0 ----------
-  pres.addSection({ title: "M0 baseline" });
-  s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "M0 baseline" });
+  pres.addSection({ title: "Appx: M0 baseline" });
+  s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Appx: M0 baseline" });
   s.addText("M0: SmolVLA is decent at nominal tasks, bad at recovery", { placeholder: "title" });
   stat(s, "0.66", "nominal LIBERO-Spatial success (500 ep)\nlerobot-eval cross-check: 0.68", 0.8, 1.6, 3.6, HEX.ink);
   stat(s, "0.12", "recovery success (RSR) on 56 held-out failure scenes, 560 ep", 0.8, 3.3, 3.6, HEX.red);
@@ -110,8 +77,8 @@ module.exports = function part1(pres, C) {
   V.m0(pres, C);
 
   // ---------- 7. M1 how one candidate is tried ----------
-  pres.addSection({ title: "M1 oracle search" });
-  s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "M1 oracle search" });
+  pres.addSection({ title: "Appx: M1 oracle search" });
+  s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Appx: M1 oracle search" });
   s.addText("M1: how one recovery candidate is tried", { placeholder: "title" });
   const phases = [
     ["Restore", "load the exact failure snapshot", HEX.ink2],
@@ -132,7 +99,7 @@ module.exports = function part1(pres, C) {
   V.m1(pres, C);
 
   // ---------- 8. M1 search loop ----------
-  s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "M1 oracle search" });
+  s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Appx: M1 oracle search" });
   s.addText("M1: search = propose, score in the simulator, refine", { placeholder: "title" });
   const loop = [["1", "Propose 64", "24 SmolVLA samples (different noise), 24 smooth perturbations, 16 primitives"],
     ["2", "Score", "simulate each: success × speed + small goal-progress shaping − jerk"],
@@ -155,7 +122,7 @@ module.exports = function part1(pres, C) {
   ], { x: 6.3, y: 4.55, w: 6.2, h: 2.1, fontSize: 13, color: HEX.ink2 });
 
   // ---------- 9. M1 data examples ----------
-  s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "M1 oracle search" });
+  s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Appx: M1 oracle search" });
   s.addText("What the recovery training data looks like", { placeholder: "title" });
   img(s, "strip_trivial.png", 0.6, 1.3, 2.4, 2.9, { alt: "trivial recovery" });
   text(s, "Trivial", { x: 0.6, y: 4.25, w: 2.4, h: 0.35, fontSize: 15, bold: true });
@@ -169,7 +136,7 @@ module.exports = function part1(pres, C) {
   V.m1bad(pres, C);
 
   // ---------- 10. M1 results ----------
-  s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "M1 oracle search" });
+  s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Appx: M1 oracle search" });
   s.addText("Distilling simulator-verified recoveries works", { placeholder: "title" });
   img(s, "m1_policy_results.png", 0.6, 1.3, 8.3, 2.8, { align: "left", alt: "M1 policy results" });
   const rows = [
@@ -190,4 +157,6 @@ module.exports = function part1(pres, C) {
     "cost: nominal 0.80 → 0.70 at a 50% mix. Trade-off set by the ratio",
     "trivial recoveries are useful supervision",
   ], { x: 9.55, y: 3.35, w: 3.0, h: 3.2, fontSize: 13, color: HEX.ink2 });
-};
+}
+
+module.exports = { setup, history };

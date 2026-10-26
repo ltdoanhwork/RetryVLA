@@ -3,13 +3,13 @@ const { HEX, card, text, bullets, img, badge, stat, caption } = require("./lib")
 const V = require("./videos");
 
 module.exports = function part2a(pres, C) {
-  pres.addSection({ title: "World model" });
-  let s = pres.addSlide({ masterName: "SECTION", sectionTitle: "World model" });
+  pres.addSection({ title: "Appx: world model" });
+  let s = pres.addSlide({ masterName: "SECTION", sectionTitle: "Appx: world model" });
   s.addText("Replacing the simulator with a world model", { placeholder: "title" });
   s.addText("M2: latent world model + competence critic   ·   M3: search in imagination", { placeholder: "body" });
 
   // why
-  s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "World model" });
+  s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Appx: world model" });
   s.addText("Why a world model if we already have a simulator?", { placeholder: "title" });
   card(s, C, 0.6, 1.4, 5.8, 4.9, HEX.tint, "oracle");
   text(s, "Oracle search (M1)", { x: 0.9, y: 1.6, w: 5.3, h: 0.45, fontSize: 20, bold: true });
@@ -25,7 +25,7 @@ module.exports = function part2a(pres, C) {
     { x: 0.6, y: 6.45, w: 12.1, h: 0.45, fontSize: 14, italic: true, color: HEX.ink2 });
 
   // latent state
-  s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "World model" });
+  s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Appx: world model" });
   s.addText("State = frozen DINOv2 patch tokens + robot state", { placeholder: "title" });
   img(s, "dino_tokens.png", 0.6, 1.3, 8.2, 2.85, { align: "left", alt: "DINOv2 tokens PCA" });
   caption(s, "Same drawer failure state. Token colors = first 3 PCA components: bowl, drawer, arm and table separate without any training", 0.6, 4.15, 8.2);
@@ -42,7 +42,7 @@ module.exports = function part2a(pres, C) {
     { x: 0.85, y: 5.2, w: 7.7, h: 1.45, fontSize: 13, color: HEX.ink2 });
 
   // C1 example pair
-  s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "World model" });
+  s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Appx: world model" });
   s.addText("One failure state, two candidates, two labels", { placeholder: "title" });
   img(s, "strip_c1_success.png", 0.6, 1.3, 12.1, 2.35, { alt: "C1 success sample" });
   caption(s, "Label 1: opens at t=21 and lifts. The bowl stays on the plate and SmolVLA finishes", 0.6, 3.65, 12.1);
@@ -52,7 +52,7 @@ module.exports = function part2a(pres, C) {
   V.c1(pres, C);
 
   // dynamics model
-  s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "World model" });
+  s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Appx: world model" });
   s.addText("M2: latent dynamics h(t+1) = h(t) + F(h(t), 5 actions)", { placeholder: "title" });
   const arch = [["h_t", "72 patch + 1 state token", HEX.ink2], ["+ action token", "MLP(5 × 7-D actions)", HEX.amber],
     ["Transformer", "6 layers, width 384", HEX.ink], ["4 heads", "ensemble Δh: mean = prediction, spread = uncertainty", HEX.blue]];
@@ -69,7 +69,7 @@ module.exports = function part2a(pres, C) {
   caption(s, "Held-out failures: gripper height, real (black) vs imagined from the start frame + actions only (amber). Error is 0.36-0.63× the copy-last-frame baseline", 0.6, 6.6, 12.1);
 
   // critic
-  s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "World model" });
+  s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Appx: world model" });
   s.addText("M2: the competence critic V(z, q, task)", { placeholder: "title" });
   card(s, C, 0.6, 1.4, 6.0, 1.3, HEX.amberTint, "q");
   text(s, "“From this (possibly imagined) state, will frozen SmolVLA finish the task?”",
@@ -86,7 +86,7 @@ module.exports = function part2a(pres, C) {
     { x: 7.15, y: 5.68, w: 5.3, h: 0.95, fontSize: 12, color: HEX.ink2 });
 
   // search in imagination
-  s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "World model" });
+  s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Appx: world model" });
   s.addText("M3: how the world model searches", { placeholder: "title" });
   const flow = [["Encode", "real failure frame → DINOv2 latent z0, robot state q0"],
     ["Propose 256", "same proposal pool as M1: SmolVLA samples, perturbations, primitives"],
