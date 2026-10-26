@@ -187,13 +187,16 @@ run dùng cho script visualization.
 
 Các quyết định cần chốt hôm nay:
 
-1. **Hướng real-world adaptation: chọn A / B / C / D?** (mô tả ngắn, cần xác nhận lại định nghĩa trong buổi họp)
-   - **A.** Ở lại simulation: hoàn thiện paper trên LIBERO (Spatial / Object / Goal / 10), không làm real robot.
-   - **B.** Sim-to-real cho policy: distill trong sim như hiện tại, chỉ deploy / đánh giá pi1 trên robot thật.
-   - **C.** Real-in-the-loop: thu continuation rollouts thật để train C^pi + WM, verify một số ít bridge trên robot thật
-     (budget nhỏ), rồi distill.
-   - **D.** Không simulator: neural video WM tạo recovery tưởng tượng ("Stretch V2" trong plan dài hạn), verify chỉ bằng robot thật.
-   Lưu ý từ B3.2: học từ imagination không verify tệ hơn pi0, nên mọi hướng cần **một bước verify thật**.
+1. **Hướng real-world adaptation: chọn A / B / C / D?** (các phương án đã trình bày ngày 2026-10-24)
+   - **A. Real-to-sim:** dựng lại scene thật trong simulation, chạy pipeline hiện có ở đó (search + sim verification),
+     deploy VLA đã distill lên robot thật. Cần robot + scene tương ứng; rủi ro: sim-to-real gap.
+   - **B. Dataset robot thật có sẵn, offline:** train WM + critic trên một dataset thật có cả episode success VÀ
+     failure, search recovery trong WM, distill KHÔNG verify. Rủi ro: không có verification; critic phải được
+     calibrate rất tốt (kết quả RISE-inspired của mình cho thấy nhãn chỉ từ imagination chỉ chính xác ~18%).
+   - **C. Ít verification thật:** WM + critic chọn top-k, chỉ verify vài ứng viên trên robot thật (human-in-the-loop),
+     rồi distill. Cần thời gian robot; khó reset về trạng thái thất bại.
+   - **D. Bước đệm trong sim:** mô phỏng ràng buộc real-world ngay trong LIBERO (k verification rất nhỏ, không
+     restore snapshot) để đo RetryVLA giảm bao nhiêu. Chạy được ngay trên GPU hiện tại.
 2. **Dùng Cpi-pool làm C^pi v3?** Search: +0.064 solved so với C^pi v2 (p = 0.12) và = B4; nhưng SFT trên data B4 = pi1.
    Đề xuất: dùng cho search tương lai sau một held-out check, không claim gain ở policy.
 3. **Suite tiếp theo: LIBERO-Goal và/hoặc LIBERO-10** với recipe đóng băng (r 0.5, không L_preserve)? Thứ tự và số seed?
