@@ -18,9 +18,14 @@ and its **32 CPUs are shared across them**. That matters: MuJoCo sim workers are
 
 ## 0. Never touch these
 
-**Current mode (user, 2026-10-16): NO borrowing.** Run only on the GPU the user gave (`shells.json:allow_only`,
-now `49b70230` = this machine, via `local:0:a` / `local:0:b` lanes in `dag_run.py`). `launch_remote.sh` and
-`dag_run.py` refuse anything else. Only lift this when the user explicitly says borrowing is OK again.
+**Current mode (user, 2026-10-27): NO borrowing.** RetryVLA's GPU is Determined shell `0097c39c`
+(`0097c39c-553a-4bdd-b81a-09a55ac8c034`, `vla_RetryVLA_DoanhLT_1`, node cn69, 1x A100 80 GB; the old `49b70230` is gone).
+**The Cursor / agent session may run on a DIFFERENT shell** (e.g. `ac1da4a3`, someone else's GPU): never run GPU / sim
+work locally there. Launch on `0097c39c` via `scripts/shells/launch_remote.sh 0097c39c 0 <name> <module> ...` or
+`dag_run.py --slots 0097c39c:0` (remote slots, NOT `local:` lanes). It is in `share_ok` because the user's own other
+jobs may share it: keep total GPU < 74 GB and sim workers <= 8. `launch_remote.sh` and `dag_run.py` refuse shells outside
+`shells.json:allow_only` (`0097c39c`; `8a2808f9` = light jobs only). Only lift this when the user explicitly says
+borrowing is OK again. Guide for other agents: `docs/GPU_GUIDE.md`.
 
 `scripts/shells/shells.json:avoid` is the contract. Re-read it each session, and extend it when the user names more:
 
