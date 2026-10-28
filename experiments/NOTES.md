@@ -719,3 +719,19 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
   M6 sft_pi2; M8 sft_aug; M9 sft_demo_only; M10 sft_demo_only_obj, sft_random_obj.
 - Kept on purpose: M4 sft_A (used by `scripts/viz_distill.py`), M5b sft_random (used by `scripts/viz_e2e.py`), and
   M9 sft_sel_random / sft_sel_task_balanced (they have no nominal eval). All key models, P3, B2, B32 and M10 comp/goal/nominal are also kept.
+
+### Disk cleanup round 2, 2026-10-26 / 2026-10-28 (RetryVLA 174 GB -> 151 GB apparent)
+- 2026-10-26 16:44 UTC (before the user's stop on deleting checkpoints): `checkpoints/` of 13 finished, evaluated
+  ablation SFT runs were removed (each has `DELETED_CHECKPOINTS.txt`): M9 sft_sel_random, sft_sel_task_balanced;
+  M10 sft_goal_obj; B32 rise_sft_cond_pool, rise_sft_awr_pool, rise_sft_cond_vla; B2 sft_progress, sft_comp_n60,
+  sft_success; P3 r01 / r03 / r07 / preserve seed0. Since 2026-10-28 NO checkpoint is deleted locally (another agent
+  uploads unneeded checkpoints to the remote store first); data/rl PPO checkpoints are untouched.
+- 2026-10-28: verification logs that are NOT critic training sources were slimmed in place: per-candidate DINO latents
+  `z`, `q`, `valid` dropped (atomic tmp + rename; all other fields kept, plus a `slimmed` note), 25.3 GB -> 0.06 GB:
+  verif_m9_mech, verif_obj, verif_m9_b32, verif_m11_a, verif_m11_b, verif_b2_value, verif_b2x_value, verif_r2_v1/v2
+  (script: `runs/_logs/slim_verif_20261028.py`). KEPT full (critic / WM data or loaded by viz scripts): collect_v1,
+  collect_wide, collect_obj, verif_r1, verif_m5b, verif_m6_r2, verif_m7_weak, verif_m8_aug.
+- Workspace caches: `conda clean -a` (pkgs 17 GB; most of it had already been cleaned) and pip caches
+  (~/.cache/pip 1.9 GB, doanh/.cache/pip 1.8 GB) emptied; `__pycache__` dirs removed.
+- Nothing to delete: eval videos (only runs/M0_recover_bddl/videos 0.4 MB, used by collect_slide_videos.py; the
+  runs/_analysis videos are slide / failure-analysis sources), smoke banks (none left), m11_b ABANDONED parts (empty).
