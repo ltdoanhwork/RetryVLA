@@ -1,0 +1,11 @@
+# Part 4 base: everything = pi1 (M5c wm_diverse round-robin, runs/20261016-042447_M5_m5c_sft_wm_diverse_rr):
+# init pi1-nominal, 6000 steps, bs 32, lr 5e-5, seed 0. Arms only change the recovery / future mix.
+# Budget: 208 recovery units per source (grounded trajectories or imagined futures), 50% nominal replay.
+defaults: [exp/m5b_sft_wm_diverse]
+milestone: P4
+train:
+  max_recovery_trajectories: 208
+  subset_mode: roundrobin
+  future_loss: cosine
+  future_center: true
+  future_head_width: 512

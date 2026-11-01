@@ -1,0 +1,24 @@
+# Part 4 (RQ2) action-free imagined futures: the 256 M5b TRAIN failure states (= the states pi1's 208 grounded
+# trajectories came from), same proposal generator / WM (latest_wm) / critic (latest_critic_v2) as M5b.
+# K = 4 imagined end states per state and variant (= m5b max_trajs_per_instance):
+#   filtered = C_pi objective (wm_diverse), goal = goal-latent distance (unfiltered by C_pi), random = pool uniform.
+# filtered + random are sim-checked (flags only, never action labels).
+# python -m retryvla.search.wm_datagen configs/train/af_futures_m5b.yaml
+defaults: [exp/m5b_compare_arms]
+milestone: P4
+tag: af_futures_m5b
+eval:
+  n_workers: 8
+futures:
+  instances_from: data/recovery/m5b/s*/p0/wm_diverse/retryvla/instances.jsonl
+  max_instances: null
+  wm_link: data/wm/latest_wm.txt
+  critic_link: data/wm/latest_critic_v2.txt
+  goal_feats: data/wm/goal_feats.pt
+  pool_size: 256
+  k: 4
+  lambda_unc: 0.5
+  beta_rough: 1.0
+  variants: [filtered, goal, random]
+  verify_variants: [filtered, random]
+  out_root: data/futures/af_m5b

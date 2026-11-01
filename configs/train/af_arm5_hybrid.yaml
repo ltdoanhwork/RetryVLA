@@ -1,0 +1,10 @@
+# Arm 5 hybrid = arm 2 (pi1's 208 grounded WM-verified trajectories, FM) + arm 3 (208 C_pi-filtered futures, L_future).
+# Batch: 50% nominal, 25% grounded, 25% futures (future_ratio 0.25, then recovery_ratio 1/3 of the rest).
+defaults: [train/af_sft_base]
+tag: af_arm5_hybrid
+train:
+  recovery_datasets: [data/recovery/m5b/s*/p*/wm_diverse]
+  recovery_ratio: 0.3333333333
+  future_datasets: [{path: data/futures/af_m5b/futures.pt, variant: filtered, n: 208}]
+  future_ratio: 0.25
+  future_beta: 0.5

@@ -1,0 +1,5 @@
+# Arm 4 action-free, NOT C_pi-filtered (uniform from the proposal pool, sim-free): same mix as arm 3.
+defaults: [train/af_arm3_free_filtered]
+tag: af_arm4_free_unfiltered
+train:
+  future_datasets: [{path: data/futures/af_m5b/futures.pt, variant: random, n: 208}]

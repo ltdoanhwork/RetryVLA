@@ -1,0 +1,9 @@
+# Arm 3 action-free, C_pi-filtered: 50% nominal (FM) + 50% imagined futures (L_future only, no action labels).
+defaults: [train/af_sft_base]
+tag: af_arm3_free_filtered
+train:
+  recovery_datasets: []
+  recovery_ratio: 0.0
+  future_datasets: [{path: data/futures/af_m5b/futures.pt, variant: filtered, n: 208}]
+  future_ratio: 0.5
+  future_beta: 0.5
