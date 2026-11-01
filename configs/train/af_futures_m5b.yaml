@@ -2,7 +2,7 @@
 # trajectories came from), same proposal generator / WM (latest_wm) / critic (latest_critic_v2) as M5b.
 # K = 4 imagined end states per state and variant (= m5b max_trajs_per_instance):
 #   filtered = C_pi objective (wm_diverse), goal = goal-latent distance (unfiltered by C_pi), random = pool uniform.
-# filtered + random are sim-checked (flags only, never action labels).
+# filtered + random are sim-checked on every 4th state (64 states; flags = statistics only, never action labels).
 # python -m retryvla.search.wm_datagen configs/train/af_futures_m5b.yaml
 defaults: [exp/m5b_compare_arms]
 milestone: P4
@@ -21,4 +21,5 @@ futures:
   beta_rough: 1.0
   variants: [filtered, goal, random]
   verify_variants: [filtered, random]
+  verify_every: 4
   out_root: data/futures/af_m5b

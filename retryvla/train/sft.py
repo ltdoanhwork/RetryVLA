@@ -57,6 +57,8 @@ def build_datasets(cfg, policy_cfg):
         log.info("matching trajectory count of %s: %d", tc.match_trajectory_count_of, n_match)
     roots = [Path(r) for r in expand_roots([REPO_ROOT / r for r in tc.recovery_datasets])]
     log.info("recovery roots: %d", len(roots))
+    if not roots:  # action-free arms (Part 4): no grounded recovery data
+        return orig, recs
     subs = recovery_episode_subsets(roots, int(n_match) if n_match else None, int(tc.get("min_traj_len", 0)),
                                     mode=str(tc.get("subset_mode", "score")))
     for root, sub in zip(roots, subs):
@@ -224,7 +226,7 @@ def main() -> None:
             with torch.autocast(device_type=device.type, dtype=amp, enabled=amp is not None):
                 if fut is not None:
                     loss, out, lf = future_forward(fut, policy, batch, f_ha, f_hf, f_tg)
-                    lp = None
+                    lp, lfm = None, loss.detach()
                     loss = loss + fut["beta"] * lf
                 elif pres is None:
                     loss, out = policy.forward(batch)
@@ -244,7 +246,8 @@ def main() -> None:
                          "train/lr": sched.get_last_lr()[0], "train/recovery_frac": float(src.float().mean()),
                          "train/steps_per_s": step / (time.time() - t0),
                          **({"train/preserve_loss": float(lp.detach())} if lp is not None else {}),
-                         **({"train/future_loss": float(lf.detach()), "train/future_frac": float((src == 2).float().mean())}
+                         **({"train/future_loss": float(lf.detach()), "train/fm_loss": float(lfm),
+                             "train/future_frac": float((src == 2).float().mean())}
                             if lf is not None else {})}, step)
                 log.info("step %d/%d loss %.4f (ema %.4f) gn %.2f lr %.2e | %.2f it/s%s", step, int(tc.steps), lv,
                          loss_ema, float(gn), sched.get_last_lr()[0], step / (time.time() - t0),

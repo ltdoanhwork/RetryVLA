@@ -171,7 +171,8 @@ def main_futures(cfg) -> None:
         goal      : arm_wm_obj(mode=goal)  = DINO-WM goal-latent distance (unfiltered by C_pi)
         random    : uniform from the proposal pool (no WM ranking at all)
       target = per-camera pooled normalized DINOv2 latent of the imagined z_H. Optional sim check (futures.verify_variants)
-      records sim_checked / sim_success flags only (never used as action labels).
+      records sim_checked / sim_success flags only (never used as action labels); futures.verify_every = k checks
+      every k-th state only (sim cost; the flags are statistics, not training labels).
     Output: <out>/futures.pt (obs table of failure observations + per-future rows), written atomically."""
     import json
     import zlib
@@ -244,7 +245,7 @@ def main_futures(cfg) -> None:
                     idx = np.asarray(idx)[:K]
                     zf, qf = pooled_future(ranker, z0, q0, cand[idx])
                     ok = [None] * len(idx)
-                    if var in vv:
+                    if var in vv and n % int(fu.get("verify_every", 1)) == 0:
                         vj = [Job("restore_snapshot", dict(bddl=bddl, snap=r.load_out["snapshot"]), task=task,
                                   max_steps=H + cont, prefix=cand[i], record="none",
                                   policy_seed=(seed + 31 * k) % (2**31 - 1)) for k, i in enumerate(idx)]
