@@ -1,0 +1,29 @@
+# RQ3 (plan Part 3): verifier optimism under search exploitation + uncertainty-penalized objective.
+# SAME M5b train-split instances (select_seed 2026, 8 shards; run shards 0-1), same pi0 / WM v1 / C^pi v2 / pool /
+# continuation seeds as M5b + M9 -> paired with M5b random / wm_diverse. Never touches test.
+#   wm_unc_l<lam>  wm_diverse pipeline, objective J = C^pi - lam * U_ens - mu * roughness, diverse top-`budget`
+#   wm_bud_l0      exploitation curve: imagination budget N in curve_budgets, top-curve_k by J (lam 0) per N
+# U_ens = std over 4 bootstrap heads on the frozen WM trunk (retryvla/wm/boot_heads.py; the WM's own 4 heads are
+# bit-identical -> U_WM == 0) x C^pi MC-dropout (p mc_dropout) of C^pi(z_H^e).
+defaults: [exp/m5b_compare_arms]
+milestone: RQ3
+tag: verif_sweep
+eval:
+  n_workers: 4            # 2 shards in parallel on dedc84ce (shared node: <= 8 sim workers in total)
+m5b:
+  arms: [wm_unc_l0, wm_unc_l0.5, wm_unc_l1, wm_unc_l2, wm_bud_l0]
+  budget: 8               # verified per wm_unc arm (wm_bud: 4 budgets x curve_k = 16)
+  curve_budgets: [8, 32, 128, 512]
+  curve_k: 4
+  mu_cost: 1.0            # = beta_rough of every earlier WM arm
+  boot_heads: data/wm/boot_heads_20261014-103001_M2_train_wm_v1.pt
+  mc_dropout: 0.1         # C^pi v2 was trained with dropout 0.1
+  log_uens: true
+  verif_slim: true        # no latents in the verif log (/pfss quota); z0 / q0 kept
+  precheck_from: ["runs/*_M5_m5b_compare_arms_s*/precheck.csv"]   # same instances: restore only, no pi0 re-roll
+  num_shards: 8
+  worker_retries: 2
+  oom_retries: 3
+  write_retries: 8
+  out_root: data/recovery/rq3_sweep
+  verif_out: data/wm/verif_rq3_sweep

@@ -34,7 +34,7 @@ from retryvla.eval.rollout import Job, run_jobs
 from retryvla.policy import SmolVLAWrapper
 from retryvla.search import arms as A
 from retryvla.search.run_search import Proposals
-from retryvla.search.scorers import Instance
+from retryvla.search.scorers import Instance, ensemble_values
 from retryvla.search.wm_search import WMCriticRanker
 from retryvla.utils import setup_logging
 from retryvla.wm.collect import encode_record
@@ -59,14 +59,32 @@ def iid(meta: dict) -> str:
     return f"{meta['scene']}__{meta['gripper_init']}{meta['trial']}"
 
 
-def precheck(pool, policy, jobs, skip: set[str], run=None) -> tuple[list[Instance], list[dict]]:
-    """One pi0 rollout per instance from the failure state; keep the ones pi0 fails (+ exact snapshot)."""
+def load_known_precheck(globs) -> dict[str, bool]:
+    """instance_id -> pi0_success from earlier runs' precheck.csv (same instances, same protocol seeds)."""
+    import glob as _g
+
+    known = {}
+    for pat in list(globs or []):
+        for f in sorted(_g.glob(str(REPO_ROOT / pat))):
+            for r in pd.read_csv(f).itertuples():
+                known[r.instance_id] = bool(r.pi0_success)
+    return known
+
+
+def precheck(pool, policy, jobs, skip: set[str], run=None, known: dict[str, bool] | None = None
+             ) -> tuple[list[Instance], list[dict]]:
+    """One pi0 rollout per instance from the failure state; keep the ones pi0 fails (+ exact snapshot).
+    known (optional, m5b.precheck_from): instance_id -> pi0_success from an earlier precheck of the SAME instance;
+    those are only restored (0 policy steps, exact snapshot) instead of re-rolled; known successes are dropped."""
     todo = []
+    known = known or {}
     for j in jobs:
-        if iid(j.meta) in skip:
+        if iid(j.meta) in skip or known.get(iid(j.meta)) is True:
             continue
         jj = Job(**{**j.__dict__})
         jj.return_snapshot = True
+        if iid(j.meta) in known:
+            jj.max_steps = 0
         todo.append(jj)
     res = (run or (lambda *a, **k: run_jobs(pool, *a, **k)))(policy, todo, desc="precheck")
     insts, rows = [], []
@@ -170,6 +188,14 @@ def main() -> None:
         policy = SmolVLAWrapper(cfg.policy.path, cfg.policy.device, cfg.policy.n_action_steps)
         ranker = WMCriticRanker(wm_ck, cr_ck, cfg.wm_collect.encoder, int(cfg.wm_collect.pool_grid), dev,
                                 float(mb.lambda_unc), float(mb.beta_rough))
+        if mb.get("boot_heads"):  # RQ3: real ensemble (bootstrap heads on the frozen trunk; WM's own heads identical)
+            from retryvla.wm.boot_heads import load_boot
+
+            ranker.boot = load_boot(REPO_ROOT / mb.boot_heads, dev)
+            ranker.mc_dropout = float(mb.get("mc_dropout", 0.0))
+            run.summary.update({"boot_heads": str(mb.boot_heads), "mc_dropout": ranker.mc_dropout})
+        elif any(A.unc_arm_lambda(a) is not None for a in arms) or mb.get("log_uens", False):
+            raise ValueError("U_ens arms need m5b.boot_heads (the WM's own ensemble heads are identical -> U == 0)")
         ranker2 = None
         if any(a.endswith("_v2") for a in arms):  # second WM / critic (e.g. retrained on broad-action data)
             ranker2 = WMCriticRanker((REPO_ROOT / mb.wm_link2).read_text().strip(), (REPO_ROOT / mb.critic_link2).read_text().strip(),
@@ -187,7 +213,8 @@ def main() -> None:
         with SimPool(int(cfg.eval.n_workers), int(cfg.env.resolution)) as pool:
             wretries = int(mb.get("worker_retries", 0))  # 0 = old behaviour (a dead sim worker kills the run)
             srun = make_safe_run(pool, wretries, int(mb.get("oom_retries", 0)), float(mb.get("oom_wait_s", 120)))
-            insts, pre = precheck(pool, policy, jobs, done, run=srun)
+            insts, pre = precheck(pool, policy, jobs, done, run=srun,
+                                  known=load_known_precheck(mb.get("precheck_from") or []))
             pd.DataFrame(pre).to_csv(run.path("precheck.csv"), index=False)
             log.info("shard %s: %d selected, %d already done, %d pi0 failures to search", mb.shard, len(jobs),
                      len(done), len(insts))
@@ -202,6 +229,7 @@ def main() -> None:
                     z0, q0 = ranker.encode(inst.obs0)
                     pool_s = ranker.score(z0, q0, inst.task, pool_c)
                     picked, extra_steps = {}, {}
+                    pool_ens = None  # RQ3: ensemble values of the shared pool, computed once per instance
                     goal = None
                     if goal_feats is not None:
                         goal = ranker.norm.z(goal_feats[canon[inst.scene_tag]].to(dev).float())
@@ -260,12 +288,26 @@ def main() -> None:
                             cand, idx, cs = A.arm_wm_two_stage(ranker, z0, q0, inst.task, pool_c, pool_s, B, seed % 10007)
                         elif a in A.VALUE_ARMS:
                             cand, idx, cs = A.arm_wm_value(value_rk[a], z0, q0, inst.task, pool_c, B, seed % 10007)
+                        elif A.unc_arm_lambda(a) is not None:  # RQ3: J = C^pi - lambda U_ens - mu R
+                            if pool_ens is None:
+                                pool_ens = ensemble_values(ranker, z0, q0, inst.task, pool_c)
+                            lam_, mu_ = A.unc_arm_lambda(a), float(mb.get("mu_cost", mb.beta_rough))
+                            if a.startswith("wm_bud_"):
+                                cand, idx, cs = A.arm_wm_budget(ranker, z0, q0, inst.task, pool_c, seed % 10007, lam_, mu_,
+                                                                budgets=tuple(int(x) for x in mb.get("curve_budgets", [8, 32, 128, 512])),
+                                                                k=int(mb.get("curve_k", 4)), pool_cs=pool_ens)
+                            else:
+                                cand, idx, cs = A.arm_wm_unc(ranker, z0, q0, inst.task, pool_c, B, seed % 10007, lam_, mu_,
+                                                             pool_cs=pool_ens)
                         else:
                             raise ValueError(a)
                         picked[a] = (cand[idx], {k: v[idx] for k, v in cs.items() if k not in ("zfeat",) and np.ndim(v) == 1},
                                      len(cand), time.time() - ta)
                         if a in value_rk:  # C^pi's prediction for the picks of a policy-agnostic arm (analysis only)
                             picked[a][1]["value_cpi"] = ranker.score(z0, q0, inst.task, cand[idx])["value"]
+                        if mb.get("log_uens", False) and "u_ens" not in picked[a][1]:  # RQ3: U_ens of every arm's picks
+                            ev = ensemble_values(ranker, z0, q0, inst.task, cand[idx])
+                            picked[a][1]["u_ens"], picked[a][1]["v_ens"] = ev["u_ens"], ev["value"]
                     # one verification batch for all arms; slot j gets the same continuation seed in every arm
                     vj, owner = [], []
                     for a in arms:
@@ -298,11 +340,13 @@ def main() -> None:
                         need = int(mb.get("robust_min", 2))
                         robust = {a: [bool(r.success) and 1 + cnt.get((a, j), 0) >= need for j, r in enumerate(by[a])] for a in arms}
                     # verification log (critic self-improvement data), all arms
-                    enc = [encode_record(ranker.enc, r.record, H, stride) for r in res]
+                    slim = bool(mb.get("verif_slim", False))  # RQ3 runs: no latents in the verif log (/pfss quota)
+                    enc = [] if slim else [encode_record(ranker.enc, r.record, H, stride) for r in res]
                     _save_retry({
                         "instance_id": inst.instance_id, "task": inst.task, "scene": inst.scene_tag,
-                        "z": torch.stack([e["z"] for e in enc]), "q": torch.as_tensor(np.stack([e["q"] for e in enc])),
-                        "valid": torch.as_tensor(np.stack([e["valid"] for e in enc])),
+                        **({"slimmed": True, "z0": z0.half().cpu(), "q0": q0.cpu()} if slim else {
+                            "z": torch.stack([e["z"] for e in enc]), "q": torch.as_tensor(np.stack([e["q"] for e in enc])),
+                            "valid": torch.as_tensor(np.stack([e["valid"] for e in enc]))}),
                         "actions": (torch.as_tensor(np.concatenate([picked[a][0] for a in arms]))
                                     if len({picked[a][0].shape[1] for a in arms}) == 1
                                     else [torch.as_tensor(x) for a in arms for x in picked[a][0]]),
@@ -311,6 +355,11 @@ def main() -> None:
                         "prefix_success": torch.as_tensor([r.prefix_success for r in res]),
                         "source": [a for a, _ in owner],
                         "pred_value": torch.as_tensor(np.concatenate([picked[a][1]["value"] for a in arms])),
+                        **({"pred_uens": torch.as_tensor(np.concatenate([
+                                picked[a][1].get("u_ens", np.full(len(picked[a][0]), np.nan)) for a in arms])),
+                            "pick_budget": torch.as_tensor(np.concatenate([
+                                picked[a][1].get("budget", np.full(len(picked[a][0]), -1)) for a in arms]))}
+                           if any("u_ens" in picked[a][1] for a in arms) else {}),
                         "arm": "m5b_all",
                     }, vdir / f"{inst.instance_id}.pt", log)
                     line = []
@@ -342,6 +391,10 @@ def main() -> None:
                             "n_scored": n_scored, "t_arm_s": t_arm,
                             "sim_steps_verify": int(sum(int(r.steps) for r in by[a])), "sim_steps_extra": int(extra_steps[a]),
                             "order_success": [bool(x) for x in succ],
+                            **({"order_pred": [float(x) for x in cs["value"]],
+                                "order_uens": [float(x) for x in cs["u_ens"]],
+                                "order_budget": [int(x) for x in cs.get("budget", np.full(len(succ), -1))]}
+                               if "u_ens" in cs else {}),
                             **{f"all_{k}": v for k, v in m_all.items()}, **{f"succ_{k}": v for k, v in m_succ.items()},
                             "succ_cells_list": sorted(set(A.descriptor(cands[succ]).tolist())) if succ.any() else [],
                         })

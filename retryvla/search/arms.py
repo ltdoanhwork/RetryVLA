@@ -23,7 +23,8 @@ from retryvla.search.wm_search import diverse_ranking
 
 ARM_NAMES = ("random", "wm_diverse", "wm_noise", "wm_qd", "wm_two_stage", "wm_goal", "wm_goal_comp", "wm_top",
              "random_diverse", "sim_prefix_critic", "wm_no_prim", "wm_plan", "wm_plan_v2",
-             "wm_progress", "wm_success", "wm_success_nopi0", "wm_cpi_pool")
+             "wm_progress", "wm_success", "wm_success_nopi0", "wm_cpi_pool",
+             "wm_unc_l0", "wm_unc_l0.5", "wm_unc_l1", "wm_unc_l2")  # wm_unc_l<lambda>: any float works
 # P2 value arms: arm -> m5b config key holding the critic-link file (wm_diverse with that critic swapped in)
 VALUE_ARMS = {"wm_progress": "progress_critic_link", "wm_success": "success_critic_link",
               "wm_success_nopi0": "success_nopi0_critic_link",  # B4 without any pi0 label (pi1, pi1more, demo)
@@ -262,6 +263,75 @@ def wide_actions(rng: np.random.Generator, n: int, h: int, std: float = 0.5, ker
             g[i, t0:] *= -1
     a[..., 6] = g
     return np.clip(a, -1, 1).astype(np.float32)
+
+
+def unc_arm_lambda(name: str) -> float | None:
+    """'wm_unc_l0.5' -> 0.5 and 'wm_bud_l1' -> 1.0 (RQ3 lambda-sweep / exploitation-curve arms); None otherwise."""
+    for p in ("wm_unc_l", "wm_bud_l"):
+        if name.startswith(p):
+            return float(name[len(p):])
+    return None
+
+
+def arm_wm_unc(ranker, z0, q0, task, pool_c, B, seed, lam, mu=1.0, iters=2, elites=16, std=0.25, diverse=True,
+               pool_cs=None):
+    """RQ3 arm: EXACTLY wm_diverse (pool + `iters` elite-local latent-CEM rounds, T=0.05, decay 0.6, same seed,
+    diverse top-B) except the objective J = C^pi - lambda * U_ens - mu * roughness, U_ens = std over the WM
+    ensemble members' own rollouts of C^pi(z_H^e) (scorers.ensemble_values). lambda = 0 -> no uncertainty penalty
+    (wm_diverse uses lambda 0.5 x the latent disagreement U_WM instead). pool_cs: precomputed ensemble_values of
+    pool_c (shared across lambdas of one instance)."""
+    from retryvla.search.scorers import ensemble_values, unc_objective
+
+    cs = pool_cs if pool_cs is not None else ensemble_values(ranker, z0, q0, task, pool_c)
+    cand = pool_c
+    cem = CEM(pool_c.shape[1], 7, CEMConfig(n_samples=len(pool_c), init_std=std, smooth_kernel=5), seed=seed)
+    for it in range(1, iters + 1):
+        s = unc_objective(cs, lam, mu)
+        el = np.argsort(-s)[:elites]
+        new = cem.sample_local(cand[el], s[el], it, temperature=0.05, decay=0.6)
+        ns = ensemble_values(ranker, z0, q0, task, new)
+        cand = np.concatenate([cand, new])
+        cs = {k: np.concatenate([cs[k], ns[k]]) for k in cs}
+    s = unc_objective(cs, lam, mu)
+    cs = dict(cs, score=s)
+    picks = diverse_ranking(s, cs["zfeat"], B, seed=seed) if diverse else np.argsort(-s)[:B]
+    return cand, picks, cs
+
+
+def arm_wm_budget(ranker, z0, q0, task, pool_c, seed, lam=0.0, mu=1.0, budgets=(8, 32, 128, 512), k=4, std=0.25,
+                  pool_cs=None):
+    """RQ3 exploitation curve: how much does the verifier get fooled when the search sees MORE imagined candidates?
+    For each imagination budget N: initial population = the first N/2 of a fixed random permutation of the shared
+    proposal pool (nested across N, capped at the pool size), plus ONE elite-local latent-CEM round of N/2 samples
+    around the top-max(2, min(16, N/8)) by J; picks = top-k by J = C^pi - lambda U_ens - mu R (no diversity: pure
+    exploitation). Returns all budgets' candidates concatenated, len(budgets) * k picks, and cs with cs['budget']
+    (imagination budget of each candidate) so verified precision@k can be read per N."""
+    from retryvla.search.scorers import ensemble_values, unc_objective
+
+    rng = np.random.default_rng(seed)
+    perm = rng.permutation(len(pool_c))
+    base = pool_cs if pool_cs is not None else ensemble_values(ranker, z0, q0, task, pool_c)
+    cands, css, picks, off = [], [], [], 0
+    for N in budgets:
+        n0 = min(N // 2, len(pool_c))
+        idx = perm[:n0]
+        c0 = pool_c[idx]
+        cs0 = {key: v[idx] for key, v in base.items()}
+        s0 = unc_objective(cs0, lam, mu)
+        ne = max(2, min(16, N // 8, n0))
+        el = np.argsort(-s0)[:ne]
+        cem = CEM(pool_c.shape[1], 7, CEMConfig(n_samples=N - n0, init_std=std, smooth_kernel=5), seed=seed + N)
+        new = cem.sample_local(c0[el], s0[el], 1, n=N - n0, temperature=0.05, decay=0.6)
+        ns = ensemble_values(ranker, z0, q0, task, new)
+        c = np.concatenate([c0, new])
+        cs = {key: np.concatenate([cs0[key], ns[key]]) for key in cs0}
+        cs["budget"] = np.full(len(c), N, dtype=np.int64)
+        s = unc_objective(cs, lam, mu)
+        cs["score"] = s
+        picks += list(off + np.argsort(-s)[:k])
+        cands.append(c); css.append(cs); off += len(c)
+    cs = {key: np.concatenate([x[key] for x in css]) for key in css[0]}
+    return np.concatenate(cands), np.array(picks), cs
 
 
 def arm_wm_plan(ranker, z0, q0, task, H, B, seed, n=256, iters=5, elites=24, std0=0.35, decay=0.7):
