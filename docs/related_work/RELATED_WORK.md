@@ -4,6 +4,7 @@
 > Mỗi paper: tiêu đề + link + venue/năm, hình method (crop từ PDF arXiv), 3-5 ý ngắn.
 > Tất cả paper dưới đây đã được **kiểm tra tồn tại** trên arXiv (tiêu đề/tác giả lấy từ arXiv API, venue kiểm tra qua proceedings/OpenReview khi có).
 > PDF gốc nằm ở `docs/related_work/pdfs/` (không commit, bị `.gitignore`), hình ở `docs/related_work/figs/`.
+> **Cập nhật 2026-11-01:** thêm mục F-J (11 bài cho hướng gộp action-grounded + action-free). Cả 11 bài đã kiểm tra trên arXiv API (tiêu đề, tác giả, ngày v1); venue kiểm tra qua CVF Open Access / ICML virtual khi có. Hình F-J lấy từ bản HTML arXiv (raster gốc) hoặc render vùng hình từ PDF (Recova, Backtrack, CureWM vì hình dạng vector / SVG).
 
 **RetryVLA (để định vị):** VLA đóng băng (SmolVLA) + latent world model trên DINOv2 features + *competence critic* C^π(s,g) = P(chính policy π hoàn thành task nếu bắt đầu từ s), học từ rollout tiếp nối thật của π. Từ một failure state, search một "bridge" ngắn (50 step) sao cho trạng thái cuối tưởng tượng có C^π cao nhất → verify trong sim (cho π chạy tiếp) → distill bridge + continuation đã verify vào VLA (trộn 50% nominal demo) → lúc test VLA tự recover, **không cần search**, không mất nominal success. Benchmark: LIBERO-Recover (Spatial = dev, Object = held-out).
 
@@ -26,12 +27,24 @@
 | LIBERO-Recover | (benchmark) | – | RSR = recovery success rate | – | – | – | 1000+ scenario, 4 level |
 | *MimicGen (thêm)* | ❌ | ❌ | Task success khi replay | SFT/BC trên data sinh ra | ✅ sim replay để lọc | Không | robosuite tasks |
 | *DAgger (thêm)* | ✅ gián tiếp (state distribution) | ❌ | Nhãn expert ở state của learner | SFT lặp | Cần expert online | Không | – |
+| **Backtrack** (F1) | ✅ | ❌ | Failure head P(fail) trên feature của VLA, học từ rollout có nhãn outcome của π đóng băng | **Không** (VLA đóng băng) | Không | Failure head + controller lùi theo motion đã đi | LIBERO 4 suite (SmolVLA, π0.5, π0-FAST), MetaWorld |
+| **CoRe** (F2) | ✅ | ⚠️ "tưởng tượng" continuation bằng ảnh tổng hợp (edit ảnh + voxel + FK), không phải WM học | Rejoin continuation tưởng tượng của chính π + restoration tối thiểu | **Không** (training-free) | Không (nhưng cần sắp xếp lại scene thật) | OOD detector + virtual planning + motion planner | LIBERO-Long + perturbation, LangSwitch, real xArm6 |
+| **Recova** (F3) | ✅ | ❌ (digital twin = sim dựng lại) | Agent chẩn đoán + code-as-policy, verify scene đã khôi phục | DAgger SFT, task policy và recovery policy **tách riêng** | ✅ twin sim + real | Agent monitor + recovery policy/skill | LIBERO-Pro, MolmoSpaces, 4 trạm robot thật |
+| **FLARE** (F4) | ✅ (Retry / Reset) | ❌ | MLLM phân tích failure offline (ID / OOD) | SFT (perturb + bridging augmentation, reset skills) | Không (reset demo do người thu) | **MLLM monitor online** | Task contact-rich sim + real (π0.5) |
+| **Hi-WM** (F5) | ✅ (corrective) | ✅ action-conditioned WM | Người can thiệp trực tiếp trong WM (rollback / branching) | SFT trên corrective trajectories | Không (người phán) | Không | 3 task real (DP, π0) |
+| **CureWM** (G1) | (độ tin cậy WM) | ✅ Cosmos Policy, Ctrl-World | Optimism / success-failure gap trên failure counterfactual | Fine-tune **WM** (không phải policy) | ✅ execution trong sim / hardware | – | 484 LIBERO counterfactuals + real arm |
+| **FOCA** (H1) | ❌ | ⚠️ video WM tuỳ chọn để co-train | Dự đoán future interaction embedding + align ngầm với future goal | SFT + loss future phụ, **action-free co-training** | Không | Không | LIBERO few-shot, RoboCasa, real |
+| **ThinkWorld** (H2) | ❌ | ✅ imagination nội tại (future trong không gian DINO) | Độ khớp future dự đoán với hệ quả quan sát được | SFT + RL (consequence-grounded) | Không | CoD reasoning tokens | sim + real, human video |
+| **PointWorld** (I1) | ❌ | ✅ 3D point-flow WM | Cost MPC | Không (MPC) | Không | MPC planning | real Franka zero-shot |
+| **PointAction** (I2) | ❌ | ✅ video → 4D pointmap | – | Point-to-action decoder | Không | Sinh video + pointmap | RoboCasa365, real YAM / xArm7 |
+| **Observing & Controlling Features** (J1) | ❌ | ❌ | Linear observer trên representation của VLA | Không (can thiệp lúc inference) | Không | Observer + controller (~1% overhead) | LIBERO (π0.5), DROID hardware |
 
 ### Định vị RetryVLA (ngắn)
 - **Tín hiệu khác**: hầu hết paper dùng *goal/progress/reward của task* (DINO-WM: gần goal image; RISE/RePO: progress; ReCoVLA/WMPO: reward). RetryVLA dùng **competence của chính policy đóng băng** — "đưa robot về chỗ mà π biết làm tiếp", nên bridge ngắn là đủ, không cần giải cả task. Kết quả của mình: competence-guided search ≫ latent-goal (kiểu DINO-WM) và progress-value search.
 - **Cách update khác**: không RL (ReCoVLA, WMPO, RISE, TD-MPC2) mà **SFT trên data đã verify trong sim** — giống tinh thần MimicGen/DAgger hơn. Đã thấy: distillation ≫ demo-only SFT; imagination-only (kiểu RISE) và residual RL cùng sim budget đều kém hơn.
 - **Test-time rẻ**: không VLM supervisor (RACER, Dream2Fix, ReCoVLA), không planning mỗi bước (DINO-WM, TD-MPC2). Search + WM chỉ dùng **offline để tạo data**.
 - **Vai trò WM thật sự**: trong RetryVLA, WM chủ yếu là **filter** trên một proposal library (không phải nguồn "tưởng tượng" duy nhất như RISE/WMPO/Dream2Fix) — verify thật trong sim mới là cái quyết định nhãn.
+- **Hướng gộp (2026-11-01, xem `experiments/PLAN.md`)**: C^π vừa *chọn đích* sửa sai, vừa *định tuyến* mẫu khi train: mẫu đã verify → SFT có action; mẫu chưa verify nhưng C^π cao → chỉ loss phụ `L_future` (không có action). Các bài gần nhất cho từng phần: **Backtrack / CoRe** (frozen VLA, trả quyền điều khiển về π — nhưng là module lúc test), **CureWM** (WM lạc quan — RQ3), **FOCA / ThinkWorld** (future-latent làm tín hiệu action-free — RQ2). Trong các bài đã đọc, chưa thấy bài nào dùng một critic gắn với policy để quyết định mẫu WM nào được làm nhãn action và mẫu nào chỉ làm tín hiệu phụ.
 
 ---
 
@@ -183,6 +196,143 @@
 
 ---
 
+## F. Recovery cho VLA đóng băng / dữ liệu sửa sai (bổ sung 2026-11-01)
+
+### F1. Backtrack: *If at First You Don't Succeed, Backtrack: Lightweight Recovery for Frozen VLAs*
+- Link: [arXiv 2610.32941](https://arxiv.org/abs/2610.32941) · Thomas Landeg, Thierry Tambe · arXiv preprint, 23/10/2026
+
+![](figs/backtrack.png)
+*Fig. 1 from Backtrack (overview: failure head + backtrack controller).*
+
+- **Phương pháp**: một failure head nhỏ (0.48-0.88% số tham số) đọc feature sẵn có của VLA đóng băng, học chỉ từ rollout có nhãn outcome của chính policy (giống SAFE, NeurIPS 2025). Khi P(fail) vượt ngưỡng, controller dừng policy, **lùi lại motion vừa đi** (cố định số bước hoặc đến khi P(fail) giảm), rồi trả quyền điều khiển cho policy y nguyên để thử lại.
+- **Kết quả**: SmolVLA, π0.5, π0-FAST trên LIBERO (4 suite, budget step gấp đôi) và MetaWorld; LIBERO-Long giảm failure rate 19-48% (tới +7.4 pt); 3 suite ngắn tác dụng nhỏ hơn. Chỉ có sim.
+- **Khác RetryVLA**: failure head của họ gần với C^π (đều học từ outcome của policy đóng băng), nhưng chỉ dùng làm **trigger lúc test**; recovery là lùi tay máy cố định, không sửa được trạng thái object. RetryVLA dùng C^π để **chọn đích** của bridge, verify trong sim rồi distill, không thêm module lúc test. Họ đánh giá từ init state sạch của LIBERO, không phải LIBERO-Recover. Đây là baseline không dùng WM của Phần 2 (mình tự cài lại, kèm biến thể backtrack-distill).
+
+### F2. CoRe: *Imagining Recovery: Inference-Time Counterfactual Realignment for Vision-Language-Action Models*
+- Link: [arXiv 2608.14822](https://arxiv.org/abs/2608.14822) · Yanyan Zhang, Disheng Liu, Kai Ye, Chaoda Song, Xinpeng Li, Mohsen Hariri, Vikash Singh, Yu Yin, Vipin Chaudhary · arXiv preprint, 14/08/2026
+
+![](figs/core.png)
+*Fig. 2 from CoRe (overview: OOD detector, recovery anchoring, synthesized counterfactual continuation, minimal restoration).*
+
+- **Phương pháp**: training-free. Khi detector OOD báo lệch, CoRe chọn một trạng thái khả thi gần đây, **tưởng tượng policy đóng băng sẽ chạy tiếp thế nào** bằng quan sát tổng hợp (edit ảnh, chiếu lại voxel, render tay máy bằng FK), rồi sắp xếp lại robot và scene tối thiểu để "nhập lại" continuation đó, sau đó trả quyền cho policy.
+- **Kết quả**: theo abstract, success tăng tới +85.0 pt và giảm 42.2% số lần khôi phục vật lý; LIBERO-Long có perturbation, LangSwitch, xArm6 thật, nhiều backbone VLA.
+- **Khác RetryVLA**: cùng ý "đưa về trạng thái mà chính π làm tiếp được". Nhưng CoRe làm **lúc test**, không học WM hay critic, và cần motion planner để sắp xếp lại scene. RetryVLA học C^π từ continuation thật, search offline, distill vào VLA nên lúc test không cần detector hay planner.
+
+### F3. Recova: *Agent-Guided Failure Recovery for Autonomous Robotic Manipulation*
+- Link: [arXiv 2610.01178](https://arxiv.org/abs/2610.01178) · [project](https://www.liuisabella.com/Recova) · Isabella Liu, An-Chieh Cheng, Johan Bjorck, Zhiding Yu, Hongxu Yin, Jan Kautz, Linxi Fan, Yuke Zhu, Sifei Liu · arXiv preprint, 01/10/2026
+
+![](figs/recova.png)
+*Fig. 2 from Recova ((A) digital twin simulation, (B) real-robot rollout loop).*
+
+- **Phương pháp**: dựng digital twin từ camera và trajectory. Trong twin, một agent chẩn đoán failure, thử các chương trình sửa (code-as-policy), thu rollout thành công cho **task policy và recovery policy riêng**. Lúc deploy, agent theo dõi tiến độ, gọi recovery, kiểm tra scene đã được khôi phục rồi chạy tiếp; ca không cứu được thì người demo, đưa vào DAgger.
+- **Kết quả**: LIBERO-Pro 78.8% vs 71.7%, MolmoSpaces 64.9% vs 38.0%; real: DAgger 23.8% → 77.5%, thêm recovery skill → 87.5%; can thiệp của người 87.5% → 0% sau 4 vòng.
+- **Khác RetryVLA**: twin đóng vai sim verifier (gần phương án A real-to-sim của mình), nhưng recovery là policy / skill riêng do agent điều phối. RetryVLA distill recovery vào **chính VLA** và chọn recovery theo C^π, không cần agent hay monitor lúc test.
+
+### F4. FLARE: *A Failure-Aware Framework for Autonomous Correction and Recovery in Visual-Language Robotic Manipulation* (Retry / Reset)
+- Link: [arXiv 2608.26645](https://arxiv.org/abs/2608.26645) · [CVF](https://openaccess.thecvf.com/content/CVPR2026/html/Zhao_FLARE_A_Failure-Aware_Framework_for_Autonomous_Correction_and_Recovery_in_CVPR_2026_paper.html) · Ganlong Zhao, Zijia Tang, Xingping Chen, Zhanghui Kuang, Ye Tian, Guanbin Li · **CVPR 2026** (pp. 22391-22401, đã xác minh trên CVF Open Access), arXiv 27/08/2026
+
+![](figs/flare.png)
+*Fig. 2 from FLARE (overall framework).*
+
+- **Phương pháp**: chia lỗi thành ID (chỉ lệch pose) và OOD (scene hỏng, ví dụ cốc đổ). **Retry**: chèn nhiễu pose và đoạn bridging vào demo để policy làm đúng bước tiếp từ nhiều cấu hình. **Reset**: MLLM offline phân tích video lỗi, từ đó thu một thư viện nhỏ reset skill theo object; lúc chạy, một MLLM monitor chọn giữa chạy task và gọi reset.
+- **Khác RetryVLA**: Retry ≈ augmentation perturb-then-bridge (giống RACER); Reset cần demo người và MLLM lúc test. RetryVLA tự tìm bridge bằng search + verify, chỉ một policy. Cách chia ID / OOD của họ gần với L1-L2 vs L3-L4 của LIBERO-Recover, hữu ích khi báo kết quả theo level.
+- Lưu ý trùng tên: *FLARE: Robot Learning with Implicit World Modeling* ([arXiv 2505.15659](https://arxiv.org/abs/2505.15659), Zheng ... Yuke Zhu, Linxi Fan; NVIDIA GEAR; arXiv 05/2025, chưa xác minh venue) là bài **khác**: căn feature của policy với latent embedding của quan sát tương lai và co-train với video không có action. Bài này liên quan trực tiếp đến `L_future` (RQ2), xem mục H.
+
+### F5. Hi-WM: *Human-in-the-World-Model for Scalable Robot Post-Training*
+- Link: [arXiv 2604.21741](https://arxiv.org/abs/2604.21741) · [project](https://hi-wm.github.io/) · Yaxuan Li, Zhongyi Zhou, Yefei Chen, Yanjiang Guo, Jiaming Liu, Shanghang Zhang, Jianyu Chen, Yichen Zhu · arXiv preprint, 23/04/2026 (v2 05/05/2026)
+
+![](figs/hiwm.png)
+*Fig. 2 from Hi-WM (pipeline: pre-training, rollout in WM, human intervention, post-training).*
+
+- **Phương pháp**: cho policy chạy closed-loop trong một action-conditioned WM; khi rollout có nguy cơ hỏng, **người can thiệp ngay trong WM** bằng các action sửa ngắn. WM lưu cache trạng thái, cho phép rollback và rẽ nhánh, nên một failure state cho ra nhiều nhánh sửa. Các trajectory sửa được thêm vào tập train.
+- **Kết quả**: 3 task thật (Fold Towel, Push T, Route Rope) với DP và π0: trung bình +37.9 pt so với base và +19.0 so với baseline WM closed-loop; success trong WM tương quan với thật r = 0.953.
+- **Khác RetryVLA**: cùng ý "một failure state, nhiều nhánh sửa" (mình làm bằng restore snapshot sim), nhưng nhãn là **người**. RetryVLA tự động: search + C^π + verify trong sim. Hi-WM là bằng chứng real-world rằng sửa sai trong WM rồi SFT có tác dụng.
+
+---
+
+## G. Độ tin cậy của WM verifier (RQ3)
+
+### G1. CureWM: *World Models Dream of Success: Diagnosing and Repairing Failure Insensitivity in Robot World Models*
+- Link: [arXiv 2610.09134](https://arxiv.org/abs/2610.09134) · [code](https://github.com/jiuyixu25/CureWM) · Jiuyi Xu, Xiao Hu, Meida Chen, Peng Gao, Yang Ye, Yangming Shi · arXiv preprint, 06/10/2026
+
+![](figs/curewm.png)
+*Fig. 2 from CureWM (overview: perturb demos at several severities, verify by execution, post-train).*
+
+- **Bài toán**: 4 checkpoint WM đã phát hành (Cosmos Policy, Ctrl-World) ít nhạy với thay đổi action và dự đoán "giống thành công" cho các failure đã kiểm chứng (over-optimism).
+- **Phương pháp**: từ demo thành công, tạo action thay thế theo một lưới mức nhiễu, **thực thi trong sim / phần cứng để có outcome thật**, rồi fine-tune WM trên failure + success còn sống cùng demo nominal; không đổi kiến trúc hay objective.
+- **Kết quả**: trên 484 LIBERO failure counterfactual held-out, optimism giảm từ 80% xuống 30-43% (trung bình 38%); robot thật: 90% → 33%. Cùng budget, failure counterfactual cho gap value success-failure 0.124, failure on-policy mới thu chỉ 0.014. Tác giả nhấn mạnh phải đo optimism **cùng với** khả năng phân biệt success / failure.
+- **Khác RetryVLA**: họ đo optimism khi rollout **thụ động** và sửa WM. RQ3 của mình đo optimism khi **search khai thác** WM + critic (false positive, ECE, precision@k theo budget CEM 8 → 512) và giảm bằng trừ điểm U_ens thay vì retrain. Bài học áp dụng: báo cả false positive lẫn AUC / precision, không chỉ một con số optimism.
+
+### G2. Ghi chú từ research notes (Ctrl-World, VLAW, MiraBench)
+Tóm tắt từ `research_notes/World model sinh dữ liệu robot/wm_policy_evaluation.md`, `research_notes/World model sinh dữ liệu robot/wm_data_engines.md` và `reports/World model sinh dữ liệu robot.md` (2026-10). ID arXiv đã kiểm tra lại trong lượt này; các con số lấy từ notes, chưa đọc lại bài gốc.
+- **Ctrl-World** ([arXiv 2510.10125](https://arxiv.org/abs/2510.10125), Guo, Shi, Chen, Finn; ICLR 2026 theo notes, arXiv không ghi venue): WM video đa view trên DROID; giữ được thứ hạng policy nhưng **đánh giá thấp** success low-level (bi quan); SFT trên imagined success do **người** gán nhãn: 38.7% → 83.4%.
+- **VLAW** ([arXiv 2602.12063](https://arxiv.org/abs/2602.12063), Guo, Lee, Shi, Chen, Liang, Finn): WM chỉ train trên demo thì "overly optimistic"; fine-tune trên rollout có cả success và failure của policy "largely eliminates" bias này.
+- **MiraBench** ([arXiv 2605.29360](https://arxiv.org/abs/2605.29360)): "visual fidelity is a poor proxy for action fidelity"; optimism bias phổ biến kể cả ở model chất lượng hình ảnh cao.
+- Kết luận cho RetryVLA (theo report): dấu của bias phụ thuộc data; chưa thấy paper nào đo bias **như hàm của budget search**, đó là khoảng trống RQ3 nhắm tới.
+
+---
+
+## H. Tương lai làm tín hiệu action-free (RQ2)
+
+### H1. FOCA: *Future-Oriented Conditioning for Data-Efficient Vision-Language-Action Adaptation*
+- Link: [arXiv 2606.20867](https://arxiv.org/abs/2606.20867) · [project](https://focavla.github.io/) · Duc Minh Nguyen, Nghiem Tuong Diep, Binh Gia Nguyen, …, Doanh Le, …, Duy M. H. Nguyen, An Thai Le, Ngo Anh Vien (23 tác giả) · **ICML 2026** (đã xác minh qua trang poster ICML 2026 và arXiv comment "Accepted at ICML 2026"), arXiv 18/06/2026
+- Venue PMLR: ICML 2026 = PMLR v306, nhưng không tìm thấy tên bài trên trang mục lục v306 lúc kiểm tra, nên **chưa xác minh** số trang PMLR. Bài có đồng tác giả Doanh Le; cần lưu ý khi trích dẫn ở chế độ double-blind.
+
+![](figs/foca.png)
+*Fig. 1 from FOCA (overview: explicit future learning + implicit future learning, optional video WM).*
+
+- **Phương pháp**: thêm token "future" vào VLM của VLA: (i) *explicit*: dự đoán embedding tương tác ở bước t+k; (ii) *implicit*: align với quan sát goal tương lai, có thể xem như biểu diễn kiểu value. Suy luận trong latent, không dự đoán pixel; cho phép **co-train không cần action** với video tổng hợp từ video WM.
+- **Kết quả**: LIBERO 95.7% với 20 demo; RoboCasa +7-12%; real tới +26 pt.
+- **Khác RetryVLA**: FOCA là thiết kế gần nhất với `L_future` (loss future-latent phụ, data WM không có action). Khác: FOCA cho adaptation few-shot nominal, future lấy từ demo / video WM **không lọc**. RetryVLA dùng future tưởng tượng từ **failure state**, chọn theo C^π, và kiểm tra trực tiếp việc lọc có quan trọng không (arm 3 vs 4).
+
+### H2. ThinkWorld: *World Imagination Reinforces Chain-of-Dynamics Reasoning*
+- Link: [arXiv 2610.37666](https://arxiv.org/abs/2610.37666) · [project](https://thinkworld-project.github.io/) · Chaehyun Kim, Chi-Pin Huang, Jisoo Kim, Min-Hung Chen, Yu-Chiang Frank Wang, Seungryong Kim, Fu-En Yang · arXiv preprint, 27/10/2026
+
+![](figs/thinkworld.png)
+*Fig. 2 from ThinkWorld (architecture and training stages).*
+
+- **Phương pháp**: mỗi "action thought" là một Chain-of-Dynamics (CoD), chuỗi motion token rời rạc dùng chung cho người và robot. Khởi tạo bằng SFT trên demo có action; rồi một decoder dự đoán tương lai **trong không gian feature DINO đóng băng** từ CoD, và RL thưởng cho CoD có tương lai dự đoán khớp với hệ quả quan sát được. Nhờ vậy video người không có action cũng cho tín hiệu.
+- **Khác RetryVLA**: cùng không gian DINO cho future (WM của mình dùng DINOv2), ủng hộ việc đặt `L_future` trên latent DINOv2 pooled. Khác: tương lai đích của họ là **quan sát thật** (video), của mình là **tưởng tượng** từ WM được C^π lọc; họ nhắm generalization, không phải recovery; họ dùng RL, mình dùng loss phụ trong SFT.
+- (Liên quan: FLARE 2505.15659, ghi ở F4, căn feature policy với latent tương lai, cùng họ phương pháp.)
+
+---
+
+## I. World model 3D / action dạng điểm (để sau, chỉ làm nếu RQ2 dương)
+
+### I1. PointWorld: *Scaling 3D World Models for In-The-Wild Robotic Manipulation*
+- Link: [arXiv 2601.03782](https://arxiv.org/abs/2601.03782) · [project](https://point-world.github.io/) · [code](https://github.com/NVlabs/PointWorld) · Wenlong Huang, Yu-Wei Chao, Arsalan Mousavian, Ming-Yu Liu, Dieter Fox, Kaichun Mo, Li Fei-Fei · **CVPR 2026 Highlight** (pp. 20765-20779, CVF Open Access), arXiv 07/01/2026
+
+![](figs/pointworld.png)
+*Fig. 2 from PointWorld (overview).*
+
+- **Phương pháp**: biểu diễn cả state và action là **3D point flow**; từ RGB-D + chuỗi action (đổi thành robot flow qua URDF) dự đoán dịch chuyển 3D của mọi điểm; train trên ~2M trajectory / 500 giờ (Franka + humanoid); 0.1 s / bước nên chạy được trong MPC; zero-shot trên Franka thật.
+- **Khác RetryVLA**: WM 3D cho planning lúc test, không có critic gắn với policy, không distill. Là ứng viên WM thứ hai (claim generality) nếu cần độ chính xác tiếp xúc tốt hơn latent DINOv2.
+
+### I2. PointAction: *3D Points as Universal Action Representations for Robot Control*
+- Link: [arXiv 2606.03943](https://arxiv.org/abs/2606.03943) · [project](https://oriontmt.github.io/pointaction/) · Mutian Tong, Han Jiang, Qiao Feng, Lingjie Liu, Jiatao Gu · arXiv preprint, 02/06/2026 (không nhầm với PointACT, arXiv 2605.21414, RSS 2026)
+
+![](figs/pointaction.png)
+*Fig. 1 from PointAction (teaser: joint RGB + dynamic 3D pointmap generation, point-to-action decoding).*
+
+- **Phương pháp**: fine-tune model sinh video để dự đoán đồng thời frame RGB và **pointmap 3D động**; một decoder diffusion biến point dynamics thành action. Điểm 3D là interface action không phụ thuộc embodiment.
+- **Khác RetryVLA**: là video-action model (policy sinh tương lai), không bàn đến recovery. Ý tưởng "future dạng điểm 3D" có thể làm target cho `L_future` ở bản 3D sau này.
+
+---
+
+## J. Steering bên trong VLA (để sau)
+
+### J1. *Observing and Controlling Features in Vision-Language-Action Models*
+- Link: [arXiv 2603.05487](https://arxiv.org/abs/2603.05487) · Hugo Buurmeijer, Carmen Amo Alonso, Aiden Swann, Marco Pavone (Stanford, NVIDIA) · arXiv preprint, 05/03/2026 (v2 sau đó; không thấy venue)
+
+![](figs/steering.png)
+*Fig. 1 from the paper (feature-observability with a linear observer, feature-controllability with a minimal linear controller).*
+
+- **Phương pháp**: linear *observer* đọc thông tin state / action từ representation trong của VLA (4 VLA, cả autoregressive lẫn transformer + flow-matching); một *controller* chỉnh representation tối thiểu để đưa dự đoán của observer vào khoảng mong muốn. Không fine-tune; π0.5 trên LIBERO và DROID thật; overhead ~1%.
+- **Khác RetryVLA**: không phải recovery, không train. Liên quan theo hai cách: (i) phương pháp linear probe trên hidden state SmolVLA dùng được cho probe rủi ro của `L_future` (embedding có tách C^π cao / thấp không); (ii) hướng sau này: steer representation về phía C^π cao lúc test thay vì SFT.
+
+---
+
 ## Ghi chú nguồn
 - Tiêu đề, tác giả, ngày arXiv lấy từ arXiv API; venue: DINO-WM (PMLR v267), RACER (IEEE ICRA 2025), WMPO (ICLR 2026, OpenReview), RISE (arXiv comment "RSS 2026"), TD-MPC2 (arXiv comment "ICLR 2024"), MimicGen ("CoRL 2023"). Các paper 2026 còn lại (RePO-VLA, Dream2Fix, ReCoVLA, LIBERO-Recover) hiện là arXiv preprint.
 - Số liệu kết quả trích từ abstract/thân bài của từng paper, không chạy lại.
+- Bổ sung 2026-11-01 (F-J): tiêu đề, tác giả, ngày v1 lấy từ arXiv API cho cả 11 bài (Hi-WM 2604.21741, CoRe 2608.14822, Recova 2610.01178, Backtrack 2610.32941, CureWM 2610.09134, FOCA 2606.20867, ThinkWorld 2610.37666, PointWorld 2601.03782, PointAction 2606.03943, FLARE 2608.26645, Observing & Controlling 2603.05487); thêm FLARE-implicit-WM 2505.15659 và Ctrl-World / VLAW / MiraBench (chỉ kiểm tra ID). Venue: FLARE và PointWorld (CVF Open Access CVPR 2026), FOCA (trang poster ICML 2026; **số trang PMLR v306 chưa xác minh**). Các bài còn lại là arXiv preprint (không có venue trong comment hay trên trang project lúc kiểm tra). Ctrl-World "ICLR 2026" lấy từ research notes, chưa xác minh lại.

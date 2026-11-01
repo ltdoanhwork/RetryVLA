@@ -11,6 +11,8 @@
 > **eps** = ràng buộc đăng ký trước: nominal(pi') >= nominal(pi1-nominal 0.796) - 2 pt, tức sàn **0.776**.
 >
 > Tổng quan related work (có hình phương pháp): [docs/related_work/RELATED_WORK.md](related_work/RELATED_WORK.md).
+>
+> **Cập nhật 2026-11-01:** hướng mới (gộp action-grounded + action-free) và các thí nghiệm đang chạy: xem [mục 10](#10-hướng-gộp-2026-11-01-đang-chạy).
 
 ## 1. TL;DR
 
@@ -205,3 +207,35 @@ Các quyết định cần chốt hôm nay:
    Checklist bằng chứng: đầu mục "Evidence" trong PLAN.md.
 5. **Chuyển recovery datasets PNG sang video** để tiết kiệm quota (data/recovery 93 GB)? Cần kiểm tra lại SFT
    (nén lossy có thể đổi kết quả) trước khi xoá bản PNG.
+
+## 10. Hướng gộp (2026-11-01, đang chạy)
+
+Paper 02 (recovery có action, đã verify) và Paper 03 (tương lai tưởng tượng không có action) được gộp thành **một bài
+RetryVLA**. Câu hỏi chung: WM sinh ra các tương lai sửa sai, làm sao biến chúng thành hành vi sửa sai mà VLA dùng
+được, và tín hiệu nào thật sự giúp? Chi tiết thiết kế, ablation và claim boundaries: `experiments/PLAN.md`, mục
+"Unified framing". Related work mới (Backtrack, CoRe, Recova, FLARE, Hi-WM, CureWM, FOCA, ThinkWorld, PointWorld /
+PointAction, steering): [RELATED_WORK.md](related_work/RELATED_WORK.md), mục F-J.
+
+- **RQ1 (đã có bằng chứng):** chọn đích sửa sai bằng C^pi tốt hơn goal-distance và progress (0.42 so với 0.19 và 0.18).
+- **RQ2 (mới):** tương lai do WM tưởng tượng, không có action, có giúp được không nếu chỉ dùng làm loss phụ
+  `L_future` (dự đoán latent DINOv2 của trạng thái đích), được C^pi lọc, thay vì làm nhãn action?
+- **RQ3 (mới):** WM + critic lạc quan đến mức nào khi bị search khai thác (false positive, ECE, precision@k theo
+  budget CEM 8 → 512), và trừ điểm uncertainty `J = C^pi - lambda*U_ens` có giảm được không?
+
+**C^pi là trung tâm:** vừa chọn đích sửa sai, vừa định tuyến mẫu khi train: ứng viên đã verify trong sim → SFT có
+action; ứng viên chưa verify nhưng C^pi cao → chỉ `L_future`; vẫn giữ 50% nominal demo.
+
+**Thí nghiệm đang chạy / chờ** (các agent khác đang chạy; kết quả sẽ vào `experiments/RESULTS.md`):
+
+| việc | trạng thái |
+|---|---|
+| Hạ tầng: thêm shell `dedc84ce` (SFT), eval / search trên `0097c39c` | đang làm (đã authorize `dedc84ce`) |
+| Nhãn L1-L4 cho scene Spatial / Object + RSR theo level cho checkpoint cũ | đang làm |
+| Baseline Backtrack (một lần thử, retry N lần) + backtrack-distill | đang làm |
+| Đường cong optimism của verifier theo budget CEM + arm `C^pi - lambda*U_ens` (lambda 0 / 0.5 / 1 / 2) | đang làm |
+| Sinh tập tương lai tưởng tượng lọc theo C^pi + `L_future`, `has_action` trong `sft.py` / `mix.py` | đang làm |
+| Ablation 6 arm x 3 seed (demo-only, grounded, free-lọc, free-không-lọc, hybrid, backtrack-distill) | chờ |
+
+**Go / no-go:** nếu hybrid không hơn action-grounded ở L3-L4 (p >= 0.1) thì RQ2 là kết quả âm có giải thích
+("imagination chỉ có ích khi được kiểm chứng"); nếu backtrack-distill ngang pi1 thì phải xem lại claim về vai trò
+của WM. 3D WM, memory và steering chỉ làm nếu RQ2 dương.
