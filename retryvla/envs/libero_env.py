@@ -119,7 +119,7 @@ class Scene:
     step: int           # step at which the failure state was captured
     language_bddl: str  # (:language ...) of the scene (paraphrased)
     language_canonical: str  # original LIBERO wording from the folder name
-    level: str = "unk"  # L1-L4 when available (not released with the assets)
+    level: str = "unk"  # L1-L4 (configs/env/levels_<suite>.yaml via splits.scenes_for; else unk)
 
     @property
     def group(self) -> str:

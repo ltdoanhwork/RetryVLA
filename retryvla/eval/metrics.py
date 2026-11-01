@@ -32,6 +32,20 @@ def rate_table(rows: Iterable[dict], key: str, success_key: str = "success") -> 
     return out
 
 
+LEVELS = ("L1", "L2", "L3", "L4")
+
+
+def level_table(rows: Iterable[dict], levels: dict[str, str], scene_key: str = "scene") -> dict[str, dict[str, Any]]:
+    """Per-level RSR (L1-L4 columns, always present, n=0 if empty) with levels looked up by scene tag, so old
+    ``episodes.jsonl`` files (all ``level: unk``) can be re-broken-down without re-running rollouts.
+    ``levels`` = ``splits.load_levels(scene_root[, official_only])``; scenes not in the map count as ``unk``."""
+    rel = [{"level": levels.get(r[scene_key], "unk"), "success": r["success"]} for r in rows]
+    tab = rate_table(rel, "level")
+    for lv in LEVELS:
+        tab.setdefault(lv, {"n": 0, "k": 0, "rate": float("nan"), "ci95": [float("nan"), float("nan")]})
+    return dict(sorted(tab.items()))
+
+
 def write_jsonl(path: str | Path, rows: Iterable[dict]) -> None:
     with open(path, "w") as f:
         for r in rows:

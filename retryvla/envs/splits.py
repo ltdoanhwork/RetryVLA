@@ -78,9 +78,25 @@ def split_sha(path: str | Path) -> str:
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()[:12]
 
 
+def load_levels(scene_root: str | Path, official_only: bool = False) -> dict[str, str]:
+    """tag -> L1..L4 from ``configs/env/levels_<suite>.yaml`` (``scripts/build_levels.py``: official LIBERO-Recovery
+    v1.0.0 annotations; ``src: inherited_*`` = copied from the nearest annotated step of the same failure episode).
+    Empty dict if no map exists for this scene root (levels stay ``unk``)."""
+    from retryvla import CONFIG_DIR
+
+    suite = Path(scene_root).name.replace("selected_bddl_scenes_", "")
+    path = CONFIG_DIR / "env" / f"levels_{suite}.yaml"
+    if not path.is_file():
+        return {}
+    import yaml
+
+    lv = (yaml.safe_load(path.read_text()) or {}).get("levels") or {}
+    return {t: v["level"] for t, v in lv.items() if not official_only or v.get("src") == "official"}
+
+
 def scenes_for(split: dict, part: str, scene_root: str | Path) -> list[Scene]:
     tags = set(split[part])
-    return [s for s in discover_scenes(scene_root) if s.tag in tags]
+    return [s for s in discover_scenes(scene_root, levels=load_levels(scene_root)) if s.tag in tags]
 
 
 class TestSplitLeak(RuntimeError):
