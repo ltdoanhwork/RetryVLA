@@ -735,3 +735,28 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
   (~/.cache/pip 1.9 GB, doanh/.cache/pip 1.8 GB) emptied; `__pycache__` dirs removed.
 - Nothing to delete: eval videos (only runs/M0_recover_bddl/videos 0.4 MB, used by collect_slide_videos.py; the
   runs/_analysis videos are slide / failure-analysis sources), smoke banks (none left), m11_b ABANDONED parts (empty).
+
+## RQ3 (plan Part 3): verifier optimism + uncertainty penalty, 2026-11-01
+- **Finding: the WM "ensemble" never was one.** In every LatentWM checkpoint (WM v1 `20261014-103001_M2_train_wm_v1`,
+  WM v2 `M11_train_wm_v2`, Object WM) the 4 `z_heads` / `q_heads` are BIT-IDENTICAL (max |W_e - W_0| = 0): heads are
+  zero-initialised (identity dynamics) and get identical gradients from the shared trunk and identical targets, so the
+  symmetry is never broken. Hence U_WM == 0 exactly and the `- lambda_unc * U_n * V.std()` term of `WMCriticRanker.score`
+  (every WM search arm since M3, lambda 0.5) has been a no-op; all earlier WM results are effectively lambda = 0.
+  Not fixed in `dynamics.py` (would change future WMs silently); RQ3 adds a separate ensemble instead.
+- **U_ens used for RQ3** (`retryvla/wm/boot_heads.py`, `scorers.ensemble_values`): 4 bootstrap linear heads (Poisson(1)
+  trajectory weights, closed-form ridge 1e-2) fitted on the FROZEN WM v1 trunk features of the WM's own training
+  transitions (collect_v1 train split; val failures unseen). The WM / its mean prediction / C^pi v2 are unchanged.
+  Member e rolls out on its own trajectory (trunk + head e); U_ens = std_e of C^pi(z_H^e) with MC dropout p 0.1 on the
+  critic (C^pi v2 trained with dropout 0.1), i.e. WM + critic disagreement in C^pi units. Val 1-step z MSE: WM 0.1564,
+  boot heads 0.1565-0.1566. `data/wm/boot_heads_20261014-103001_M2_train_wm_v1.pt` (fit took 10 s on dedc84ce).
+  Caveat seen in the smoke: when C^pi saturates at 1.0 every member agrees -> U_ens = 0 on most CEM-optimised picks.
+- Offline (0 new sim, `python -m scripts.verifier_rescore` on dedc84ce + `python scripts/analyze_verifier.py` ->
+  runs/_analysis/verifier): 43,632 verified candidates of the M5b-instance logs re-scored with WM v1 + C^pi v2 (matches
+  the logged pred_value to ~5e-4 median). Results in RESULTS "RQ3".
+- **Ops incident 18:09 UTC (mine):** `remote_ctl.sh stop dedc84ce:0` to release my 10-s boot-heads job killed the
+  Part-4 agent's `rv_af_dg` (wm_datagen af_futures_m5b, 6 min into its precheck): on a shared GPU the bare slot key
+  `dedc84ce:0` belonged to THAT session (mine was `dedc84ce:0:rv_rq3_boot`). Relaunched identically at 18:20
+  (`rv_af_dg`, same args, nothing written yet by the killed run). Rule: on shared GPUs release claims by tmux session
+  name only (pop the claim whose `tmux == name`), never `remote_ctl.sh stop <shell:gpu>`.
+- Sweep launched 19:06 UTC on dedc84ce (2 x 4 sim workers, `rv_rq3_sweep_s0/s1`, configs/exp/rq3_verifier_sweep.yaml,
+  M5b shards 0-1 of 8, pi0 failures restored from the M5b precheck without re-rolling).
