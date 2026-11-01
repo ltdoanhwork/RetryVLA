@@ -760,3 +760,12 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
   name only (pop the claim whose `tmux == name`), never `remote_ctl.sh stop <shell:gpu>`.
 - Sweep launched 19:06 UTC on dedc84ce (2 x 4 sim workers, `rv_rq3_sweep_s0/s1`, configs/exp/rq3_verifier_sweep.yaml,
   M5b shards 0-1 of 8, pi0 failures restored from the M5b precheck without re-rolling).
+
+## Part 4 (RQ2) action-free futures, ops log 2026-11-01
+- Shell: only dedc84ce (0097c39c gone). First `rv_af_dg` (18:05) was killed 18:09 by a sibling's slot-key release
+  and relaunched 18:20 by them; I restarted it 19:03 with `futures.verify_every=4` (CPU-bound shell: ~4 sibling sim jobs,
+  load 14-36 / 32; full verification of filtered + random was ~2 min / state -> 8.5 h). Rate ~45 s / state -> ~3.3 h.
+- One short /pfss EDQUOT window ~18:25 (smoke checkpoint write retried 2 min and succeeded). Smoke checkpoints deleted.
+- Chain `af_chain` (agent machine tmux, CPU only) launches on dedc84ce: SFT arm 3 -> SFT arm 5 + arm 3 evals (RSR 8
+  workers, nominal 4) -> arm 5 evals -> probe (pi1-nominal, pi1, arm 3, arm 5). SFTs use `save_every=6000` (no
+  intermediate checkpoints). Worktree `../RetryVLA_af_base_wt` (c6d3f8c, for the default-path check) can be removed.

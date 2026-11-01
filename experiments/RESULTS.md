@@ -428,3 +428,21 @@ is the same on L2 and L3 (pi1 vs pi0: +0.34 L2, +0.28 L3; goal / progress data g
 data helps also on object-state recovery (L3: bowl dropped / off the plate), not only on action adaptation. Object has no
 official L3 test scene, so the held-out split cannot test L3. L4 cannot be evaluated on our scenes at all.
 New evals record official levels in `summary.json` (`by_level_official`) and the inherited map in `by_level`.
+
+## RQ2 action-free imagined futures (Part 4, 2026-11-01; seed 0; IN PROGRESS)
+Code: `wm_datagen` futures mode, `FutureDataset` / `MixDataset(future_ratio)`, `sft` L_future (`train.future_beta`,
+default 0 = OFF). Configs `configs/train/af_*.yaml`; chain `scripts/af_chain.sh`; table `python scripts/analyze_af.py`
+-> runs/_analysis/af/summary.md; probe `scripts/af_probe.py` -> runs/_analysis/af_probe_s0/.
+- Futures dataset `data/futures/af_m5b/futures.pt`: the 256 M5b TRAIN failure states (where pi1's 208 grounded
+  trajectories come from), WM v1 + C^pi v2 (as M5b), K = 4 imagined end states per state and variant: `filtered`
+  (wm_diverse C^pi objective), `goal` (goal-latent distance), `random` (pool uniform). Target = per-camera pooled
+  normalized DINOv2 latent of z_H (768-d). Sim-check flags on every 4th state (64) for filtered + random only
+  (statistics, never action labels). Running estimate at 220/256: sim success of the checked futures filtered 0.16 vs
+  random 0.055; mean C^pi filtered 0.86 / goal 0.07 / random 0.03.
+- Arms (same init pi1-nominal, 6k steps, bs 32, lr 5e-5): 3 = 50 % nominal + 50 % futures (208 filtered futures,
+  round-robin over states, L_future only); 4 = same with 208 random futures; 5 = 50 % nominal + 25 % pi1's 208 grounded
+  trajectories + 25 % the 208 filtered futures. beta_f = 0.5, cosine on mean-centred targets (untuned). Note: arm 5
+  sees half of pi1's grounded samples per batch (50 % nominal replay kept fixed).
+- Default path check: pi1's exact SFT recipe 20 steps with c6d3f8c (pre-Part-4) vs new code: per-step loss
+  identical (max |diff| 0.0); `tests/test_af_default.py` (old vs new MixDataset streams identical; masking).
+- Results (arm 3 / arm 5 seed 0, test RSR + nominal vs pi1 0.439 / 0.808, 3-seed 0.418): pending, see summary.md.
