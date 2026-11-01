@@ -389,3 +389,42 @@ same SFT recipe as M9 comp (init pi1-nominal, 6k steps, round-robin, 1 seed). Te
 = pi1 and = competence SFT n=60 / n=66 (0.430 / 0.417); **the search-level gain of the better critic does not transfer
 to an SFT gain** at this data scale (66 trajectories). Consistent with B4 being "the same competence objective with
 more pi0 labels": its banks are as useful for distillation as C^pi v2's, not more.
+
+## Per-level RSR, L1-L4 (Part 1, 2026-11-01; recomputed from existing episodes.jsonl, 0 new rollouts)
+**Label source: OFFICIAL.** LIBERO-Recovery v1.0.0 (github 832d54d, 2026-10-22) released per-scene VLM levels
+(Qwen3-VL-27B, "minimum intervention": L1 action retry, L2 action adaptation, L3 object-state recovery, L4 remove an
+unrelated obstruction) in ModelScope `ataier/LIBERO_Recovery_FailureScenes/annotations/scenes`. Our curated scenes are
+the same dumps (sim_state bit-identical on 4 checked scenes). Coverage: Spatial 84 / 168 (every `step_0180`; `step_0200`
+not annotated), Object 50 / 77 (`step_0240`; `step_0260` not). No L4 among our scenes (upstream L4 are mostly
+constructed). Unannotated scenes inherit the label of the same failure episode 20 steps earlier (`src: inherited`);
+weak, because upstream labels of one episode change between annotated steps 60 apart in 45 % (Spatial) / 28 % (Object)
+of episodes. Primary view = official only (Spatial test: 28 scenes = 1 L1 / 11 L2 / 16 L3; Object test: 17 = 4 L1 /
+13 L2). Maps: `configs/env/levels_{spatial,object}.yaml` (`scripts/build_levels.py`); table: `scripts/analyze_levels.py`
+-> runs/_analysis/levels/levels.md (copy: experiments/levels/levels_existing.md, incl. the official+inherited view).
+Multi-seed rows pool episodes; ± = sd of the per-seed rate. Wilson CIs on pooled episodes are optimistic (scene clusters).
+
+| model (Spatial test, official-label scenes) | seeds | all 28 scenes | L1 (1 scene) | L2 (11) | L3 (16) |
+|---|---|---|---|---|---|
+| pi0 | 1 | 0.129 | 0.800 | 0.109 | 0.100 |
+| pi1-nominal | 1 | 0.129 | 0.700 | 0.091 | 0.119 |
+| demo-only | 1 | 0.118 | 0.700 | 0.109 | 0.087 |
+| goal-data SFT | 3 | 0.190 | 0.733 | 0.182 ± 0.024 | 0.163 ± 0.025 |
+| progress-data SFT | 1 | 0.200 | 0.800 | 0.173 | 0.181 |
+| competence SFT n=66 | 3 | 0.402 | 0.800 | 0.373 ± 0.031 | 0.398 ± 0.036 |
+| **pi1 RetryVLA** | 3 | **0.425** | 0.833 | **0.448 ± 0.019** | 0.383 ± 0.025 |
+| M7 base | 3 | 0.476 | 0.800 | 0.445 ± 0.027 | 0.477 ± 0.025 |
+
+| model (Object test, official-label scenes) | all 17 scenes | L1 (4) | L2 (13) |
+|---|---|---|---|
+| pi0 | 0.195 | 0.225 | 0.187 |
+| pi1-nominal | 0.163 | 0.250 | 0.140 |
+| demo-only | 0.137 | 0.225 | 0.113 |
+| random SFT | 0.321 | 0.325 | 0.320 |
+| goal SFT | 0.195 | 0.225 | 0.187 |
+| competence SFT (Object pi1) | 0.305 | 0.400 | 0.280 |
+
+Reading: L1 is near-solved by every policy (Spatial: 1 scene, n = 10 per seed, not informative). The recovery-data gain
+is the same on L2 and L3 (pi1 vs pi0: +0.34 L2, +0.28 L3; goal / progress data gain only ~+0.07 on both), i.e. C^pi-selected
+data helps also on object-state recovery (L3: bowl dropped / off the plate), not only on action adaptation. Object has no
+official L3 test scene, so the held-out split cannot test L3. L4 cannot be evaluated on our scenes at all.
+New evals record official levels in `summary.json` (`by_level_official`) and the inherited map in `by_level`.
