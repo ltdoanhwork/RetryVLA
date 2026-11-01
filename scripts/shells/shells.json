@@ -21,11 +21,13 @@
  },
  "claims": {},
  "allow_only": {
-  "0097c39c": "vla_RetryVLA_DoanhLT_1 (cn69), RetryVLA's GPU per user 2026-10-27",
-  "8a2808f9": "vla_BSC_DoanhLT_1 (user's own; 2026-10-19 user: submit a few LIGHT jobs here; owner job gg_8a2808f9 uses the GPU -> share_ok, <=8 workers)"
+  "0097c39c": "vla_RetryVLA_DoanhLT_1 (cn69), RetryVLA's GPU per user 2026-10-27. 2026-11-01: NOT in `det shell list` any more (gone); kept for history",
+  "8a2808f9": "vla_BSC_DoanhLT_1 (user's own; 2026-10-19 user: submit a few LIGHT jobs here; owner job gg_8a2808f9 uses the GPU -> share_ok, <=8 workers)",
+  "dedc84ce": "vla_BSC_DoanhLT_1 (cn69, 1x A100 80GB, 32 CPU), authorized for RetryVLA by user 2026-11-02. Shared: owner job (video_world physics, ~17 GB, ~7 CPU, tmux cwpe_fix + gg_dedc84ce) runs there -> keep our GPU total <= ~55 GB, sim workers <= 8, never touch non-rv_ sessions. envcheck 2026-11-01: OK video decode, OK sim 50 steps 1.06 s (NVIDIA EGL)"
  },
  "share_ok": {
   "0097c39c": true,
-  "8a2808f9": true
+  "8a2808f9": true,
+  "dedc84ce": true
  }
 }
