@@ -1,0 +1,9 @@
+# Part 2 Backtrack-distill: the standard pi1 SFT recipe (init pi1-nominal, 6k steps, bs 32, 50 % recovery replay,
+# 208 trajectories round-robin over instances) on successful Backtrack-retry episodes instead of verified WM bridges.
+defaults: [exp/m4_sft_A_base_nom_random]
+milestone: BT
+tag: sft_bt_distill
+train:
+  recovery_datasets: [data/recovery/bt_distill/s*/p*/bt]
+  subset_mode: roundrobin
+  max_recovery_trajectories: 208

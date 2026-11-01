@@ -52,11 +52,17 @@ def instance_jobs(scenes: list[Scene], rc, seed: int, instruction: str, part: st
     return jobs
 
 
-def summarize(rows: list[dict]) -> dict:
+def summarize(rows: list[dict], scene_root=None) -> dict:
     sr = float(np.mean([r["success"] for r in rows])) if rows else float("nan")
     out = {"rsr": sr, "n_episodes": len(rows)}
     for key in ("part", "gripper_init", "task_folder", "level"):
         out[f"by_{key}"] = rate_table(rows, key)
+    if scene_root is not None:  # L1-L4 on the scenes with an OFFICIAL upstream label only (by_level adds inherited)
+        from retryvla.envs.splits import load_levels
+        from retryvla.eval.metrics import level_table
+
+        lv = load_levels(scene_root, official_only=True)
+        out["by_level_official"] = level_table([r for r in rows if r["scene"] in lv], lv)
     out["by_scene"] = {k: v["rate"] for k, v in rate_table(rows, "scene").items()}
     for g in ("close", "open"):
         if g in out["by_gripper_init"]:
@@ -100,6 +106,11 @@ def main() -> None:
                                     "facebook/dinov2-small", 6, torch.device(cfg.policy.device), 0.5, 1.0)
             policy = BestOfNPolicy(policy, ranker, int(bon.n))
             run.summary["bon"] = {"n": int(bon.n), "critic": bon.critic_link}
+        if (cfg.get("backtrack") or {}).get("mode"):  # Backtrack baseline (no WM): retreat / retrace, then the VLA
+            from retryvla.policy.backtrack import BacktrackPolicy
+
+            policy = BacktrackPolicy(policy, to_dict(cfg.backtrack))
+            run.summary["backtrack"] = to_dict(cfg.backtrack)
         if (cfg.get("residual") or {}).get("ckpt"):  # B3.3 residual bridge controller (RL baseline); no-op if unset
             from retryvla.baselines.recovery_rl.bridge import maybe_wrap
 
@@ -108,6 +119,10 @@ def main() -> None:
 
         def on_result(r):
             rows.append({**r.meta, "success": r.success, "steps": r.steps, "progress": r.progress})
+            if hasattr(policy, "events") and hasattr(policy, "eps"):  # Backtrack: per-episode backtrack count
+                ev = policy.events(jobs[r.job_id].policy_seed)
+                rows[-1].update({"n_bt": ev.get("n_bt", 0), "bt_triggers": ev.get("triggers", [])})
+                policy.drop(jobs[r.job_id].policy_seed)
             if r.record is not None and (cfg.eval.save_videos == "all" or not r.success):
                 m = r.meta
                 save_video(r.record["image"], run.path("videos", f"{m['scene']}_{m['gripper_init']}{m['trial']}_"
@@ -118,10 +133,10 @@ def main() -> None:
             # eval.worker_retries (default 0 = old behaviour): respawn on a sim-worker segfault, re-run unfinished jobs
             run_jobs_resilient(pool, policy, jobs, retries=int(cfg.eval.get("worker_retries", 0) or 0),
                                noise_scale=float(cfg.policy.noise_scale), on_result=on_result, desc="recover")
-        if callable(getattr(type(policy), "stats", None)):  # B3.3 residual diagnostics (bridge.py)
+        if callable(getattr(type(policy), "stats", None)):  # B3.3 residual / Backtrack diagnostics
             run.summary["residual_stats"] = policy.stats()
         write_jsonl(run.path("episodes.jsonl"), rows)
-        summ = summarize(rows)
+        summ = summarize(rows, root)
         run.log({"recover/rsr": summ["rsr"], **{f"recover/rsr_{g}": summ.get(f"rsr_{g}", float("nan"))
                                                 for g in ("close", "open")}})
         for part, v in summ["by_part"].items():

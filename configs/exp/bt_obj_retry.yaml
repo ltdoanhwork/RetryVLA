@@ -1,0 +1,21 @@
+# Backtrack retry on the held-out LIBERO-Object test split (26 scenes x 10). Frozen recipe = bt_retry (no tuning on Object).
+defaults: [exp/obj_eval]
+milestone: BT
+tag: obj_bt_retry
+recover_tag: obj_bt_retry_recover_test
+recover_eval:
+  splits: [test]
+eval:
+  n_workers: 8
+  save_videos: none
+  worker_retries: 2
+backtrack:
+  mode: retry
+  lift: 0.08
+  k: 40
+  retry_lift: 0.03
+  max_retries: 3
+  min_gap: 60
+  stall_dist: 0.015
+  stall_steps: 60
+  attempt_steps: 160

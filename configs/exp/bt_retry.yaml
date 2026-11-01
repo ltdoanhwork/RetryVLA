@@ -1,0 +1,15 @@
+# Part 2 Backtrack baseline, retry: single + up to 3 retrace backtracks (EE pose 40 steps earlier + 3 cm, gripper open)
+# on stall (< 1.5 cm in 60 steps) or attempt timeout (160 steps, gripper open), >= 60 steps of pi0 between backtracks,
+# all inside the same 520-step budget.
+defaults: [exp/bt_single]
+tag: bt_retry
+recover_tag: bt_retry_recover_test
+backtrack:
+  mode: retry
+  k: 40
+  retry_lift: 0.03
+  max_retries: 3
+  min_gap: 60
+  stall_dist: 0.015
+  stall_steps: 60
+  attempt_steps: 160

@@ -1,0 +1,15 @@
+# Part 2 Backtrack baseline (no WM, no training), single: t = 0 retreat (open gripper, +8 cm) then frozen pi0.
+# retryvla/policy/backtrack.py; standard RSR protocol on the Spatial test split (56 scenes x 10 trials, 520 steps).
+defaults: [exp/m0_baseline_spatial]
+milestone: BT
+tag: bt_single
+recover_tag: bt_single_recover_test
+recover_eval:
+  splits: [test]
+eval:
+  n_workers: 8
+  save_videos: none
+  worker_retries: 2
+backtrack:
+  mode: single
+  lift: 0.08

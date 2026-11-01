@@ -1,0 +1,15 @@
+# Backtrack-distill data: Backtrack-retry (pi0) from the SAME 256 pi0 train-failure instances as pi1's M5b data,
+# 4 continuation seeds each, keep <= 4 successful episodes / instance (RecoveryWriter format). Train split only.
+defaults: [exp/bt_retry]
+tag: bt_datagen
+eval:
+  n_workers: 8
+  worker_retries: 2
+btd:
+  precheck_from: [runs/*_M5_m5b_compare_arms_s*of8/precheck.csv]
+  attempts: 4
+  max_trajs_per_instance: 4
+  out_root: data/recovery/bt_distill
+  shard: 0
+  num_shards: 1
+  write_retries: 3

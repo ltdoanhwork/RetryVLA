@@ -30,11 +30,15 @@ fi
 OUT=$(det shell open "$FULL" -- bash "$HERE/remote_tmux.sh" "$SESS" "$GPU" "$@" 2>&1 | grep -E "LAUNCHED|EXISTS|NO_TMUX|QUOTA|rror" || true)
 echo "$OUT"
 [[ "$OUT" == *LAUNCHED* ]] || { echo "launch failed; no claim recorded"; exit 1; }
-# record the claim
+# record the claim. A share_ok GPU can host several of our jobs (sibling agents, 2026-11-01): if "shell:gpu" is
+# already claimed by another session, key this one "shell:gpu:<session>" instead of overwriting it. Atomic write.
 python3 - "$HERE/shells.json" "${PREFIX:0:8}:$GPU" "$SESS" "$*" <<'PY'
-import json, sys, datetime
+import json, os, sys, datetime
 p, key, sess, args = sys.argv[1:]
-d = json.load(open(p)); d.setdefault("claims", {})[key] = {"tmux": sess, "args": args,
-    "since": datetime.datetime.now().isoformat(timespec="seconds")}
-json.dump(d, open(p, "w"), indent=1)
+d = json.load(open(p)); c = d.setdefault("claims", {})
+if key in c and c[key].get("tmux") != sess:
+    key = f"{key}:{sess}"
+c[key] = {"tmux": sess, "args": args, "since": datetime.datetime.now().isoformat(timespec="seconds")}
+tmp = f"{p}.tmp{os.getpid()}"
+json.dump(d, open(tmp, "w"), indent=1); os.replace(tmp, p)
 PY
