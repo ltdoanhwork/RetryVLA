@@ -19,15 +19,34 @@
   "max_load_per_core": 0.6,
   "tmux_prefix": "rv_"
  },
- "claims": {},
+ "claims": {
+  "dedc84ce:0": {
+   "tmux": "rv_af_arm5_hybrid_s0",
+   "args": "retryvla.retry_oom --min_free_gb 32 retryvla.train.sft configs/train/af_arm5_hybrid.yaml tag=af_arm5_hybrid_s0 train.seed=0 train.save_every=6000",
+   "since": "2026-11-02T07:54:45"
+  },
+  "dedc84ce:0:rv_af_arm3_free_filtered_s0_rec": {
+   "tmux": "rv_af_arm3_free_filtered_s0_rec",
+   "args": "retryvla.retry_oom --min_free_gb 6 retryvla.eval.eval_recover configs/exp/m0_baseline_spatial.yaml milestone=P4 recover_tag=af_arm3_free_filtered_s0_recover_test policy.path=runs/20261101-222240_P4_af_arm3_free_filtered_s0/checkpoints/006000/pretrained_model recover_eval.splits=[test] eval.n_workers=5 eval.save_videos=none eval.worker_retries=2",
+   "since": "2026-11-02T07:54:55"
+  },
+  "dedc84ce:0:rv_af_arm3_free_filtered_s0_nom": {
+   "tmux": "rv_af_arm3_free_filtered_s0_nom",
+   "args": "retryvla.retry_oom --min_free_gb 6 retryvla.eval.eval_nominal configs/exp/m0_baseline_spatial.yaml milestone=P4 nominal_tag=af_arm3_free_filtered_s0_nominal policy.path=runs/20261101-222240_P4_af_arm3_free_filtered_s0/checkpoints/006000/pretrained_model eval.n_workers=3 eval.save_videos=none eval.worker_retries=2",
+   "since": "2026-11-02T07:55:05"
+  }
+ },
  "allow_only": {
-  "0097c39c": "vla_RetryVLA_DoanhLT_1 (cn69), RetryVLA's GPU per user 2026-10-27. 2026-11-01: NOT in `det shell list` any more (gone); kept for history",
-  "8a2808f9": "vla_BSC_DoanhLT_1 (user's own; 2026-10-19 user: submit a few LIGHT jobs here; owner job gg_8a2808f9 uses the GPU -> share_ok, <=8 workers)",
-  "dedc84ce": "vla_BSC_DoanhLT_1 (cn69, 1x A100 80GB, 32 CPU), authorized for RetryVLA by user 2026-11-02. Shared: owner job (video_world physics, ~17 GB, ~7 CPU, tmux cwpe_fix + gg_dedc84ce) runs there -> keep our GPU total <= ~55 GB, sim workers <= 8, never touch non-rv_ sessions. envcheck 2026-11-01: OK video decode, OK sim 50 steps 1.06 s (NVIDIA EGL)"
+  "dedc84ce": "vla_BSC_DoanhLT_1 (cn69, 1x A100 80GB, 32 CPU), authorized for RetryVLA by user 2026-11-02 (one of the only two RetryVLA shells with c37611dd, user 2026-11-02 15:57). Shared: owner job (video_world physics, ~17 GB, ~7 CPU, tmux cwpe_fix + gg_dedc84ce) runs there -> keep our GPU total <= ~55 GB, sim workers <= 8, never touch non-rv_ sessions. envcheck 2026-11-01: OK video decode, OK sim 50 steps 1.06 s (NVIDIA EGL)",
+  "c37611dd": "vla_RetryVLA_DoanhLT_1 (new, label 'VLA'; cn43, container 497d28ac2bd7 = also the Cursor agent box), 1x A100 80GB, 32 CPU; authorized for RetryVLA by user 2026-11-02 15:57 (+07). Shared: other projects' ASR jobs (Qwen3-ASR evals, nemo train_u, ~57 GB, 99% util, ~4-5 CPU) + agent Cursor servers -> GPU: evals only (<= ~6 GB of ours), no SFT unless >= 35 GB free; sim workers <= 12, never touch non-rv_ sessions (af_chain, abl1-q4b, x1-*, x3-*, w5-final, report8790). envcheck 2026-11-02: OK video decode, OK sim 50 steps 1.27 s (NVIDIA EGL), headless cv2 OK"
  },
  "share_ok": {
-  "0097c39c": true,
-  "8a2808f9": true,
-  "dedc84ce": true
- }
+  "dedc84ce": true,
+  "c37611dd": true
+ },
+ "gone": {
+  "0097c39c": "vla_RetryVLA_DoanhLT_1 (cn69), RetryVLA's GPU 2026-10-27..10-31; not RUNNING since 2026-11-01 (user 2026-11-02: no longer running). Removed from allow_only",
+  "8a2808f9": "removed from allow_only 2026-11-02 (user: RetryVLA only on dedc84ce + c37611dd). Was: vla_BSC_DoanhLT_1 (user's own; 2026-10-19 user: submit a few LIGHT jobs here; owner job gg_8a2808f9 uses the GPU -> share_ok, <=8 workers)"
+ },
+ "_mode": "user 2026-11-02 15:57 (+07): ALL RetryVLA experiments ONLY on dedc84ce + c37611dd; never any other shell"
 }
