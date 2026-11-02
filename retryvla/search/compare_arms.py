@@ -186,14 +186,26 @@ def main() -> None:
     with tracking.start(cfg) as run:
         run.summary.update({"wm_ckpt": wm_ck, "critic_ckpt": cr_ck, "part": str(part), "resumed_done": len(done)})
         policy = SmolVLAWrapper(cfg.policy.path, cfg.policy.device, cfg.policy.n_action_steps)
-        ranker = WMCriticRanker(wm_ck, cr_ck, cfg.wm_collect.encoder, int(cfg.wm_collect.pool_grid), dev,
-                                float(mb.lambda_unc), float(mb.beta_rough))
+        if str(mb.get("ranker", "dino")) == "vjepa2_ac":  # foundation-WM test: V-JEPA 2-AC + C^pi on its latents
+            from retryvla.wm.vjepa2_ac import VJRanker
+
+            wm_ck = (REPO_ROOT / mb.vj_wm_link).read_text().strip()
+            cr_ck = (REPO_ROOT / mb.vj_critic_link).read_text().strip()
+            run.summary.update({"wm_ckpt": wm_ck, "critic_ckpt": cr_ck, "ranker": "vjepa2_ac"})
+            ranker = VJRanker(wm_ck, cr_ck, dev, float(mb.lambda_unc), float(mb.beta_rough))
+        else:
+            ranker = WMCriticRanker(wm_ck, cr_ck, cfg.wm_collect.encoder, int(cfg.wm_collect.pool_grid), dev,
+                                    float(mb.lambda_unc), float(mb.beta_rough))
+        if mb.get("boot_heads") and not isinstance(ranker, WMCriticRanker):
+            raise ValueError("boot_heads are DINO-WM heads; set m5b.boot_heads null for ranker vjepa2_ac")
         if mb.get("boot_heads"):  # RQ3: real ensemble (bootstrap heads on the frozen trunk; WM's own heads identical)
             from retryvla.wm.boot_heads import load_boot
 
             ranker.boot = load_boot(REPO_ROOT / mb.boot_heads, dev)
             ranker.mc_dropout = float(mb.get("mc_dropout", 0.0))
             run.summary.update({"boot_heads": str(mb.boot_heads), "mc_dropout": ranker.mc_dropout})
+        elif not isinstance(ranker, WMCriticRanker):
+            pass  # VJRanker.ensemble_values: U_ens = critic MC-dropout only (single predictor)
         elif any(A.unc_arm_lambda(a) is not None for a in arms) or mb.get("log_uens", False):
             raise ValueError("U_ens arms need m5b.boot_heads (the WM's own ensemble heads are identical -> U == 0)")
         ranker2 = None

@@ -116,6 +116,8 @@ def ensemble_values(ranker, z0, q0, task: str, cands: np.ndarray, bs: int = 128)
 
     from retryvla.search.cem import roughness
 
+    if hasattr(ranker, "ensemble_values"):  # non-DINO WMs (retryvla.wm.vjepa2_ac.VJRanker) implement their own
+        return ranker.ensemble_values(z0, q0, task, cands)
     tid = ranker.vocab.get(task, 0)
     dev = ranker.dev
     boot = getattr(ranker, "boot", None)

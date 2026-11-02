@@ -1,0 +1,10 @@
+# C^pi on V-JEPA 2 latents (same data / labels / recipe as C^pi v2 = configs/exp/m5_train_critic_v2.yaml).
+defaults: [exp/m2_train_critic]
+milestone: RQ3
+tag: vj_train_critic
+critic:
+  data_roots: [data/foundation/vj_latents/collect_v1, data/foundation/vj_latents/verif_r1]
+  exclude_instances_file: data/splits/m5_r2_heldout_instances.txt
+  exclude_only_roots: [data/foundation/vj_latents/verif_r1]
+  wm_link: data/foundation/latest_vj_wm.txt
+  out_link: data/foundation/latest_vj_critic.txt

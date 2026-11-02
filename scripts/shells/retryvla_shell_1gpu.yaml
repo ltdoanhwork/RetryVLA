@@ -1,0 +1,18 @@
+# Template cloned from `det shell config c37611dd` (vla_RetryVLA_DoanhLT_1), 2026-11-02.
+# det shell start --detach --config-file scripts/shells/retryvla_shell_1gpu.yaml
+description: vla_RetryVLA_DoanhLT_2
+bind_mounts:
+- {container_path: /pfss/mlde/mlde_ext, host_path: /pfss/mlde/mlde_ext, propagation: rprivate, read_only: false}
+- {container_path: /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge, host_path: /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge, propagation: rprivate, read_only: false}
+- {container_path: /pfss/mlde/users/hn49pymo, host_path: /pfss/mlde/users/hn49pymo, propagation: rprivate, read_only: false}
+- {container_path: /etc/hosts, host_path: /etc/hosts, propagation: rprivate, read_only: true}
+environment:
+  add_capabilities: [IPC_LOCK]
+  force_pull_image: true
+  image:
+    cuda: ghcr.io/ltdoanhwork/vla-humanoid:latest@sha256:0dcd63e3856c53492fa25e058e3f78d3a85505e5a0ceef432fc1737c030b7235
+resources:
+  resource_pool: 42_Compute
+  shm_size: 40000000000
+  slots: 1
+work_dir: /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge

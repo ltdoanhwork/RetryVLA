@@ -1,0 +1,16 @@
+# Foundation-WM test, online: the RQ3 exploitation curve (wm_bud_l0) + paired search arm (wm_unc_l0 = wm_diverse
+# pipeline, J = C^pi - mu R) with V-JEPA 2-AC (fine-tuned) + C^pi on V-JEPA latents as the verifier, on the SAME
+# 49 train-split instances (M5b shards 0-1 of 8), same pool / continuation seeds as rq3_verifier_sweep -> paired
+# with its WM v1 arms. Train split only; never touches test.
+defaults: [exp/rq3_verifier_sweep]
+tag: vj_sweep
+m5b:
+  ranker: vjepa2_ac
+  vj_wm_link: data/foundation/latest_vj_wm.txt
+  vj_critic_link: data/foundation/latest_vj_critic.txt
+  arms: [wm_unc_l0, wm_bud_l0]
+  boot_heads: null
+  log_uens: false
+  verif_slim: true
+  out_root: data/recovery/vj_rq3_sweep
+  verif_out: data/wm/verif_vj_rq3_sweep

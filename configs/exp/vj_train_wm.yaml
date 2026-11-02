@@ -1,0 +1,21 @@
+# Foundation-WM test (RQ3 follow-up): fine-tune V-JEPA 2-AC (ViT-g encoder frozen, AC predictor ~300M) on the SAME
+# bridges WM v1 was trained on (collect_v1, re-simulated -> frames -> pooled 8x8 V-JEPA latents). Same val split.
+defaults: [env/libero_spatial, policy/smolvla_libero, eval/default]
+milestone: RQ3
+tag: vj_train_wm
+vjwm:
+  data_roots: [data/foundation/vj_latents/collect_v1]
+  val_frac: 0.15
+  seed: 0
+  lr: 3.0e-5          # pretrained predictor
+  lr_fast: 1.0e-3     # new chunk-action encoder / state encoder / q_head
+  weight_decay: 0.04
+  batch_size: 8
+  steps: 6000
+  ar_steps: 10        # full 10-step open-loop rollout loss (what search uses)
+  lam_q: 1.0
+  ckpt_act: true
+  n_val_eval: 256
+  log_every: 50
+  eval_every: 1000
+  out_link: data/foundation/latest_vj_wm.txt
