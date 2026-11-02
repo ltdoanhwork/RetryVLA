@@ -12,7 +12,7 @@ say() { echo "$(date -Is) $*" | tee -a "$L"; }
 launch() {  # name module args... -> echoes log path
   local n=$1; shift
   for k in 1 2 3 4 5 6; do
-    out=$(scripts/shells/launch_remote.sh "$SH" 0 "$n" "$@" 2>&1 | grep -E "LAUNCHED|REFUSED|failed|not RUNNING" | tail -1)
+    out=$(scripts/shells/launch_remote.sh "$SH" 0 "$n" "$@" 2>&1 | tr -d '\r' | grep -E "LAUNCHED|REFUSED|failed|not RUNNING" | tail -1)
     if [[ "$out" == *LAUNCHED* ]]; then echo "${out##*log=}"; return 0; fi
     say "launch $n failed ($out), retry $k in 300 s" >&2; sleep 300
   done
@@ -38,10 +38,10 @@ evals() {  # tag -> launches RSR + nominal, waits for both
   local t=$1 p; p=$(ckpt "$t")
   [ -n "$p" ] || { say "no checkpoint for $t"; return 1; }
   lr=$(launch "${t}_rec" retryvla.retry_oom --min_free_gb 6 retryvla.eval.eval_recover configs/exp/m0_baseline_spatial.yaml \
-       milestone=P4 recover_tag=${t}_recover_test policy.path=$p "recover_eval.splits=[test]" eval.n_workers=8 \
+       milestone=P4 recover_tag=${t}_recover_test policy.path=$p "recover_eval.splits=[test]" eval.n_workers=5 \
        eval.save_videos=none eval.worker_retries=2)
   ln=$(launch "${t}_nom" retryvla.retry_oom --min_free_gb 6 retryvla.eval.eval_nominal configs/exp/m0_baseline_spatial.yaml \
-       milestone=P4 nominal_tag=${t}_nominal policy.path=$p eval.n_workers=4 eval.save_videos=none eval.worker_retries=2)
+       milestone=P4 nominal_tag=${t}_nominal policy.path=$p eval.n_workers=3 eval.save_videos=none eval.worker_retries=2)
   say "$t evals: $lr $ln"
   wait_log "$lr"; r1=$?; release "${t}_rec"
   wait_log "$ln"; r2=$?; release "${t}_nom"
@@ -59,14 +59,17 @@ wait_log "$DG" || { say "datagen FAILED"; exit 1; }
 release af_dg
 [ -f data/futures/af_m5b/futures.pt ] || { say "no futures.pt"; exit 1; }
 T3=af_arm3_free_filtered_s$SEED; T5=af_arm5_hybrid_s$SEED
-l3=$(sft af_arm3_free_filtered "$T3"); say "sft $T3: $l3"
-wait_log "$l3" || { say "sft $T3 FAILED"; exit 1; }
+if [ -n "$(ckpt "$T3")" ]; then say "sft $T3: checkpoint exists, skip"; else
+  l3=$(sft af_arm3_free_filtered "$T3"); say "sft $T3: $l3"
+  wait_log "$l3" || { say "sft $T3 FAILED"; exit 1; }
+fi
 release "$T3"
 l5=$(sft af_arm5_hybrid "$T5"); say "sft $T5: $l5"
 evals "$T3" &
 E3=$!
 wait_log "$l5" || say "sft $T5 FAILED"
 release "$T5"
+wait $E3  # <= 8 sim workers on the shared shell: arm 5 evals start after arm 3 evals
 evals "$T5" &
 E5=$!
 P1=runs/20261016-042447_M5_m5c_sft_wm_diverse_rr/checkpoints/006000/pretrained_model
@@ -76,5 +79,5 @@ lp=$(launch af_probe retryvla.retry_oom --min_free_gb 6 scripts.af_probe --futur
      --policy arm3=$(ckpt "$T3") --policy arm5=$(ckpt "$T5"))
 say "probe: $lp"
 wait_log "$lp"; say "probe rc $?"; release af_probe
-wait $E3 $E5
+wait $E5
 say "chain DONE"

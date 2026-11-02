@@ -769,3 +769,34 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
 - Chain `af_chain` (agent machine tmux, CPU only) launches on dedc84ce: SFT arm 3 -> SFT arm 5 + arm 3 evals (RSR 8
   workers, nominal 4) -> arm 5 evals -> probe (pi1-nominal, pi1, arm 3, arm 5). SFTs use `save_every=6000` (no
   intermediate checkpoints). Worktree `../RetryVLA_af_base_wt` (c6d3f8c, for the default-path check) can be removed.
+
+## Review + disk cleanup round 3, 2026-11-02 (~07:40-08:00 UTC)
+- Job status at 07:40 UTC: nothing of ours running on dedc84ce (GPU 0 MiB, no live rv_ process); 0097c39c is gone
+  (a new `vla_RetryVLA_DoanhLT_1` shell `c37611dd` exists but is NOT in `allow_only`, not used).
+  Backtrack chain DONE (bt_single, bt_retry, Object bt_retry, bt_distill SFT + RSR + nominal; rc 0, 04:25 UTC).
+  RQ3 sweep shards 0/1 DIED at 00:53 / 01:08 UTC on `[Errno 122] Disk quota exceeded` (RecoveryWriter parquet write)
+  after 24/30 + 25/33 instances (49 used by analyze_verifier); parts `data/recovery/rq3_sweep/s*/p0` are NOT
+  `CLOSED`, so a plain relaunch would redo them (to resume: check the p0 datasets, write `p0/CLOSED`, relaunch).
+  Not relaunched (sibling-owned; 49 / 63 instances already give the curve + lambda sweep).
+- **af_chain bug (Part 4):** `launch()` kept the `\r` that `det shell open` (pty) appends, so `wait_log` polled a
+  non-existent "<log>\r" forever: arm 3 SFT finished 23:59 UTC but the chain sat idle ~8 h (GPU idle). Fix: `tr -d '\r'`;
+  plus skip an SFT whose 006000 checkpoint exists, eval workers 5 (RSR) + 3 (nominal) and arm-5 evals after arm-3
+  evals (<= 8 sim workers on the shared shell). Old local tmux `af_chain` killed; relaunched 07:54 UTC
+  (`bash scripts/af_chain.sh dedc84ce 0`, local tmux `af_chain`): arm 5 SFT + arm 3 RSR / nominal running.
+- Released the 5 finished claims (rq3_sweep_s0/s1, bt_chain, bt_single_rec, bt_chain2) by exact key.
+- Deleted (dry-run first; ~128 GB freed, almost all workspace-level cache):
+  - `~/.cache/huggingface/datasets/parquet`: 397 of 448 Arrow cache dirs last written before 2026-10-29
+    (131 GB apparent; dir 135 GB -> 7.1 GB). Pure `datasets` cache of local parquet loads, regenerated on next load.
+    List with dates/sizes: `runs/_logs/cleanup_20261102_hfcache_list.txt`. Dirs written 10-29..11-02 kept.
+  - worktree `../RetryVLA_af_base_wt` (c6d3f8c, af_smoke default-path check; `git worktree remove` + prune), 81 MB.
+  - smoke runs: runs/*_P4_af_futures_smoke, *_P4_af_smoke_{default_base,default_new,af_arm5_hybrid,af_arm3_free_filtered},
+    *_SMOKE_verif_sweep_s0of1, and `data/futures/af_smoke` (~6 MB; results already in the Part 4 / RQ3 notes above).
+  - 4 stale `*.pt.tmp` in data/wm/verif_b2x_value (2.5 MB), all `__pycache__` outside env/.
+- Checked, nothing to free: `conda clean -a --dry-run` (pkgs 20 GB are all in use by envs), `uv cache prune`
+  (no unused entries; archive-v0 86 GB backs other projects' venvs), runs/ checkpoints (every SFT run already has only
+  006000 + last; no intermediate step dirs). torch hub (4.2 GB model weights) and HF hub (170 GB, other projects) kept.
+- Kept on purpose in data/ (129 GB): every data/recovery and data/wm dir is either a config-referenced SFT / critic /
+  WM source or a registered search output; data/futures/af_m5b (RQ2), data/recovery/bt_distill, data/recovery/rq3_sweep
+  + data/wm/verif_rq3_sweep (dead-sweep outputs, needed to resume), data/wm/latest_*, boot heads, init checkpoints
+  (M1 nominal, M5c pi1 s0, M6, M10 nominal obj) and the arm-3 / Backtrack-distill checkpoints. Unreferenced-but-old
+  candidates left for the user to decide: data/recovery/m1b_hard_random_s{0,1} + m1b_hard_cem_local_s1 (~2.2 GB).
