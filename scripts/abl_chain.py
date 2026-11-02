@@ -8,7 +8,8 @@ Cells (committed configs, only the seed changes; same recipe / init / steps / ev
   arm 3 free-filtered    configs/train/af_arm3_free_filtered.yaml    seeds 1-2  (seed 0 = af_chain)
   arm 5 hybrid           configs/train/af_arm5_hybrid.yaml           seeds 1-2  (seed 0 = af_chain)
   arm 6 backtrack-distill configs/exp/bt_sft_distill.yaml            seeds 1-2  (BT_sft_bt_distill_s<k>; seed 0 = bt_chain)
-Arms 1 / 2 (demo-only, pi1) already have 3 seeds (M8/M9) -> reused by scripts/analyze_ablation.py.
+  arm 1 demo-only        configs/exp/m9_sft_demo_only.yaml           seeds 1-2  (M9_sft_demo_only_s<k>; seed 0 = M9_sft_demo_only)
+Arm 2 (pi1) already has 3 seeds (M5c + M8_seed_pi1_s1/s2) -> reused by scripts/analyze_ablation.py.
 
 Scheduling (re-read every poll; state = files on /pfss, so a restarted chain resumes):
   SFT  (retry_oom --min_free_gb 32, save_every=6000 -> only the final 006000 checkpoint): one at a time on dedc84ce;
@@ -43,13 +44,15 @@ POLL_S = 120
 MAX_TRIES = 3
 
 ARMS = {  # key -> (config, milestone, tag stem)
+    "a1": ("configs/exp/m9_sft_demo_only.yaml", "M9", "sft_demo_only_s{}"),
     "a4": ("configs/train/af_arm4_free_unfiltered.yaml", "P4", "af_arm4_free_unfiltered_s{}"),
     "a3": ("configs/train/af_arm3_free_filtered.yaml", "P4", "af_arm3_free_filtered_s{}"),
     "a5": ("configs/train/af_arm5_hybrid.yaml", "P4", "af_arm5_hybrid_s{}"),
     "a6": ("configs/exp/bt_sft_distill.yaml", "BT", "sft_bt_distill_s{}"),
 }
 # order: complete one seed of every arm first (arm 4 seed 0 is the only missing seed-0 cell), then the next seed
-ORDER = [("a4", 0), ("a3", 1), ("a5", 1), ("a6", 1), ("a4", 1), ("a3", 2), ("a5", 2), ("a6", 2), ("a4", 2)]
+ORDER = [("a4", 0), ("a3", 1), ("a5", 1), ("a6", 1), ("a4", 1), ("a3", 2), ("a5", 2), ("a6", 2), ("a4", 2),
+         ("a1", 1), ("a1", 2)]  # demo-only had 1 seed only (M9_sft_demo_only), not 3
 
 
 def say(msg: str) -> None:
