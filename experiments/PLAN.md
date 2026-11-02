@@ -175,3 +175,9 @@ whether the WM beats "back up and retry" when both are distilled.
 
 Compute for this round: eval / search (MuJoCo, CPU-heavy) on shell `0097c39c`, SFT on `dedc84ce` (see
 `scripts/shells/shells.json`; the compute rules above predate this).
+
+## Real-world extension: verification (user decision, 2026-11-02)
+Verification will follow a Ctrl-World-like approach ([arXiv 2510.10125](https://arxiv.org/abs/2510.10125)). Once
+real data is available, a world model trained on the real dataset will act as the simulator / verifier, in place
+of MuJoCo sim verification. Its verdicts are WM verdicts, not "sim-verified"; see RQ3 for optimism caveats.
+Baselines on LIBERO-Recover (sim) are surveyed in `docs/related_work/LIBERO_RECOVER_BASELINES.md` (2026-11-02).
