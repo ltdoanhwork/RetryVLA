@@ -17,7 +17,8 @@ Scheduling (re-read every poll; state = files on /pfss, so a restarted chain res
   eval (RSR test 560 ep + nominal 500 ep, standard protocol, worker_retries 2): sim-worker budget per shell summed over
        ALL live rv_ claims (sibling agents included): c37611dd 12 (RSR 8 / nominal 4), dedc84ce 8 (RSR 5 / nominal 3).
   done = 006000/pretrained_model/model.safetensors exists (SFT) / summary.json status done (eval).
-  Claims are released by exact tmux session name only (never by slot key). Failed jobs are retried twice.
+  Claims are released by exact tmux session name only (never by slot key). Jobs that end rc != 0 are retried twice; launch refusals
+  (GPU busy, quota probe, det hiccup) just retry at the next poll.
 """
 
 from __future__ import annotations
@@ -216,6 +217,8 @@ def main() -> None:
             say(f"{sess} on {sh} ended rc={rc}")
             release(sess)
             running.pop(sess)
+            if rc != 0:
+                tries[sess] = tries.get(sess, 0) + 1  # only real failures count (launch refusals just retry next poll)
             if kind != "sft" and c.eval_done("rec") and c.eval_done("nom"):
                 for d in glob.glob(str(REPO / f"runs/*_{c.ms}_{c.tag}/checkpoints/0*")):
                     if not d.endswith("006000"):
@@ -249,7 +252,6 @@ def main() -> None:
                 c = todo_sft.pop(0)
                 s = f"rv_{c.short}"
                 log = launch(sh, s, c.sft_args(), a.dry)
-                tries[s] = tries.get(s, 0) + 1
                 if log:
                     running[s] = (sh, log, c, "sft")
                     pr[sh]["used"] += 30000
@@ -264,7 +266,6 @@ def main() -> None:
                         continue
                     s = f"rv_{c.short}_{k}"
                     log = launch(sh, s, c.eval_args(k, w), a.dry)
-                    tries[s] = tries.get(s, 0) + 1
                     if log:
                         running[s] = (sh, log, c, k)
                         pr[sh]["used"] += 4000
