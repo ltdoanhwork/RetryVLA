@@ -446,3 +446,25 @@ default 0 = OFF). Configs `configs/train/af_*.yaml`; chain `scripts/af_chain.sh`
 - Default path check: pi1's exact SFT recipe 20 steps with c6d3f8c (pre-Part-4) vs new code: per-step loss
   identical (max |diff| 0.0); `tests/test_af_default.py` (old vs new MixDataset streams identical; masking).
 - Results (arm 3 / arm 5 seed 0, test RSR + nominal vs pi1 0.439 / 0.808, 3-seed 0.418): pending, see summary.md.
+
+## 6-arm ablation x 3 seeds (plan todo `ablation`; RUNNING since 2026-11-02 09:06 UTC)
+Arms (same init pi1-nominal, 6k steps, bs 32, 50 % nominal replay, same eval seeds / protocol; only the recovery /
+future mix and `train.seed` differ): 1 demo-only (`exp/m9_sft_demo_only`), 2 action-grounded pi1 (M5c + M8 seeds),
+3 action-free C^pi-filtered, 4 action-free unfiltered (random futures), 5 hybrid (`train/af_arm{3,4,5}_*`),
+6 Backtrack-distill (`exp/bt_sft_distill`). Missing cells are queued by `scripts/abl_chain.py` (arm 4 s0-2, arms 3 / 5 / 6
+s1-2, arm 1 s1-2: the M9 demo-only baseline had ONE seed, not 3); seed-0 cells of arms 3 / 5 come from `af_chain`
+(Part 4), arm 6 s0 from `bt_chain` (Part 2). Table: `python scripts/analyze_ablation.py` ->
+runs/_analysis/ablation/ablation.md (re-run by the chain after every finished cell). RQ3 lambda-distill seeds NOT
+queued: the online lambda sweep (runs/_analysis/verifier E2) shows no clear gain (wm_unc_l1 vs l0 solved 0.388 vs 0.306,
+McNemar p 0.29; hits / sim 0.115 vs 0.122), so the plan's distill condition is not met and no lambda was chosen.
+
+Status 2026-11-02 09:15 UTC (finished cells only; nominal margin = mean >= pi1-nominal 0.796 - 2 pt):
+
+| arm | seeds RSR / nom | test RSR | dRSR vs pi1 [95% CI], p | McNemar vs pi1 n01/n10, p | nominal | margin | L2 (11) / L3 (16) official |
+|---|---|---|---|---|---|---|---|
+| 1 demo-only | 1 / 1 | 0.127 | -0.292 [-0.379, -0.206], p < 1e-4 | 19/194, p 1e-37 | 0.820 | pass | 0.109 / 0.087 |
+| 2 action-grounded (pi1) | 3 / 3 | 0.418 ± 0.021 | (ref) | (ref) | 0.785 ± 0.021 | pass | 0.448 ± 0.019 / 0.383 ± 0.025 |
+| 3 action-free, C^pi-filtered | 0 / 1 | pending (s0 RSR running) | | | s0 done (see table) | | |
+| 4 action-free, unfiltered | 0 / 0 | pending (s0 SFT running) | | | | | |
+| 5 hybrid (2 + 3) | 0 / 0 | pending (s0 SFT done, evals queued by af_chain) | | | | | |
+| 6 Backtrack-distill | 1 / 1 | 0.182 | -0.236 [-0.320, -0.149], p < 1e-4 | 30/174, p 7e-26 | 0.806 | pass | 0.173 / 0.150 |

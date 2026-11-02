@@ -800,3 +800,20 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
   + data/wm/verif_rq3_sweep (dead-sweep outputs, needed to resume), data/wm/latest_*, boot heads, init checkpoints
   (M1 nominal, M5c pi1 s0, M6, M10 nominal obj) and the arm-3 / Backtrack-distill checkpoints. Unreferenced-but-old
   candidates left for the user to decide: data/recovery/m1b_hard_random_s{0,1} + m1b_hard_cem_local_s1 (~2.2 GB).
+
+## 6-arm ablation chain + shell change, 2026-11-02 (~08:58-09:15 UTC)
+- User 15:57 (+07): RetryVLA runs ONLY on `dedc84ce` (cn69) and `c37611dd` (`vla_RetryVLA_DoanhLT_1`, label 'VLA').
+  Read-only probe of c37611dd: node cn43, container 497d28ac2bd7 = the Cursor agent box itself; 1x A100 80 GB with
+  ~57 GB / 99 % util held by other projects' ASR jobs (Qwen3-ASR evals, nemo `train_u`; their tmux abl1-q4b, x1-*, x3-*,
+  w5-final, report8790 untouched), load ~11.5 / 32. envcheck: OK video decode, OK sim 50 steps 1.27 s (NVIDIA EGL),
+  headless cv2 OK. -> shells.json allow_only + share_ok (evals only, <= 12 sim workers; SFT only if >= 45 GB free);
+  0097c39c + 8a2808f9 moved to `shells.json:gone` (bdfaf71). TMPDIR is unset in both images (= /tmp).
+- Inventory at 09:00 UTC: bt_chain ALL DONE 04:25 (Backtrack-distill s0 RSR 0.182 / nominal 0.806); RQ3 sweeps dead
+  since 00:53 / 01:08 (EDQUOT, not relaunched by their owner); af_chain (local tmux) has arm 3 s0 RSR (250/560) +
+  nominal (done) and arm 5 s0 SFT (done 09:01) -> arm 5 evals + probe next, all on dedc84ce (8 sim workers).
+- **Arm 1 demo-only had only seed 0** (M9_sft_demo_only; the M8 seeds are pi1 and M7 base) -> seeds 1-2 added.
+- `scripts/abl_chain.py` in local tmux `abl_chain` (console runs/_logs/abl_chain_console.log): 11 SFTs one at a time on
+  dedc84ce (retry_oom 32 GB, save_every 6000 -> only the final checkpoint), order a4s0, a3s1, a5s1, a6s1, a4s1, a3s2, a5s2,
+  a6s2, a4s2, a1s1, a1s2; evals (RSR 8 + nominal 4 workers on c37611dd, 5 + 3 on dedc84ce) scheduled by a sim-worker budget
+  over ALL live rv_ claims (c37611dd 12, dedc84ce 8, siblings included). Sessions `rv_abl_<arm>s<seed>[_rec|_nom]`,
+  claims released by exact session name. SFT speed on the shared dedc84ce GPU ~1.2 it/s (~85 min / SFT).
