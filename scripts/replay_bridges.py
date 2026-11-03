@@ -138,6 +138,8 @@ def main() -> None:
     ap.add_argument("--max_cands", type=int, default=0, help="only the first N candidates per file (smoke/check)")
     ap.add_argument("--sources", nargs="*", default=[], help="only candidates whose logged source/arm is listed")
     ap.add_argument("--no_dino", action="store_true")
+    ap.add_argument("--reverse", action="store_true", help="process files in reverse order (2 shells meet in the middle;"
+                    " every file is re-checked for an existing output right before it is replayed)")
     ap.add_argument("--check", action="store_true")
     ap.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     a = ap.parse_args()
@@ -154,7 +156,7 @@ def main() -> None:
         n = Path(f).stem
         return ((out is None or (out / f"{n}.pt").exists()) and (fout is None or (fout / f"{n}.pt").exists()))
 
-    files = [f for f in files if not done(f)]
+    files = [f for f in files if not done(f)][:: -1 if a.reverse else 1]
     log.info("%d source files to replay (%s, shard %d/%d)", len(files), a.src, a.shard, a.num_shards)
     if not files:
         return
@@ -177,6 +179,8 @@ def main() -> None:
             snaps = collect_instances(pool, cfg, set(heads.values()), exclude=not a.no_exclude)
         log.info("restored %d / %d instances (%.0fs)", len(snaps), len(set(heads.values())), time.time() - t0)
         for n, f in enumerate(files):
+            if done(f):  # written meanwhile by a concurrent replay of the same source (other shell)
+                continue
             d = torch.load(f, weights_only=False)
             i = d["instance_id"]
             if i not in snaps:
