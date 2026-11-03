@@ -17,7 +17,9 @@ Scheduling (re-read every poll; state = files on /pfss, so a restarted chain res
   eval (RSR test 560 ep + nominal 500 ep, standard protocol, worker_retries 2): sim-worker budget per shell summed over
        ALL live rv_ claims (sibling agents included): c37611dd 12 (RSR 8 / nominal 4), dedc84ce 8 (RSR 5 / nominal 3).
   done = 006000/pretrained_model/model.safetensors exists (SFT) / summary.json status done (eval).
-  Claims are released by exact tmux session name only (never by slot key). Jobs that end rc != 0 are retried twice; launch refusals
+  Claims are released by exact tmux session name only (never by slot key).
+  Watchdog: a running job whose log has no write for STALL_MIN min, or whose shell / tmux session is gone, is killed
+  (exact session name) and retried. Jobs that end rc != 0 are retried twice; launch refusals
   (GPU busy, quota probe, det hiccup) just retry at the next poll.
 """
 
@@ -43,6 +45,7 @@ WORKERS = {"c37611dd": {"rec": 8, "nom": 4}, "dedc84ce": {"rec": 5, "nom": 3}}
 EVAL_PREF = ["c37611dd", "dedc84ce"]
 POLL_S = 120
 MAX_TRIES = 3
+STALL_MIN = 45  # watchdog: no log write for this long (evals log every ~30 s, SFT ~40 s, retry_oom waits 1-2 min)
 
 ARMS = {  # key -> (config, milestone, tag stem)
     "a1": ("configs/exp/m9_sft_demo_only.yaml", "M9", "sft_demo_only_s{}"),
@@ -174,6 +177,13 @@ def launch(shell: str, sess: str, args: list[str], dry: bool) -> str | None:
     return m.group(1)
 
 
+def kill(shell: str, sess: str) -> None:
+    """kill ONE of our tmux sessions by exact name on a shell (never by pattern)"""
+    env = {k: v for k, v in os.environ.items() if k != "LD_LIBRARY_PATH"}
+    subprocess.run(["det", "shell", "open", SHELLS[shell], "--", "/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/.local/bin/tmux",
+                    "kill-session", "-t", f"={sess}"], capture_output=True, text=True, timeout=180, env=env)
+
+
 def rc_of(log: str) -> int | None:
     try:
         m = re.findall(r"RV_DONE rc=(\d+)", open(log, errors="ignore").read())
@@ -213,6 +223,25 @@ def main() -> None:
         for sess, (sh, log, c, kind) in list(running.items()):
             rc = rc_of(log)
             if rc is None:
+                # stall watchdog (2026-11-03: dedc84ce was TERMINATED under rv_abl_a4s2_rec; the log froze 6.7 h)
+                try:
+                    idle = (time.time() - os.path.getmtime(log)) / 60
+                except OSError:
+                    idle = 0.0
+                gone = (pr[sh].get("ok") is False and idle > 15) or (pr[sh].get("ok") and sess not in pr[sh]["tmux"] and idle > 5)
+                if idle > STALL_MIN or gone:
+                    why = "shell/session gone" if gone else f"no log progress for {idle:.0f} min"
+                    say(f"WATCHDOG {sess} on {sh}: {why} -> kill + retry")
+                    if pr[sh].get("ok") and sess in pr[sh]["tmux"] and sess.startswith("rv_abl_"):
+                        kill(sh, sess)
+                    try:
+                        with open(log, "a") as f:
+                            f.write(f"[abl_chain] WATCHDOG killed ({why}) at {time.strftime('%Y-%m-%dT%H:%M:%S')}\n")
+                    except OSError:
+                        pass
+                    release(sess)
+                    running.pop(sess)
+                    tries[sess] = tries.get(sess, 0) + 1
                 continue
             say(f"{sess} on {sh} ended rc={rc}")
             release(sess)
