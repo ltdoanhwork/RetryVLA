@@ -468,3 +468,67 @@ Status 2026-11-02 09:15 UTC (finished cells only; nominal margin = mean >= pi1-n
 | 4 action-free, unfiltered | 0 / 0 | pending (s0 SFT running) | | | | | |
 | 5 hybrid (2 + 3) | 0 / 0 | pending (s0 SFT done, evals queued by af_chain) | | | | | |
 | 6 Backtrack-distill | 1 / 1 | 0.182 | -0.236 [-0.320, -0.149], p < 1e-4 | 30/174, p 7e-26 | 0.806 | pass | 0.173 / 0.150 |
+
+## RQ3 follow-up: is the WM too weak? WM-vs-critic diagnosis + V-JEPA 2-AC as drop-in WM (2026-11-02/03; train split only)
+Full tables: runs/_analysis/wm_vs_true/summary.md (offline) and online_vj.md (online). Scripts: scripts/diag_wm_true.py,
+analyze_wm_true.py, vj_rescore.py, analyze_vj_online.py.
+
+**Step 1 (0 new sim for verif_m5b: true end latents were stored at verification time).** Same 16,384 sim-verified bridges
+(256 train instances x 64). (a) = C^pi v2 on the WM v1-imagined end latent, (b) = C^pi v2 on the TRUE end latent.
+
+| arm (imagined behind pick) | n | real SR | mean C(a) | mean C(b) | gap WM (a-b) | gap critic (b-SR) | FP(a) | FP(b) | AUC(a) | AUC(b) | ECE(a) | ECE(b) |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| random (1, no selection) | 4096 | 0.062 | 0.054 | 0.057 | -0.003 | -0.005 | 0.553 | 0.488 | 0.831 | 0.849 | 0.061 | 0.055 |
+| wm_diverse (768) | 4096 | 0.171 | 0.727 | 0.265 | +0.462 | +0.094 | 0.789 | 0.611 | 0.647 | 0.777 | 0.578 | 0.210 |
+| wm_noise (768) | 4096 | 0.076 | 0.491 | 0.183 | +0.309 | +0.107 | 0.879 | 0.747 | 0.707 | 0.831 | 0.441 | 0.152 |
+| wm_qd (768) | 4096 | 0.113 | 0.441 | 0.161 | +0.280 | +0.048 | 0.799 | 0.623 | 0.751 | 0.831 | 0.367 | 0.138 |
+
+- Unselected (random) candidates: WM imagination is as good as the truth for the critic (a ~ b ~ SR, AUC 0.83 vs 0.85).
+- Search-selected candidates: ~80-85 % of the over-optimism is the WM (a - b = +0.28..+0.46); the critic on the TRUE
+  state of the same picks is still optimistic (+0.05..+0.11, FP 0.61-0.75). Critic(true tokens, imagined state) == C(b)
+  and critic(imagined tokens, true state) == C(a): the error is entirely in the imagined image tokens, not proprio.
+- The WM's average latent error is NOT larger on selected picks (h10 normalized MSE 0.32 wm_diverse vs 0.34 random; ratio
+  to copy-frame ~0.40 for all arms): search finds bridges whose (normal-sized) error points the way C^pi rewards.
+  Among WM-predicted positives, larger end-latent error -> more FP (AUC(-mse_end -> success) 0.65).
+- Critic self-exploitation control (M9 `sim_prefix_critic`, picks chosen by C^pi on the REAL end state): mean C 0.267 vs
+  real SR 0.115, FP 0.644 -> the critic is also exploitable, but by ~0.15 vs 0.46-0.75 for WM imagination.
+- **Verdict: both, WM-dominated.** Ranking by the true end state would lift p@4 0.193 -> 0.237 (all candidates).
+- High-budget breakdown on the RQ3-sweep picks (re-simulated, `data/wm/true_end_rq3`): see summary.md section true_end_rq3.
+
+**Step 2: V-JEPA 2-AC (Meta, MIT; ViT-g 1.01B frozen + AC predictor 305M, DROID).** Adapter retryvla/wm/vjepa2_ac.py:
+agent view, 16x16 tokens -> 2x2 pool -> 64 x 1408; 1 model step = 5 env steps (20 Hz -> 4 Hz = DROID rate); chunk action
+encoder Linear(35->1024) initialised = AC action encoder o physical map (OSC 0.05 m / 0.5 rad), proprio via q_head.
+Data = SAME bridges as WM v1 (collect_v1, re-simulated on CPU shells -> JPEG -> pooled latents), same val split; critic =
+C^pi v2 recipe (collect_v1 + verif_r1) on V-JEPA latents.
+
+| | open-loop ratio (MSE / copy-frame) h1 / h4 / h10 | critic val AUC real / imagined | ECE imagined |
+|---|---|---|---|
+| WM v1 (DINOv2, both cams) | 0.629 / 0.396 / 0.356 | 0.817 / 0.798 | 0.134 |
+| V-JEPA 2-AC zero-shot | 2.00 / 2.15 / 2.24 | - | - |
+| V-JEPA 2-AC fine-tuned (3000 steps) | 0.659 / 0.547 / 0.557 | 0.783 / 0.792 | 0.129 |
+(ratios are in each model's own latent space; zero-shot is worse than copying the frame: DROID -> LIBERO gap.)
+
+Offline, same candidates (verif_m5b; random = unbiased, wm_diverse = picked by WM v1):
+
+| set | SR | mean C(a) WM v1 / VJ | FP(a) WM v1 / VJ | AUC(a) WM v1 / VJ | ECE(a) WM v1 / VJ | p@1 by (a) WM v1 / VJ |
+|---|---|---|---|---|---|---|
+| random | 0.062 | 0.054 / 0.061 | 0.553 / 0.570 | 0.831 / 0.863 | 0.061 / 0.063 | 0.203 / 0.227 |
+| wm_diverse (WM v1 picks) | 0.171 | 0.727 / 0.276 | 0.789 / 0.655 | 0.647 / 0.761 | 0.578 / 0.218 | 0.180 / 0.254 |
+
+Online paired search (new sims; 63 train instances = M5b shards 0-1, same pools / continuation seeds, verifier swapped):
+
+| arm | verifier | solved | hits / sim | mean C^pi picks | FP | ECE |
+|---|---|---|---|---|---|---|
+| wm_unc_l0 (wm_diverse pipeline, 8 verified) | WM v1 | 0.349 | 0.137 | 0.800 | 0.829 | 0.663 |
+| | V-JEPA | 0.413 | 0.155 | 0.870 | 0.828 | 0.718 |
+| wm_bud_l0 (4 budgets x top-4) | WM v1 | 0.381 | 0.083 | 0.399 | 0.813 | 0.326 |
+| | V-JEPA | 0.413 | 0.110 | 0.471 | 0.797 | 0.377 |
+
+wm_unc_l0 V-JEPA vs WM v1: only-VJ 10 / only-WM 6, McNemar p 0.45, d hits +0.14 (p 0.56); wm_bud_l0: 7 / 5, p 0.77,
+d hits +0.43 (sign-flip p 0.07). Exploitation curve, N = 8 / 32 / 128 / 512: mean C^pi of top-4 WM v1 0.08 / 0.31 /
+0.49 / 0.72 vs V-JEPA 0.12 / 0.36 / 0.61 / 0.79; real p@4 0.036 / 0.103 / 0.087 / 0.107 vs 0.063 / 0.119 / 0.119 / 0.139;
+FP 0.72 / 0.71 / 0.83 / 0.85 vs 0.71 / 0.70 / 0.83 / 0.84.
+**Decision: not clearly better.** The foundation WM is better calibrated on candidates it did not select (offline) and
+gives a small, non-significant online gain, but its own search exploits it just as hard (FP ~0.83, gap ~0.65 at N=512).
+A stronger WM alone does not remove verifier exploitation -> no V-JEPA recovery dataset / distill (plan gate). Next lever:
+real ensemble disagreement across DIFFERENT WMs (WM v1 x V-JEPA), or verify more picks per instance.

@@ -31,7 +31,7 @@ log = logging.getLogger("vjepa_encode")
 
 
 def dec(b: bytes) -> np.ndarray:
-    return cv2.imdecode(np.frombuffer(b, np.uint8), cv2.IMREAD_COLOR)[..., ::-1]
+    return np.ascontiguousarray(cv2.imdecode(np.frombuffer(b, np.uint8), cv2.IMREAD_COLOR)[..., ::-1])
 
 
 def main() -> None:

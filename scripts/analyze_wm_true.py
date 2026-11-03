@@ -73,6 +73,9 @@ def main() -> None:
     out = REPO / a.out
     out.mkdir(parents=True, exist_ok=True)
     d = pd.read_parquet(REPO / a.rows)
+    extra = REPO / a.out / "rows_rq3.parquet"   # RQ3-sweep picks re-simulated (CPU diag run, Mesa render)
+    if extra.exists() and "true_end_rq3" not in set(d.dir):
+        d = pd.concat([d, pd.read_parquet(extra)], ignore_index=True)
     d["group"] = np.where(d.arm.str.startswith("wm_bud"), d.arm + "@N" + d.pick_budget.astype(str), d.arm)
     md = ["# Step 1: is the verifier's over-optimism the WM's or the critic's? (WM v1 + C^pi v2)", "",
           "Same sim-verified candidates. (a) C^pi on the WM-imagined end latent; (b) C^pi on the TRUE end latent "
@@ -120,6 +123,26 @@ def main() -> None:
         md.append(f"| {src} | {len(p)} | {p.success.mean():.3f} | {p.c_true.mean():.3f} | {hb.mean():.3f} | "
                   f"{p.success[hb].mean():.3f} | {p.success[~hb].mean():.3f} | {auc(-p.mse_end, p.success):.3f} |")
     md.append("")
+    # V-JEPA 2-AC verifier on the same candidates (scripts/vj_rescore.py)
+    vjp = REPO / "runs/_analysis/wm_vs_true/rows_vj.parquet"
+    if vjp.exists():
+        v = pd.read_parquet(vjp).drop(columns=["success"])
+        m = d.merge(v, on=["dir", "instance_id", "arm", "rank"])
+        md += ["## Foundation WM: V-JEPA 2-AC (fine-tuned) + C^pi_VJ vs WM v1 + C^pi v2, SAME candidates (offline)", "",
+               "a = imagined end, b = true end (each verifier in its own latent space). Candidates were SELECTED by WM v1 "
+               "(wm_* arms) or drawn uniformly (random) - the random rows are the unbiased comparison.", "",
+               "| group | n | SR | mean a DINO / VJ | mean b DINO / VJ | FP(a) DINO / VJ | FP(b) DINO / VJ | AUC(a) DINO / VJ | "
+               "AUC(b) DINO / VJ | ECE(a) DINO / VJ | p@1 by a DINO / VJ | p@4 by a DINO / VJ |",
+               "|---|---|---|---|---|---|---|---|---|---|---|---|"]
+        for (src, grp), g in m.groupby(["dir", "group"], sort=False):
+            y = g.success.to_numpy()
+            A, B, VA, VB = (cal(g[c], y) for c in ("c_wm", "c_true", "c_vj_wm", "c_vj_true"))
+            pa, pv = p_at(g, "c_wm"), p_at(g, "c_vj_wm")
+            md.append(f"| {src}:{grp} | {len(g)} | {y.mean():.3f} | {A['mean']:.3f} / {VA['mean']:.3f} | "
+                      f"{B['mean']:.3f} / {VB['mean']:.3f} | {A['fp']:.3f} / {VA['fp']:.3f} | {B['fp']:.3f} / {VB['fp']:.3f} | "
+                      f"{A['auc']:.3f} / {VA['auc']:.3f} | {B['auc']:.3f} / {VB['auc']:.3f} | {A['ece']:.3f} / {VA['ece']:.3f} | "
+                      f"{pa[1]:.3f} / {pv[1]:.3f} | {pa[4]:.3f} / {pv[4]:.3f} |")
+        md.append("")
     # renderer control: replayed (Mesa) vs stored (NVIDIA) latents of the same verif_m5b candidates
     ctrl = REPO / "runs/_analysis/wm_vs_true/control_rows.parquet"
     if ctrl.exists():

@@ -20,70 +20,29 @@
   "tmux_prefix": "rv_"
  },
  "claims": {
-  "dedc84ce:0:rv_rq3_sweep_s0": {
-   "tmux": "rv_rq3_sweep_s0",
-   "args": "retryvla.retry_oom --min_free_gb 10 retryvla.search.compare_arms configs/exp/rq3_verifier_sweep.yaml m5b.shard=0",
-   "since": "2026-11-02T09:59:21"
+  "c37611dd:0": {
+   "tmux": "rv_abl_a4s2_rec",
+   "args": "retryvla.retry_oom --min_free_gb 6 retryvla.eval.eval_recover configs/exp/m0_baseline_spatial.yaml milestone=P4 recover_tag=af_arm4_free_unfiltered_s2_recover_test recover_eval.splits=[test] policy.path=runs/20261102-172726_P4_af_arm4_free_unfiltered_s2/checkpoints/006000/pretrained_model eval.n_workers=8 eval.save_videos=none eval.worker_retries=2",
+   "since": "2026-11-03T05:44:50"
   },
-  "c37611dd:0:rv_rq3_sweep_s1": {
-   "tmux": "rv_rq3_sweep_s1",
-   "args": "retryvla.retry_oom --min_free_gb 8 retryvla.search.compare_arms configs/exp/rq3_verifier_sweep.yaml m5b.shard=1",
-   "since": "2026-11-02T09:59:31"
-  },
-  "c37611dd:0:rv_abl_a3s2_rec": {
-   "tmux": "rv_abl_a3s2_rec",
-   "args": "retryvla.retry_oom --min_free_gb 6 retryvla.eval.eval_recover configs/exp/m0_baseline_spatial.yaml milestone=P4 recover_tag=af_arm3_free_filtered_s2_recover_test recover_eval.splits=[test] policy.path=runs/20261102-135424_P4_af_arm3_free_filtered_s2/checkpoints/006000/pretrained_model eval.n_workers=8 eval.save_videos=none eval.worker_retries=2",
-   "since": "2026-11-02T15:20:25"
-  },
-  "c37611dd:0:rv_abl_a3s2_nom": {
-   "tmux": "rv_abl_a3s2_nom",
-   "args": "retryvla.retry_oom --min_free_gb 6 retryvla.eval.eval_nominal configs/exp/m0_baseline_spatial.yaml milestone=P4 nominal_tag=af_arm3_free_filtered_s2_nominal policy.path=runs/20261102-135424_P4_af_arm3_free_filtered_s2/checkpoints/006000/pretrained_model eval.n_workers=4 eval.save_videos=none eval.worker_retries=2",
-   "since": "2026-11-02T15:20:39"
-  },
-  "dedc84ce:0:rv_abl_a3s1_nom": {
-   "tmux": "rv_abl_a3s1_nom",
-   "args": "retryvla.retry_oom --min_free_gb 6 retryvla.eval.eval_nominal configs/exp/m0_baseline_spatial.yaml milestone=P4 nominal_tag=af_arm3_free_filtered_s1_nominal policy.path=runs/20261102-140834_P4_af_arm3_free_filtered_s1/checkpoints/006000/pretrained_model eval.n_workers=3 eval.save_videos=none eval.worker_retries=2",
-   "since": "2026-11-02T15:51:23"
-  },
-  "bd8bdcf6:cpu:rv_replay": {
-   "tmux": "rv_replay",
-   "args": "bash scripts/vjepa_replay_chain.sh A (rq3 true ends -> verif_r1 -> verif_m5b frames; 28 sim workers)",
-   "since": "2026-11-02T16:38:22"
-  },
-  "dedc84ce:0": {
-   "tmux": "rv_abl_a6s2",
-   "args": "retryvla.retry_oom --min_free_gb 32 retryvla.train.sft configs/exp/bt_sft_distill.yaml tag=sft_bt_distill_s2 train.seed=2 train.save_every=6000",
-   "since": "2026-11-02T16:13:22"
-  },
-  "dedc84ce:0:rv_abl_a3s1_rec": {
-   "tmux": "rv_abl_a3s1_rec",
-   "args": "retryvla.retry_oom --min_free_gb 6 retryvla.eval.eval_recover configs/exp/m0_baseline_spatial.yaml milestone=P4 recover_tag=af_arm3_free_filtered_s1_recover_test recover_eval.splits=[test] policy.path=runs/20261102-140834_P4_af_arm3_free_filtered_s1/checkpoints/006000/pretrained_model eval.n_workers=5 eval.save_videos=none eval.worker_retries=2",
-   "since": "2026-11-02T16:17:22"
-  },
-  "89995d8d:cpu:rv_replayB": {
-   "tmux": "rv_replayB",
-   "args": "W=30 bash scripts/vjepa_replay_chain.sh B (collect_v1 frames)",
-   "since": "2026-11-02T16:38:22"
-  },
-  "dedc84ce:0:rv_vjenc_c1": {
-   "tmux": "rv_vjenc_c1",
-   "args": "scripts.vjepa_encode --src data/foundation/frames/collect_v1 --out data/foundation/vj_latents/collect_v1 --expect 144",
-   "since": "2026-11-02T16:40:25"
+  "bd8bdcf6:cpu:rv_diagcpu": {
+   "tmux": "rv_diagcpu",
+   "args": "bash runs/_jobs/diag_cpu.sh (Step-1 rq3 true-end diag on CPU)",
+   "since": "2026-11-03T06:01:34"
   }
  },
  "allow_only": {
-  "dedc84ce": "vla_BSC_DoanhLT_1 (cn69, 1x A100 80GB, 32 CPU), authorized for RetryVLA by user 2026-11-02 (one of the only two RetryVLA shells with c37611dd, user 2026-11-02 15:57). Shared: owner job (video_world physics, ~17 GB, ~7 CPU, tmux cwpe_fix + gg_dedc84ce) runs there -> keep our GPU total <= ~55 GB, sim workers <= 8, never touch non-rv_ sessions. envcheck 2026-11-01: OK video decode, OK sim 50 steps 1.06 s (NVIDIA EGL)",
   "c37611dd": "vla_RetryVLA_DoanhLT_1 (new, label 'VLA'; cn43, container 497d28ac2bd7 = also the Cursor agent box), 1x A100 80GB, 32 CPU; authorized for RetryVLA by user 2026-11-02 15:57 (+07). Shared: other projects' ASR jobs (Qwen3-ASR evals, nemo train_u, ~57 GB, 99% util, ~4-5 CPU) + agent Cursor servers -> GPU: evals only (<= ~6 GB of ours), no SFT unless >= 35 GB free; sim workers <= 12, never touch non-rv_ sessions (af_chain, abl1-q4b, x1-*, x3-*, w5-final, report8790). envcheck 2026-11-02: OK video decode, OK sim 50 steps 1.27 s (NVIDIA EGL), headless cv2 OK",
-  "bd8bdcf6": "vla_RetryVLA_DoanhLT_cpu (bd8bdcf6-3558-427a-816e-cf2b1486c982), CPU-ONLY shell (slots 0, 32 CPU, no GPU -> Mesa software EGL ~180 ms/step) requested 2026-11-02 15:50 UTC by the WM-diagnosis agent under the user's account (user: OK to request a new shell for CPU work; a 1-GPU shell was refused: workspace slot limit 29). Config scripts/shells/retryvla_shell_cpu.yaml (= c37611dd's template, slots 0). Sim replays only. KILL when done: env -u LD_LIBRARY_PATH det shell kill bd8bdcf6-3558-427a-816e-cf2b1486c982",
-  "89995d8d": "vla_RetryVLA_DoanhLT_cpu2 (89995d8d-ca67-4a85-ad9b-073aad4e2a8a), second CPU-ONLY shell (slots 0), requested 2026-11-02 16:37 UTC by the WM-diagnosis agent (bd8bdcf6 saturated by Step-1/2 replays; Mesa EGL). Sim replays only. KILL when done: env -u LD_LIBRARY_PATH det shell kill 89995d8d-ca67-4a85-ad9b-073aad4e2a8a"
+  "bd8bdcf6": "vla_RetryVLA_DoanhLT_cpu (bd8bdcf6-3558-427a-816e-cf2b1486c982), CPU-ONLY shell (slots 0, 32 CPU, no GPU -> Mesa software EGL ~180 ms/step) requested 2026-11-02 15:50 UTC by the WM-diagnosis agent under the user's account (user: OK to request a new shell for CPU work; a 1-GPU shell was refused: workspace slot limit 29). Config scripts/shells/retryvla_shell_cpu.yaml (= c37611dd's template, slots 0). Sim replays only. KILL when done: env -u LD_LIBRARY_PATH det shell kill bd8bdcf6-3558-427a-816e-cf2b1486c982"
  },
  "share_ok": {
-  "dedc84ce": true,
   "c37611dd": true
  },
  "gone": {
   "0097c39c": "vla_RetryVLA_DoanhLT_1 (cn69), RetryVLA's GPU 2026-10-27..10-31; not RUNNING since 2026-11-01 (user 2026-11-02: no longer running). Removed from allow_only",
-  "8a2808f9": "removed from allow_only 2026-11-02 (user: RetryVLA only on dedc84ce + c37611dd). Was: vla_BSC_DoanhLT_1 (user's own; 2026-10-19 user: submit a few LIGHT jobs here; owner job gg_8a2808f9 uses the GPU -> share_ok, <=8 workers)"
+  "8a2808f9": "removed from allow_only 2026-11-02 (user: RetryVLA only on dedc84ce + c37611dd). Was: vla_BSC_DoanhLT_1 (user's own; 2026-10-19 user: submit a few LIGHT jobs here; owner job gg_8a2808f9 uses the GPU -> share_ok, <=8 workers)",
+  "dedc84ce": "vla_BSC_DoanhLT_1 (cn69) TERMINATED ~23:00 UTC 2026-11-02 (coordinator 2026-11-03 06:00). All rv_ jobs there had finished (vj_chain DONE 22:54). Removed from allow_only.",
+  "89995d8d": "vla_RetryVLA_DoanhLT_cpu2 (CPU-only, agent-requested 2026-11-02); replays done 19:29 UTC; killed 2026-11-03"
  },
  "_mode": "user 2026-11-02 15:57 (+07): ALL RetryVLA experiments ONLY on dedc84ce + c37611dd; never any other shell"
 }

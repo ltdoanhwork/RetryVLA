@@ -7,15 +7,15 @@ vjwm:
   data_roots: [data/foundation/vj_latents/collect_v1]
   val_frac: 0.15
   seed: 0
-  lr: 3.0e-5          # pretrained predictor
+  lr: 1.0e-4          # pretrained predictor (zero-shot open-loop ratio ~2x copy-frame: large domain gap)
   lr_fast: 1.0e-3     # new chunk-action encoder / state encoder / q_head
   weight_decay: 0.04
   batch_size: 8
-  steps: 6000
-  ar_steps: 10        # full 10-step open-loop rollout loss (what search uses)
+  steps: 3000
+  ar_steps: 4         # open-loop rollout loss over 4 model steps (V-JEPA 2-AC used 2; 10 was 7 s/step on the shared GPU)
   lam_q: 1.0
-  ckpt_act: true
+  ckpt_act: false     # ~8 GB with checkpointing; off = faster, ~20 GB
   n_val_eval: 256
   log_every: 50
-  eval_every: 1000
+  eval_every: 500
   out_link: data/foundation/latest_vj_wm.txt

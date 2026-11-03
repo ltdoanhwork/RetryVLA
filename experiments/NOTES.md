@@ -817,3 +817,22 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
   a6s2, a4s2, a1s1, a1s2; evals (RSR 8 + nominal 4 workers on c37611dd, 5 + 3 on dedc84ce) scheduled by a sim-worker budget
   over ALL live rv_ claims (c37611dd 12, dedc84ce 8, siblings included). Sessions `rv_abl_<arm>s<seed>[_rec|_nom]`,
   claims released by exact session name. SFT speed on the shared dedc84ce GPU ~1.2 it/s (~85 min / SFT).
+
+## WM-vs-critic diagnosis + V-JEPA 2-AC foundation WM, ops log 2026-11-02/03 (results: RESULTS "RQ3 follow-up")
+- Replays: `scripts/replay_bridges.py` re-simulates logged 50-step bridges from the exact failure snapshots (compare_arms
+  restore-only path / collect build_instances, policy=None). Physics is bit-exact (state max|dq| = 0, prefix_success agree
+  1.000). Mesa (CPU shell) vs NVIDIA render + fp32 vs bf16 DINO: latent rel. MSE ~2e-2 (control rows:
+  runs/_analysis/wm_vs_true/control_rows.parquet). `LP_NUM_THREADS=1` per sim worker is ~1.5x faster on Mesa.
+- Shells: a 1-GPU shell was refused (workspace slot limit 29/29); two CPU-only shells (slots 0) created from c37611dd's
+  template (scripts/shells/retryvla_shell_cpu.yaml): bd8bdcf6 `vla_RetryVLA_DoanhLT_cpu`, 89995d8d `..._cpu2`.
+  89995d8d killed 2026-11-03 06:02 UTC after its replays; bd8bdcf6 killed after the CPU diag of the RQ3 picks.
+- CUDA context creation on c37611dd hung in the NVIDIA driver (D state) on 2026-11-02 16:00-16:30 UTC (box at load 64-91 /
+  32, GPU 70 GB used) -> all V-JEPA GPU work ran on dedc84ce (~14 GB peak for the fine-tune, 0.72 it/s).
+- /pfss reads with `torch.load(mmap=True)` ran at ~0.4 MB/s (page faults); plain loads at ~1 GB/s.
+- V-JEPA 2: code third_party/vjepa2 (git clone, commit 204698b, untracked), weights split into
+  data/foundation/vjepa2/vjepa2_ac_vitg_{encoder (bf16 2.0 GB), predictor (fp32 1.2 GB)}.pt; the 11.7 GB release file was
+  deleted (re-download: dl.fbaipublicfiles.com/vjepa2/vjepa2-ac-vitg.pt). Latents data/foundation/vj_latents (13 GB:
+  collect_v1 8.6 GB only needed to re-fine-tune), JPEG frames data/foundation/frames (2.6 GB).
+- Chain `scripts/vj_chain.py` (local tmux) DONE 22:54 UTC 2026-11-02: fine-tune 18:09-19:20, critic 19:32-19:48, encodes,
+  offline rescoring, online sweeps s0/s1 (rv_vjsweep_*, rc 0, 22:38 / 22:54). dedc84ce was TERMINATED ~23:00 UTC:
+  nothing of this work was lost; stale dedc84ce claims removed, dedc84ce moved to shells.json:gone.

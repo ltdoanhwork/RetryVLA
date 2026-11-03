@@ -81,6 +81,8 @@ def main() -> None:
     dev = torch.device(cfg.policy.device)
     ls = load_latents(list(c.data_roots))
     tr, va = group_split(ls, float(c.val_frac), int(c.seed))           # = WM v1's split (same ids / crc32)
+    if len(va) == 0:  # tiny smoke runs only
+        va = tr
     vq = ls.valid[torch.as_tensor(tr)]
     qtr = ls.q[torch.as_tensor(tr)][vq]
     q_mean, q_std = qtr.mean(0), qtr.std(0).clamp_min(1e-3)
