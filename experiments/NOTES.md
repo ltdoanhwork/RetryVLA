@@ -862,3 +862,30 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
   3. RQ3 sweep: the relaunch (rv_rq3_sweep_s0/s1, 2026-11-02 10:00) finished rc 0 at 11:03 / 11:16 UTC; parts p0 + p1
      CLOSED, 30 + 33 = 63 instances, same 63 as the V-JEPA sweep. Done.
 - No jobs launched on the thanhnv shells (none pending); they stay registered for the next RetryVLA eval work.
+
+## Cross-WM disagreement sweep (WM v1 x V-JEPA 2-AC), ops log 2026-11-08 (results: RESULTS "Cross-WM disagreement")
+- User chose the "next lever" of the V-JEPA test: penalise disagreement between two DIFFERENT world models. New arms in
+  `retryvla/search/arms.py` (`xwm_values`, `xwm_objective`, `arm_xwm`): every candidate (pool + 2 elite-local CEM rounds,
+  exactly the wm_unc_l0 pipeline, diverse top-8 on WM v1 end features) is imagined by WM v1 + C^pi v2 AND by V-JEPA 2-AC
+  + C^pi_VJ; J = mean(C_v1, C_vj) - lambda |C_v1 - C_vj| - mu R with lambda 0 (average) / 0.5 (= min: both must agree) /
+  1. In-run controls `wm_unc_l0` (WM v1 alone) and `vj_unc_l0` (V-JEPA alone, = the vj_sweep arm). Both verifiers score
+  every arm's picks (`order_v1` / `order_v2`). Config `configs/exp/xwm_sweep.yaml` (inherits rq3_verifier_sweep: same
+  63 train instances = M5b shards 0-1, precheck restored, 8 verified / arm, same continuation seed per slot).
+- `compare_arms`: opt-in `m5b.paired_rng` + `num_sub_shards` / `sub_shard`: precheck ALL instances of the shard and draw
+  every instance's proposal pool in order, skipping other-sub-shard / done instances only AFTER drawing -> pools identical
+  to an un-split, un-resumed run (the Proposals RNG is sequential; the old rq3 sweep's resumed p1 instances had NOT been
+  paired this way). Done set = done.jsonl of every part. Default path unchanged (flags off).
+- Chain `scripts/xwm_chain.py` (agent box, local tmux `xwm_chain`, console runs/_logs/xwm_chain_console.log): launch via
+  launch_remote (claims), watchdog (no log write 45 min / session or shell gone -> kill exact session, relaunch, resume),
+  owner back-off (non-rv_ tmux, unknown GPU memory > 40 GB on our GPU, or node load / core EXCLUDING our workers > 0.9 ->
+  kill our lane, relaunch after 2 clear polls), then `scripts/analyze_xwm.py` -> runs/_analysis/xwm/xwm.md.
+- 16:03 UTC first launch with 4 lanes (2 per shell, 6 + 6 / 8 + 8 workers). cn06 (335de36e) already carries ~16 load
+  from other containers: two lanes pushed it to 1.52 / core, the back-off (then counting our own load) killed both cn06
+  lanes at 16:09 before their first instance finished (partial dirs deleted). 16:16 chain restarted with ONE lane on
+  cn06 and our own load subtracted in the back-off test:
+  | tmux | shell:GPU | work | sim workers |
+  |---|---|---|---|
+  | rv_xwm_s0 | 335de36e:0 | shard 0 (30 instances) | 6 |
+  | rv_xwm_s1_0 | b936d1d7:0 | shard 1 sub 0 of 2 (17) | 8 |
+  | rv_xwm_s1_1 | b936d1d7:1 | shard 1 sub 1 of 2 (16) | 8 |
+  First instance 223 s (5 arms x 8 verifications, 8 workers). GPU ~10-15 GB / lane (WM v1 + V-JEPA ViT-g + SmolVLA).

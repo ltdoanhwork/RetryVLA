@@ -165,6 +165,8 @@ def main() -> None:
     scenes = scenes_for(split, "train", REPO_ROOT / cfg.recover.scene_root)
     assert_allowed([s.tag for s in scenes], split)
     cfg.tag = f"{cfg.tag}_s{mb.shard}of{mb.num_shards}"
+    if int(mb.get("num_sub_shards", 1)) > 1:
+        cfg.tag += f"_sub{int(mb.sub_shard)}of{int(mb.num_sub_shards)}"
     arms = list(mb.arms)
     H, NP, B = int(sc.horizon), int(mb.pool_size), int(mb.budget)
     cont, stride = int(sc.continuation_max_steps), int(cfg.wm_collect.stride)
@@ -172,6 +174,8 @@ def main() -> None:
     wm_ck = (REPO_ROOT / mb.wm_link).read_text().strip()
     cr_ck = (REPO_ROOT / mb.critic_link).read_text().strip()
     root = REPO_ROOT / mb.out_root / f"s{mb.shard}"
+    if int(mb.get("num_sub_shards", 1)) > 1:  # sub-shards of one shard run in parallel -> own part dirs
+        root = root / f"sub{int(mb.sub_shard)}"
     root.mkdir(parents=True, exist_ok=True)
     done = closed_done(root)
     part = root / f"p{len(list(root.glob('p*')))}"
@@ -209,6 +213,14 @@ def main() -> None:
         elif any(A.unc_arm_lambda(a) is not None for a in arms) or mb.get("log_uens", False):
             raise ValueError("U_ens arms need m5b.boot_heads (the WM's own ensemble heads are identical -> U == 0)")
         ranker2 = None
+        rk_vj = None
+        if any(A.xwm_arm_lambda(a) is not None or a == "vj_unc_l0" for a in arms):  # cross-WM: WM v1 x V-JEPA 2-AC
+            from retryvla.wm.vjepa2_ac import VJRanker
+
+            vw = (REPO_ROOT / mb.vj_wm_link).read_text().strip()
+            vc = (REPO_ROOT / mb.vj_critic_link).read_text().strip()
+            rk_vj = VJRanker(vw, vc, dev, float(mb.lambda_unc), float(mb.beta_rough))
+            run.summary.update({"vj_wm_ckpt": vw, "vj_critic_ckpt": vc})
         if any(a.endswith("_v2") for a in arms):  # second WM / critic (e.g. retrained on broad-action data)
             ranker2 = WMCriticRanker((REPO_ROOT / mb.wm_link2).read_text().strip(), (REPO_ROOT / mb.critic_link2).read_text().strip(),
                                      cfg.wm_collect.encoder, int(cfg.wm_collect.pool_grid), dev,
@@ -225,7 +237,15 @@ def main() -> None:
         with SimPool(int(cfg.eval.n_workers), int(cfg.env.resolution)) as pool:
             wretries = int(mb.get("worker_retries", 0))  # 0 = old behaviour (a dead sim worker kills the run)
             srun = make_safe_run(pool, wretries, int(mb.get("oom_retries", 0)), float(mb.get("oom_wait_s", 120)))
-            insts, pre = precheck(pool, policy, jobs, done, run=srun,
+            # paired_rng (opt-in): precheck ALL selected instances and draw every instance's proposal pool in order,
+            # skipping already-done / other-sub-shard instances AFTER drawing -> pools identical to an un-split,
+            # un-resumed run of this shard (the Proposals RNG is sequential). done = done.jsonl of every part.
+            paired = bool(mb.get("paired_rng", False))
+            nsub, sub = int(mb.get("num_sub_shards", 1)), int(mb.get("sub_shard", 0))
+            if paired:
+                for p_ in root.glob("p*/done.jsonl"):
+                    done |= {json.loads(x)["instance_id"] for x in p_.read_text().splitlines() if x.strip()}
+            insts, pre = precheck(pool, policy, jobs, set() if paired else done, run=srun,
                                   known=load_known_precheck(mb.get("precheck_from") or []))
             pd.DataFrame(pre).to_csv(run.path("precheck.csv"), index=False)
             log.info("shard %s: %d selected, %d already done, %d pi0 failures to search", mb.shard, len(jobs),
@@ -237,11 +257,15 @@ def main() -> None:
                     rng = np.random.default_rng(seed)
                     ti = time.time()
                     pool_c, src = proposals(inst, NP)
+                    if paired and (n % nsub != sub or inst.instance_id in done):
+                        continue
                     ref = pool_c[[s.startswith("vla_") for s in src]]
                     z0, q0 = ranker.encode(inst.obs0)
                     pool_s = ranker.score(z0, q0, inst.task, pool_c)
                     picked, extra_steps = {}, {}
                     pool_ens = None  # RQ3: ensemble values of the shared pool, computed once per instance
+                    pool_x = None    # cross-WM values of the shared pool (WM v1 + V-JEPA), computed once
+                    zq_vj = rk_vj.encode(inst.obs0) if rk_vj is not None else None
                     goal = None
                     if goal_feats is not None:
                         goal = ranker.norm.z(goal_feats[canon[inst.scene_tag]].to(dev).float())
@@ -300,6 +324,15 @@ def main() -> None:
                             cand, idx, cs = A.arm_wm_two_stage(ranker, z0, q0, inst.task, pool_c, pool_s, B, seed % 10007)
                         elif a in A.VALUE_ARMS:
                             cand, idx, cs = A.arm_wm_value(value_rk[a], z0, q0, inst.task, pool_c, B, seed % 10007)
+                        elif A.xwm_arm_lambda(a) is not None:  # cross-WM: J = mean(v1, v2) - lam |v1 - v2| - mu R
+                            if pool_x is None:
+                                pool_x = A.xwm_values(ranker, (z0, q0), rk_vj, zq_vj, inst.task, pool_c)
+                            cand, idx, cs = A.arm_xwm(ranker, (z0, q0), rk_vj, zq_vj, inst.task, pool_c, B, seed % 10007,
+                                                      A.xwm_arm_lambda(a), float(mb.get("mu_cost", mb.beta_rough)),
+                                                      pool_cs=pool_x)
+                        elif a == "vj_unc_l0":  # V-JEPA alone, same pipeline as wm_unc_l0 (= the vj_sweep arm)
+                            cand, idx, cs = A.arm_wm_unc(rk_vj, *zq_vj, inst.task, pool_c, B, seed % 10007, 0.0,
+                                                         float(mb.get("mu_cost", mb.beta_rough)))
                         elif A.unc_arm_lambda(a) is not None:  # RQ3: J = C^pi - lambda U_ens - mu R
                             if pool_ens is None:
                                 pool_ens = ensemble_values(ranker, z0, q0, inst.task, pool_c)
@@ -320,6 +353,9 @@ def main() -> None:
                         if mb.get("log_uens", False) and "u_ens" not in picked[a][1]:  # RQ3: U_ens of every arm's picks
                             ev = ensemble_values(ranker, z0, q0, inst.task, cand[idx])
                             picked[a][1]["u_ens"], picked[a][1]["v_ens"] = ev["u_ens"], ev["value"]
+                        if rk_vj is not None and "v1" not in picked[a][1]:  # cross-WM: both verifiers on every pick
+                            xv = A.xwm_values(ranker, (z0, q0), rk_vj, zq_vj, inst.task, cand[idx])
+                            picked[a][1]["v1"], picked[a][1]["v2"] = xv["v1"], xv["v2"]
                     # one verification batch for all arms; slot j gets the same continuation seed in every arm
                     vj, owner = [], []
                     for a in arms:
@@ -407,6 +443,9 @@ def main() -> None:
                                 "order_uens": [float(x) for x in cs["u_ens"]],
                                 "order_budget": [int(x) for x in cs.get("budget", np.full(len(succ), -1))]}
                                if "u_ens" in cs else {}),
+                            **({"order_pred": [float(x) for x in cs["value"]],
+                                "order_v1": [float(x) for x in cs["v1"]], "order_v2": [float(x) for x in cs["v2"]]}
+                               if "v1" in cs else {}),
                             **{f"all_{k}": v for k, v in m_all.items()}, **{f"succ_{k}": v for k, v in m_succ.items()},
                             "succ_cells_list": sorted(set(A.descriptor(cands[succ]).tolist())) if succ.any() else [],
                         })

@@ -1,0 +1,22 @@
+# Cross-WM disagreement search (user 2026-11-08): WM v1 (DINOv2) + C^pi v2  x  V-JEPA 2-AC (fine-tuned) + C^pi_VJ.
+# SAME 63 train-split instances as rq3_verifier_sweep / vj_rq3_sweep (M5b shards 0-1 of 8), same pool (paired_rng:
+# the sequential Proposals RNG is replayed over every instance of the shard even when sub-sharded / resumed), same
+# CEM seeds and continuation seeds per slot -> paired with each other and with vj_rq3_sweep. Train split only.
+#   wm_unc_l0   WM v1 alone (in-run control; = the rq3 sweep arm)
+#   vj_unc_l0   V-JEPA alone (in-run control; = the vj sweep arm)
+#   xwm_l<lam>  J = mean(C_v1, C_vj) - lam |C_v1 - C_vj| - mu R; lam 0 = average, 0.5 = min (both must agree), 1
+# Every arm's picks are scored by BOTH verifiers (order_v1 / order_v2 in per_instance.jsonl).
+defaults: [exp/rq3_verifier_sweep]
+tag: xwm_sweep
+eval:
+  n_workers: 8            # thanhnv shells: light jobs, <= 8 sim workers / job
+m5b:
+  arms: [wm_unc_l0, vj_unc_l0, xwm_l0, xwm_l0.5, xwm_l1]
+  vj_wm_link: data/foundation/latest_vj_wm.txt
+  vj_critic_link: data/foundation/latest_vj_critic.txt
+  log_uens: false
+  paired_rng: true
+  num_sub_shards: 1
+  sub_shard: 0
+  out_root: data/recovery/xwm_sweep
+  verif_out: data/wm/verif_xwm_sweep

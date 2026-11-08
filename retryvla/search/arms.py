@@ -298,6 +298,45 @@ def arm_wm_unc(ranker, z0, q0, task, pool_c, B, seed, lam, mu=1.0, iters=2, elit
     return cand, picks, cs
 
 
+def xwm_arm_lambda(name: str) -> float | None:
+    """'xwm_l0.5' -> 0.5 (cross-WM disagreement arms, WM v1 x V-JEPA 2-AC); None otherwise."""
+    return float(name[len("xwm_l"):]) if name.startswith("xwm_l") else None
+
+
+def xwm_values(rk1, zq1, rk2, zq2, task, cands) -> dict:
+    """C^pi of the SAME action candidates under two different world models (each with its own critic, own latent
+    space): v1 = WM v1 (DINOv2) + C^pi v2, v2 = V-JEPA 2-AC + C^pi_VJ. zfeat = WM v1 imagined end features."""
+    s1 = rk1.score(*zq1, task, cands)
+    s2 = rk2.score(*zq2, task, cands)
+    return {"v1": s1["value"], "v2": s2["value"], "rough": s1["rough"], "zfeat": s1["zfeat"]}
+
+
+def xwm_objective(cs: dict, lam: float, mu: float) -> np.ndarray:
+    """J = mean(v1, v2) - lambda |v1 - v2| - mu R. lambda 0 = plain 2-WM average; lambda 0.5 = min(v1, v2)
+    (both WMs must agree it succeeds); lambda 1 = mean - full disagreement."""
+    return 0.5 * (cs["v1"] + cs["v2"]) - float(lam) * np.abs(cs["v1"] - cs["v2"]) - float(mu) * cs["rough"]
+
+
+def arm_xwm(rk1, zq1, rk2, zq2, task, pool_c, B, seed, lam, mu=1.0, iters=2, elites=16, std=0.25, pool_cs=None):
+    """Cross-WM disagreement arm: EXACTLY the wm_unc_l0 pipeline (shared pool + `iters` elite-local CEM rounds,
+    T 0.05, decay 0.6, same seed, diverse top-B on WM v1 end features) with the objective xwm_objective, so every
+    candidate (pool and CEM samples) is imagined by BOTH world models. cs['value'] = mean(v1, v2) (logged as
+    pred_value), cs['dis'] = |v1 - v2|."""
+    cs = pool_cs if pool_cs is not None else xwm_values(rk1, zq1, rk2, zq2, task, pool_c)
+    cand = pool_c
+    cem = CEM(pool_c.shape[1], 7, CEMConfig(n_samples=len(pool_c), init_std=std, smooth_kernel=5), seed=seed)
+    for it in range(1, iters + 1):
+        s = xwm_objective(cs, lam, mu)
+        el = np.argsort(-s)[:elites]
+        new = cem.sample_local(cand[el], s[el], it, temperature=0.05, decay=0.6)
+        ns = xwm_values(rk1, zq1, rk2, zq2, task, new)
+        cand = np.concatenate([cand, new])
+        cs = {k: np.concatenate([cs[k], ns[k]]) for k in cs}
+    s = xwm_objective(cs, lam, mu)
+    cs = dict(cs, score=s, value=0.5 * (cs["v1"] + cs["v2"]), dis=np.abs(cs["v1"] - cs["v2"]))
+    return cand, diverse_ranking(s, cs["zfeat"], B, seed=seed), cs
+
+
 def arm_wm_budget(ranker, z0, q0, task, pool_c, seed, lam=0.0, mu=1.0, budgets=(8, 32, 128, 512), k=4, std=0.25,
                   pool_cs=None):
     """RQ3 exploitation curve: how much does the verifier get fooled when the search sees MORE imagined candidates?
