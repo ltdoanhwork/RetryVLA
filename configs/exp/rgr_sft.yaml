@@ -1,0 +1,12 @@
+# RGR distill (only if the pre-registered rule in scripts/analyze_rgr.py picks an arm): the standard pi1 SFT recipe
+# (init pi1-nominal, 6k steps, bs 32, 50 % recovery replay, round-robin over instances; = bt_sft_distill / M5b SFTs)
+# on the verified chains of ONE rgr_sweep arm. The chain runs it twice with the same trajectory count: the chosen arm
+# and the in-run `single` arm (same instances), so the SFT comparison isolates the search arm. 1 seed (directional).
+defaults: [exp/m4_sft_A_base_nom_random]
+milestone: RGR
+tag: sft_rgr
+train:
+  recovery_datasets: [data/recovery/rgr_sweep/s*/p*/single]
+  subset_mode: roundrobin
+  max_recovery_trajectories: 208
+  save_every: 6000

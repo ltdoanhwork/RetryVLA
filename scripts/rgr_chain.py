@@ -67,6 +67,88 @@ def analyze() -> None:
                    cwd=REPO, timeout=1800)
 
 
+def run_blocking(n: str, args: list[str]) -> int:
+    """launch one task and wait for RV_DONE (watchdog: stall / session gone -> kill exact session + relaunch)."""
+    for _ in range(MAX_TRIES):
+        log = launch(n, args)
+        if log is None:
+            time.sleep(POLL_S)
+            continue
+        while True:
+            time.sleep(POLL_S)
+            rc = rc_of(log)
+            if rc is not None:
+                release(n)
+                say(f"{n} ended rc={rc}")
+                if rc == 0:
+                    return 0
+                break
+            live = live_sessions()
+            idle = (time.time() - os.path.getmtime(log)) / 60 if os.path.exists(log) else 0.0
+            if idle > STALL_MIN or (live is not None and n not in live and idle > 5):
+                say(f"WATCHDOG {n}: stalled / gone ({idle:.0f} min) -> kill + relaunch")
+                if live and n in live:
+                    kill(n)
+                release(n)
+                break
+    return 1
+
+
+def n_traj(dirs: list[str]) -> int:
+    return sum(1 for d in dirs for f in glob.glob(str(REPO / d / "retryvla/trajectories.jsonl")) for _ in open(f))
+
+
+def kill_shell() -> None:
+    if os.environ.get("RGR_KEEP_SHELL"):
+        say("RGR_KEEP_SHELL set: shell kept")
+        return
+    p = subprocess.run(["det", "shell", "kill", SH_FULL], capture_output=True, text=True, env=ENV, timeout=300)
+    say(f"det shell kill {SH}: rc {p.returncode} {p.stdout.strip()[-200:]} {p.stderr.strip()[-200:]}")
+
+
+def phase2() -> None:
+    """pre-registered decision (scripts/analyze_rgr.py) -> optional matched 1-seed distill of the chosen arm vs
+    `single` -> test RSR + nominal -> kill the agent-requested shell."""
+    import json
+    import threading
+
+    dec = json.loads((REPO / "runs/_analysis/rgr/decision.json").read_text())
+    say(f"decision: {dec}")
+    arm = dec.get("arm")
+    if arm:
+        closed = [str(Path(p).parent.relative_to(REPO)) for p in glob.glob(str(REPO / "data/recovery/rgr_sweep/s*/p*/CLOSED"))]
+        dirs = {a: [f"{c}/{a}" for c in closed] for a in (arm, "single")}
+        n = min(208, n_traj(dirs[arm]), n_traj(dirs["single"]))
+        say(f"distill {arm} vs single, {n} trajectories each, parts {closed}")
+        cks = {}
+
+        def sft_eval(a: str) -> None:
+            tag = f"sft_rgr_{a}"
+            rc = run_blocking(f"rv_rgr_sft_{a}"[:40], ["retryvla.retry_oom", "--min_free_gb", "30", "retryvla.train.sft",
+                              "configs/exp/rgr_sft.yaml", f"tag={tag}", f"train.recovery_datasets=[{','.join(dirs[a])}]",
+                              f"train.max_recovery_trajectories={n}"])
+            if rc:
+                return
+            ck = sorted(glob.glob(str(REPO / f"runs/*_RGR_{tag}/checkpoints/006000/pretrained_model")), key=os.path.getmtime)[-1]
+            cks[a] = ck
+            for k, args in (("rec", ["retryvla.eval.eval_recover", "configs/exp/m0_baseline_spatial.yaml", "milestone=RGR",
+                                     f"recover_tag={tag}_recover_test", f"policy.path={ck}", "recover_eval.splits=[test]"]),
+                            ("nom", ["retryvla.eval.eval_nominal", "configs/exp/m0_baseline_spatial.yaml", "milestone=RGR",
+                                     f"nominal_tag={tag}_nominal", f"policy.path={ck}"])):
+                run_blocking(f"rv_rgr_{k}_{a}"[:40], args + ["eval.n_workers=8", "eval.save_videos=none",
+                                                            "eval.worker_retries=2"])
+
+        ts = [threading.Thread(target=sft_eval, args=(a,)) for a in (arm, "single")]
+        for t in ts:
+            t.start()
+            time.sleep(120)
+        for t in ts:
+            t.join()
+        say(f"distill done: {cks}")
+    kill_shell()
+    say("PHASE 2 DONE")
+
+
 def main() -> None:
     tasks = {"rv_rgr_head": ["retryvla.geom.head", "--steps", "6000"]}
     for k in SHARDS:
@@ -124,7 +206,8 @@ def main() -> None:
             running += s["log"] is not None
         if all(s["done"] for s in st.values()):
             analyze()
-            say("ALL DONE")
+            say("ALL SWEEPS DONE")
+            phase2()
             return
         if all(s["done"] or s["tries"] >= MAX_TRIES for s in st.values()):
             say(f"GIVING UP: {[(n, s['tries']) for n, s in st.items() if not s['done']]}")

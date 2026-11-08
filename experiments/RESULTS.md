@@ -398,8 +398,8 @@ the same dumps (sim_state bit-identical on 4 checked scenes). Coverage: Spatial 
 not annotated), Object 50 / 77 (`step_0240`; `step_0260` not). No L4 among our scenes (upstream L4 are mostly
 constructed). Unannotated scenes inherit the label of the same failure episode 20 steps earlier (`src: inherited`);
 weak, because upstream labels of one episode change between annotated steps 60 apart in 45 % (Spatial) / 28 % (Object)
-of episodes. Primary view = official only (Spatial test: 28 scenes = 1 L1 / 11 L2 / 16 L3; Object test: 17 = 4 L1 /
-13 L2). Maps: `configs/env/levels_{spatial,object}.yaml` (`scripts/build_levels.py`); table: `scripts/analyze_levels.py`
+of episodes. Primary view = official only (Spatial test: 28 scenes = 1 L1 / 11 L2 / 16 L3; Object test: 19 = 4 L1 /
+15 L2). Maps: `configs/env/levels_{spatial,object}.yaml` (`scripts/build_levels.py`); table: `scripts/analyze_levels.py`
 -> runs/_analysis/levels/levels.md (copy: experiments/levels/levels_existing.md, incl. the official+inherited view).
 Multi-seed rows pool episodes; ± = sd of the per-seed rate. Wilson CIs on pooled episodes are optimistic (scene clusters).
 
@@ -414,7 +414,7 @@ Multi-seed rows pool episodes; ± = sd of the per-seed rate. Wilson CIs on poole
 | **pi1 RetryVLA** | 3 | **0.425** | 0.833 | **0.448 ± 0.019** | 0.383 ± 0.025 |
 | M7 base | 3 | 0.476 | 0.800 | 0.445 ± 0.027 | 0.477 ± 0.025 |
 
-| model (Object test, official-label scenes) | all 17 scenes | L1 (4) | L2 (13) |
+| model (Object test, official-label scenes) | all 19 scenes | L1 (4) | L2 (15) |
 |---|---|---|---|
 | pi0 | 0.195 | 0.225 | 0.187 |
 | pi1-nominal | 0.163 | 0.250 | 0.140 |
@@ -556,3 +556,36 @@ FP 0.72 / 0.71 / 0.83 / 0.85 vs 0.71 / 0.70 / 0.83 / 0.84.
 gives a small, non-significant online gain, but its own search exploits it just as hard (FP ~0.83, gap ~0.65 at N=512).
 A stronger WM alone does not remove verifier exploitation -> no V-JEPA recovery dataset / distill (plan gate). Next lever:
 real ensemble disagreement across DIFFERENT WMs (WM v1 x V-JEPA), or verify more picks per instance.
+
+## RGR: Recursive Policy-Conditioned Geometric Recovery (2026-11-08; train split only; IN PROGRESS)
+Design: PLAN "RGR". Code `retryvla/geom/`, `retryvla/search/rgr_{core,search}.py`, `configs/exp/rgr_sweep.yaml`;
+table `python scripts/analyze_rgr.py` -> runs/_analysis/rgr/{rgr.md, decision.json}.
+
+**Oracle geometry labels.** All 144 collect_v1 instances (4,608 TRAIN bridges) re-simulated from their exact snapshots
+(`scripts/geom_labels.py`, d2ecd68c, 2 x 8 workers, 31 min): privileged geometry at t = 0, 5, ..., 50, aligned with the
+WM latent frames. Replay check: logged eef xy vs replay max 1.1-1.7 mm per file (render / encode-side state rounding;
+physics is bit-exact). Base rates of the collect_v1 bridges (start -> end, first 60 files): off_table 1.8 % (none of
+them succeeds), tilt >= 0.5 0.7 %, goal object pushed > 2.5 cm 1.9 %, penetration > 0.5 cm 0.3 %. Geometric failure
+is RARE in this data: most failed bridges are geometrically fine but do not hand pi a competent state.
+
+**Geometry head (observation-only)** `runs/20261108-173840_RGR_geom_head` (2-layer transformer on WM v1 latent tokens +
+proprio, 6k steps, real + WM-imagined latents with true labels; val = the WM's held-out failure episodes, 1,024 bridges):
+
+| eval set | obj pos err median / p90 | goal pos err median | gripper-obj dist MAE | obj up-axis MAE | finger-obj contact AUC | corr(E_geom pred, true) | GeomInvalid AUC (true rate) |
+|---|---|---|---|---|---|---|---|
+| real latents (all frames) | 2.6 / 6.0 cm | 0.66 cm | 2.5 cm | 0.019 | 0.955 | 0.66 | 0.86 (2.9 %) |
+| WM-imagined end state (h = 10) | 2.8 / 6.5 cm | 0.83 cm | 2.8 cm | 0.036 | 0.862 | 0.42 | 0.61 (5.3 %) |
+| copy frame-0 prediction (baseline, end) | 3.1 / 6.6 cm | 0.66 cm | 8.8 cm | 0.038 | 0.550 | -0.20 | 0.33 |
+
+Reading: the head reads the robot / gripper-object relation and contacts well from real latents, but object position is
+only ~2.6 cm accurate (6x6-pooled DINOv2 tokens), and on IMAGINED end states the invalid-transition detector is weak
+(AUC 0.61): the WM imagination, not the head, limits observation-only geometry (same pattern as RQ3). Oracle numbers
+below use privileged state and are an upper bound only.
+
+**Search sweep (launched 17:42 UTC, d2ecd68c, 2 lanes x 8 sim workers, M5b train shards 0-3 = 127 instances;
+~4 min / instance for 6 arms).** Arms: single, single_geo, rec, rec_geo, rec_geo_oracle, rec_geo_nofc. Table,
+McNemar / sign-flip vs `single`, per-level (L1 / L2 / L3) and the pre-registered distill decision: pending
+(runs/_analysis/rgr/rgr.md, refreshed after each shard).
+Pre-registered distill rule (written before any result): best non-oracle arm with n01 > n10, McNemar p < 0.10 vs
+`single` and L3 solved rate >= single's -> 1-seed SFT (pi1 recipe, `configs/exp/rgr_sft.yaml`) of that arm AND of
+`single` at the same trajectory count, both evaluated on Spatial test RSR (per level) + nominal; otherwise no distill.

@@ -110,7 +110,28 @@ def main() -> None:
             L.append(f"- {arm}: {s1.mean():.3f} vs {s0.mean():.3f} (n {len(j)}), n01/n10 {n01}/{n10}, p {p:.3f}")
     (out / "rgr.md").write_text("\n".join(L) + "\n")
     d.to_parquet(out / "rows.parquet")
+    # pre-registered distill rule (2026-11-08, before any result): best non-oracle arm by solved-rate gain over
+    # `single`; distill only if n01 > n10 with McNemar p < 0.10 and its L3 solved rate is not below single's
+    dec = {"arm": None, "candidates": {}}
+    r0 = d[d.arm == a.ref].set_index("instance_id")
+    for arm in arms:
+        if arm == a.ref or "oracle" in arm:
+            continue
+        x = d[d.arm == arm].set_index("instance_id")
+        j = x.index.intersection(r0.index)
+        s1, s0 = x.loc[j, "solved"].astype(bool), r0.loc[j, "solved"].astype(bool)
+        n01, n10 = int((s1 & ~s0).sum()), int((~s1 & s0).sum())
+        p = binomtest(n01, n01 + n10, 0.5).pvalue if n01 + n10 else 1.0
+        l3 = x.loc[j][x.loc[j, "level"] == "L3"].solved.mean() - r0.loc[j][r0.loc[j, "level"] == "L3"].solved.mean()
+        dec["candidates"][arm] = {"d_solved": float(s1.mean() - s0.mean()), "n01": n01, "n10": n10, "p": float(p),
+                                  "d_l3": float(l3), "ok": bool(n01 > n10 and p < 0.10 and l3 >= 0)}
+    ok = {k: v for k, v in dec["candidates"].items() if v["ok"]}
+    if ok:
+        dec["arm"] = max(ok, key=lambda k: ok[k]["d_solved"])
+    dec["n_instances"] = int(len(keep))
+    (out / "decision.json").write_text(json.dumps(dec, indent=1))
     print("\n".join(L))
+    print("DECISION", json.dumps(dec))
 
 
 if __name__ == "__main__":

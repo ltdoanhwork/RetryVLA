@@ -26,14 +26,14 @@
    "since": "2026-11-08T16:17:09"
   },
   "d2ecd68c:0": {
-   "tmux": "rv_rgr_lab0",
-   "args": "scripts.geom_labels --workers 8 --shard 0 --num_shards 2",
-   "since": "2026-11-08T17:06:05"
+   "tmux": "rv_rgr_sw0",
+   "args": "retryvla.retry_oom --min_free_gb 20 retryvla.search.rgr_search configs/exp/rgr_sweep.yaml m5b.shard=0 eval.n_workers=8",
+   "since": "2026-11-08T17:42:43"
   },
-  "d2ecd68c:0:rv_rgr_lab1": {
-   "tmux": "rv_rgr_lab1",
-   "args": "scripts.geom_labels --workers 8 --shard 1 --num_shards 2",
-   "since": "2026-11-08T17:06:16"
+  "d2ecd68c:0:rv_rgr_sw1": {
+   "tmux": "rv_rgr_sw1",
+   "args": "retryvla.retry_oom --min_free_gb 20 retryvla.search.rgr_search configs/exp/rgr_sweep.yaml m5b.shard=1 eval.n_workers=8",
+   "since": "2026-11-08T17:42:53"
   }
  },
  "allow_only": {

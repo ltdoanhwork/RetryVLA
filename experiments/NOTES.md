@@ -889,3 +889,22 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
   | rv_xwm_s1_0 | b936d1d7:0 | shard 1 sub 0 of 2 (17) | 8 |
   | rv_xwm_s1_1 | b936d1d7:1 | shard 1 sub 1 of 2 (16) | 8 |
   First instance 223 s (5 arms x 8 verifications, 8 workers). GPU ~10-15 GB / lane (WM v1 + V-JEPA ViT-g + SmolVLA).
+
+## RGR (recursive geometric recovery) PoC, ops log 2026-11-08 (results: RESULTS "RGR")
+- Shell: the thanhnv shells are carrying the xwm sweep (other agent; untouched), so a 1-GPU shell was requested under
+  the user's own account: `det shell start --detach -w IAS_SAMMerge --config-file <copy of retryvla_shell_1gpu.yaml,
+  description vla_RetryVLA_DoanhLT_rgr>` (without `-w` it fails: "resource pool 42_Compute ... not available to workspace
+  id 1") -> d2ecd68c (cn28, container 87970a1a39b6, 1x A100 80 GB, node load ~11-13 from other containers). envcheck OK
+  (video decode, sim 50 steps 0.97 s NVIDIA EGL). Registered in shells.json allow_only + share_ok; `scripts/rgr_chain.py`
+  kills it (`det shell kill`) after phase 2 (set RGR_KEEP_SHELL=1 to keep).
+- Geometry label replays (rv_rgr_lab0/1, 2 x 8 workers) 17:06-17:37 UTC. First smoke caught a feature bug:
+  "infeasible" (floating object) used the height above the TABLE, but objects resting on the cabinet / stove sit
+  ~16 cm high -> fixed to the lift relative to the segment start (b9a7c0d). Smoke runs + their outputs deleted.
+- Budget note: in the first smoke the recursive arm executed only 4 first bridges and spent the rest on low-value
+  2-bridge chains; changed to adaptive screening (execute first bridges while the chains whose OBSERVED s_1 reaches B_0
+  do not fill the sim budget, <= 10 executions = 500 env steps), verification ordered by observed / re-planned C^pi,
+  replans capped by the 768-rollout imagination budget. Only smoke instances were looked at (train shard 0), no tuning
+  on results beyond this budget-accounting fix.
+- Chain `scripts/rgr_chain.py` (agent box local tmux `rgr_chain`, console runs/_logs/rgr_chain_console.log): head
+  (done 17:42) -> sweep shards 0-3, 2 at a time (rv_rgr_sw<k>, retry_oom, stall watchdog 45 min) -> analyze_rgr after
+  each shard -> phase 2: pre-registered decision -> optional matched SFT pair + test RSR / nominal -> kill d2ecd68c.
