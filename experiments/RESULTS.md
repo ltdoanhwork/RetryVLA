@@ -586,6 +586,12 @@ below use privileged state and are an upper bound only.
 ~4 min / instance for 6 arms).** Arms: single, single_geo, rec, rec_geo, rec_geo_oracle, rec_geo_nofc. Table,
 McNemar / sign-flip vs `single`, per-level (L1 / L2 / L3) and the pre-registered distill decision: pending
 (runs/_analysis/rgr/rgr.md, refreshed after each shard).
+Interim at 18:25 UTC (17 paired instances of shards 0-1, 2 L2 / 15 L3; NOT final, small n): solved single 0.588,
+single_geo 0.471, rec 0.294 (McNemar 0/5, p 0.06), rec_geo 0.412 (0/3), rec_geo_oracle 0.412, rec_geo_nofc 0.353.
+Geometry lowers FP a lot for the recursive arm (FP 0.73 rec -> 0.47 rec_geo; verified chains 99-100 % truly
+geom-valid) but no arm beats single yet; forward correction shows the WM's over-optimism directly: imagined C^pi of the
+executed first bridge's end state 0.28-0.29 vs observed 0.12-0.13; re-plan rate 0.26-0.37. Oracle = head here
+(geometry failures are rare, see base rates).
 Pre-registered distill rule (written before any result): best non-oracle arm with n01 > n10, McNemar p < 0.10 vs
 `single` and L3 solved rate >= single's -> 1-seed SFT (pi1 recipe, `configs/exp/rgr_sft.yaml`) of that arm AND of
 `single` at the same trajectory count, both evaluated on Spatial test RSR (per level) + nominal; otherwise no distill.
