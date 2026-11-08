@@ -181,3 +181,68 @@ Verification will follow a Ctrl-World-like approach ([arXiv 2510.10125](https://
 real data is available, a world model trained on the real dataset will act as the simulator / verifier, in place
 of MuJoCo sim verification. Its verdicts are WM verdicts, not "sim-verified"; see RQ3 for optimism caveats.
 Baselines on LIBERO-Recover (sim) are surveyed in `docs/related_work/LIBERO_RECOVER_BASELINES.md` (2026-11-02).
+
+## Recursive Policy-Conditioned Geometric Recovery (RGR), design note (user request 2026-11-08)
+Results go to `experiments/RESULTS.md` ("RGR"), ops to `experiments/NOTES.md`. Code: `retryvla/geom/` (features,
+head, exec), `retryvla/search/rgr_core.py`, `retryvla/search/rgr_search.py`, `configs/exp/rgr_sweep.yaml`,
+`scripts/geom_labels.py`, `scripts/analyze_rgr.py`. Default search / eval paths are unchanged (new modules only;
+`SimPool` worker gained an opt-in `bridge()` command).
+
+**Formulation.** B_0 = {s : C^pi(s, g) >= tau} (the frozen VLA's competence region, tau = 0.5).
+B_{k+1} = B_k U {s : exists bridge b with T_hat(s, b) in B_k and GeomValid(s, b)}. A recovery is a CHAIN of short
+bridges b_1..b_K (H = 50 env steps each) from the failure state through intermediate recoverable states into B_0,
+instead of one bridge. Bridge score J(b) = C^pi(s_H, g) - lambda E_geom(b) - 1[not GeomValid] - mu R(b)
+(R = action roughness, mu = 1 as every earlier arm; the plan's beta U_WM term is not used because the WM's own
+ensemble heads are identical (U == 0, NOTES RQ3) and the bootstrap U_ens did not help (RQ3)). Chain value of a first
+bridge: Q(b_1) = max(J(b_1), gamma max_{b_2} J(b_1, b_2)), gamma = 0.9 (imagined 2-step backward lookahead).
+E_geom terms (`retryvla/geom/features.py`, each in [0, 1], object-state terms counted only as a WORSENING vs the
+segment start): off_table (an object falls off), penetrate (contact penetration > 1 cm), tilt (manipulated object
+tips over), disturb (goal object pushed > 5 cm = rigid-body / collision consistency), align (gripper-object distance,
+weight 0.25), infeasible (object lifted without finger contact = floating). GeomValid = no off_table and the other
+hard terms < 0.5.
+Two sources of geometry: (a) ORACLE: privileged MuJoCo poses / contacts / gripper of the TRUE state after each
+executed segment (upper bound, labelled "oracle" everywhere); (b) OBSERVATION-ONLY: a small geometry head on the WM v1
+latent (`retryvla/geom/head.py`, labels from sim replays of the collect_v1 TRAIN bridges, trained on real + WM-imagined
+latents), applied to imagined states and to observed states. Head accuracy is reported (val episodes, real and
+imagined latents, vs copy-frame-0 baseline).
+**Forward geometric correction.** The first bridges of the chain are EXECUTED in sim, the real state is re-encoded;
+if the latent discrepancy to the WM prediction (normalized MSE > 0.40; WM v1 h10 mean is ~0.32) or the head's
+object-position discrepancy (> 3 cm, geo arms) is large, the next bridge is re-planned from the observed state (fresh
+SmolVLA samples at the real observation + primitives + the lookahead set) instead of continuing the imagined plan; if
+the observed state is already in B_0 the chain hands over to pi right there. Geo arms drop chains whose executed
+segment is geom-invalid (head on the observed state; oracle: true state) and execute the next first bridge.
+**Verification unchanged.** Every final chain is re-executed bit-exactly from the ORIGINAL failure snapshot
+(prefix = concatenated bridges, then the frozen pi), exactly as all earlier verified data; only these are written.
+
+**2x2 (+ oracle), paired** (same instances / proposal pools / continuation seeds as the rq3 / vj / xwm sweeps;
+M5b train shards 0-3, never test):
+
+| | single bridge | recursive (K = 2, forward correction) |
+|---|---|---|
+| no geometry | `single` (= wm_unc_l0 / M5b pipeline) | `rec` |
+| geometry head (obs-only) | `single_geo` | `rec_geo` |
+| geometry oracle (privileged) | - | `rec_geo_oracle` (upper bound) |
+
+Fairness: imagination <= ~768 WM bridge rollouts per arm and instance (single: 256 pool + 2 x 256 CEM; recursive:
+256 pool + 128 CEM + 12 x 16 lookahead + re-plans, logged per instance); sim budget = 8 x (H + 300) worst-case env
+steps per arm, segment executions included (a 2-bridge chain costs 400, so recursive arms verify ~6 chains vs 8
+single bridges). Optional ablations: `rec_geo_nofc` (chain chosen fully in imagination), depth K = 3.
+
+**Metrics.** Search (train instances, paired McNemar on solved + sign-flip on hits): verified recovery yield = solved
+rate and hits per verification / per 1k sim steps; FP rate (imagined C^pi >= 0.5 but sim fails) imagined vs actual,
+and for recursive arms the imagined vs observed C^pi of s_1 (B_0 membership agreement); geometric validity of the
+verified chains (TRUE geometry at every segment boundary, measurement only); #bridges per solved chain; sim cost
+(verification + execution steps); re-plan rate and latent discrepancy. Per official level (train has L1 / L2 / L3,
+no L4: train scenes 4 L1 / 34 L2 / 74 L3, pilot 20 L2 / 40 L3; the 256 M5b pi0 failures are 11 L1 / 83 L2 / 162 L3)
+-> L3 ("object-state recovery") is the key level. Distillation (only if a variant is clearly better than `single` in
+verified yield, esp. on L3): recovery dataset from that arm, 1-seed SFT with the standard config (pi1 recipe, 6k steps,
+r 0.5), test RSR overall + per level (Spatial test: 1 L1 / 11 L2 / 16 L3 official, no L4; Object test L1-L2 only)
+and nominal (<= 2 pt drop vs pi1-nominal 0.796).
+
+**Claim boundaries.** Oracle numbers are upper bounds (privileged state), never "observation-only". The geometry head
+is trained on TRAIN bridges only and only its measured accuracy may be quoted. A search-level gain is a claim about
+acquisition (verified yield per sim), not about the policy, unless the distilled policy improves test RSR beyond the
+~4 pt noise level (1 seed = directional only). Recursive gains may come from closed-loop re-planning (re-observing
+after the first bridge) rather than from geometry: the 2x2 separates the two; do not attribute a `rec` gain to
+"geometric recoverability". L4 cannot be evaluated (no L4 scenes in our splits). Do not claim the recursive set B_k is
+computed: it is approximated by K <= 3 search with a learned C^pi and WM.

@@ -96,6 +96,30 @@ class _RecordingSim:
             out.pop("obs", None)
         return out
 
+    def bridge(self, actions, every: int = 5, snapshot: bool = True, stop_on_success: bool = True) -> dict:
+        """RGR (opt-in, not used by default paths): execute an open-loop bridge segment, return the end obs,
+        privileged geometry (retryvla.geom.features.sim_geom) at t = 0, every, 2*every, ... and at the end
+        ([F, G], F = len // every + 1 when the bridge runs to the end), success, n steps and the exact end
+        snapshot (to branch / chain the next segment)."""
+        from retryvla.geom.features import sim_geom
+
+        geoms = [sim_geom(self.sim)]
+        out = {"success": False, "n": 0}
+        acts = np.asarray(actions, dtype=np.float32)
+        for t, a in enumerate(acts):
+            out = self.step(a) | {"n": out["n"] + 1}
+            if (t + 1) % every == 0:
+                geoms.append(sim_geom(self.sim))
+            if out["success"] and stop_on_success:
+                break
+        if out["n"] % every:
+            geoms.append(sim_geom(self.sim))
+        out["geom"] = np.stack(geoms)
+        if snapshot:
+            out["snapshot"] = self.sim.snapshot()
+        out["obs"] = self._last_obs
+        return out
+
     def begin(self, load_cmd: str, load_kwargs: dict, record: bool = False,
               return_snapshot: bool = False, record_cfg: dict | None = None) -> dict:
         out = dict(getattr(self.sim, load_cmd)(**load_kwargs))

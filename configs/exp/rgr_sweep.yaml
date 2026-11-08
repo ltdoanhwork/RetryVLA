@@ -1,0 +1,39 @@
+# RGR (Recursive Policy-Conditioned Geometric Recovery), user 2026-11-08. 2x2 {geometry verifier} x {recursive}
+# + oracle-geometry upper bound, paired on the SAME M5b train-split instances / pools / continuation seeds as the
+# rq3 / vj / xwm sweeps (shards 0-1 = the 63 instances of those sweeps; shards 2-3 add 64 more). TRAIN split only.
+# Nothing here was tuned on test; tau / lam / thresholds are set a priori (below), not swept.
+defaults: [exp/rq3_verifier_sweep]
+milestone: RGR
+tag: rgr_sweep
+eval:
+  n_workers: 8
+m5b:
+  budget: 8               # single: 8 verified bridges; every arm: sim budget = budget x (H + cont) worst-case env steps
+  log_uens: false
+  boot_heads: null
+  verif_slim: true
+  num_sub_shards: 1
+  sub_shard: 0
+rgr:
+  arms: [single, single_geo, rec, rec_geo, rec_geo_oracle, rec_geo_nofc]   # 2x2 + oracle + no-forward-correction ablation; rec3_geo = K 3
+  geom_head_link: data/geom/latest_geom_head.txt
+  tau: 0.5                # B_0 = {s: C^pi(s, g) >= tau}
+  gamma: 0.9              # chain discount: prefer the shorter chain at equal value
+  lam_geom: 1.0           # J = C^pi - lam E_geom - 1[invalid] - mu R (geo arms)
+  single_cem_iters: 2     # single: pool 256 + 2 x 256 CEM = 768 imagined bridges (= M5b / rq3 wm_unc_l0)
+  rec_cem_iters: 1        # rec: pool 256 + 1 x 128 CEM + n1 x n2 lookahead + replans (<= ~768 in total)
+  rec_cem_n: 128
+  n1: 12                  # level-1 bridges expanded in the imagined lookahead
+  n2: 16                  # continuation bridges per level-1 bridge (8 primitives + 8 random pool members)
+  k1: 4                   # level-1 bridges executed in sim (forward correction)
+  max_exec: 10            # first bridges executed at most (adaptive screening while the budget allows)
+  imag_budget: 768        # recursive arms: total imagined bridge rollouts incl. re-plans (= single's 256 + 2 x 256)
+  replan_vla: 16          # replan pool at the observed state: 16 SmolVLA samples + 16 primitives + the n2 set
+  replan_prim_random: 8
+  disc_thr: 0.40          # latent discrepancy (normalized MSE, WM v1 h10 mean ~0.32) above which b2 is re-planned
+  value_disc_thr: 0.5     # or |C^pi(observed s_1) - C^pi(imagined s_1)| above this
+  geo_disc_thr_cm: 3.0    # or: head(real s_1) vs head(imagined s_1) object-position discrepancy (geo arms)
+  depth: 2                # K (3 = one more executed + re-planned segment when the best b2 is still < tau)
+  measure_geom: true      # measurement only: TRUE geometry at every segment boundary of every verified chain
+  out_root: data/recovery/rgr_sweep
+  max_instances: 0
