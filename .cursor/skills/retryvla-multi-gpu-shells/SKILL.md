@@ -18,10 +18,7 @@ and its **32 CPUs are shared across them**. That matters: MuJoCo sim workers are
 
 ## 0. Never touch these
 
-**Current mode (user, 2026-11-02 15:57 +07): RetryVLA runs ONLY on `dedc84ce` (cn69, shared with an owner job;
-SFT GPU) and `c37611dd` (`vla_RetryVLA_DoanhLT_1`, cn43, = the Cursor agent container; other projects' ASR jobs hold
-~57 GB / 99 % util -> evals only, <= 12 sim workers). Both are `allow_only` + `share_ok`; `0097c39c` and `8a2808f9`
-were removed (`shells.json:gone`). Never touch any other shell.** History of the previous mode below.
+**Current mode (user, 2026-11-08): RetryVLA may add a FEW SMALL jobs on thanhnv's `335de36e` (`vla_roboworm_thanhnv_2-1`, cn06) and `b936d1d7` (`vla_roboworm_thanhnv_2-2`, cn37), each 2x A100 80 GB / 32 CPU, idle at the 2026-11-08 probe. Both `allow_only` + `share_ok`, light jobs only: <= 8 sim workers / job, `retry_oom`, never touch non-`rv_` sessions, back off if the owner ramps up. `c37611dd`, `dedc84ce`, `bd8bdcf6`, `89995d8d` are gone (`shells.json:gone`). Never touch any other shell.** History of the previous mode below.
 
 Previous mode (user, 2026-10-27): NO borrowing. RetryVLA's GPU was Determined shell `0097c39c`
 (`0097c39c-553a-4bdd-b81a-09a55ac8c034`, `vla_RetryVLA_DoanhLT_1`, node cn69, 1x A100 80 GB; the old `49b70230` is gone).

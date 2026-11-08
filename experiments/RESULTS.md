@@ -447,7 +447,7 @@ default 0 = OFF). Configs `configs/train/af_*.yaml`; chain `scripts/af_chain.sh`
   identical (max |diff| 0.0); `tests/test_af_default.py` (old vs new MixDataset streams identical; masking).
 - Results (arm 3 / arm 5 seed 0, test RSR + nominal vs pi1 0.439 / 0.808, 3-seed 0.418): pending, see summary.md.
 
-## 6-arm ablation x 3 seeds (plan todo `ablation`; RUNNING since 2026-11-02 09:06 UTC)
+## 6-arm ablation x 3 seeds (plan todo `ablation`; DONE 2026-11-03 09:37 UTC, all 18 cells)
 Arms (same init pi1-nominal, 6k steps, bs 32, 50 % nominal replay, same eval seeds / protocol; only the recovery /
 future mix and `train.seed` differ): 1 demo-only (`exp/m9_sft_demo_only`), 2 action-grounded pi1 (M5c + M8 seeds),
 3 action-free C^pi-filtered, 4 action-free unfiltered (random futures), 5 hybrid (`train/af_arm{3,4,5}_*`),
@@ -458,7 +458,26 @@ runs/_analysis/ablation/ablation.md (re-run by the chain after every finished ce
 queued: the online lambda sweep (runs/_analysis/verifier E2) shows no clear gain (wm_unc_l1 vs l0 solved 0.388 vs 0.306,
 McNemar p 0.29; hits / sim 0.115 vs 0.122), so the plan's distill condition is not met and no lambda was chosen.
 
-Status 2026-11-02 09:15 UTC (finished cells only; nominal margin = mean >= pi1-nominal 0.796 - 2 pt):
+**Final (3 / 3 seeds every arm; `abl_chain` ALL DONE 2026-11-03 09:37 UTC, last cell arm 4 s2 relaunched on
+c37611dd after dedc84ce died).** Spatial test = 56 scenes x 10 episodes; ± = sd over SFT seeds; vs pi1 = scene x seed
+bootstrap CI + sign-flip p; McNemar pooled over seed pairs; nominal margin = mean >= pi1-nominal 0.796 - 2 pt.
+Copy: runs/_analysis/ablation/ablation.md (+ per-level table).
+
+| arm | test RSR | per seed | dRSR vs pi1 [95% CI], p | McNemar n01/n10, p | nominal | margin | official L2 (11) / L3 (16) |
+|---|---|---|---|---|---|---|---|
+| 1 demo-only | 0.136 ± 0.015 | 0.127 / 0.127 / 0.154 | -0.283 [-0.373, -0.195], p < 1e-4 | 55/530, 1.6e-98 | 0.815 ± 0.012 | pass | 0.106 / 0.106 |
+| 2 action-grounded (pi1) | **0.418 ± 0.021** | 0.439 / 0.396 / 0.420 | (ref) | (ref) | 0.785 ± 0.021 | pass | 0.448 / 0.383 |
+| 3 action-free, C^pi-filtered | 0.125 ± 0.002 | 0.123 / 0.125 / 0.127 | -0.293 [-0.380, -0.210], p < 1e-4 | 57/550, 3e-102 | 0.801 ± 0.023 | pass | 0.094 / 0.115 |
+| 4 action-free, unfiltered | 0.120 ± 0.014 | 0.114 / 0.136 / 0.109 | -0.299 [-0.386, -0.215], p < 1e-4 | 45/547, 1.1e-110 | 0.804 ± 0.007 | pass | 0.094 / 0.108 |
+| 5 hybrid (2 + 3) | 0.370 ± 0.006 | 0.362 / 0.371 / 0.375 | -0.049 [-0.088, -0.008], p 0.0015 | 139/221, 1.8e-05 | 0.780 ± 0.022 | pass | 0.352 / 0.348 |
+| 6 Backtrack-distill | 0.166 ± 0.015 | 0.182 / 0.164 / 0.152 | -0.252 [-0.342, -0.167], p < 1e-4 | 79/503, 1.7e-76 | 0.798 ± 0.014 | pass | 0.133 / 0.158 |
+
+Reading: action-grounded recovery data is the whole effect. Action-free futures (filtered or not) are no better than
+demo-only (arm 3 vs 4: 0.125 vs 0.120, C^pi filtering adds nothing); mixing them in (arm 5, which sees half of pi1's
+grounded samples per batch) costs ~5 pt RSR vs pi1 (significant). Backtrack-distill is +3 pt over demo-only, far below pi1. Every
+arm keeps nominal within the 2 pt margin.
+
+Superseded status 2026-11-02 09:15 UTC (finished cells only at the time):
 
 | arm | seeds RSR / nom | test RSR | dRSR vs pi1 [95% CI], p | McNemar vs pi1 n01/n10, p | nominal | margin | L2 (11) / L3 (16) official |
 |---|---|---|---|---|---|---|---|
@@ -493,7 +512,12 @@ analyze_wm_true.py, vj_rescore.py, analyze_vj_online.py.
 - Critic self-exploitation control (M9 `sim_prefix_critic`, picks chosen by C^pi on the REAL end state): mean C 0.267 vs
   real SR 0.115, FP 0.644 -> the critic is also exploitable, but by ~0.15 vs 0.46-0.75 for WM imagination.
 - **Verdict: both, WM-dominated.** Ranking by the true end state would lift p@4 0.193 -> 0.237 (all candidates).
-- High-budget breakdown on the RQ3-sweep picks (re-simulated, `data/wm/true_end_rq3`): see summary.md section true_end_rq3.
+- High-budget breakdown on the RQ3-sweep picks (63 train instances, 1920 picks re-simulated on CPU / Mesa,
+  `data/wm/true_end_rq3`; summary.md section true_end_rq3, folded in 2026-11-08). The WM share of the over-optimism grows
+  with the imagination budget: wm_bud_l0 gap WM (a-b) -0.01 / +0.09 / +0.22 / +0.33 at N = 8 / 32 / 128 / 512, gap
+  critic (b-SR) +0.05 / +0.09 / +0.12 / +0.18 (critic share also grows); AUC(b) stays 0.85-0.91 while AUC(a) drops
+  0.88 -> 0.65. lambda > 0 (wm_unc_l0.5..l2, 17 inst.) shrinks the WM gap +0.44 -> +0.31..0.39 but not FP(a) (0.73-0.76).
+  Pooled: FP(a) 0.81 vs FP(b) 0.61, p@4 0.163 by (a) vs 0.198 by (b). Same verdict: WM-dominated, critic second.
 
 **Step 2: V-JEPA 2-AC (Meta, MIT; ViT-g 1.01B frozen + AC predictor 305M, DROID).** Adapter retryvla/wm/vjepa2_ac.py:
 agent view, 16x16 tokens -> 2x2 pool -> 64 x 1408; 1 model step = 5 env steps (20 Hz -> 4 Hz = DROID rate); chunk action

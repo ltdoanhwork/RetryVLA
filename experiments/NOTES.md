@@ -836,3 +836,29 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
 - Chain `scripts/vj_chain.py` (local tmux) DONE 22:54 UTC 2026-11-02: fine-tune 18:09-19:20, critic 19:32-19:48, encodes,
   offline rescoring, online sweeps s0/s1 (rv_vjsweep_*, rc 0, 22:38 / 22:54). dedc84ce was TERMINATED ~23:00 UTC:
   nothing of this work was lost; stale dedc84ce claims removed, dedc84ce moved to shells.json:gone.
+
+## thanhnv shells probe + pending-work audit, 2026-11-08 (~09:35-09:50 UTC)
+- User: two Determined shells `vla_roboworm_thanhnv_2-1` (335de36e, cn06) and `vla_roboworm_thanhnv_2-2` (b936d1d7,
+  cn37) belong to thanhnv; a FEW SMALL RetryVLA jobs may use idle capacity. Read-only probe 09:37 UTC:
+
+  | shell | node / container | GPU 0 used / peak util | GPU 1 used / peak util | load / nproc | owner procs / tmux |
+  |---|---|---|---|---|---|
+  | 335de36e (2-1) | cn06 / 2ff49dc615a0 | 0 MiB / 0 % | 0 MiB / 0 % | 15.9 / 32 (other containers on the node) | none (only stale `git log` pagers from sshd) / none |
+  | b936d1d7 (2-2) | cn37 / 21a1ed348945 | 0 MiB / 0 % | 0 MiB / 0 % | 2.6 / 32 | none / none |
+
+  envcheck: both OK video decode + OK sim 50 steps 1.05 s / 0.94 s (NVIDIA EGL). -> shells.json allow_only + share_ok
+  ("light jobs only, owner thanhnv": <= 8 sim workers / job, retry_oom, never touch non-rv_ sessions).
+- c37611dd and bd8bdcf6 are no longer in `det shell list` (terminated) -> shells.json:gone; the stale
+  `bd8bdcf6:cpu:rv_diagcpu` claim (job finished rc 0 2026-11-03 06:50) removed; dedc84ce / 89995d8d already in gone.
+  bd8bdcf6 needed no kill. The agent box is now 8e980338 (`vla_RetryVLA_DoanhLT_1`, cn55), not in allow_only.
+- Pending-work audit -> **nothing left to launch**:
+  1. Ablation arm 4 seed 2 RSR: finished on c37611dd (rv_abl_a4s2_rec rc 0, 09:37 UTC 2026-11-03), abl_chain ALL DONE,
+     runs/_analysis/ablation/ablation.md already the full 6 x 3 table (re-run by the chain). RESULTS section finalised.
+  2. V-JEPA 2-AC work was NOT lost with dedc84ce: vj_chain DONE 22:54 UTC 2026-11-02 before the shell died (vj sweeps
+     s0 30/30, s1 33/33 instances, p0 CLOSED; RESULTS "RQ3 follow-up"). Decision there: not clearly better than WM v1
+     (McNemar p 0.45 / 0.77) -> plan gate says no distill, so no SFT / test RSR is due. The Step-1 high-budget
+     true-end diag (rows_rq3.parquet, 1920 picks, CPU on bd8bdcf6, done 06:50 UTC 11-03) had never been folded into
+     summary.md: re-ran `scripts/analyze_wm_true.py` (CPU, 20 s) -> section true_end_rq3; numbers in RESULTS.
+  3. RQ3 sweep: the relaunch (rv_rq3_sweep_s0/s1, 2026-11-02 10:00) finished rc 0 at 11:03 / 11:16 UTC; parts p0 + p1
+     CLOSED, 30 + 33 = 63 instances, same 63 as the V-JEPA sweep. Done.
+- No jobs launched on the thanhnv shells (none pending); they stay registered for the next RetryVLA eval work.
