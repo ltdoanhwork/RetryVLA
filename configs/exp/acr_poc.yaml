@@ -1,0 +1,29 @@
+# ACR (Active Causal Recovery) PoC, user 2026-11-09. Design + pre-registered gates: experiments/PLAN.md "ACR".
+# Same instances / protocol / pi0 / continuation length as the RGR sweep (M5b train shards 0-3), TRAIN split only.
+# Nothing is tuned on evaluation states: hidden-magnitude ranges are fixed on the 3 calibration states (tier calib).
+defaults: [exp/rgr_sweep]
+milestone: ACR
+tag: acr
+eval:
+  n_workers: 8
+acr:
+  tier: B                       # calib | B | A
+  mode: collect                 # collect | postprobe
+  decisions: null               # postprobe: runs/_analysis/acr/decisions_<tier>.json
+  instances: data/acr/instances.json
+  shards: [0, 1, 2, 3]          # M5b shards the RGR sweep used (instances are reconstructed from them)
+  precheck_from: ["runs/*_RGR_rgr_sweep_s*/precheck.csv"]
+  out_root: data/acr/v1
+  lane: 0
+  num_lanes: 1
+  max_states: 0
+  families: [vla, hover, grasp_slow, grasp_firm, push_goal, retreat]
+  n_real_var: 6                 # outcome-table variants per family and case (budgets B <= 8 read off the table)
+  n_plan_var: 2                 # planning trials per family and particle
+  cont_steps: 300               # frozen-pi continuation after the prefix (= search.continuation_max_steps)
+  perception_sigma: 0.025       # simulated object / goal position noise of object-relative families (m)
+  types:                        # hidden type -> magnitude range [lo, hi]; planning particles = the two ends
+    slippery: [0.05, 0.2]       # object sliding friction x (with raised geom priority)
+    anchored: [3.0, 10.0]       # planar dry friction on the object's free joint (N)
+    heavy: [1.0, 3.0]           # object mass (kg; nominal bowl ~0.006)
+    weak_grip: [0.05, 0.2]      # gripper actuator force range x (nominal +-20 N)

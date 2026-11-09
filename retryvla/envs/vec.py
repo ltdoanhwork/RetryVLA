@@ -122,11 +122,67 @@ class _RecordingSim:
 
     def begin(self, load_cmd: str, load_kwargs: dict, record: bool = False,
               return_snapshot: bool = False, record_cfg: dict | None = None) -> dict:
-        out = dict(getattr(self.sim, load_cmd)(**load_kwargs))
+        fn = getattr(self, load_cmd) if load_cmd in self._OWN_LOADS else getattr(self.sim, load_cmd)
+        out = dict(fn(**load_kwargs))
         self._last_obs = out["obs"]
         self.record(bool(record), segment=1, **(record_cfg or {}))
         if not return_snapshot:
             out.pop("snapshot", None)
+        return out
+
+    # ---- ACR (opt-in, not used by default paths): hidden physics + diagnostic probes ----
+    _OWN_LOADS = ("restore_hidden", "restore_family")
+
+    def restore_family(self, bddl: str, snap: dict, hidden: dict | None = None, wps: list | None = None) -> dict:
+        """ACR Job load command: restore_hidden, then execute a recovery-family prefix (waypoints); pi continues from
+        the returned obs. Prefix steps / success are reported in the load output (n_prefix, prefix_success)."""
+        out = self.restore_hidden(bddl, snap, hidden)
+        r = self._run_family(wps or [], snapshot=False)
+        out.update({"obs": self._last_obs, "n_prefix": int(r["n"]), "prefix_success": bool(r["success"]),
+                    "geom_after_prefix": r["geom1"]})
+        return out
+
+    def restore_hidden(self, bddl: str, snap: dict, hidden: dict | None = None) -> dict:
+        """restore_snapshot, then reset the model to nominal and apply hidden parameters (retryvla.causal.hypotheses).
+        Always use this (also with hidden=None) in ACR workers so no hypothesis leaks across jobs."""
+        from retryvla.causal.hypotheses import apply_hidden
+
+        out = self.sim.restore_snapshot(bddl, snap)
+        out["hidden"] = apply_hidden(self.sim, hidden)
+        self._last_obs = out["obs"]
+        return out
+
+    def probe(self, actions, snapshot: bool = True, abort_disp: float = 0.03) -> dict:
+        """Execute a diagnostic probe open-loop; return response features (retryvla.causal.probes.response) + the
+        exact end snapshot (recovery trials after a probe start there)."""
+        from retryvla.causal.probes import run_probe
+
+        out = run_probe(self, np.asarray(actions, np.float32), abort_disp=abort_disp)
+        if snapshot:
+            out["snapshot"] = self.sim.snapshot()
+        out["obs"] = self._last_obs
+        return out
+
+    def run_family(self, wps: list, snapshot: bool = True) -> dict:
+        """ACR: execute a recovery-family prefix (retryvla.causal.families waypoints, closed-loop servo on the eef);
+        returns success, n, privileged end geometry and the exact end snapshot (pi continues from there)."""
+        return self._run_family(wps, snapshot)
+
+    def state_info(self) -> dict:
+        """ACR: privileged geometry of the current state + nearest other free object (Tier A cause labels)."""
+        from retryvla.causal.causes import other_objects_min_dist
+        from retryvla.geom.features import sim_geom
+
+        return {"geom": sim_geom(self.sim), "clutter_dist": other_objects_min_dist(self.sim)}
+
+    def _run_family(self, wps: list, snapshot: bool = True) -> dict:
+        from retryvla.causal.families import run_waypoints
+        from retryvla.geom.features import sim_geom
+
+        out = run_waypoints(self, wps)
+        out["geom1"] = sim_geom(self.sim)
+        if snapshot:
+            out["snapshot"] = self.sim.snapshot()
         return out
 
     def finish(self, keep_record: bool = False, snapshot: bool = False) -> dict:
@@ -136,6 +192,8 @@ class _RecordingSim:
         return out
 
     def __getattr__(self, name):
+        if name.startswith("_"):
+            raise AttributeError(name)
         fn = getattr(self.sim, name)
         if not callable(fn):
             return fn
