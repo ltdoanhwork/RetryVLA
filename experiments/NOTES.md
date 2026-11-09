@@ -928,3 +928,24 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
 - Controls vs the earlier sweeps (same pools / seeds): identical per-slot outcomes on 78 % (WM v1) / 72 % (V-JEPA) of
   instances, solved 0.367 vs 0.350 / 0.400 vs 0.417: GPU non-determinism in the bf16 WM rollouts changes some CEM picks
   -> only the IN-RUN controls are used for the paired tests.
+
+## ACR (Active Causal Recovery) PoC, ops log 2026-11-09 (design: PLAN "ACR"; results: RESULTS "ACR")
+- Shells: the thanhnv shells are unavailable (335de36e: owner job at 99 % / load 78; b936d1d7 not in the probe), the
+  agent box (8e980338, cn55) GPU is someone's 100 %. So, as for RGR, a 1-GPU shell was requested under the user's own
+  account: `det shell start --detach -w IAS_SAMMerge --config-file <copy of retryvla_shell_1gpu.yaml, description
+  vla_RetryVLA_DoanhLT_acr>` -> e26be342 (cn48, container d0ebdd764ec7, 1x A100 80 GB, node load ~20 / 32 from other
+  containers). envcheck OK (video decode, sim 50 steps 0.94 s NVIDIA EGL). shells.json allow_only + share_ok.
+- Code checks (single process, agent box, 1 sim, no policy): the OSC delta is world-aligned, ~1 cm / step at |a| = 1
+  (probe / servo scale fixed to that); the bowl weighs 5.6 g, gripper = position actuator, force range +-20 N;
+  MuJoCo combines contact friction by MAX -> "slippery" needs a raised geom priority. Lowering the OBJECT friction made
+  the bowl slide onto the plate by itself (prefix success at step 1) -> slippery redefined as FINGER friction (resting
+  state unchanged; tests/test_causal.py::test_static_equivalence). All 5 tests pass (render-identical first obs,
+  bit-exact nominal after a hypothesis, every hypothesis changes some probe response, static equivalence, lengths).
+- Calibration (rv_acr_calib, 12 workers, 3 calibration states x 22 hypotheses x 3 scripted prefixes x 3 variants, no
+  policy, 2.7 min): ranges frozen (PLAN "Calibration outcome"); anchored dropped.
+- Smoke (rv_acr_smoke, 1 CALIBRATION state, tier B pipeline, 12 workers): 663 s / state (7 particles x 6 families x 2
+  planning trials + 4 cases x 36 outcome-table trials + 99 probes); analysis end-to-end OK (index bug fixed).
+  Smoke outputs deleted (calibration state, never reported).
+- 16:14 UTC chain `scripts/acr_chain.py` (agent box local tmux `acr_chain`, console runs/_logs/acr_chain_console.log):
+  rv_acr_B0 / B1 (tier B, 25 states, 2 lanes x 7 workers) -> rv_acr_A0 / A1 (tier A, 60 states) -> analyze_acr (3
+  feature sets) -> postprobe B / A -> analyze. Expected ~4 h tier B + ~1.5 h tier A. Shell kept for review follow-ups.
