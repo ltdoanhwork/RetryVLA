@@ -116,7 +116,7 @@ def collect(cfg, pool, policy, srun, run):
     a = cfg.acr
     tier = str(a.tier)
     sel = json.loads((REPO_ROOT / a.instances).read_text())
-    ids = {"calib": sel["tier_b_calib"], "B": sel["tier_b"], "A": sel["tier_a"]}[tier]
+    ids = sel[a.id_list] if a.get("id_list") else {"calib": sel["tier_b_calib"], "B": sel["tier_b"], "A": sel["tier_a"]}[tier]
     ids = ids[int(a.get("lane", 0)):: int(a.get("num_lanes", 1))]
     if int(a.get("max_states", 0)):
         ids = ids[: int(a.max_states)]

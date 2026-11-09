@@ -42,9 +42,9 @@ def outcome(O: np.ndarray, Ns: np.ndarray, n: np.ndarray) -> tuple[bool, int, in
     return hits > 0, hits, steps, alloc
 
 
-def score_case(arm, n, probe, O, Ns, case, plen, base_alloc):
+def score_case(arm, n, probe, O, Ns, case, plen, base_alloc, probes=None):
     s, h, st, alloc = outcome(O, Ns, n)
-    psucc = bool(probe is not None and case["probe_success"][probe])
+    psucc = bool(probe is not None and case["probe_success"][list(plen).index(probe)])
     st += plen.get(probe, 0) if probe is not None else 0
     return {"arm": arm, "solved": bool(s or psucc), "hits": h, "steps": st, "probe": probe, "alloc": alloc,
             "probe_success": psucc, "changed": alloc != base_alloc}
@@ -325,7 +325,7 @@ def main() -> None:
             cr, cg, nc = change_gain(dB, "evi_probe")
             md.append(f"\nevi_probe decision-change rate {cr:.3f} ({nc}), mean solved gain on changed {cg:+.3f}")
             per = dB.pivot_table(index="h_type", columns="arm", values="solved", aggfunc="mean")
-            md += ["", "Per hidden type / cause (solved):", "", per.reindex(columns=[a for a in ARMS if a in per]).round(3).to_markdown()]
+            md += ["", "Per hidden type / cause (solved):", "", md_table(per.reindex(columns=[a for a in ARMS if a in per]).astype(float).round(3))]
             if B == B_PRIMARY:
                 o = tests[0]
                 g = {"oracle_gain_pt": 100 * (o["sa"] - o["sb"]), "oracle_p": o["p"]}
