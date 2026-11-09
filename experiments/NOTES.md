@@ -908,3 +908,7 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
 - Chain `scripts/rgr_chain.py` (agent box local tmux `rgr_chain`, console runs/_logs/rgr_chain_console.log): head
   (done 17:42) -> sweep shards 0-3, 2 at a time (rv_rgr_sw<k>, retry_oom, stall watchdog 45 min) -> analyze_rgr after
   each shard -> phase 2: pre-registered decision -> optional matched SFT pair + test RSR / nominal -> kill d2ecd68c.
+- FINAL (checked 2026-11-09 02:50 UTC): shards sw0-sw3 rc 0 (19:48 / 20:04 / 21:49 / 22:22 UTC), 127 paired instances;
+  phase 2 decision `arm: null` (no candidate has n01 > n10 with p < 0.10; best rec_geo_nofc 11/12, p 1.0) -> no SFT
+  launched; `det shell kill d2ecd68c` rc 0 at 22:22 (state TERMINATED). shells.json: d2ecd68c removed from allow_only /
+  share_ok (no claims left) -> gone. RESULTS "RGR" marked FINAL (negative).

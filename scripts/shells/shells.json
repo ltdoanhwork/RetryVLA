@@ -21,30 +21,23 @@
  },
  "claims": {
   "335de36e:0": {
-   "tmux": "rv_xwm_s0",
-   "args": "retryvla.retry_oom --min_free_gb 20 retryvla.search.compare_arms configs/exp/xwm_sweep.yaml m5b.shard=0 m5b.num_sub_shards=1 m5b.sub_shard=0 eval.n_workers=6",
-   "since": "2026-11-08T16:17:09"
+   "tmux": "rv_xwm_s1_0",
+   "args": "retryvla.retry_oom --min_free_gb 20 retryvla.search.compare_arms configs/exp/xwm_sweep.yaml m5b.shard=1 m5b.num_sub_shards=2 m5b.sub_shard=0 eval.n_workers=4",
+   "since": "2026-11-09T02:51:30"
   },
-  "d2ecd68c:0": {
-   "tmux": "rv_rgr_sw0",
-   "args": "retryvla.retry_oom --min_free_gb 20 retryvla.search.rgr_search configs/exp/rgr_sweep.yaml m5b.shard=0 eval.n_workers=8",
-   "since": "2026-11-08T17:42:43"
-  },
-  "d2ecd68c:0:rv_rgr_sw1": {
-   "tmux": "rv_rgr_sw1",
-   "args": "retryvla.retry_oom --min_free_gb 20 retryvla.search.rgr_search configs/exp/rgr_sweep.yaml m5b.shard=1 eval.n_workers=8",
-   "since": "2026-11-08T17:42:53"
+  "335de36e:1": {
+   "tmux": "rv_xwm_s1_1",
+   "args": "retryvla.retry_oom --min_free_gb 20 retryvla.search.compare_arms configs/exp/xwm_sweep.yaml m5b.shard=1 m5b.num_sub_shards=2 m5b.sub_shard=1 eval.n_workers=4",
+   "since": "2026-11-09T02:51:41"
   }
  },
  "allow_only": {
   "335de36e": "owner thanhnv; LIGHT JOBS ONLY (user 2026-11-08): <= 8 sim workers / job, retry_oom, never touch non-rv_ processes, back off if the owner ramps up. vla_roboworm_thanhnv_2-1 (335de36e-7f25-4b34-8979-2e74ded69fce), node cn06, container 2ff49dc615a0, 2x A100 80GB, 32 CPU (node load ~15.9 from other containers). Probe 2026-11-08 09:37 UTC: both GPUs 0 MiB / 0 % util, no owner tmux / GPU processes. envcheck: OK video decode, OK sim 50 steps 1.05 s (NVIDIA EGL)",
-  "b936d1d7": "owner thanhnv; LIGHT JOBS ONLY (user 2026-11-08): <= 8 sim workers / job, retry_oom, never touch non-rv_ processes, back off if the owner ramps up. vla_roboworm_thanhnv_2-2 (b936d1d7-8a44-4bb8-8f76-a9edb41eb320), node cn37, container 21a1ed348945, 2x A100 80GB, 32 CPU (load ~2.6). Probe 2026-11-08 09:37 UTC: both GPUs 0 MiB / 0 % util, no owner tmux / GPU processes. envcheck: OK video decode, OK sim 50 steps 0.94 s (NVIDIA EGL)",
-  "d2ecd68c": "vla_RetryVLA_DoanhLT_rgr (d2ecd68c-9ef7-43e7-be02-31f14c60a74c), USER'S OWN account, requested by the agent 2026-11-08 16:53 UTC for the recursive geometric recovery PoC (RGR: geometry head, searches, SFT). node cn28, container 87970a1a39b6, 1x A100 80GB, 32 CPU (node load ~11-13 from other containers). envcheck OK video decode, OK sim 50 steps 0.97 s. KILL when RGR done."
+  "b936d1d7": "owner thanhnv; LIGHT JOBS ONLY (user 2026-11-08): <= 8 sim workers / job, retry_oom, never touch non-rv_ processes, back off if the owner ramps up. vla_roboworm_thanhnv_2-2 (b936d1d7-8a44-4bb8-8f76-a9edb41eb320), node cn37, container 21a1ed348945, 2x A100 80GB, 32 CPU (load ~2.6). Probe 2026-11-08 09:37 UTC: both GPUs 0 MiB / 0 % util, no owner tmux / GPU processes. envcheck: OK video decode, OK sim 50 steps 0.94 s (NVIDIA EGL)"
  },
  "share_ok": {
   "335de36e": true,
-  "b936d1d7": true,
-  "d2ecd68c": true
+  "b936d1d7": true
  },
  "gone": {
   "0097c39c": "vla_RetryVLA_DoanhLT_1 (cn69), RetryVLA's GPU 2026-10-27..10-31; not RUNNING since 2026-11-01 (user 2026-11-02: no longer running). Removed from allow_only",
@@ -52,7 +45,8 @@
   "dedc84ce": "vla_BSC_DoanhLT_1 (cn69) TERMINATED ~23:00 UTC 2026-11-02 (coordinator 2026-11-03 06:00). All rv_ jobs there had finished (vj_chain DONE 22:54). Removed from allow_only.",
   "89995d8d": "vla_RetryVLA_DoanhLT_cpu2 (CPU-only, agent-requested 2026-11-02); replays done 19:29 UTC; killed 2026-11-03",
   "c37611dd": "not in `det shell list` on 2026-11-08 (terminated; last rv_ job there: rv_abl_a4s2_rec rc 0 2026-11-03 09:37). Was: vla_RetryVLA_DoanhLT_1 (new, label 'VLA'; cn43, container 497d28ac2bd7 = also the Cursor agent box), 1x A100 80GB, 32 CPU; authorized for RetryVLA by user 2026-",
-  "bd8bdcf6": "not in `det shell list` on 2026-11-08 (terminated; last rv_ job there: rv_diagcpu2 rc 0 2026-11-03 06:50). Was: vla_RetryVLA_DoanhLT_cpu (bd8bdcf6-3558-427a-816e-cf2b1486c982), CPU-ONLY shell (slots 0, 32 CPU, no GPU -> Mesa software EGL ~180 ms/step) requested 2026-11-02"
+  "bd8bdcf6": "not in `det shell list` on 2026-11-08 (terminated; last rv_ job there: rv_diagcpu2 rc 0 2026-11-03 06:50). Was: vla_RetryVLA_DoanhLT_cpu (bd8bdcf6-3558-427a-816e-cf2b1486c982), CPU-ONLY shell (slots 0, 32 CPU, no GPU -> Mesa software EGL ~180 ms/step) requested 2026-11-02",
+  "d2ecd68c": "vla_RetryVLA_DoanhLT_rgr: killed by rgr_chain 2026-11-08 22:22 UTC after ALL SWEEPS DONE (TERMINATED). Was: vla_RetryVLA_DoanhLT_rgr (d2ecd68c-9ef7-43e7-be02-31f14c60a74c), USER'S OWN account, requested by the agent 2026-11-08 16:53 UTC for the recursive geometric rec"
  },
  "_mode": "user 2026-11-08: RetryVLA may add a FEW SMALL jobs on thanhnv's 335de36e + b936d1d7 (light only); c37611dd / dedc84ce gone. Agent box now 8e980338 (vla_RetryVLA_DoanhLT_1, cn55) - not in allow_only. Never any other shell | d2ecd68c = agent-requested user-account shell for RGR (kill when done)"
 }

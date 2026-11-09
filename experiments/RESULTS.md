@@ -557,7 +557,7 @@ gives a small, non-significant online gain, but its own search exploits it just 
 A stronger WM alone does not remove verifier exploitation -> no V-JEPA recovery dataset / distill (plan gate). Next lever:
 real ensemble disagreement across DIFFERENT WMs (WM v1 x V-JEPA), or verify more picks per instance.
 
-## RGR: Recursive Policy-Conditioned Geometric Recovery (2026-11-08; train split only; IN PROGRESS)
+## RGR: Recursive Policy-Conditioned Geometric Recovery (2026-11-08; train split only; FINAL: negative)
 Design: PLAN "RGR". Code `retryvla/geom/`, `retryvla/search/rgr_{core,search}.py`, `configs/exp/rgr_sweep.yaml`;
 table `python scripts/analyze_rgr.py` -> runs/_analysis/rgr/{rgr.md, decision.json}.
 
@@ -595,3 +595,33 @@ executed first bridge's end state 0.28-0.29 vs observed 0.12-0.13; re-plan rate 
 Pre-registered distill rule (written before any result): best non-oracle arm with n01 > n10, McNemar p < 0.10 vs
 `single` and L3 solved rate >= single's -> 1-seed SFT (pi1 recipe, `configs/exp/rgr_sft.yaml`) of that arm AND of
 `single` at the same trajectory count, both evaluated on Spatial test RSR (per level) + nominal; otherwise no distill.
+
+**Final (127 paired train instances, all 4 shards rc 0, 22:22 UTC; runs/_analysis/rgr/rgr.md + decision.json).**
+
+| arm | solved | hits / verif | hits / 1k sim | FP (pred >= 0.5) | mean pred / SR | bridges / succ | sim steps (verif + exec) | replan | McNemar vs single n01/n10, p | d hits, p |
+|---|---|---|---|---|---|---|---|---|---|---|
+| single | **0.425** | 0.150 | 0.48 | 0.826 | 0.814 / 0.150 | 1.00 | 2509 (2509 + 0) | - | - | - |
+| single_geo | 0.386 | 0.157 | 0.51 | 0.790 | 0.708 / 0.157 | 1.00 | 2469 (2469 + 0) | - | 7/12, 0.359 | +0.06, 0.642 |
+| rec | 0.370 | 0.169 | 0.40 | 0.739 | 0.605 / 0.169 | 1.49 | 2305 (1893 + 412) | 0.30 | 9/16, 0.230 | -0.28, 0.018 |
+| rec_geo | 0.386 | **0.204** | 0.49 | **0.667** | 0.556 / 0.204 | 1.50 | 2246 (1824 + 422) | 0.40 | 8/13, 0.383 | -0.09, 0.457 |
+| rec_geo_oracle | 0.378 | 0.197 | 0.48 | 0.658 | 0.554 / 0.197 | 1.45 | 2201 (1781 + 420) | 0.39 | 6/12, 0.238 | -0.15, 0.221 |
+| rec_geo_nofc | 0.417 | 0.152 | 0.44 | 0.773 | 0.524 / 0.152 | 1.55 | 2395 (2395 + 0) | 0.00 | 11/12, 1.000 | -0.13, 0.262 |
+
+Per level solved (L1 n 5 / L2 n 44 / L3 n 78): single 0.000 / 0.364 / 0.487; rec_geo 0.000 / 0.409 / 0.397;
+rec_geo_nofc 0.000 / 0.318 / 0.500 (L3 vs single 8/7, p 1.0); every other arm is below single on L3.
+
+**Decision (pre-registered rule, applied by rgr_chain phase 2): no arm qualifies** (all have n01 <= n10, p >= 0.23)
+-> **no distill / SFT / test eval**; d2ecd68c killed by the chain at 22:22 UTC (TERMINATED, shells.json:gone).
+
+Reading (negative result):
+- Geometry works as a *verifier filter*: it cuts FP 0.826 -> 0.667 (rec_geo) and raises precision per verification
+  0.150 -> 0.204 (+36 %), and the observation-only head is as good as privileged geometry (oracle 0.658 / 0.197) because
+  geometric failures are rare (~2-5 % of bridges). But it does NOT raise the solved rate (single_geo 0.386, rec_geo
+  0.386 vs 0.425): more hits per verification, not more instances with at least one hit.
+- Recursion costs budget: executing first bridges (~420 env steps / instance) leaves fewer verifications (1824 vs 2509
+  steps), so hits / 1k sim do not improve (0.40-0.49 vs 0.48) and solved drops 4-5 pt. Without forward correction
+  (rec_geo_nofc) the 2-bridge chains are verified blind and fall back to ~single (0.417).
+- Forward correction exposes the bottleneck directly: imagined C^pi of the executed first bridge's end state ~0.41 vs
+  observed 0.15-0.16. The limit is WM imagination (over-optimistic end states; geometry head AUC 0.61 on imagined vs
+  0.86 on real latents), the same diagnosis as RQ3 / V-JEPA: better selection rules on the same imagination do not lift
+  the solved rate at equal sim budget.

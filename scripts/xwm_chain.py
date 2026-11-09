@@ -31,6 +31,10 @@ SHELLS = {"335de36e": "335de36e-7f25-4b34-8979-2e74ded69fce", "b936d1d7": "b936d
 # (2026-11-08 16:09) -> ONE lane there (shard 0 unsplit, 6 workers); cn37 (b936d1d7, load ~2.6): shard 1 split in 2
 # lane = (shell, gpu, shard, sub_shard, num_sub_shards, n_workers)
 LANES = [("335de36e", 0, 0, 0, 1, 6), ("b936d1d7", 0, 1, 0, 2, 8), ("b936d1d7", 1, 1, 1, 2, 8)]
+# 2026-11-09: shard 0 DONE (rc 0); owner tmux quang-vgp on b936d1d7 since 2026-11-08 17:04 -> the rest of shard 1
+# (8 of 33) on 335de36e, 2 x 4 workers (= one 8-worker lane of CPU). XWM_LANES=resume2 selects this set.
+if os.environ.get("XWM_LANES") == "resume2":
+    LANES = [("335de36e", 0, 1, 0, 2, 4), ("335de36e", 1, 1, 1, 2, 4)]
 # back-off on load: load / core EXCLUDING our own sim workers (~1.3 load each incl. render threads + policy)
 STALL_MIN, OWNER_MIB, LOAD_MAX, POLL_S, MAX_TRIES, OUR_LOAD_PER_W = 45, 40000, 0.9, 300, 4, 1.3
 ENV = {k: v for k, v in os.environ.items() if k != "LD_LIBRARY_PATH"}
