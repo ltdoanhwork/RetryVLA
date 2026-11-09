@@ -912,3 +912,19 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
   phase 2 decision `arm: null` (no candidate has n01 > n10 with p < 0.10; best rec_geo_nofc 11/12, p 1.0) -> no SFT
   launched; `det shell kill d2ecd68c` rc 0 at 22:22 (state TERMINATED). shells.json: d2ecd68c removed from allow_only /
   share_ok (no claims left) -> gone. RESULTS "RGR" marked FINAL (negative).
+
+## Cross-WM disagreement sweep, ops log continued 2026-11-08/09 (start: section "Cross-WM disagreement sweep" above)
+- 2026-11-08 17:04 UTC: owner-side tmux `quang-vgp` appeared on b936d1d7 -> back-off killed rv_xwm_s1_0 / s1_1 (25 / 33
+  shard-1 instances done). 19:26 rv_xwm_s0 rc 0 (30 / 30). The chain then waited (tmux test kept failing) and no report
+  was produced overnight (coordinator check 2026-11-09 02:50).
+- 2026-11-09 02:51 resume2 (`XWM_LANES=resume2`): shard 1 on 335de36e, 2 x 4 workers; 03:02 back-off again: a triquang
+  SpatialLIBERO / robocasa job arrived in that container (GPU0 45 GB 99 %, load 71 / 32). Read-only check of
+  b936d1d7: GPUs 0 MiB, load 2.5, `quang-vgp` = an interactive `claude` CLI idle ~10 h (1 % CPU) -> 03:08 resume3 there
+  (2 x 6 workers, `XWM_IGNORE_TMUX=quang-vgp`, GPU / load back-off kept). 03:30 triquang video-gen jobs took both
+  b936d1d7 GPUs (100 %) -> back-off killed s1_1 (3 instances left); s1_0 had 1 instance left (~10 GB, 6 workers) and was
+  let finish (rc 0 03:42). 03:43 chain STOPPED by me, claims released, no rv_ session left on either shell.
+  **60 / 63 paired instances** (missing: shard 1 sub 1 episode_002 open7, episode_005 open7, episode_013 close4).
+  The per-instance pools stayed paired through all resumes (paired_rng).
+- Controls vs the earlier sweeps (same pools / seeds): identical per-slot outcomes on 78 % (WM v1) / 72 % (V-JEPA) of
+  instances, solved 0.367 vs 0.350 / 0.400 vs 0.417: GPU non-determinism in the bf16 WM rollouts changes some CEM picks
+  -> only the IN-RUN controls are used for the paired tests.

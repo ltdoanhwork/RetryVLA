@@ -19,18 +19,7 @@
   "max_load_per_core": 0.6,
   "tmux_prefix": "rv_"
  },
- "claims": {
-  "335de36e:0": {
-   "tmux": "rv_xwm_s1_0",
-   "args": "retryvla.retry_oom --min_free_gb 20 retryvla.search.compare_arms configs/exp/xwm_sweep.yaml m5b.shard=1 m5b.num_sub_shards=2 m5b.sub_shard=0 eval.n_workers=4",
-   "since": "2026-11-09T02:51:30"
-  },
-  "335de36e:1": {
-   "tmux": "rv_xwm_s1_1",
-   "args": "retryvla.retry_oom --min_free_gb 20 retryvla.search.compare_arms configs/exp/xwm_sweep.yaml m5b.shard=1 m5b.num_sub_shards=2 m5b.sub_shard=1 eval.n_workers=4",
-   "since": "2026-11-09T02:51:41"
-  }
- },
+ "claims": {},
  "allow_only": {
   "335de36e": "owner thanhnv; LIGHT JOBS ONLY (user 2026-11-08): <= 8 sim workers / job, retry_oom, never touch non-rv_ processes, back off if the owner ramps up. vla_roboworm_thanhnv_2-1 (335de36e-7f25-4b34-8979-2e74ded69fce), node cn06, container 2ff49dc615a0, 2x A100 80GB, 32 CPU (node load ~15.9 from other containers). Probe 2026-11-08 09:37 UTC: both GPUs 0 MiB / 0 % util, no owner tmux / GPU processes. envcheck: OK video decode, OK sim 50 steps 1.05 s (NVIDIA EGL)",
   "b936d1d7": "owner thanhnv; LIGHT JOBS ONLY (user 2026-11-08): <= 8 sim workers / job, retry_oom, never touch non-rv_ processes, back off if the owner ramps up. vla_roboworm_thanhnv_2-2 (b936d1d7-8a44-4bb8-8f76-a9edb41eb320), node cn37, container 21a1ed348945, 2x A100 80GB, 32 CPU (load ~2.6). Probe 2026-11-08 09:37 UTC: both GPUs 0 MiB / 0 % util, no owner tmux / GPU processes. envcheck: OK video decode, OK sim 50 steps 0.94 s (NVIDIA EGL)"

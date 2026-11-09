@@ -35,6 +35,12 @@ LANES = [("335de36e", 0, 0, 0, 1, 6), ("b936d1d7", 0, 1, 0, 2, 8), ("b936d1d7", 
 # (8 of 33) on 335de36e, 2 x 4 workers (= one 8-worker lane of CPU). XWM_LANES=resume2 selects this set.
 if os.environ.get("XWM_LANES") == "resume2":
     LANES = [("335de36e", 0, 1, 0, 2, 4), ("335de36e", 1, 1, 1, 2, 4)]
+# 2026-11-09 03:02: cn06 got a triquang SpatialLIBERO job (GPU0 45 GB 99 %, load 71) -> back-off; b936d1d7 idle
+# (GPUs 0 MiB, load 2.5; its only non-rv_ tmux `quang-vgp` is an interactive claude CLI idle ~10 h) -> resume3 there.
+elif os.environ.get("XWM_LANES") == "resume3":
+    LANES = [("b936d1d7", 0, 1, 0, 2, 6), ("b936d1d7", 1, 1, 1, 2, 6)]
+# owner tmux sessions known to be idle (checked read-only): ignored by the tmux test, GPU / load tests still apply
+IGNORE_TMUX = set(filter(None, os.environ.get("XWM_IGNORE_TMUX", "").split(",")))
 # back-off on load: load / core EXCLUDING our own sim workers (~1.3 load each incl. render threads + policy)
 STALL_MIN, OWNER_MIB, LOAD_MAX, POLL_S, MAX_TRIES, OUR_LOAD_PER_W = 45, 40000, 0.9, 300, 4, 1.3
 ENV = {k: v for k, v in os.environ.items() if k != "LD_LIBRARY_PATH"}
@@ -110,7 +116,7 @@ def owner_busy(pr: dict, gpu: int, ours_live: bool, our_w: int = 0) -> str | Non
     """our_w = sim workers of OUR live lanes on this shell (their load is subtracted before the load test)"""
     if not pr.get("ok"):
         return None
-    other = sorted(s for s in pr["tmux"] if not s.startswith("rv_"))
+    other = sorted(s for s in pr["tmux"] if not s.startswith("rv_") and s not in IGNORE_TMUX)
     if other:
         return f"owner tmux {other}"
     used = pr["gpu"].get(gpu, (0, 0))[0]

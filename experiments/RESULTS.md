@@ -557,6 +557,41 @@ gives a small, non-significant online gain, but its own search exploits it just 
 A stronger WM alone does not remove verifier exploitation -> no V-JEPA recovery dataset / distill (plan gate). Next lever:
 real ensemble disagreement across DIFFERENT WMs (WM v1 x V-JEPA), or verify more picks per instance.
 
+## Cross-WM disagreement search: WM v1 x V-JEPA 2-AC (2026-11-08/09; train split only; FINAL, 60 / 63 instances)
+Arms (`configs/exp/xwm_sweep.yaml`, `retryvla/search/arms.py:arm_xwm`): the wm_unc_l0 pipeline (shared 256 pool + 2
+elite-local CEM rounds, diverse top-8) with every candidate imagined by BOTH WM v1 + C^pi v2 and V-JEPA 2-AC + C^pi_VJ;
+J = mean(C_v1, C_vj) - lambda |C_v1 - C_vj| - mu R. In-run controls = each WM alone. Same 63 train instances as the
+RQ3 / V-JEPA sweeps (M5b shards 0-1), identical pools / CEM seeds / continuation seeds per slot in every arm (paired);
+60 finished (3 of shard 1 left undone: owner jobs took the GPUs, see NOTES). Table: `python scripts/analyze_xwm.py` ->
+runs/_analysis/xwm/xwm.md. FP = P(fail | pred > 0.5) on the arm's own objective value; p@k = first k picks (J order).
+
+| arm | solved | hits / sim | p@1 | p@4 | mean pred | FP (own) | ECE | FP C_v1 | FP C_vj | FP both > 0.5 (n) |
+|---|---|---|---|---|---|---|---|---|---|---|
+| WM v1 alone | 0.367 | 0.146 | **0.217** | 0.150 | 0.793 | 0.821 | 0.647 | 0.822 | 0.712 | 0.706 (119) |
+| V-JEPA alone | 0.400 | 0.152 | 0.183 | 0.158 | 0.881 | 0.835 | 0.736 | 0.584 | 0.835 | 0.584 (89) |
+| x-WM mean (lam 0) | 0.433 | 0.146 | 0.133 | 0.163 | 0.726 | 0.794 | 0.580 | 0.801 | 0.811 | 0.740 (258) |
+| **x-WM min = both agree (lam 0.5)** | **0.433** | **0.171** | 0.183 | **0.196** | 0.529 | 0.702 | 0.362 | 0.698 | 0.705 | 0.677 (226) |
+| x-WM mean - abs diff (lam 1) | 0.317 | 0.144 | 0.117 | 0.142 | 0.389 | **0.644** | **0.252** | 0.642 | 0.644 | 0.642 (187) |
+
+| paired test | solved a / b | only a / only b | McNemar p | d hits / inst [95% CI] | sign-flip p |
+|---|---|---|---|---|---|
+| min vs WM v1 | 0.433 / 0.367 | 6 / 2 | 0.289 | +0.20 [-0.08, +0.50] | 0.219 |
+| min vs V-JEPA | 0.433 / 0.400 | 8 / 6 | 0.791 | +0.15 [-0.17, +0.47] | 0.430 |
+| mean vs WM v1 | 0.433 / 0.367 | 7 / 3 | 0.344 | +0.00 [-0.32, +0.35] | 1.0 |
+| mean vs V-JEPA | 0.433 / 0.400 | 8 / 6 | 0.791 | -0.05 [-0.38, +0.27] | 0.843 |
+| lam 1 vs WM v1 | 0.317 / 0.367 | 1 / 4 | 0.375 | -0.02 [-0.32, +0.30] | 1.0 |
+| V-JEPA vs WM v1 | 0.400 / 0.367 | 8 / 6 | 0.791 | +0.05 [-0.33, +0.43] | 0.867 |
+
+Reading: **not clearly positive -> no distill proposed.** Requiring agreement (min) is the best arm on every
+budget-normalised metric: hits / sim 0.171 vs 0.146 / 0.152 (+17 % / +12 %), p@4 0.196 vs 0.150 / 0.158, FP 0.70 vs
+0.82 / 0.84 and ECE 0.36 vs 0.65 / 0.74, with solved +6.7 pt over WM v1. None of it is significant at n = 60 (McNemar
+p 0.29, hits sign-flip p 0.22). Penalising disagreement harder (lam 1) gives the best calibration (FP 0.64, ECE 0.25) but
+loses solved rate (0.317): it pushes the search towards candidates both WMs find unexciting. The two WMs' errors are
+correlated: when BOTH predict success, the pick still fails 58-74 % of the time, so cross-WM agreement removes only part
+of the exploitation (consistent with RQ3 / RGR: the shared bottleneck is imagined end states, not the selection rule).
+Controls reproduce the earlier sweeps on 72-78 % of instances slot-for-slot (bf16 GPU non-determinism in CEM picks); all
+tests above use the in-run controls. Next lever if pursued: verify the min arm at n = 127 (+ shards 2-3) before any SFT.
+
 ## RGR: Recursive Policy-Conditioned Geometric Recovery (2026-11-08; train split only; FINAL: negative)
 Design: PLAN "RGR". Code `retryvla/geom/`, `retryvla/search/rgr_{core,search}.py`, `configs/exp/rgr_sweep.yaml`;
 table `python scripts/analyze_rgr.py` -> runs/_analysis/rgr/{rgr.md, decision.json}.
