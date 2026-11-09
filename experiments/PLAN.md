@@ -246,3 +246,85 @@ acquisition (verified yield per sim), not about the policy, unless the distilled
 after the first bridge) rather than from geometry: the 2x2 separates the two; do not attribute a `rec` gain to
 "geometric recoverability". L4 cannot be evaluated (no L4 scenes in our splits). Do not claim the recursive set B_k is
 computed: it is approximated by K <= 3 search with a learned C^pi and WM.
+
+## Active Causal Recovery (ACR) PoC, design note (user request 2026-11-09; written BEFORE any ACR result)
+"Act Before You Imagine". Results -> RESULTS "ACR", ops -> NOTES, independent review -> `experiments/reviews/ACR_review.md`
+(skill `retryvla-idea-review`; the idea may not be closed before that review is answered).
+Code: `retryvla/causal/` (hypotheses, probes, families, belief, causes), `retryvla/search/acr_search.py`,
+`configs/exp/acr_poc.yaml`, `scripts/acr_select_instances.py`, `scripts/analyze_acr.py`, `scripts/acr_chain.py`.
+Default search / eval paths unchanged (SimPool workers gain opt-in `set_hidden` / `probe` / `run_family` commands).
+
+**Question.** RGR / xwm / RQ3: imagined recoveries are over-optimistic (FP 0.67-0.83) and geometric failures are rare
+(2-5 %). New question: when several physical explanations fit the SAME observation, does a short safe probe, chosen for
+its value to the recovery DECISION, select a better recovery than passive re-observation, a random probe, an
+information-maximising probe, or simply one more recovery trial? Kill test: if knowing the cause (oracle) does not help,
+probing cannot help either.
+
+**Real vs planning environment (no sim-oracle leak).** Real env = the failure snapshot + hidden parameters h* (Tier B)
+or the true state (Tier A); probes and recovery trials run there and are the scarce resource (env steps). The agent's
+planning model never sees h*: Tier B = the same snapshot simulated under particles h in H (types x magnitudes that are
+NOT the true magnitudes); Tier A = population statistics cross-fitted on OTHER episodes (no per-instance planning sim,
+because without hidden parameters the planning sim would equal the real env).
+
+**Recovery families F** (open-loop prefix <= 100 steps, then the frozen pi continuation 300 steps, as every search arm):
+`vla` (SmolVLA chunk samples), `regrasp_slow`, `regrasp_deep` (descend deeper, long close, fast lift), `push_goal`
+(push the object along object->goal), `reposition` (retreat + reposition primitive), `lift_wait` (open, raise, hold).
+Object-relative families use the object pose with simulated perception noise (sigma 2.5 cm = the RGR geometry head's
+median error); 8 jittered variants per family (fixed seeds).
+**Outcome table (paired evaluation).** For every (state, h*) every family's 8 variants are executed ONCE in the real env
+from the failure snapshot (48 rollouts) -> O[f, j]. Every arm's trial allocation is scored by look-up in the SAME
+table (trial j of family f = variant j), so arms are perfectly paired and any budget B can be read off. Probe side
+effects: for `evi_probe` the allocated trials are ALSO re-run from the post-probe snapshot (reported separately;
+primary = table, honest check = post-probe).
+**Allocator (identical for every arm; arms differ only in the belief b).** Greedy: add the trial that maximises
+U(n, b) = sum_h b(h) [1 - prod_f (1 - V(h, f))^{n_f}] until B trials (V = planning success rate of family f under h).
+Point-mass belief -> concentrates; diffuse belief -> hedges across families. no_probe = prior belief.
+
+**Tier B (controlled hidden physics; run first).** 25 train-split M5b/RGR states x 5 h* types: `nominal`, `slippery`
+(object geom friction x[0.1, 0.3], object geom priority raised so its friction governs finger + table contacts),
+`sticky` (object sliding friction x[4, 8]), `heavy` (object mass x[4, 8]), `weak_grip` (gripper actuator gain /
+force range x[0.25, 0.4]). True magnitudes are drawn per case from those ranges; the planning particles are the 2 range
+ENDS per type + nominal (9 particles), so the planner never has the exact h*. Pixel-identical first render is a unit
+test. Magnitude ranges are fixed on 3 separate CALIBRATION states (not in the 25) only to avoid "nothing works"
+(every type must leave >= 1 family with planning success > 0 on >= 2 / 3 calibration states); then frozen.
+**Tier A (natural, no injection).** <= 60 RGR train instances: up to 30 that `single` left unsolved (cause priority
+held / blocked / near_goal over free) + others for cross-fitting. Cause label (privileged, at the snapshot,
+`retryvla/causal/causes.py`): `held` (finger contact, gripper closed), `blocked` (object elevated > 3 cm or another
+free object within 9 cm), `near_goal` (object-goal xy < 8 cm), `free`. V(cause, f) and the response -> cause classifier
+are fitted on the other episode groups (5-fold group cross-fitting, leakage unit = failure episode).
+
+**Probes** (<= 30 env steps, reversible where possible, executed in the real env): `hold` (zero action = passive),
+`squeeze` (close / open in place), `lift2` (close, raise 2 cm, lower, open), `nudge_{+x,-x,+y,-y}` (gripper closed,
+1 cm lateral, return), `touch_grasp` (descend 2 cm, close, raise 2 cm, lower, open), `yaw_wiggle`. Response features
+(observation-only): finger qpos trace summary, commanded vs achieved eef displacement, end gripper width; perception
+upper bound adds the privileged object displacement (labelled "oracle perception"). Safety: Risk(a) = planning P(any of
+off_table / tilt / disturb from `geom_terms`); probes with Risk > 0.2 are not allowed; real-env abort if object
+displacement > 3 cm or tilt.
+**Belief / EVI.** Tier B: likelihood = Gaussian kernel (per-feature scale = std over particles + floor) between the
+real response and each particle's planning-sim response; b0 uniform. EVI(a) = sum_h b0(h) U(n(b_a,h), h) -
+sum_h b0(h) U(n(b0), h), where b_a,h = posterior after the response particle h would produce. Objective EVI - lam
+Risk - beta Cost (lam 1, beta 0.001 / step); probe only if the best objective > 0, else no probe. Info gain = expected
+entropy reduction of b over the same simulated responses. Tier A: classifier posterior instead of the kernel.
+
+**Arms** (paired, same outcome table): `no_probe` (b0), `passive` (hold), `random_probe`, `infogain_probe`,
+`evi_probe`, `extra_trial` (b0 and B + 1 trials: one FULL extra trial, more generous than the probe's step cost),
+`oracle_cause` (b = point mass on the nearest particle to h* / the true cause), plus `single` (Tier A only, from RGR).
+Budgets B in {2, 4, 8}; B = 4 primary (pre-registered), others reported.
+
+**Pre-registered gates.**
+- G0 (decision relevance; Tier B): argmax_f V(h, f) differs across the 5 types on >= 30 % of states AND
+  `oracle_cause` beats `no_probe` by >= 10 pt solved at B = 4 (McNemar p < 0.10, unit = (state, h*) case).
+  If G0 fails the idea is NOT closed: the review skill runs on that failure (families too coarse? hypotheses wrong?
+  B too large?) before a decision.
+- G1 (information): `evi_probe` > `passive`, `random_probe`, `extra_trial` on solved (B = 4), decision-change rate > 0
+  with positive mean gain on the changed decisions.
+- G2 (decision relevance of the probe choice): `evi_probe` solved >= `infogain_probe` at <= its probe cost.
+Metrics: solved / hits per 1k real steps (probe steps charged), probe cost, planning-sim steps, posterior accuracy
+(MAP type), decision-change rate + conditional gain, probe safety violations, post-probe re-run solved; paired McNemar
++ sign-flip, per type / per cause / per level. Train split only, no SFT, no test.
+
+**Claim boundaries.** Tier B is a controlled hidden-physics benchmark built on LIBERO-Recover states, not the official
+benchmark; the planner is a simulator with the right STRUCTURE (parameter class) but not the true parameters (a
+system-identification setting, like M1's oracle scorer is a sim scorer). Object-relative families use simulated
+perception noise, not the observation-only head. Tier A is the only natural-failure evidence. No policy claim without
+distillation + test RSR.
