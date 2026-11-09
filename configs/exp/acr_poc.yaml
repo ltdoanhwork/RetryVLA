@@ -23,7 +23,8 @@ acr:
   cont_steps: 300               # frozen-pi continuation after the prefix (= search.continuation_max_steps)
   perception_sigma: 0.025       # simulated object / goal position noise of object-relative families (m)
   types:                        # hidden type -> magnitude range [lo, hi]; planning particles = the two ends
-    slippery: [0.05, 0.2]       # object sliding friction x (with raised geom priority)
-    anchored: [3.0, 10.0]       # planar dry friction on the object's free joint (N)
-    heavy: [1.0, 3.0]           # object mass (kg; nominal bowl ~0.006)
-    weak_grip: [0.05, 0.2]      # gripper actuator force range x (nominal +-20 N)
+    # FROZEN 2026-11-09 16:05 UTC from the 3 calibration states (retryvla/causal/calibrate.py, runs/_analysis/acr/
+    # calib_grid.csv; rule in PLAN "ACR"): anchored dropped (no outcome effect up to 100 N)
+    slippery: [0.001, 0.03]     # finger sliding friction x (finger geom priority raised)
+    heavy: [2.0, 4.0]           # object mass (kg; nominal bowl ~0.006); only 3.0 qualified on the grid
+    weak_grip: [0.003, 0.1]     # gripper actuator force range x (nominal +-20 N)

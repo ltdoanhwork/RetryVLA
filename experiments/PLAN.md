@@ -328,3 +328,14 @@ benchmark; the planner is a simulator with the right STRUCTURE (parameter class)
 system-identification setting, like M1's oracle scorer is a sim scorer). Object-relative families use simulated
 perception noise, not the observation-only head. Tier A is the only natural-failure evidence. No policy claim without
 distillation + test RSR.
+**Calibration outcome (2026-11-09 16:05 UTC, 3 calibration states only, before any evaluation state was run;
+`runs/_analysis/acr/calib_grid.csv`).** Note the definition change made during code checks (before calibration):
+`slippery` lowers the FINGER friction (priority raised), not the object's: with low object friction the bowl slid
+onto the plate by itself (visible, and solved the task) -> not a hidden cause. Pooled sub-goal rates (3 variants x 3
+states, scripted prefix only): nominal grasp-lift 0.22 / push 0.22. Applying the rule: slippery qualifies at
+0.001-0.03 (grasp 0, push kept) -> [0.001, 0.03]; weak_grip 0.003-0.1 -> [0.003, 0.1]; heavy only at 3.0 (>= 10 kills
+everything, 1.0 does not suppress grasp) -> [2, 4] around the single qualifying grid point (deviation: the rule gives a
+single point; particles need two ends); `anchored` (planar joint friction) had no outcome effect at any magnitude up
+to 100 N -> dropped. Tier B therefore has 4 cases per state (nominal + 3 hidden types), 25 states = 100 cases, 7
+planning particles. The calibration also shows the scripted families are weak (~1 / 3 sub-goal success at nominal
+with 2.5 cm perception noise); success is still counted after the pi continuation.
