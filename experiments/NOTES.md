@@ -949,3 +949,7 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
 - 16:14 UTC chain `scripts/acr_chain.py` (agent box local tmux `acr_chain`, console runs/_logs/acr_chain_console.log):
   rv_acr_B0 / B1 (tier B, 25 states, 2 lanes x 7 workers) -> rv_acr_A0 / A1 (tier A, 60 states) -> analyze_acr (3
   feature sets) -> postprobe B / A -> analyze. Expected ~4 h tier B + ~1.5 h tier A. Shell kept for review follow-ups.
+- 2026-11-09 16:46 UTC (user request): acr_chain stopped (tmux kill-session =acr_chain), then `det shell kill
+  e26be342` -> TERMINATED. Tier B was at 2 / 25 states (data/acr/v1/B, complete per-state files; the in-flight 3rd
+  states of both lanes are lost). shells.json: e26be342 -> gone, no claims left. Resume: on any allowed shell,
+  re-run `scripts/acr_chain.py` with SH / SH_FULL edited (acr_search skips finished state files).
