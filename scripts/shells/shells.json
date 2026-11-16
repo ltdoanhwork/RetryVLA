@@ -24,6 +24,26 @@
    "tmux": "rv_acrn_smoke",
    "args": "retryvla.search.acr_search configs/exp/acrn.yaml acr.max_states=1 acr.out_root=data/acr/n1_smoke",
    "since": "2026-11-16T04:16:27"
+  },
+  "cb2b6ab1:0:rv_acrn_c0": {
+   "tmux": "rv_acrn_c0",
+   "args": "retryvla.retry_oom --min_free_gb 10 retryvla.search.acr_search configs/exp/acrn.yaml acr.lane=0 acr.num_lanes=4 eval.n_workers=12",
+   "since": "2026-11-16T04:27:00"
+  },
+  "cb2b6ab1:0:rv_acrn_c1": {
+   "tmux": "rv_acrn_c1",
+   "args": "retryvla.retry_oom --min_free_gb 10 retryvla.search.acr_search configs/exp/acrn.yaml acr.lane=1 acr.num_lanes=4 eval.n_workers=12",
+   "since": "2026-11-16T04:27:30"
+  },
+  "f02ea5c5:0": {
+   "tmux": "rv_acrn_c2",
+   "args": "retryvla.retry_oom --min_free_gb 10 retryvla.search.acr_search configs/exp/acrn.yaml acr.lane=2 acr.num_lanes=4 eval.n_workers=12",
+   "since": "2026-11-16T04:28:00"
+  },
+  "f02ea5c5:0:rv_acrn_c3": {
+   "tmux": "rv_acrn_c3",
+   "args": "retryvla.retry_oom --min_free_gb 10 retryvla.search.acr_search configs/exp/acrn.yaml acr.lane=3 acr.num_lanes=4 eval.n_workers=12",
+   "since": "2026-11-16T04:28:30"
   }
  },
  "allow_only": {
