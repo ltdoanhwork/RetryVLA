@@ -44,6 +44,11 @@
    "tmux": "rv_acrn_c3",
    "args": "retryvla.retry_oom --min_free_gb 10 retryvla.search.acr_search configs/exp/acrn.yaml acr.lane=3 acr.num_lanes=4 eval.n_workers=12",
    "since": "2026-11-16T04:28:30"
+  },
+  "b8c028b9:0": {
+   "tmux": "rv_t2m_poc1",
+   "args": "scripts.t2mem_poc1 --epochs 60 --seeds 3",
+   "since": "2026-11-16T04:34:52"
   }
  },
  "allow_only": {
@@ -69,5 +74,5 @@
   "d2ecd68c": "vla_RetryVLA_DoanhLT_rgr: killed by rgr_chain 2026-11-08 22:22 UTC after ALL SWEEPS DONE (TERMINATED). Was: vla_RetryVLA_DoanhLT_rgr (d2ecd68c-9ef7-43e7-be02-31f14c60a74c), USER'S OWN account, requested by the agent 2026-11-08 16:53 UTC for the recursive geometric rec",
   "e26be342": "vla_RetryVLA_DoanhLT_acr (cn48): agent-requested user-account shell for ACR; killed 2026-11-09 16:46 UTC on the user's request (det shell kill), mid tier-B (2 / 25 states done); acr_chain stopped first"
  },
- "_mode": "user 2026-11-08: RetryVLA may add a FEW SMALL jobs on thanhnv's 335de36e + b936d1d7 (light only); c37611dd / dedc84ce gone. Agent box now 8e980338 (vla_RetryVLA_DoanhLT_1, cn55) - not in allow_only. Never any other shell | d2ecd68c = agent-requested user-account shell for RGR (kill when done) | cb2b6ab1 = agent-requested user-account shell for ACR-N (2026-11-16; kill when done) | f02ea5c5 = 2nd agent-requested user-account shell for ACR-N (kill when done)"
+ "_mode": "user 2026-11-16 04:26 UTC: GPU jobs may use shells whose NAME contains thanhnv/Thanhnv, DoanhLT or quang (read-only probe first, clearly idle GPUs only, never disturb others' processes/tmux, light workers + owner back-off watchdog on non-RetryVLA shells, register here + release claims). Prefer existing shells over new requests. | user 2026-11-08: RetryVLA may add a FEW SMALL jobs on thanhnv's 335de36e + b936d1d7 (light only); c37611dd / dedc84ce gone. Agent box now 8e980338 (vla_RetryVLA_DoanhLT_1, cn55) - not in allow_only. Never any other shell | d2ecd68c = agent-requested user-account shell for RGR (kill when done) | cb2b6ab1 = agent-requested user-account shell for ACR-N (2026-11-16; kill when done) | f02ea5c5 = 2nd agent-requested user-account shell for ACR-N (kill when done)"
 }

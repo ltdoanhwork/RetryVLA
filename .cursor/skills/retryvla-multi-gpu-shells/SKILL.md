@@ -18,6 +18,16 @@ and its **32 CPUs are shared across them**. That matters: MuJoCo sim workers are
 
 ## 0. Never touch these
 
+**Current mode (user, 2026-11-16 04:26 UTC; supersedes the 2026-11-08 note below): GPU jobs may use Determined shells
+whose NAME contains `thanhnv` / `Thanhnv`, `DoanhLT` or `quang` (e.g. vla_roboworm_thanhnv_2-*,
+benchmark_RoboWorM_Thanhnv_*, vla_*_DoanhLT_*, vla_robotood_triquang_*, vla_memory_triquang_*).** Rules: read-only probe
+first (`find_free.py`); only GPUs that are clearly idle (low util, enough free memory); never kill or disturb other
+people's processes / tmux (only `rv_*` sessions are ours); light worker counts on shells RetryVLA does not own, with the
+owner back-off watchdog (as in `scripts/xwm_chain.py`); register every used shell in `shells.json` allow_only / share_ok
+with a note and release claims when done. Prefer these existing shells over requesting new ones; agent-requested
+user-account shells (2026-11-16: cb2b6ab1, f02ea5c5 for ACR-N) are kept while in use and killed (`det shell kill`) when
+done. Everything in `shells.json:avoid` stays forbidden.
+
 **Current mode (user, 2026-11-08): RetryVLA may add a FEW SMALL jobs on thanhnv's `335de36e` (`vla_roboworm_thanhnv_2-1`, cn06) and `b936d1d7` (`vla_roboworm_thanhnv_2-2`, cn37), each 2x A100 80 GB / 32 CPU, idle at the 2026-11-08 probe. Both `allow_only` + `share_ok`, light jobs only: <= 8 sim workers / job, `retry_oom`, never touch non-`rv_` sessions, back off if the owner ramps up. `c37611dd`, `dedc84ce`, `bd8bdcf6`, `89995d8d` are gone (`shells.json:gone`). Never touch any other shell.** History of the previous mode below.
 
 Previous mode (user, 2026-10-27): NO borrowing. RetryVLA's GPU was Determined shell `0097c39c`
