@@ -24,7 +24,6 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from sklearn.linear_model import LogisticRegression
 
 from scripts.t2mem_poc1 import REPO, boot_ci, folds, load
 
@@ -49,18 +48,42 @@ def feats(x):
     return torch.cat([x["lw"][:, None], x["hw"]], 1).cpu().numpy()
 
 
+class _TorchLogit:
+    """L2 logistic regression fitted by LBFGS on the GPU (sklearn on the borrowed node used 24 cores)."""
+
+    def __init__(self, w, b):
+        self.coef_ = w[None].cpu().numpy()
+        self.intercept_ = np.array([float(b)])
+        self._w, self._b = w, b
+
+    def decision_function(self, X):
+        X = torch.as_tensor(X, dtype=torch.float32, device=self._w.device)
+        return (X @ self._w + self._b).cpu().numpy()
+
+
 def fit_recal(insts, idx_lists=None, C=0.05):
-    """Logistic recalibrator. idx_lists: per-instance candidate indices whose labels are visible (None = all 64)."""
+    """Logistic recalibrator (L2, strength 1/C as sklearn). idx_lists: per-instance visible candidate indices."""
     X, Y = [], []
     for j, x in enumerate(insts):
-        f, y = feats(x), x["y"].cpu().numpy()
+        f, y = torch.cat([x["lw"][:, None], x["hw"]], 1), x["y"]
         if idx_lists is not None:
-            f, y = f[idx_lists[j]], y[idx_lists[j]]
+            ii = torch.as_tensor(idx_lists[j], device=f.device, dtype=torch.long)
+            f, y = f[ii], y[ii]
         X.append(f); Y.append(y)
-    X, Y = np.concatenate(X), np.concatenate(Y)
+    X, Y = torch.cat(X).float(), torch.cat(Y).float()
     if Y.min() == Y.max():
         return None
-    return LogisticRegression(C=C, max_iter=2000).fit(X, Y)
+    w = torch.zeros(X.shape[1], device=X.device, requires_grad=True)
+    b = torch.zeros((), device=X.device, requires_grad=True)
+    opt = torch.optim.LBFGS([w, b], lr=1, max_iter=200, line_search_fn="strong_wolfe")
+
+    def closure():
+        opt.zero_grad()
+        loss = F.binary_cross_entropy_with_logits(X @ w + b, Y, reduction="sum") + 0.5 / C * (w * w).sum()
+        loss.backward()
+        return loss
+    opt.step(closure)
+    return _TorchLogit(w.detach(), b.detach())
 
 
 def recal_logit(m, x):
@@ -385,6 +408,7 @@ def main() -> None:
     ap.add_argument("--seeds", type=int, default=2)
     a = ap.parse_args()
     dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    torch.set_num_threads(4)
     insts, _ = load(a.cache, dev)
     fl = folds(insts)
     if a.fold >= 0:
