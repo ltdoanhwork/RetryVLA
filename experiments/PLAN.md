@@ -444,3 +444,10 @@ allocated trials of `evi_probe` (and `random_probe`) are re-run from the TRUE po
 **Claim boundaries.** Causes are defined from privileged sim; oracle arms are upper bounds. Probe responses are
 from the same simulator (no sensor noise beyond rendering). Scripted options use simulated perception noise, not the
 observation-only head. U is selected on `single` failure. No policy claim without distillation + test RSR.
+
+## T2Mem (test-time memory for fail -> recovery), status 2026-11-16
+Design + gates: NOTES "T2Mem PoC"; results: RESULTS "T2Mem"; review: experiments/reviews/T2MEM_review.md.
+Status: approach A (memory policy, repeat-breaking) closed as tested; RoboTTT-style failure-as-context parked (reopen
+iff a history-vs-state probe gains >= 0.03 AUC or the train-split a2 repeat rate is >= 20 % with CI lower bound > 10 %).
+Approach B (per-instance memory in search) closed, negative. The imagination recalibrator is inconclusive with realistic
+labels: not used until more instances + an online n = 127 check.

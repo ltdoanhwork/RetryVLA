@@ -306,25 +306,25 @@ Reference numbers [R]:
 ## 5. Responses (filled by the main agent; every question answered)
 | question | response (answered by / follow-up run / out of scope because) |
 |---|---|
-| Q2.1a | |
-| Q2.1b | |
-| Q2.1c | |
-| Q2.1d | |
-| Q2.2a | |
-| Q2.2b | |
-| Q2.2b2 | |
-| Q2.2c | |
-| Q2.2d | |
-| Q2.3a | |
-| Q2.3b | |
-| Q2.3c | |
-| Q2.3d | |
-| Q2.4a-d | |
-| Q2.5a | |
-| Q2.5b | |
-| Q2.5c | |
-| Q2.5d | |
-| Q2.6a-d | |
+| Q2.1a | Out of scope offline (fixed pool). Not pursued: every offline memory arm already fails vs the recalibrator, so an online CEM memory has no offline support (closing on this data). |
+| Q2.1b | Answered by f2.md: all memory arms tie or raise solved by <= +2.7 pt while losing hits; budget realloc shows the hits-vs-solved trade-off explicitly (-4 to -5 pt solved). |
+| Q2.1c | Accepted: A is closed only for the repeat-breaking mechanism. The RoboTTT-style failure-as-context variant is parked, not tested (PLAN status). |
+| Q2.1d | Accepted: a2-only rate 15-26 % is on the threshold (n = 34). PoC 0 header text is stale for `--by touch` (archived md says close-command params; noted here, not rewritten). Train-split rerun not done (A parked). |
+| Q2.2a | Follow-up run F2 (`scripts/t2mem_f2.py`, mem_fixed): separate W from 0 on the FROZEN recalibrator, residual on the CURRENT score. K4R4 -0.055 (clustered p 0.24), K1R16 -0.094 (p 0.027), K4R8 +0.012 (p 0.82). FAIL. |
+| Q2.2b | Follow-up run F2: latent read-out o initialised N(0, 0.01) and trained (mem_ss = latent only): -0.080 / -0.086 / -0.049. FAIL. F1 restriction acknowledged in RESULTS. |
+| Q2.2b2 | Follow-up run F2: K1 x R16 (15 writes) and K4 x R8 (32 verifications), plus GP-UCB residual surrogate. Best = gp_ucb K4R8 +0.117 (p 0.12), K1R16 +0.066 (p 0.15). Neither passes. PFN / set-transformer not run (out of scope: the GP already bounds what a few-shot surrogate gets here). |
+| Q2.2c | Partly answered by the prequential recalibrator (cross-instance memory with realistic labels): +0.12 to +0.48 on the second half, order-dependent. Campaign memory per failure episode not run separately. |
+| Q2.2d | Follow-up run F2 K4R8: mem_fixed +0.012, gp_ucb +0.117 (p 0.12). FAIL (rule needs +0.10 and p < 0.10). |
+| Q2.3a | Follow-up run F2 prequential (own 16 picks only, 3 episode orders): 2nd-half +0.305 (p 0.12) / +0.484 (p 0.003) / +0.117 (p 0.41). Lead rule FAIL (not robust across orders). |
+| Q2.3b | Adopted: all F2 p-values are failure-episode-clustered sign flips. PoC 1 gate-3 'worse than control' is withdrawn (cluster p 0.40); 'not better' stands. |
+| Q2.3c | Follow-up run F2: knn_pos (successes only, grid on train folds) -0.055 / -0.074 / 0.000; gp_ucb allows both residual signs. FAIL. |
+| Q2.3d | mem_* arms are means over 2 seeds per fold in F2; per-seed differences not logged separately (minor; all point estimates are <= +0.012 so a seed-level sign flip cannot reach +0.10). |
+| Q2.4a-d | Answered by the reviewer's MDE (0.113-0.135 hits). F2 differences have 95 % CIs whose upper bounds are <= +0.10 for every mem_* arm in every regime, so the memory negative is powered. Online power (Q2.4d) not needed (no online run). |
+| Q2.5a | Consistent with F2: mem_pos / knn_pos (exploit near successes) also fail, so neither avoid-failure nor seek-success per-instance signals add to the recalibrator. Stated as the mechanism in RESULTS. |
+| Q2.5b | Answered by the reviewer (arm-only +0.10 vs full +0.46) and by F2 base (torch logistic on [l_wm, h_wm]: +0.484 hits r1-4 vs static, = the PoC 1 static control). |
+| Q2.5c | Out of scope: A is parked; the probe is listed as the reopen condition in PLAN. |
+| Q2.5d | Follow-up run F2 budget realloc: hits / verification +35 % (static) / +29 % (recal) but solved -5.1 / -4.3 pt. Rule FAIL (solved loss > 2 pt). It is a yield-vs-coverage trade-off, recorded as an option, not a result. |
+| Q2.6a-d | a: not met (F2). b: met (all mem_* CI upper bounds < +0.10 in K4R4 and K1R16; gp / knn_pos <= recal + 0.12 with p >= 0.12). c: realistic-label rule failed on order robustness, online check not run. d: not met (not tested; A parked). |
 
 **Reviewer's top-3 counter-questions (closing rule 4):**
 1. **Q2.2a/b.** Does the memory write the *right* thing? Today it writes a residual vs the raw critic, which overwrites
@@ -357,3 +357,17 @@ Reviewer's recommendation (to be confirmed or overridden by the main agent after
   - Do not call it a memory result, and do not distill from it until the online check passes.
 - **F1** (`poc1_followup.md`) had not appeared when this review was written. Whatever it shows, interpret it under
   Q2.2b: a NO is not evidence against test-time memory in general.
+
+**Main agent final verdict (2026-11-16, after F2 = runs/_analysis/t2mem/f2.md):**
+- **A: closed as tested** (repeat-breaking). RoboTTT-style failure-as-context policy **parked**; reopen only per Q2.6d.
+- **B (per-instance test-time memory in the search): CLOSED, negative.** At n = 256 (offline, fixed 64-candidate pool,
+  16-32 verifications), no per-instance memory beats the frozen recalibrator in any regime. That covers the fixed-write
+  delta rule with a live latent read-out, latent-only, success-only, kNN-pos and GP-UCB. All memory CI upper bounds are
+  below +0.10 hits, and all closing rules are met. Mechanism: failures and successes are co-located in critic space (Q2.5a),
+  and the instance-level information is mostly difficulty, which the recalibrator / budget allocation already capture.
+- **Recalibrator lead: inconclusive with realistic labels.** The fold-trained version gives +0.48 hits / 16 verifications.
+  Trained prequentially on its own picks, it gives +0.12 to +0.48 depending on the stream order (1 of 3 orders significant).
+  Not used for search or distillation. Next step if pursued: more instances (pool verif_m5b with other verif dirs), then
+  an online n = 127 check.
+- **Budget reallocation:** +29-35 % hits per verification at -4 to -5 pt solved. This is a trade-off option for data
+  yield, not a gain.

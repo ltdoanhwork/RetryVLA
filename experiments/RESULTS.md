@@ -710,3 +710,19 @@ verifications, +19 %), about equal to ranking by the TRUE end state (3.17). The 
 largely correctable by a learned readout of the imagination. It still needs: a held-out check on another verif dir
 (e.g. verif_rq3_sweep / verif_xwm_sweep candidates, whose picks were made by a DIFFERENT, stronger search), and an
 online paired search test, before any claim or distill.
+
+**F2 follow-up after the independent review (experiments/reviews/T2MEM_review.md; runs/_analysis/t2mem/f2.md;
+failure-episode-clustered p):** the strongest per-instance memory variants, all stacked on a FROZEN logistic
+recalibrator, were tested:
+- fixed delta-rule write on the current score with a live latent read-out;
+- latent-only;
+- success-only;
+- kNN-pos;
+- GP-UCB.
+
+Tested regimes: K4 x R4, K1 x R16 and K4 x R8. mem_fixed vs recalibrator: -0.055 (p 0.24), -0.094 (p 0.03),
++0.012 (p 0.82). Best arm gp_ucb: +0.012 / +0.066 / +0.117 (p >= 0.12). **Per-instance test-time memory: closed,
+negative.** The PoC 1 claim "worse than its control" is withdrawn (cluster p 0.40); "not better" stands.
+Recalibrator with realistic labels (prequential, own 16 picks only): second-half gain +0.31 (p 0.12) / +0.48 (p 0.003) /
++0.12 (p 0.41) across 3 stream orders -> **inconclusive**; not used. Budget reallocation (r1-miss capped at 8): hits per
+verification +29-35 % but solved -4 to -5 pt (trade-off, rule failed).
