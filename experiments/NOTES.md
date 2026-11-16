@@ -969,3 +969,24 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
 - 04:26 UTC chain `acrn_chain` (agent box tmux, console runs/_logs/acrn_chain_console.log): rv_acrn_c0..c3 (2 lanes
   per shell x 12 workers, 97 states) -> analyze --write-decisions -> postprobe (evi / random sequences re-run from the
   true post-probe state) -> analyze -> kill both shells.
+
+## T2Mem PoC (test-time memory for fail -> recovery), 2026-11-16 (user request; ops + pre-registrations)
+- Idea: T²Mem (arXiv 2609.36720, fast-weight test-time memory in a VLA) applied to RetryVLA. Approach A = memory in the
+  policy, trained on fail -> recovery episodes; approach B = instance-level test-time memory of VERIFIED outcomes in the
+  recovery search (the verifier's FP ~0.8 is the documented bottleneck: RQ3 / xWM / RGR).
+- Shell: user authorized thanhnv / quang / doanhlt shells. b8c028b9 (vla_roboworm_thanhnv_1-1, cn35, 1x A100, idle at
+  04:00 UTC probe) added to shells.json allow_only. Jobs: rv_t2m_cache (1 min), rv_t2m_smoke, rv_t2m_poc1 (53 min).
+- PoC 0 (`scripts/poc_mem_repeat.py`, 0 sim, rule written in the docstring before running: drop A if < 20 % of failed
+  episodes repeat an earlier failed grasp). The close-command attempt definition is chatter-dominated (10-80 close
+  onsets / episode, 15 % touch the bowl) and gave 4-79 % depending on thresholds -> NOT used. Finger-bowl contact
+  segments (primary): 8-15 % of 73 failed episodes (pi1 s0 + M7 base s0) contain a repeat at tol 2-3 cm; within-episode
+  repeat rate 23-41 % vs cross-episode null 0-14 %. -> approach A dropped (few episodes have >= 2 real attempts).
+- PoC 1 (`scripts/t2mem_cache.py` + `scripts/t2mem_poc1.py`, 0 sim, verif_m5b train, 4 folds by failure episode):
+  pre-registered gate FAILED on condition 3 (t2m_label < its static control). The static control (no write; a linear
+  outcome recalibrator on C^pi's imagined-state embedding, trained on other folds) reaches 2.327 hits r2-4 vs
+  oracle_true 2.387 vs static 1.859.
+- Follow-up F1 (pre-registered here BEFORE running; `t2mem_poc1 --followup`): does memory add anything ON TOP of that
+  recalibrator? Stage A = recalibrator (used from round 1), Stage B = A frozen, only the write path learned (T2Mem-style
+  alternation). Rule: memory adds value iff mem_on_recal - recal_r1 > 0 hits r2-4 with sign-flip p < 0.10. If NO, the
+  test-time-memory idea is reported negative at n = 256 (offline replay) and the recalibrator is reported separately as
+  a lead (not a memory result; needs its own held-out check before any search use).

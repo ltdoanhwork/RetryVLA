@@ -176,12 +176,15 @@ class FastMem(nn.Module):
         return W - eta * g
 
     def run(self, inst, train=False):
-        """Returns rounds (picks) and the outer loss (BCE on not-yet-verified candidates after each write)."""
+        """Returns rounds (picks) and the outer loss (BCE on not-yet-verified candidates after each write).
+        r1_recal (follow-up arms): round-1 picks also use the learned readout of W0 (a recalibrated static critic)."""
         W = self.W0
-        s = inst["lw"]
+        s = self.score(inst, W) if getattr(self, "r1_recal", False) else inst["lw"]
         picked = torch.zeros(64, dtype=torch.bool, device=s.device)
         tb = torch.arange(64, device=s.device) * 1e-6
         rounds, loss = [], 0.0
+        if train and getattr(self, "r1_recal", False):
+            loss = loss + F.binary_cross_entropy_with_logits(s, inst["y"])
         for r in range(R):
             sc = s.detach().clone() - tb
             sc[picked] = -1e9
@@ -197,11 +200,17 @@ class FastMem(nn.Module):
         return rounds, loss
 
 
-def train_mem(head, insts, label, static, epochs, seed, dev):
+def train_mem(head, insts, label, static, epochs, seed, dev, r1_recal=False, init=None, train_only=None):
+    """init: state_dict to start from; train_only: parameter-name prefixes to optimise (others frozen) =
+    T2Mem-style alternation (Stage 2A: learn the memory with the scorer it feeds held fixed)."""
     torch.manual_seed(seed)
     m = FastMem(head, label=label, static=static).to(dev)
-    opt = torch.optim.AdamW([p for n, p in m.named_parameters() if not n.startswith("head.")], lr=2e-3,
-                            weight_decay=1e-4)
+    m.r1_recal = r1_recal
+    if init is not None:
+        m.load_state_dict(init)
+    params = [p for n, p in m.named_parameters() if not n.startswith("head.")
+              and (train_only is None or any(n.startswith(t) for t in train_only))]
+    opt = torch.optim.AdamW(params, lr=2e-3, weight_decay=1e-4)
     for ep in range(epochs):
         perm = np.random.default_rng(seed + ep).permutation(len(insts))
         tot = 0.0
@@ -242,6 +251,72 @@ def summarize(per):  # per: [n_inst, R] hits
             "prec_round": (per.mean(0) / K).tolist()}
 
 
+def followup(a, insts, head, fl, dev) -> None:
+    """F1: is there any memory gain ON TOP of the cross-instance recalibrator that the static control turned out to be?
+    recal_r1 = Stage A only (label=True, static: ln / q / o / W0 / lab_out learned, no write), used from round 1 on.
+    mem_on_recal = Stage A, then Stage B: A's parameters frozen, only the write path (k, v, eta, lab_scale) learned.
+    Round 1 is identical between the two arms, so any r2-4 difference is the test-time memory.
+    Rule (pre-registered in NOTES before running): memory adds value iff mem_on_recal - recal_r1 > 0 hits r2-4 with
+    sign-flip p < 0.10 (and the same holds for the self-supervised-only write, mem_on_recal_ss, as a secondary)."""
+    names = ["static", "oracle_true", "recal_r1", "mem_on_recal", "mem_on_recal_ss"]
+    res = {m: [None] * len(insts) for m in names}
+    with torch.no_grad():
+        for i, x in enumerate(insts):
+            res["static"][i] = hits_of(x, replay(x, lambda st, inst, obs: (inst["lw"], st)))
+            res["oracle_true"][i] = hits_of(x, replay(x, lambda st, inst, obs: (inst["lt"], st)))
+    write_params = ["k.", "v.", "log_eta", "lab_scale"]
+    for f in range(4):
+        tr = [insts[i] for i in range(len(insts)) if fl[i] != f]
+        te = [i for i in range(len(insts)) if fl[i] == f]
+        acc = {m: {i: [] for i in te} for m in names[2:]}
+        for sd in range(a.seeds):
+            A = train_mem(head, tr, True, True, a.epochs, 1000 * f + sd, dev, r1_recal=True)
+            sA = {k: v.detach().clone() for k, v in A.state_dict().items()}
+            B = train_mem(head, tr, True, False, a.epochs, 1000 * f + sd + 500, dev, r1_recal=True, init=sA,
+                          train_only=write_params)
+            # self-supervised-only write: label channel of the VALUE zeroed (lab_scale fixed at 0), read-out kept
+            sA0 = dict(sA); sA0["lab_scale"] = torch.zeros_like(sA["lab_scale"])
+            C = train_mem(head, tr, True, False, a.epochs, 1000 * f + sd + 700, dev, r1_recal=True, init=sA0,
+                          train_only=["k.", "v.", "log_eta"])
+            with torch.no_grad():
+                for i in te:
+                    acc["recal_r1"][i].append(hits_of(insts[i], A.run(insts[i])[0]))
+                    acc["mem_on_recal"][i].append(hits_of(insts[i], B.run(insts[i])[0]))
+                    acc["mem_on_recal_ss"][i].append(hits_of(insts[i], C.run(insts[i])[0]))
+        for m in names[2:]:
+            for i in te:
+                res[m][i] = np.mean(acc[m][i], 0).tolist()
+        log.info("followup fold %d done", f)
+    S = {m: summarize(v) for m, v in res.items()}
+
+    def d_(x, y, rng=slice(1, None)):
+        return np.array([sum(h[rng]) for h in res[x]]) - np.array([sum(h[rng]) for h in res[y]])
+
+    lines = ["# T2Mem PoC 1 follow-up F1: memory on top of a frozen recalibrator (2-stage alternation)", "",
+             "| method | hits r1 | hits r2-4 | prec / verif r2-4 | solved@16 | hits r1-4 | prec per round |",
+             "|---|---|---|---|---|---|---|"]
+    for m, s in S.items():
+        tot = np.mean([sum(h) for h in res[m]])
+        lines.append(f"| {m} | {s['hits_r1']:.3f} | {s['hits_r24']:.3f} | {s['p_per_verif_r24']:.3f} | "
+                     f"{s['solved16']:.3f} | {tot:.3f} | {' / '.join(f'{v:.3f}' for v in s['prec_round'])} |")
+    lines += ["", "| comparison | d hits (rounds) | 95% CI | sign-flip p |", "|---|---|---|---|"]
+    for x, y, rg, lab in [("mem_on_recal", "recal_r1", slice(1, None), "r2-4"),
+                          ("mem_on_recal_ss", "recal_r1", slice(1, None), "r2-4"),
+                          ("recal_r1", "static", slice(0, None), "r1-4"),
+                          ("oracle_true", "static", slice(0, None), "r1-4")]:
+        d = d_(x, y, rg)
+        lo, hi = boot_ci(d)
+        lines.append(f"| {x} - {y} | {d.mean():+.3f} ({lab}) | [{lo:+.3f}, {hi:+.3f}] | {signflip(d):.3g} |")
+    d = d_("mem_on_recal", "recal_r1")
+    ok = d.mean() > 0 and signflip(d) < 0.10
+    lines += ["", f"**F1 rule: memory adds value on top of the recalibrator -> {'YES' if ok else 'NO'}**"]
+    out = REPO / a.out
+    (out / "poc1_followup.md").write_text("\n".join(lines) + "\n")
+    json.dump({"summary": S, "per_instance": res, "iids": [x["iid"] for x in insts], "folds": fl, "memory_adds": ok},
+              open(out / "poc1_followup.json", "w"), indent=1, default=float)
+    print("\n".join(lines))
+
+
 # -------------------------------------------------------------------------------------------------------- main
 def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s | %(message)s")
@@ -250,10 +325,14 @@ def main() -> None:
     ap.add_argument("--out", default="runs/_analysis/t2mem")
     ap.add_argument("--epochs", type=int, default=60)
     ap.add_argument("--seeds", type=int, default=3)
+    ap.add_argument("--followup", action="store_true",
+                    help="follow-up F1 (NOTES 2026-11-16): memory on top of a frozen recalibrator, 2-stage alternation")
     a = ap.parse_args()
     dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     insts, head = load(a.cache, dev)
     fl = folds(insts)
+    if a.followup:
+        return followup(a, insts, head, fl, dev)
     log.info("%d instances, %d groups, base success rate %.3f", len(insts), len({x['group'] for x in insts}),
              float(torch.stack([x["y"] for x in insts]).mean()))
 

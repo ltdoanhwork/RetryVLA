@@ -29,6 +29,36 @@ RESIM = REPO / "runs/_analysis/failures/resim"
 OUT = REPO / "runs/_analysis/t2mem"
 
 
+def attempts_touch(t: np.ndarray, cols: list[str], merge_gap: int = 10, min_len: int = 3) -> list[dict]:
+    """Attempt = a finger-bowl contact segment (gaps < merge_gap merged); robust to gripper command chatter."""
+    c = {k: i for i, k in enumerate(cols)}
+    touch = (t[:, c["c_left"]] > 0) | (t[:, c["c_right"]] > 0)
+    n, segs, i = len(t), [], 0
+    while i < n:
+        if touch[i]:
+            j = i
+            while j < n and touch[j]:
+                j += 1
+            if segs and i - segs[-1][1] < merge_gap:
+                segs[-1][1] = j
+            else:
+                segs.append([i, j])
+            i = j
+        else:
+            i += 1
+    out = []
+    for i, j in segs:
+        if j - i < min_len:
+            continue
+        eef = t[i, [c["eef_x"], c["eef_y"], c["eef_z"]]]
+        bowl = t[i, [c["bowl_x"], c["bowl_y"], c["bowl_z"]]]
+        z0 = t[max(0, i - 1), c["bowl_z"]]
+        lift = float(t[i:min(n, j + 20), c["bowl_z"]].max() - z0)
+        out.append({"t": int(i), "hold": int(j - i), "rel": (eef - bowl).tolist(), "abs": eef.tolist(),
+                    "lift": lift, "lifted": lift > 0.03, "touch": True})
+    return out
+
+
 def attempts(t: np.ndarray, cols: list[str], min_hold: int = 5, merge_gap: int = 0, near: float = 1e9) -> list[dict]:
     c = {k: i for i, k in enumerate(cols)}
     a6 = t[:, c["a6"]]
@@ -67,13 +97,15 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--models", nargs="+", default=["pi1_s0", "m7base_s0"])
     ap.add_argument("--tol", type=float, default=0.02)
+    ap.add_argument("--by", choices=["close", "touch"], default="close",
+                    help="attempt = gripper close command (chatter-prone) or finger-bowl contact segment")
     ap.add_argument("--min_hold", type=int, default=5)
     ap.add_argument("--merge_gap", type=int, default=3, help="re-open shorter than this = same attempt (chatter)")
     ap.add_argument("--near", type=float, default=0.10, help="only closes with EEF within this of the bowl (m)")
     args = ap.parse_args()
     modes = {(e["model"], e["iid"]): e.get("mode") for e in json.load(open(RESIM.parent / "modes.json"))["episodes"]}
     res, lines = {}, ["# T2Mem PoC 0: repeated failed grasps within an episode", "",
-                      f"tol = {args.tol} m (EEF pose relative to bowl at close), attempt = close held >= "
+                      f"[by={args.by}] tol = {args.tol} m (EEF pose relative to bowl at attempt onset), attempt = close held >= "
                       f"{args.min_hold} steps (re-open < {args.merge_gap} merged) with EEF within {args.near} m of the "
                       "bowl. Failed episodes only; `f_infeasible` excluded. Within = attempt within tol of an EARLIER "
                       "failed attempt of the same episode; cross (null) = same number of failed attempts drawn from "
@@ -89,7 +121,8 @@ def main() -> None:
             t, cols = d["tele"], [str(x) for x in d["cols"]]
             if t[:, cols.index("success")].max() > 0 or mode in (None, "f_infeasible"):
                 continue
-            at = attempts(t, cols, args.min_hold, args.merge_gap, args.near)
+            at = (attempts_touch(t, cols, args.merge_gap) if args.by == "touch"
+                  else attempts(t, cols, args.min_hold, args.merge_gap, args.near))
             n_rep = 0
             for k, a in enumerate(at):
                 prev = [b for b in at[:k] if not b["lifted"]]
@@ -147,9 +180,9 @@ def main() -> None:
               f"Within-episode repeat rate {w:.0%} vs cross-episode null {x:.0%} (ratio {w / max(x, 1e-9):.2f}): "
               "ratio ~1 means the repeats reflect a fixed task prior, not an episodic loop."]
     OUT.mkdir(parents=True, exist_ok=True)
-    (OUT / f"poc0_repeat_tol{args.tol:g}.md").write_text("\n".join(lines) + "\n")
+    (OUT / f"poc0_repeat_{args.by}_tol{args.tol:g}_h{args.min_hold}_g{args.merge_gap}_n{args.near:g}.md").write_text("\n".join(lines) + "\n")
     json.dump({"tol": args.tol, "pooled_frac": frac, "verdict": verdict, "models": res},
-              open(OUT / f"poc0_repeat_tol{args.tol:g}.json", "w"), indent=1)
+              open(OUT / f"poc0_repeat_{args.by}_tol{args.tol:g}_h{args.min_hold}_g{args.merge_gap}_n{args.near:g}.json", "w"), indent=1)
     print("\n".join(lines))
 
 
