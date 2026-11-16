@@ -168,6 +168,12 @@ class _RecordingSim:
         returns success, n, privileged end geometry and the exact end snapshot (pi continues from there)."""
         return self._run_family(wps, snapshot)
 
+    def oracle_tests(self, bddl: str, snap: dict) -> dict:
+        """ACR-N: privileged failure-cause measurements (contact census, lift / movability tests) from the snapshot."""
+        from retryvla.causal.oracle import oracle_tests
+
+        return oracle_tests(self, bddl, snap)
+
     def state_info(self) -> dict:
         """ACR: privileged geometry of the current state + nearest other free object (Tier A cause labels)."""
         from retryvla.causal.causes import other_objects_min_dist

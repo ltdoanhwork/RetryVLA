@@ -48,6 +48,8 @@ def library(g: float) -> dict[str, np.ndarray]:
                     ("nudge_my", (0, -v, 0))):
         P[name] = np.concatenate([_seg(6, g=1.0), _seg(4, d, g=1.0), _seg(4, tuple(-x for x in d), g=1.0),
                                   _seg(4, g=g)])
+    # ACR-N: release test (open, rise ~2 cm, hold): does anything fall / move when the grip is released?
+    P["release"] = np.concatenate([_seg(8, g=-1.0), _seg(8, (0, 0, v), g=-1.0), _seg(6, g=-1.0)])
     for k, a in P.items():
         assert len(a) <= PROBE_MAX_STEPS, k
     return P
@@ -65,7 +67,10 @@ def run_probe(rsim, actions: np.ndarray, abort_disp: float = 0.03) -> dict:
     g0 = sim_geom(rsim.sim)
     eef0, obj0 = g0[[IDX["eef_x"], IDX["eef_y"], IDX["eef_z"]]], g0[[IDX["obj_x"], IDX["obj_y"], IDX["obj_z"]]]
     tr, aborted, success = [g0], False, False
-    for a in actions:
+    mid, obs_mid = len(actions) // 2, None
+    for k, a in enumerate(actions):
+        if k == mid:
+            obs_mid = rsim._last_obs
         if aborted:
             a = np.concatenate([np.zeros(6, np.float32), a[6:7]])
         out = rsim.step(a)
@@ -77,7 +82,7 @@ def run_probe(rsim, actions: np.ndarray, abort_disp: float = 0.03) -> dict:
     T = np.stack(tr)
     feats = response(T, actions, eef0, obj0)
     return {"feats": feats, "geom0": g0, "geom1": T[-1], "n": int(len(actions)), "aborted": aborted,
-            "success": success}
+            "success": success, "obs_mid": obs_mid}
 
 
 def response(T: np.ndarray, actions: np.ndarray, eef0: np.ndarray, obj0: np.ndarray) -> dict[str, float]:

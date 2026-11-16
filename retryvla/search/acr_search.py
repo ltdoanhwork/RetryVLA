@@ -228,6 +228,189 @@ def postprobe(cfg, pool, policy, srun, run):
         log.info("postprobe [%d/%d] %s", k + 1, len(ids), iid_[-40:])
 
 
+OPTIONS_N = ("vla", "wm_single", "wm_prim", "hover", "grasp_slow", "grasp_firm", "push_goal", "retreat",
+             "place_goal", "pull_free")
+
+
+def _lat_change(z0, z1) -> tuple[float, float]:
+    """Mean squared change of normalized DINOv2 latents, agent-view half / wrist half of the tokens."""
+    P = z0.shape[1] // 2
+    d = ((z1.float() - z0.float()) ** 2).mean(2)[0]
+    return float(d[:P].mean()), float(d[P:].mean())
+
+
+def collect_n(cfg, pool, policy, srun, run):
+    """ACR-N (natural failures, PLAN "ACR-N"): oracle cause tests, every probe's observation-only + oracle response,
+    and the outcome table O[option, variant] of every recovery option executed from the failure snapshot."""
+    import torch
+
+    from retryvla.causal.oracle import CAUSES
+    from retryvla.geom.head import load_head
+    from retryvla.search import rgr_core as R
+    from retryvla.search.run_search import Proposals
+    from retryvla.search.wm_search import WMCriticRanker
+
+    a, mb, sc = cfg.acr, cfg.m5b, cfg.search
+    sel = json.loads((REPO_ROOT / a.instances).read_text())
+    ids = sel["order"][int(a.get("lane", 0)):: int(a.get("num_lanes", 1))]
+    if int(a.get("max_states", 0)):
+        ids = ids[: int(a.max_states)]
+    out_dir = REPO_ROOT / a.out_root / "N"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    todo = [i for i in ids if not (out_dir / f"{i}.json").exists()]
+    log.info("tier N: %d states (%d todo)", len(ids), len(todo))
+    if not todo:
+        return
+    dev = torch.device(cfg.policy.device)
+    ranker = WMCriticRanker((REPO_ROOT / mb.wm_link).read_text().strip(), (REPO_ROOT / mb.critic_link).read_text().strip(),
+                            cfg.wm_collect.encoder, int(cfg.wm_collect.pool_grid), dev, 0.0, float(mb.beta_rough))
+    head = load_head((REPO_ROOT / cfg.rgr.geom_head_link).read_text().strip(), dev)
+    insts = restore_instances(pool, policy, cfg, todo, srun)
+    H, cont, nv = int(sc.horizon), int(a.cont_steps), int(a.n_real_var)
+    proposals = Proposals(policy, sc, H, int(cfg.eval.seed) + 4242)
+    t0 = time.time()
+    for n, inst in enumerate(insts):
+        ti = time.time()
+        base = zlib.crc32(inst.instance_id.encode()) % (2**31)
+        orc = run_seqs(pool, [[("oracle_tests", (inst.bddl, inst.snapshot), {})]])[0]
+        info = run_seqs(pool, [[("restore_hidden", (inst.bddl, inst.snapshot, None), {}), ("state_info", (), {})]])[0]
+        g0 = np.asarray(info["geom"])
+        z0, q0 = ranker.encode(inst.obs0)
+        cpi0 = float(ranker.score_real(z0, q0, inst.task)[0])
+        g0h = head.predict(z0, q0).cpu().numpy()[0]
+        # ---- probes (real env, nominal physics) ----
+        lib = PR.library(PR.gripper_cmd(g0))
+        items = [[("restore_hidden", (inst.bddl, inst.snapshot, None), {}), ("probe", (lib[k],), {"snapshot": False})]
+                 for k in lib]
+        pr = run_seqs(pool, items)
+        probes = {}
+        for k, r in zip(lib, pr):
+            z1, q1 = ranker.encode(r["obs"])
+            zm, _ = ranker.encode(r["obs_mid"]) if r.get("obs_mid") is not None else (z1, q1)
+            la_e, lw_e = _lat_change(z0, z1)
+            la_m, lw_m = _lat_change(z0, zm)
+            vis = {"lat_agent_end": la_e, "lat_wrist_end": lw_e, "lat_agent_mid": la_m, "lat_wrist_mid": lw_m,
+                   "cpi_end": float(ranker.score_real(z1, q1, inst.task)[0]) - cpi0}
+            probes[k] = {"feats": {**r["feats"], **vis}, "risk": PR.risk(r["geom0"], r["geom1"]),
+                         "aborted": bool(r["aborted"]), "success": bool(r["success"]), "n": int(r["n"])}
+        # ---- WM options (fresh single-like pool: 256 proposals + 2 CEM rounds; and primitives only) ----
+        pool_c, src = proposals(inst, int(mb.pool_size))
+        cs0 = R.imagine(ranker, None, z0, q0, inst.task, pool_c)
+        sd = base % 10007
+        cand, cs = R.cem_rounds(ranker, None, z0, q0, inst.task, pool_c, cs0, 2, 0.0, float(mb.get("mu_cost", 1.0)),
+                                False, sd)
+        s_all = R.objective(cs, 0.0, float(mb.get("mu_cost", 1.0)), False)
+        i_single = R.select_diverse(s_all, cs["zfeat"], nv, sd)
+        wm_single = cand[i_single]
+        is_prim = np.nonzero(np.array([x.startswith("prim") for x in src]))[0]
+        sp = R.objective({k: v[is_prim] for k, v in cs0.items()}, 0.0, float(mb.get("mu_cost", 1.0)), False)
+        k_ = min(nv, len(is_prim))
+        wm_prim = pool_c[is_prim[R.select_diverse(sp, cs0["zfeat"][is_prim], k_, sd)]]
+        wm_val = {"wm_single": [float(x) for x in cs["value"][i_single]]}
+        # ---- outcome table ----
+        jobs, own = [], []
+        for oi, o in enumerate(OPTIONS_N):
+            for j in range(nv):
+                rng, ps = seeds(base, 3, oi, j)
+                if o in ("wm_single", "wm_prim"):
+                    acts = (wm_single if o == "wm_single" else wm_prim)
+                    if j >= len(acts):
+                        continue
+                    jobs.append(Job("restore_hidden", dict(bddl=inst.bddl, snap=inst.snapshot, hidden=None),
+                                    task=inst.task, max_steps=H + cont, prefix=acts[j], policy_seed=ps))
+                else:
+                    wps = FAM.build(o, g0, rng, float(a.perception_sigma))
+                    jobs.append(Job("restore_family", dict(bddl=inst.bddl, snap=inst.snapshot, hidden=None, wps=wps),
+                                    task=inst.task, max_steps=cont, policy_seed=ps))
+                own.append((oi, j))
+        res = srun(policy, jobs, noise_scale=float(cfg.policy.noise_scale), desc="table")
+        F = len(OPTIONS_N)
+        O = np.zeros((F, nv), int) - 1          # -1 = variant missing
+        OS = np.zeros((F, nv), int)
+        PS = np.zeros((F, nv), bool)
+        sub = np.full((F, nv, 3), np.nan)       # after-prefix: obj lift, obj-goal xy, finger contact
+        for (oi, j), r in zip(own, res):
+            O[oi, j] = int(bool(r.success or r.load_out.get("prefix_success", False)))
+            OS[oi, j] = int(r.steps) + int(r.load_out.get("n_prefix", 0))
+            PS[oi, j] = bool(r.prefix_success or r.load_out.get("prefix_success", False))
+            ga = r.load_out.get("geom_after_prefix")
+            if ga is not None:
+                from retryvla.geom.features import IDX
+                ga = np.asarray(ga)
+                sub[oi, j] = [ga[IDX["obj_z"]] - g0[IDX["obj_z"]],
+                              np.linalg.norm(ga[[IDX["obj_x"], IDX["obj_y"]]] - ga[[IDX["goal_x"], IDX["goal_y"]]]),
+                              ga[IDX["finger_obj_contact"]]]
+        rec = {"instance_id": inst.instance_id, "scene": inst.scene_tag, "task": inst.task, "tier": "N",
+               "task_folder": inst.meta.get("task_folder"), "gripper_init": inst.meta.get("gripper_init"),
+               "level": sel["level"].get(inst.instance_id), "set": sel["set"].get(inst.instance_id),
+               "single_solved": sel["single_solved"].get(inst.instance_id), "g0": g0,
+               "oracle": orc, "cause": orc["cause"], "causes": list(CAUSES),
+               "obs_feats": {"state": np.asarray(inst.obs0["state"], float), "cpi0": cpi0, "head": g0h},
+               "probes": probes, "probe_len": {k: int(len(v)) for k, v in lib.items()},
+               "options": list(OPTIONS_N), "O": O, "O_steps": OS, "O_prefix_success": PS, "O_sub": sub,
+               "wm_actions": {"wm_single": wm_single, "wm_prim": wm_prim}, "wm_val": wm_val, "H": H, "cont": cont}
+        rec["t_s"] = time.time() - ti
+        tmp = out_dir / f"{inst.instance_id}.json.tmp"
+        tmp.write_text(json.dumps(_js(rec)))
+        tmp.replace(out_dir / f"{inst.instance_id}.json")
+        line = " ".join(f"{o[:6]}:{int((O[i] > 0).sum())}" for i, o in enumerate(OPTIONS_N))
+        log.info("[%d/%d] %s cause %s | %s | %.0fs (total %.0fs)", n + 1, len(insts), inst.instance_id[-40:],
+                 orc["cause"], line, time.time() - ti, time.time() - t0)
+        run.log({"acrn/states_done": n + 1}, step=n)
+
+
+def postprobe_n(cfg, pool, policy, srun, run):
+    """ACR-N honest check: execute the decision file's probe in the real env, then re-run that arm's trial sequence
+    (same options / variants / continuation seeds) from the TRUE post-probe state; object-relative options are rebuilt
+    from the post-probe geometry, WM options replay the same open-loop actions."""
+    a = cfg.acr
+    dec = json.loads((REPO_ROOT / a.decisions).read_text())
+    out_p = REPO_ROOT / a.out_root / "postprobe_N.jsonl"
+    done = set()
+    if out_p.exists():
+        done = {(json.loads(l)["instance_id"], json.loads(l)["arm"]) for l in open(out_p)}
+    rows = [d for d in dec["rows"] if (d["instance_id"], d["arm"]) not in done]
+    lane, nl = int(a.get("lane", 0)), int(a.get("num_lanes", 1))
+    ids = sorted({d["instance_id"] for d in rows})[lane::nl]
+    if not ids:
+        return
+    insts = {i.instance_id: i for i in restore_instances(pool, policy, cfg, ids, srun)}
+    for k, iid_ in enumerate(ids):
+        inst = insts[iid_]
+        base = zlib.crc32(iid_.encode()) % (2**31)
+        rec = json.loads((REPO_ROOT / a.out_root / "N" / f"{iid_}.json").read_text())
+        lib = PR.library(PR.gripper_cmd(np.asarray(rec["g0"])))
+        H, cont = int(rec["H"]), int(rec["cont"])
+        for d in [d for d in rows if d["instance_id"] == iid_]:
+            snap, g = inst.snapshot, np.asarray(rec["g0"])
+            pinfo = {"n": 0, "success": False}
+            if d.get("probe"):
+                r = run_seqs(pool, [[("restore_hidden", (inst.bddl, inst.snapshot, None), {}),
+                                     ("probe", (lib[d["probe"]],), {"snapshot": True})]])[0]
+                snap, pinfo = r["snapshot"], {"n": r["n"], "success": r["success"]}
+                g = np.asarray(run_seqs(pool, [[("restore_hidden", (inst.bddl, snap, None), {}),
+                                                ("state_info", (), {})]])[0]["geom"])
+            jobs = []
+            for oi, j in d["seq"]:
+                o = rec["options"][oi]
+                rng, ps = seeds(base, 3, oi, j)
+                if o.startswith("wm_"):
+                    jobs.append(Job("restore_hidden", dict(bddl=inst.bddl, snap=snap, hidden=None), task=inst.task,
+                                    max_steps=H + cont, prefix=np.asarray(rec["wm_actions"][o][j], np.float32),
+                                    policy_seed=ps))
+                else:
+                    wps = FAM.build(o, g, rng, float(a.perception_sigma))
+                    jobs.append(Job("restore_family", dict(bddl=inst.bddl, snap=snap, hidden=None, wps=wps),
+                                    task=inst.task, max_steps=cont, policy_seed=ps))
+            res = srun(policy, jobs, noise_scale=float(cfg.policy.noise_scale), desc="postprobe") if jobs else []
+            with open(out_p, "a") as f:
+                f.write(json.dumps({"instance_id": iid_, "arm": d["arm"], "probe": d.get("probe"), "seq": d["seq"],
+                                    "succ": [bool(r.success or r.load_out.get("prefix_success", False)) for r in res],
+                                    "steps": [int(r.steps) + int(r.load_out.get("n_prefix", 0)) for r in res],
+                                    "probe_success": bool(pinfo["success"]), "probe_n": int(pinfo["n"])}) + "\n")
+        log.info("postprobe N [%d/%d] %s", k + 1, len(ids), iid_[-40:])
+
+
 def main() -> None:
     setup_logging()
     cfg = cli_config()
@@ -238,7 +421,12 @@ def main() -> None:
         with SimPool(int(cfg.eval.n_workers), int(cfg.env.resolution)) as pool:
             srun = make_safe_run(pool, int(cfg.m5b.get("worker_retries", 2)), int(cfg.m5b.get("oom_retries", 3)),
                                  float(cfg.m5b.get("oom_wait_s", 120)))
-            (postprobe if str(a.get("mode", "collect")) == "postprobe" else collect)(cfg, pool, policy, srun, run)
+            if str(a.tier) == "N" and str(a.get("mode", "collect")) == "collect":
+                collect_n(cfg, pool, policy, srun, run)
+            elif str(a.tier) == "N":
+                postprobe_n(cfg, pool, policy, srun, run)
+            else:
+                (postprobe if str(a.get("mode", "collect")) == "postprobe" else collect)(cfg, pool, policy, srun, run)
         run.summary["config"] = to_dict(cfg)
 
 

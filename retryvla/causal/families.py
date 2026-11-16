@@ -20,7 +20,7 @@ import numpy as np
 
 from retryvla.causal.probes import STEP_M
 
-FAMILIES = ("vla", "hover", "grasp_slow", "grasp_firm", "push_goal", "retreat")
+FAMILIES = ("vla", "hover", "grasp_slow", "grasp_firm", "push_goal", "retreat", "place_goal", "pull_free")
 PREFIX_MAX = 140
 
 
@@ -70,6 +70,21 @@ def build(name: str, g0: np.ndarray, rng: np.random.Generator, sigma: float) -> 
         return [wp(None, 1, 6), wp([eef[0], eef[1], up], 1, 25), wp([behind[0], behind[1], up], 1, 30),
                 wp([behind[0], behind[1], zp], 1, 25, speed=0.5), wp([push_to[0], push_to[1], zp], 1, 40, speed=0.4),
                 wp([push_to[0] - u[0] * 0.05, push_to[1] - u[1] * 0.05, zp + 0.10], -1, 15)]
+    if name == "place_goal":
+        # ACR-N: keep / close the grasp, rise, carry above the goal, lower, release, rise (secure-grasp option)
+        zc = max(eef[2], goal[2] + 0.14)
+        gz = goal[2] + rng.uniform(0.06, 0.09)
+        return [wp(None, 1, 6), wp([eef[0], eef[1], zc], 1, 25, speed=0.6), wp([goal[0], goal[1], zc], 1, 40, speed=0.6),
+                wp([goal[0], goal[1], gz], 1, 20, speed=0.5), wp(None, -1, 10), wp([goal[0], goal[1], zc], -1, 15)]
+    if name == "pull_free":
+        # ACR-N: gripper closed, from the far side push the object ~5 cm toward the robot (-x: out of clutter / off
+        # a fixture edge), then open and back off; pi re-grasps from a freed state
+        d = rng.uniform(0.04, 0.06)
+        far = obj[:2] + np.array([0.075, rng.normal(0, 0.01)])
+        zp = obj[2] + rng.uniform(0.015, 0.03)
+        return [wp(None, 1, 6), wp([eef[0], eef[1], up], 1, 25), wp([far[0], far[1], up], 1, 30),
+                wp([far[0], far[1], zp], 1, 25, speed=0.5), wp([far[0] - 0.075 - d, far[1], zp], 1, 30, speed=0.4),
+                wp([far[0] - 0.075 - d - 0.03, far[1], zp + 0.10], -1, 15)]
     raise ValueError(name)
 
 

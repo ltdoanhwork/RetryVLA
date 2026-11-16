@@ -339,3 +339,108 @@ single point; particles need two ends); `anchored` (planar joint friction) had n
 to 100 N -> dropped. Tier B therefore has 4 cases per state (nominal + 3 hidden types), 25 states = 100 cases, 7
 planning particles. The calibration also shows the scripted families are weak (~1 / 3 sub-goal success at nominal
 with 2.5 cm perception noise); success is still counted after the pi continuation.
+
+## ACR-N: "Act Before You Imagine" on NATURAL failures, design note (user pivot 2026-11-16; written BEFORE any ACR-N result)
+Supersedes the 2026-11-09 ACR plan for the next round (ACR Tier B was stopped at 2 / 25 states on the user's request;
+its code is reused). Results -> RESULTS "ACR-N", ops -> NOTES, adversarial review afterwards (`retryvla-idea-review`).
+Code: `retryvla/causal/{oracle,families,probes,belief}.py`, `retryvla/search/acr_search.py` (tier `N`),
+`configs/exp/acrn.yaml`, `scripts/acrn_select_instances.py`, `scripts/analyze_acrn.py`, `scripts/acrn_chain.py`.
+
+**Question.** RGR showed that pose geometry (even oracle) does not raise the solved rate, and every imagined-recovery
+variant is bottlenecked by WM over-optimism. Do the failures that `single` cannot solve have a hidden PHYSICAL cause
+(grasp state, slip, contact / blockage, movability, policy OOD) that (a) changes which recovery works and (b) can be
+established cheaply by a short safe probe, so that choosing the probe by decision value and recovering conditioned on
+the resulting belief solves more of them at the SAME sim budget?
+
+**Instances (train only, deterministic, `scripts/acrn_select_instances.py`, seed 20261116).** Primary set U = ALL
+RGR train instances that `single` left unsolved (73 of 127; no cherry-picking), ordered so L3 and instances with
+finger/object contact at the failure snapshot come first (if compute runs out, the first N are the priority list).
+Control set S = 24 `single`-solved instances (stratified by task) -> used for cross-fitting the decision table /
+belief model and for a no-harm check. Selection-on-failure caveat: on U, `single` = 0 by construction, so absolute
+rates on U are biased upwards for anything re-run with new seeds; only PAIRED comparisons inside the new outcome table
+are tests (arm 1b below is the honest control).
+
+**Failure-cause taxonomy (oracle, privileged MuJoCo; `retryvla/causal/oracle.py`).** Measured at the failure snapshot:
+contact census (finger-object, gripper-other body, object-object, object-fixture other than the table, object-goal),
+gripper aperture + actuator force, object up-axis, and two INTERVENTIONAL oracle tests run from the exact snapshot
+(never charged, never visible to non-oracle arms): lift test (close, raise eef 3 cm: object lift / eef lift) and
+movability test (external horizontal force 2 x m g on the object for 20 steps, robot frozen: object displacement).
+Cause = first match:
+1. `tipped`: object up-axis z < 0.8.
+2. `held_ok`: finger-object contact, gripper closed, lift ratio >= 0.6 (secure grasp; failure is transport / place).
+3. `held_slip`: finger-object contact but lift ratio < 0.6 or only one finger (insecure / slipping grasp).
+4. `stuck`: object touches a fixture / other object (not table, not the gripper) or sits > 3 cm above the table, AND
+   movability displacement < 1 cm (blocked / jammed).
+5. `obstructed`: gripper (fingers / hand) in contact with a non-target body (plate, fixture, other object).
+6. `contact_free`: object touches a fixture / other object / goal but is movable (cluttered / on the rim).
+7. `free`: object only on the table, not touched (approach / localisation / policy-OOD failure).
+Distribution reported on U and S; pre-registered merge: causes with < 4 instances in U+S are merged into the nearest
+group (tipped -> contact_free, held_ok/held_slip -> held, stuck/obstructed -> blocked) for the decision table only.
+Policy-OOD is reported as an outcome attribute (pi-only success rate from the failure state = `vla` option row), not
+as a cause.
+
+**Probe library (<= 45 env steps, bounded; `retryvla/causal/probes.py`).** `hold` (15 steps zero action = passive
+re-observation), `squeeze` (close / restore), `lift2` (close, raise ~2.4 cm, lower, restore), `touch_grasp`,
+`yaw_wiggle` (wrist micro-rotation), `nudge_{px,mx,py,my}` (~1.2 cm lateral, return), `release` (open, rise 2 cm).
+Observation-available response (inference-legal): proprio trace (finger opening min / end / std while closed,
+achieved eef displacement / lift, return error, commanded-minus-achieved path = lag) + VISUAL response: DINOv2 latent
+change (WM v1 encoder, agent-view and wrist separately) start -> peak and start -> end, + C^pi of the post-probe obs.
+Tactile (finger-object contact fraction) and oracle perception (privileged object displacement / lift) are reported as
+separate upper-bound feature sets. Safety: real-env abort if the object moves > 3 cm; Risk(a) = cross-fitted rate of
+the probe worsening the state (off_table / tilt / goal disturbed, `geom_terms`); probes with Risk > 0.2 are excluded.
+Probe cost = its env steps, charged to the same sim budget as recovery trials.
+
+**Recovery options (cause-conditioned option set, `retryvla/causal/families.py`).** Every option = open-loop prefix
+then the frozen pi continuation (300 steps), executed in the real sim from the failure snapshot:
+`vla` (pi only, new seed), `wm_vla` (top-C^pi WM v1 imagined SmolVLA samples / perturbations, = the `single` scorer
+without CEM), `wm_prim` (top-C^pi WM v1 imagined proposal primitives: open / retreat / reposition / regrasp),
+`hover` (re-approach from a pre-grasp pose), `grasp_slow`, `grasp_firm` (regrasp variants), `push_goal`, `retreat`
+(back off), `place_goal` (keep the grasp, carry above the goal, lower, release: for a secure grasp), `pull_free`
+(push the object 5 cm toward the robot out of clutter / off a fixture, back off). 8 variants each (fixed seeds,
+2.5 cm simulated perception noise for object-relative options) -> OUTCOME TABLE O[option, variant] per instance
+(80 sim trials). Every arm's choices are scored by look-up in the same table (perfectly paired).
+
+**Decision table and belief (cross-fitted, 5-fold GROUP folds by failure episode).** V[c, o] = smoothed success rate
+of option o on training-fold instances of cause c (Beta prior centred on the option's marginal rate, strength 2).
+Belief: b0(c | failure obs) = multinomial logistic regression on observation-only failure features (proprio at the
+failure: gripper opening, eef height; C^pi of the failure obs; RGR geometry-head predictions of finger contact /
+gripper-object distance / object height from the real latent). After probe a with response r:
+b_a(c) ∝ b0(c) p(r | c, a), p = diagonal Gaussian per cause (pooled-variance shrinkage) fitted on training folds.
+Sequential allocation (identical for every arm; arms differ only in the belief): greedily append the trial that
+maximises the belief-weighted P(>= 1 success) per expected step cost until the step budget is used; executed in that
+order by table look-up until the first success or until the budget is exhausted (actual table steps charged).
+EVI(a) = E_{c ~ b0} E_{r ~ train responses of cause c} [V_c(alloc(b_a(r), S - cost_a))] - E_{c~b0}[V_c(alloc(b0, S))];
+cost enters through the reduced budget; a* = argmax EVI(a) - lam Risk(a) (lam = 1); probe only if the objective > 0.
+
+**Arms (paired, same instances, same step budget S including probe steps).**
+(1) `single` (historical RGR picks; = 0 on U by construction) and (1b) `no_probe` = allocation with b0 (honest control),
+plus (1c) `wm_only` = all budget on `wm_vla` (fresh single-like); (2) `passive` = `hold` probe; (3) `random_probe`
+(uniform over safe probes, fixed seed); (4) `evi_probe`; (4b) `infogain_probe` (max expected entropy reduction, same
+budget accounting); (5) `oracle_cause` (point-mass belief on the true cause, charged the EVI arm's probe cost);
+(6) `oracle_cause_free` (no probe cost) -> 5 vs 6 separates information value from budget; (7) `hindsight_best`
+(best single option per instance in hindsight: option-set ceiling, not an arm); (8) `extra_budget` (b0, S + 45 steps).
+Budgets: S = 2800 env steps (= `single`'s 8 x 350, primary), S = 1400 secondary.
+
+**Metrics.** solved rate (U primary; U+S; per level; per cause), verified recovery yield (hits per 1k steps), probe
+cost, steps to first success, decision-change rate (allocation's first option differs from no_probe) and the gain on
+changed decisions, cause-ID accuracy of b0 vs b_a (MAP, cross-fitted), option-choice entropy across causes, probe
+safety violations; McNemar (exact) vs `no_probe` and vs `wm_only` (and vs `single` on U+S). Honest check: the
+allocated trials of `evi_probe` (and `random_probe`) are re-run from the TRUE post-probe state (probe side effects in).
+
+**Pre-registered decision rules.**
+- G0 (actionable causes): `oracle_cause` beats `no_probe` by >= 8 pt solved on U at S = 2800 with exact McNemar
+  p < 0.10. If G0 FAILS: do not close; diagnose (i) coverage: `hindsight_best` on U (option set too weak if < 30 %),
+  (ii) cause -> option relevance: fraction of instances whose oracle-belief first option differs from the b0 first
+  option, mutual information between cause and best option, per-cause V table spread, (iii) whether the bottleneck is
+  the pi continuation (prefix sub-goal reached but pi fails: `place_goal` / grasp prefix success vs final success);
+  report what would need to be true.
+- G1 (information): if G0 passes, `evi_probe` beats `no_probe`, `passive`, `random_probe` and `extra_budget` on U
+  (>= 5 pt, p < 0.10 vs `no_probe`) with a positive mean gain on changed decisions; else analyse the belief update
+  (cause-ID accuracy with / without probe, proprio vs tactile vs oracle-perception features).
+- G2 (go to distillation): G1 passes AND the post-probe honest re-run keeps >= 80 % of the table gain AND
+  `evi_probe` >= `single` on U+S (no harm on S). Then generate a probe-then-recover dataset and run 1-seed SFT + test
+  RSR / nominal (deployable form discussed in RESULTS). Otherwise no distillation.
+
+**Claim boundaries.** Causes are defined from privileged sim; oracle arms are upper bounds. Probe responses are
+from the same simulator (no sensor noise beyond rendering). Scripted options use simulated perception noise, not the
+observation-only head. U is selected on `single` failure. No policy claim without distillation + test RSR.

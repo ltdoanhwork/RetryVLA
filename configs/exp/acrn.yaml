@@ -1,0 +1,15 @@
+# ACR-N ("Act Before You Imagine" on NATURAL failures), user pivot 2026-11-16. Design + pre-registered decision rules:
+# experiments/PLAN.md "ACR-N". Same instances / protocol / pi0 / continuation length as the RGR sweep (M5b train
+# shards 0-3), TRAIN split only. Nothing tuned on test.
+defaults: [exp/acr_poc]
+milestone: ACRN
+tag: acrn
+eval:
+  n_workers: 12
+acr:
+  tier: N
+  mode: collect               # collect | postprobe (acr.decisions = runs/_analysis/acrn/decisions.json)
+  instances: data/acr/instances_n.json
+  out_root: data/acr/n1
+  n_real_var: 8               # variants per recovery option in the outcome table (10 options -> 80 sim trials)
+  cont_steps: 300

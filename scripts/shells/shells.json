@@ -19,14 +19,25 @@
   "max_load_per_core": 0.6,
   "tmux_prefix": "rv_"
  },
- "claims": {},
+ "claims": {
+  "cb2b6ab1:0": {
+   "tmux": "rv_acrn_smoke",
+   "args": "retryvla.search.acr_search configs/exp/acrn.yaml acr.max_states=1 acr.out_root=data/acr/n1_smoke",
+   "since": "2026-11-16T04:16:27"
+  }
+ },
  "allow_only": {
   "335de36e": "owner thanhnv; LIGHT JOBS ONLY (user 2026-11-08): <= 8 sim workers / job, retry_oom, never touch non-rv_ processes, back off if the owner ramps up. vla_roboworm_thanhnv_2-1 (335de36e-7f25-4b34-8979-2e74ded69fce), node cn06, container 2ff49dc615a0, 2x A100 80GB, 32 CPU (node load ~15.9 from other containers). Probe 2026-11-08 09:37 UTC: both GPUs 0 MiB / 0 % util, no owner tmux / GPU processes. envcheck: OK video decode, OK sim 50 steps 1.05 s (NVIDIA EGL)",
-  "b936d1d7": "owner thanhnv; LIGHT JOBS ONLY (user 2026-11-08): <= 8 sim workers / job, retry_oom, never touch non-rv_ processes, back off if the owner ramps up. vla_roboworm_thanhnv_2-2 (b936d1d7-8a44-4bb8-8f76-a9edb41eb320), node cn37, container 21a1ed348945, 2x A100 80GB, 32 CPU (load ~2.6). Probe 2026-11-08 09:37 UTC: both GPUs 0 MiB / 0 % util, no owner tmux / GPU processes. envcheck: OK video decode, OK sim 50 steps 0.94 s (NVIDIA EGL)"
+  "b936d1d7": "owner thanhnv; LIGHT JOBS ONLY (user 2026-11-08): <= 8 sim workers / job, retry_oom, never touch non-rv_ processes, back off if the owner ramps up. vla_roboworm_thanhnv_2-2 (b936d1d7-8a44-4bb8-8f76-a9edb41eb320), node cn37, container 21a1ed348945, 2x A100 80GB, 32 CPU (load ~2.6). Probe 2026-11-08 09:37 UTC: both GPUs 0 MiB / 0 % util, no owner tmux / GPU processes. envcheck: OK video decode, OK sim 50 steps 0.94 s (NVIDIA EGL)",
+  "cb2b6ab1": "vla_RetryVLA_DoanhLT_acr2 (cb2b6ab1-0ffa-43fc-a595-dfe07138c6cc): USER'S OWN account, requested by the agent 2026-11-16 04:08 UTC for ACR-N (natural-failure causal probing PoC). 1x A100 80GB, 32 CPU, envcheck OK (video decode, sim 50 steps 0.99 s). Kill (det shell kill) when ACR-N is done",
+  "b8c028b9": "owner thanhnv; user 2026-11-16 authorized thanhnv / quang / doanhlt shells for the T2Mem PoC. vla_roboworm_thanhnv_1-1 (b8c028b9-2b65-44dc-a7f8-3ead8bb21ecc), node cn35, container eddb781656dd, 1x A100 80GB, 32 CPU. Probe 2026-11-16 04:00 UTC: GPU 0 MiB / 0 %, load 3.3, no tmux. Light jobs only, never touch non-rv_ sessions.",
+  "f02ea5c5": "vla_RetryVLA_DoanhLT_acr2b (f02ea5c5-ce1a-4538-8795-042482822093): USER'S OWN account, requested by the agent 2026-11-16 04:22 UTC for ACR-N (2nd lane pair). 1x A100 80GB, 32 CPU, envcheck OK (sim 50 steps 1.01 s). Killed by scripts/acrn_chain.py when ACR-N is done"
  },
  "share_ok": {
   "335de36e": true,
-  "b936d1d7": true
+  "b936d1d7": true,
+  "cb2b6ab1": true,
+  "f02ea5c5": true
  },
  "gone": {
   "0097c39c": "vla_RetryVLA_DoanhLT_1 (cn69), RetryVLA's GPU 2026-10-27..10-31; not RUNNING since 2026-11-01 (user 2026-11-02: no longer running). Removed from allow_only",
@@ -38,5 +49,5 @@
   "d2ecd68c": "vla_RetryVLA_DoanhLT_rgr: killed by rgr_chain 2026-11-08 22:22 UTC after ALL SWEEPS DONE (TERMINATED). Was: vla_RetryVLA_DoanhLT_rgr (d2ecd68c-9ef7-43e7-be02-31f14c60a74c), USER'S OWN account, requested by the agent 2026-11-08 16:53 UTC for the recursive geometric rec",
   "e26be342": "vla_RetryVLA_DoanhLT_acr (cn48): agent-requested user-account shell for ACR; killed 2026-11-09 16:46 UTC on the user's request (det shell kill), mid tier-B (2 / 25 states done); acr_chain stopped first"
  },
- "_mode": "user 2026-11-08: RetryVLA may add a FEW SMALL jobs on thanhnv's 335de36e + b936d1d7 (light only); c37611dd / dedc84ce gone. Agent box now 8e980338 (vla_RetryVLA_DoanhLT_1, cn55) - not in allow_only. Never any other shell | d2ecd68c = agent-requested user-account shell for RGR (kill when done)"
+ "_mode": "user 2026-11-08: RetryVLA may add a FEW SMALL jobs on thanhnv's 335de36e + b936d1d7 (light only); c37611dd / dedc84ce gone. Agent box now 8e980338 (vla_RetryVLA_DoanhLT_1, cn55) - not in allow_only. Never any other shell | d2ecd68c = agent-requested user-account shell for RGR (kill when done) | cb2b6ab1 = agent-requested user-account shell for ACR-N (2026-11-16; kill when done) | f02ea5c5 = 2nd agent-requested user-account shell for ACR-N (kill when done)"
 }
