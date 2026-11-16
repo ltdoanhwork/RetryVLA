@@ -990,3 +990,21 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
   alternation). Rule: memory adds value iff mem_on_recal - recal_r1 > 0 hits r2-4 with sign-flip p < 0.10. If NO, the
   test-time-memory idea is reported negative at n = 256 (offline replay) and the recalibrator is reported separately as
   a lead (not a memory result; needs its own held-out check before any search use).
+- Review (experiments/reviews/T2MEM_review.md, fresh-context agent): A close-as-tested; B redesign (F1 could only test
+  the label channel: latent read-out o = 0 had no gradient; label write = residual vs RAW critic, overwriting the
+  recalibrator); recalibrator = separate lead, picks-only label access shrinks it (+0.18). F1's NO is therefore NOT
+  evidence against test-time memory in general.
+- Follow-up F2 (pre-registered here BEFORE running; `scripts/t2mem_f2.py`, train only, cluster = failure episode,
+  all p-values = episode-clustered sign flips):
+  * Base = logistic recalibrator on [l_wm, h_wm] (fold-trained; cross-fitted logits for meta-training).
+  * Memory ResMem on top of the FROZEN base: W starts at 0 (not learned), delta-rule write of the residual on the
+    CURRENT score (y - sigmoid(score)), live latent read-out (o random init); arms mem_fixed (label + latent, primary),
+    mem_ss (latent only), mem_pos (writes successes only); plus GP-UCB residual surrogate and knn_pos (hyper-params by
+    train-fold grid). Regimes K4 x R4, K1 x R16, K4 x R8.
+    Rule: B continues iff mem_fixed - base >= +0.10 hits after round 1, clustered p < 0.10 and solved not lower, in
+    K4R4 or K1R16. Secondary arms passing the same rule -> "redesign around that variant" (multiplicity noted).
+    All fail in all regimes -> B closed (negative at n = 256, offline fixed pool, 16-32 verifications).
+  * Recalibrator, realistic labels: prequential over the instance stream (3 episode orders), trained only on its own
+    16 picks per earlier instance. Lead continues iff second-half gain >= +0.15 hits r2-4 (K4R4), clustered p < 0.10.
+  * Budget reallocation (Hyperband-style, static ranking): r1-miss instances capped at 8 verifications, saved budget
+    to r1-hit instances, same total. Positive iff distinct hits / verification +20 % with <= 2 pt solved loss.
