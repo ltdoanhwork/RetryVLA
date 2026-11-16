@@ -660,3 +660,11 @@ Reading (negative result):
   observed 0.15-0.16. The limit is WM imagination (over-optimistic end states; geometry head AUC 0.61 on imagined vs
   0.86 on real latents), the same diagnosis as RQ3 / V-JEPA: better selection rules on the same imagination do not lift
   the solved rate at equal sim budget.
+
+## ACR-N: Act Before You Imagine on natural failures (2026-11-16; train split only; IN PROGRESS)
+Design + pre-registered gates G0-G2: PLAN "ACR-N". Data: data/acr/n1/N/<instance>.json (oracle cause tests, 11 probe
+responses, 10 options x 8 variants outcome table); table `python scripts/analyze_acrn.py` -> runs/_analysis/acrn/
+{acrn.md, decision.json, rows_b2800.jsonl, rows_b1400.jsonl}; honest post-probe re-run -> data/acr/n1/postprobe_N.jsonl.
+Status 04:45 UTC: collection running (97 states = U 73 + S 24, 4 lanes, ~300 s / state / lane, ETA ~06:40 UTC), then
+postprobe + final analysis by `acrn_chain`. No numbers are reported until the chain finishes (first 5 states only
+used to check that the analysis runs end-to-end, not looked at for decisions).

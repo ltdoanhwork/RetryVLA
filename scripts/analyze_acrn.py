@@ -363,7 +363,7 @@ def diagnostics(recs, causes) -> str:
     mi = float((p[nz] * np.log2(p[nz] / (pc @ pb)[nz])).sum())
     hb = float(-(pb[pb > 0] * np.log2(pb[pb > 0])).sum())
     out += ["", f"MI(cause; hindsight-best option) = {mi:.3f} bits (H(best) = {hb:.3f} bits)", "",
-            "Cause x hindsight-best option (counts):", "", ct.to_markdown()]
+            "Cause x hindsight-best option (counts):", "", "```\n" + ct.to_string() + "\n```"]
     # prefix sub-goal vs final success (is the pi continuation the bottleneck?)
     out += ["", "### Prefix sub-goal reached vs final success (scripted options, all variants)", "",
             "| option | sub-goal def | sub-goal rate | final success | P(final | sub-goal) |", "|---|---|---|---|---|"]

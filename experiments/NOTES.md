@@ -953,3 +953,19 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
   e26be342` -> TERMINATED. Tier B was at 2 / 25 states (data/acr/v1/B, complete per-state files; the in-flight 3rd
   states of both lanes are lost). shells.json: e26be342 -> gone, no claims left. Resume: on any allowed shell,
   re-run `scripts/acr_chain.py` with SH / SH_FULL edited (acr_search skips finished state files).
+
+## ACR-N (Act Before You Imagine, natural failures), ops log 2026-11-16 (design: PLAN "ACR-N"; results: RESULTS "ACR-N")
+- Shells: the local agent box GPUs are someone else's (95-99 %); thanhnv shells not used. Two 1-GPU shells requested
+  under the user's own account (`det shell start --detach -w IAS_SAMMerge --config-file <copy of
+  retryvla_shell_1gpu.yaml>`): cb2b6ab1 (vla_RetryVLA_DoanhLT_acr2) and f02ea5c5 (..._acr2b); envcheck OK on both
+  (sim 50 steps 0.99 / 1.01 s, NVIDIA EGL). shells.json allow_only + share_ok; `scripts/acrn_chain.py` kills both at
+  the end (ACRN_KEEP_SHELL=1 to keep).
+- Reused the 2026-11-09 ACR code (probes, families, SimPool opt-in commands); new: oracle cause tests, `release`
+  probe, visual probe response (DINOv2 latent change agent / wrist, C^pi change), `place_goal` / `pull_free` options,
+  WM options (`wm_single` = fresh 256-pool + 2 CEM rounds + diverse top-8 = the `single` scorer; `wm_prim`).
+- Smoke (1 L3 U state, cause free, out_root n1_smoke, deleted): 342 s / state at 12 workers, 0 / 80 table trials
+  succeeded. The movability test flung a free 5.6 g bowl ~5 m (3 m g for 20 steps) -> shortened to 5 control steps
+  before the real run (threshold 1 cm unchanged; it only has to separate "moves" from "blocked").
+- 04:26 UTC chain `acrn_chain` (agent box tmux, console runs/_logs/acrn_chain_console.log): rv_acrn_c0..c3 (2 lanes
+  per shell x 12 workers, 97 states) -> analyze --write-decisions -> postprobe (evi / random sequences re-run from the
+  true post-probe state) -> analyze -> kill both shells.
