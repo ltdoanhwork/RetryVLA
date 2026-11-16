@@ -668,3 +668,45 @@ responses, 10 options x 8 variants outcome table); table `python scripts/analyze
 Status 04:45 UTC: collection running (97 states = U 73 + S 24, 4 lanes, ~300 s / state / lane, ETA ~06:40 UTC), then
 postprobe + final analysis by `acrn_chain`. No numbers are reported until the chain finishes (first 5 states only
 used to check that the analysis runs end-to-end, not looked at for decisions).
+
+## T2Mem: test-time memory for fail -> recovery (2026-11-16; 0 new sim; PoC 1 on train only)
+Design / pre-registrations: NOTES "T2Mem PoC". Outputs: runs/_analysis/t2mem/{poc0_repeat_touch_*.md, poc1.md,
+poc1_followup.md}. Code: scripts/poc_mem_repeat.py, scripts/t2mem_cache.py, scripts/t2mem_poc1.py.
+
+**PoC 0 (approach A = memory in the policy):** attempts = finger-bowl contact segments in the 73 re-simulated failed
+test episodes (diagnostic only). Only 35 % of failed episodes have >= 2 attempts, and 8-15 % contain a repeat of an earlier
+failed grasp (tol 2-3 cm) -> below the pre-registered 20 % -> **approach A dropped**. Failures are mostly ONE wrong
+attempt and then drifting (a1 wrong place: 0 / 24 repeats), not a loop that a "remember what failed" memory could break.
+
+**PoC 1 (approach B = per-instance test-time memory of verified outcomes in the search; offline replay, 256 train
+instances x 64 verified candidates, 4 rounds x 4 picks, 4 folds by failure episode):**
+
+| method | hits r1 | hits r2-4 | solved@16 | d hits r2-4 vs static, p |
+|---|---|---|---|---|
+| static (current ranking, C^pi on WM imagination) | 0.781 | 1.859 | 0.551 | - |
+| knn_label / knn_latent / ttt_plain (explicit memory) | 0.781 | 1.934 / 1.898 / 1.824 | 0.547 / 0.551 / 0.539 | +0.07 p 0.20 / +0.04 p 0.52 / -0.04 p 0.74 |
+| t2m_ss / t2m_label (T2Mem-style, meta-learned) | 0.781 | 2.096 / 2.234 | 0.574 / 0.574 | +0.24 p 5e-5 / +0.38 p < 1e-4 |
+| t2m_label_static (same model, NO write) | 0.781 | **2.327** | 0.578 | +0.47 p < 1e-4 |
+| oracle_true (C^pi on the TRUE end state) | 0.781 | 2.387 | 0.578 | +0.53 |
+
+Pre-registered gate: conditions 1-2 pass, **condition 3 FAILS** (t2m_label - its no-write control -0.0077 / verif,
+p 0.047) -> no online PoC. Follow-up F1 (pre-registered): a recalibrator learned first (used from round 1), then only
+the write path learned on top of it (T2Mem-style alternation):
+
+| method | hits r1 | hits r2-4 | hits r1-4 | solved@16 |
+|---|---|---|---|---|
+| recal_r1 | 0.977 | 2.163 | 3.139 | 0.574 |
+| mem_on_recal (label + latent write) | 0.977 | 2.159 | 3.135 | 0.574 |
+| mem_on_recal_ss (latent write only) | 0.977 | 2.126 | 3.103 | 0.574 |
+
+mem_on_recal - recal_r1 = -0.004 hits r2-4 [-0.070, +0.061], p 0.94 -> **memory adds nothing**.
+
+Reading: the "gain" of the T2Mem-style memory was entirely a CROSS-instance effect (learned slow parameters
+recalibrating C^pi's imagined-state embedding); the per-instance fast-weight writes add nothing or hurt. With 4 picks per
+write and 10 % base success, the memory mostly sees failures, and these say little about the other 60 candidates
+beyond what the recalibrator already knows. **Lead (not a memory result):** a linear outcome recalibrator on the C^pi
+CLS embedding of the imagined end state gets hits r1-4 3.14 vs static 2.64 (+0.50 [+0.32, +0.69] per 16
+verifications, +19 %), about equal to ranking by the TRUE end state (3.17). The bottleneck "WM imagination is over-optimistic" is
+largely correctable by a learned readout of the imagination. It still needs: a held-out check on another verif dir
+(e.g. verif_rq3_sweep / verif_xwm_sweep candidates, whose picks were made by a DIFFERENT, stronger search), and an
+online paired search test, before any claim or distill.
