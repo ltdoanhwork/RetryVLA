@@ -492,6 +492,43 @@ grasp_slow-fixed keeps >= 80 % of the GT-pose cross-fitted fixed gain on U (solv
 on U by >= 8 pt (exact McNemar p < 0.10); else report the library gain as privileged-pose-only and diagnose.
 Also reported: head-pose cross-fitted fixed choice among the 3 options, head pose error at the failure state, S.
 
+## LRS: re-implementation of arXiv 2610.05151 (local recovery supervision) vs RetryVLA, design note (user request 2026-11-17; written BEFORE any LRS result)
+Comparison + deviations: `docs/related_work/COMPARE_2610.05151.md`. Code `retryvla/baselines/lrs_teacher.py`,
+`configs/exp/lrs_pilot.yaml`, analysis `scripts/analyze_lrs.py`. TRAIN split only (M5b / RGR instances).
+- Research question: at an equal simulator budget on the same pi0 train failures, does an LLM tool-teacher with
+  frozen-student handoff acceptance (LRS) produce as many verified recoveries as our WM + C^pi generator (`single`), and
+  does C^pi help LRS?
+- Hypothesis: with a local 8B VLM teacher, LRS's closed-loop reasoning is weaker than a large cheap pool + WM / C^pi
+  selection (expected: solved_full single 0.4-0.6 vs lrs3 0.1-0.3). Their short-horizon handoff rule over-accepts
+  relative to full-task continuation (precision < 0.6). C^pi ranking of real teacher endpoints cuts sim per accepted
+  path.
+- Falsified if: lrs3 solved_full >= single - 0.05 (then the teacher is a competitive generator and must be scaled /
+  distilled), or precision of their rule >= 0.8.
+- Closest prior work: 2610.05151 (LRS), Agent as Policy 2609.12541 (teacher client), Kintsugi-VLA 2609.31048, MAGMA-GEN
+  2609.20056 (re-execution validated corrections), Code as Policies.
+- Arms: (a) `lrs` 1 attempt (their final protocol), (a3) `lrs3` <= 3 attempts, (d) `lrs3_cpi` same stage-1 paths,
+  hand-off order by C^pi(real endpoint), secondary `lrs_geo` (teacher also sees object 3-D positions = their robomimic
+  teacher access); controls (b) `single` (RGR rgr_sweep rows, identical instances / seeds, 8 verifications) and (c)
+  `random` (8 uniform picks from the same 256 pool, paired continuation seeds, new run). No oracle arm is needed for
+  the generator question: the acceptance rule is itself measured against the ground-truth full-continuation oracle.
+- Instances + split: pilot = RGR shard 0 of 4 (M5b select_seed 2026, n ~ 31 pi0 failures, train); scale = all 4 shards
+  (127). Budget per instance: <= 2,800 sim steps (= 8 x (50 + 300), RGR budget), charged for teacher actions + student
+  hand-off tests + extensions; the final full-continuation check of accepted LRS paths is reported both charged and
+  uncharged. LLM: <= 12 turns / stage, <= 5 stages, <= 300 teacher actions / attempt.
+- Primary metric + test: solved_full (>= 1 path whose replay + frozen pi0 <= 300 steps reaches task success), paired
+  exact McNemar vs `single`. Secondary: their-rule accept rate, precision P(full | accepted) with Wilson CI, full hits /
+  1k sim steps, LLM seconds / instance, per level (L1-L3).
+- Decision rules (pilot): (R1) lrs3 solved_full >= single - 0.05 -> scale to 127 + 1-seed SFT. (R2) single - lrs3 >= 0.15
+  with McNemar p < 0.10 -> "our generator wins at this teacher strength"; run `lrs_geo` on the pilot to bound teacher
+  strength before any claim. (R3) precision < 0.6 (Wilson upper < 0.75) -> report "short-horizon handoff over-accepts".
+  (R4) lrs3_cpi: same solved_full with >= 20 % fewer sim steps per accepted path, or >= +1 solved instance per 10 ->
+  "C^pi helps LRS". Anything else -> inconclusive at n ~ 31; scale to 127 if LLM time <= 6 h.
+- SFT (only if >= 15 full-verified LRS paths exist): pi1 recipe (init pi1-nominal, 6k steps, bs 32, r 0.5,
+  round-robin) on LRS paths vs `single` trajectories of the SAME instances at the same trajectory count, 1 seed
+  ("seed 0, preliminary"), Spatial test RSR + nominal; LRS within 3 pt of single -> 3 seeds.
+- Minimum detectable effect at n 31 (alpha 0.10, power 0.8, ~35 % discordant): ~0.25; at n 127: ~0.12. The pilot is
+  powered only for large gaps.
+
 ## T2Mem (test-time memory for fail -> recovery), status 2026-11-16
 Design + gates: NOTES "T2Mem PoC"; results: RESULTS "T2Mem"; review: experiments/reviews/T2MEM_review.md.
 Status: approach A (memory policy, repeat-breaking) closed as tested; RoboTTT-style failure-as-context parked (reopen
