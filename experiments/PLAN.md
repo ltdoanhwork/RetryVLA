@@ -450,6 +450,48 @@ allocated trials of `evi_probe` (and `random_probe`) are re-run from the TRUE po
 from the same simulator (no sensor noise beyond rendering). Scripted options use simulated perception noise, not the
 observation-only head. U is selected on `single` failure. No policy claim without distillation + test RSR.
 
+## ACR-N follow-ups F1 / F1b / F2, pre-registration (2026-11-17, from docs/reviews/ACRN_REVIEW.md section 5; written BEFORE any F1 / F1b / F2 result)
+Same 97 instances (U 73 single-unsolved, S 24), same outcome table (data/acr/n1/N), same executor (`analyze_acrn.execute`:
+a trial starts only if used + worst-case cost <= budget, actual table steps charged, stop at the first success), same
+5 episode folds; budgets 2800 (primary) and 1400. Code: `scripts/acrn_f1.py` (offline), `retryvla/search/acr_search.py`
+tier N modes `latents` / `f2`, `scripts/analyze_acrn_f2.py`.
+
+**F1 selector shoot-out (offline, 0 sim).** Every model is fitted on the training folds only.
+- (a) `fixed`: the single option whose fixed policy (variants in order) has the highest solved rate on the training
+  folds at that budget.
+- (b) cause table with strong shrinkage: `cause_s20` = oracle-cause V table, Beta strength 20 toward the option
+  marginal, same sequential allocator; `cause_tie` = the top-2 options by training-fold fixed solved rate, oracle
+  cause only breaks the tie (pick the one with the higher per-cause rate), then alternate.
+- (c) `learned`: per-option L2 logistic regression (C = 0.3, standardised) predicting per-trial success from failure
+  observations: obs_x (proprio, C^pi, RGR geometry-head predictions) + DINOv2 failure-latent PCA-16 (PCA fitted on the
+  training folds); sequential ranking by p_o * r[o, k] / cost_o, r[o, k] = training-fold failure decay (P(variant k
+  succeeds | earlier variants of o failed) / P(variant 0 succeeds), Beta-smoothed).
+- (d) `learned_sub`: (c) + outcome-informed sequencing: after a failed trial of option o with sub-goal outcome s
+  (scripted options: lift >= 3 cm / obj-goal xy < 4 cm / neither; WM / vla options: "na"), multiply every other
+  option o' by m[o, s, o'] = P(o' trial succeeds | instance has a failed o-trial with outcome s) / P(o' succeeds),
+  shrunk toward 1 with strength 20 (training folds). Caveat: s uses privileged geometry after the prefix
+  (upper bound on outcome-informed selection; a proprio proxy would be weaker).
+- Ceilings: split-half oracle (choose by the instance's own variants 0-3, evaluate 4 trials on variants 4-7), hindsight.
+- **Primary contrast: (d) vs (a) on U at 2800.** "Selection matters" iff (d) - (a) >= +5 pt, exact McNemar p < 0.10
+  AND (d) on S >= 0.95; else conclude "a fixed scripted prior is the result; selection is noise-limited at n 73".
+  Cause is reopened only if (b) >= (c) on BOTH budgets (best of cause_s20 / cause_tie, U).
+**F1b probe features.** Same as (c) with probe-response features of ALL probes added (feature sets proprio, obs =
+proprio + visual, tactile, oracle; each set: concatenated responses of the 11 probes, PCA-16 within fold). Metric:
+pooled cross-fitted AUC of the predicted per-option success probability over (instance, option, variant) cells,
+cluster bootstrap over instances (2000 resamples) for the AUC difference vs (c). Probing continues iff AUC +0.05
+(bootstrap 90 % CI lower bound > 0) AND solved +5 pt vs (c) at either budget (U); else probing is closed as tested and
+the AUC ladder obs < proprio < tactile < oracle is reported as the finding. (A real probe would be charged its steps;
+F1b does not charge them, i.e. it is optimistic for probing.)
+**F2 deployability (sim, train only).** Re-run `grasp_slow`, `hover`, `grasp_firm` x 8 variants on all 97 instances
+with object / goal positions from the RGR geometry head on the real failure latent (observation-only; no sim GT pose,
+no added noise: perception_sigma 0; eef from proprio; same variant seeds / continuation seeds as the table), plus a
+fresh full `single` (RGR rgr_search arm `single`, 256 pool + 2 CEM rounds + diverse top-8 verified, new proposal and
+continuation seeds: eval.seed + 1000, rgr.seed_offset 1000) on all 127 RGR train instances (reported on U / S).
+Primary: head-pose fixed `grasp_slow` x 6 at 2800 on U. **Go to a distillation PROPOSAL** (not launched) iff head-pose
+grasp_slow-fixed keeps >= 80 % of the GT-pose cross-fitted fixed gain on U (solved >= 0.22) AND beats fresh `single`
+on U by >= 8 pt (exact McNemar p < 0.10); else report the library gain as privileged-pose-only and diagnose.
+Also reported: head-pose cross-fitted fixed choice among the 3 options, head pose error at the failure state, S.
+
 ## T2Mem (test-time memory for fail -> recovery), status 2026-11-16
 Design + gates: NOTES "T2Mem PoC"; results: RESULTS "T2Mem"; review: experiments/reviews/T2MEM_review.md.
 Status: approach A (memory policy, repeat-breaking) closed as tested; RoboTTT-style failure-as-context parked (reopen
