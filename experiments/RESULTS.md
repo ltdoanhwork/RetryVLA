@@ -754,8 +754,9 @@ yet extracted): what a probe reveals is largely already visible in the failure f
 **F2 deployability (observation-only pose; RUNNING, tmux `acrn_f2_chain` on 8b889199 GPUs 1-3, ETA ~13:30 UTC;
 analysis `scripts/analyze_acrn_f2.py` -> runs/_analysis/acrn_f2/f2.md runs automatically at the end).** Pre-registered
 rule: distillation PROPOSAL iff head-pose fixed grasp_slow on U >= 0.22 at 2800 AND >= fresh `single` + 8 pt (exact
-McNemar p < 0.10). Head pose error at the failure state (97 instances): object xy median 2.8 cm, p90 ~34 cm (the head
-fails badly when the bowl is held / occluded), goal xy median 0.6 cm.
+McNemar p < 0.10). Head pose error at the failure state (97 instances): object xy median 2.8 cm, p90 ~34 cm (errors > 10 cm are concentrated in
+the `free` cause: median 22.6 cm, 9 / 13 > 10 cm, i.e. a displaced bowl far from the demonstrations; held_ok /
+obstructed / contact_free medians 1.6-2.3 cm), goal xy median 0.6 cm.
 
 **Verdict (2026-11-17, after review + F1 / F1b; F2 pending).** Inconclusive on cause at n = 73 (power ~0.5 for +8 pt),
 negative point estimate (oracle cause -2.7 pt at 2800); **cause-conditioned probing is closed as tested** (EVI
