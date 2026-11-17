@@ -1,0 +1,67 @@
+{
+ "2800": {
+  "d_minus_a_U": 0.0,
+  "mcnemar": [
+   5,
+   5,
+   1.0
+  ],
+  "d_S": 0.9583333333333334,
+  "cause_best_U": 0.273972602739726,
+  "learned_U": 0.273972602739726,
+  "probe_proprio_minus_learned_U": -0.0410958904109589,
+  "probe_obs_minus_learned_U": -0.136986301369863,
+  "probe_tactile_minus_learned_U": -0.0821917808219178,
+  "probe_oracle_minus_learned_U": -0.0410958904109589
+ },
+ "1400": {
+  "d_minus_a_U": 0.0684931506849315,
+  "mcnemar": [
+   8,
+   3,
+   0.2265625
+  ],
+  "d_S": 0.7083333333333334,
+  "cause_best_U": 0.0821917808219178,
+  "learned_U": 0.136986301369863,
+  "probe_proprio_minus_learned_U": 0.0273972602739726,
+  "probe_obs_minus_learned_U": -0.0547945205479452,
+  "probe_tactile_minus_learned_U": 0.0,
+  "probe_oracle_minus_learned_U": 0.0
+ },
+ "selection_matters": false,
+ "cause_reopened": false,
+ "auc_proprio": {
+  "auc": 0.7423884913414315,
+  "d_auc": 0.014995811328492703,
+  "ci90": [
+   -0.017199912251910386,
+   0.049733531697668455
+  ]
+ },
+ "auc_obs": {
+  "auc": 0.7406408526955403,
+  "d_auc": 0.013248172682601478,
+  "ci90": [
+   -0.013193996898128429,
+   0.039021120555089515
+  ]
+ },
+ "auc_tactile": {
+  "auc": 0.7400202767569894,
+  "d_auc": 0.012627596744050673,
+  "ci90": [
+   -0.01233853125667052,
+   0.037897257678955173
+  ]
+ },
+ "auc_oracle": {
+  "auc": 0.7420998111694593,
+  "d_auc": 0.014707131156520559,
+  "ci90": [
+   -0.008363552003461871,
+   0.038706917477683775
+  ]
+ },
+ "probing_continues": false
+}

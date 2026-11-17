@@ -1008,3 +1008,19 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
     16 picks per earlier instance. Lead continues iff second-half gain >= +0.15 hits r2-4 (K4R4), clustered p < 0.10.
   * Budget reallocation (Hyperband-style, static ranking): r1-miss instances capped at 8 verifications, saved budget
     to r1-hit instances, same total. Positive iff distinct hits / verification +20 % with <= 2 pt solved loss.
+
+## ACR-N follow-ups (review docs/reviews/ACRN_REVIEW.md), ops log 2026-11-17 (results: RESULTS "ACR-N")
+- Pre-registration of F1 / F1b / F2 committed (45b1b1f) before any run. Clarification (no result seen): "fresh
+  single on new seeds" uses `rgr.seed_offset 1000` only; `eval.seed` is NOT changed because it also seeds the
+  LIBERO-Recover protocol (object noise) and would change the instances.
+- 09:46-09:53 UTC: /pfss workspace quota (EDQUOT) blocked writes and the git commit (6th EDQUOT window); F1 was
+  developed in /tmp meanwhile; writes recovered by 09:53 without deleting anything.
+- Postprobe bug (2026-11-16 chain): `KeyError: nan` (pandas NaN probe in no-probe decision rows) -> all postprobe
+  attempts rc 1; fixed in acr_search.postprobe_n (string check); not re-run (G1 failed).
+- F1 preliminary (09:51, before latents existed; obs_x only): learned 0.301 / learned_sub 0.301 vs fixed 0.274;
+  probe sets +0.04-0.05 AUC. Final F1 (10:20, with the pre-registered DINOv2 latent PCA-16): see RESULTS; the
+  preliminary is reported there only as the "probe info is in the frame" observation.
+- F2 chain `acrn_f2_chain` (agent box = 8b889199 local tmux; console runs/_logs/acrn_f2_chain_console.log), 09:53 UTC:
+  rv_acrnf2_0 / 1 (GPU 3 / 1, 5 workers; head-pose table; ~240 s / state) + rv_acrnsf_0..3 (GPU 2, 2, 3, 1; 3 workers;
+  fresh single, ~70-150 s / instance). GPUs 1-3 are shared with other users' cab_prod2_label jobs (8-20 GB, up to
+  99 % util); GPU0 untouched. Node load 26-35 / 32.

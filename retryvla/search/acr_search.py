@@ -468,7 +468,7 @@ def postprobe_n(cfg, pool, policy, srun, run):
         for d in [d for d in rows if d["instance_id"] == iid_]:
             snap, g = inst.snapshot, np.asarray(rec["g0"])
             pinfo = {"n": 0, "success": False}
-            if d.get("probe"):
+            if isinstance(d.get("probe"), str):  # no-probe rows carry None / NaN (pandas) -> KeyError: nan (2026-11-16)
                 r = run_seqs(pool, [[("restore_hidden", (inst.bddl, inst.snapshot, None), {}),
                                      ("probe", (lib[d["probe"]],), {"snapshot": True})]])[0]
                 snap, pinfo = r["snapshot"], {"n": r["n"], "success": r["success"]}

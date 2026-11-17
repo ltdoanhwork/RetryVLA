@@ -220,6 +220,13 @@ gated by a cause taxonomy.
 ## 8. Responses (filled by the main agent)
 | question | response |
 |---|---|
-| | |
+| 1 diagnosis / weakest assumptions | Written in RESULTS "ACR-N" (Diagnosis + ranked weakest assumptions); the chain had finished but the stub was not updated. |
+| 2 why no_probe < fixed grasp_slow | The belief allocator mixes near-tied options: grasp_firm's variant-0 rate 0.119 ~ grasp_slow 0.121 -> first trial on 37 / 73 U; the per-variant-index V[c, o, k] is seed noise and moves later trials to wm_prim (72 / 465), hover (48), push_goal (27). Not the S prior: U-train-only V -> U 0.233 (S 0.75); no k-decay -> U 0.233 / S 0.79. Variance, not bias. |
+| 3 split-half ceiling | 0.205 (oracle choice from the instance's own variants 0-3, evaluated on 4-7) vs 0.164 fixed vs hindsight 0.52 / ~0.49 on 4 trials; F1 reproduces c1. |
+| 4 post-probe re-run | Launched, crashed every attempt (`KeyError: nan`, NaN probe in no-probe rows); fixed in acr_search 2026-11-17; not re-run because the EVI arm probed on 4 / 97 and G1 failed -> G2 unevaluable. |
+| 5 grasp_slow under observation-only pose | F2 (RESULTS "ACR-N", F2 block). |
+| 6 1400 / S | Regime effect of a state-blind planner: at 1400 only 3 scripted trials (worst case 440) fit vs 4 WM trials; pooled V rates wm_single's variant 0 at 0.06 (its top-C^pi pick is the most over-optimistic) so the planner commits to grasp_firm / grasp_slow on easy S states where WM search is cheapest. Not a bug; F1 learned selectors recover part of it (S 0.71 at 1400). |
+| F1 | (d) - (a) = 0.000 at 2800 (5/5) -> selection does not matter at n 73; cause not reopened (1400: 0.082 < 0.137). |
+| F1b | dAUC +0.013-0.015 with the failure latent in the base model (CIs include 0), solved down -> probing closed as tested. |
 
 ## 9. Final verdict (main agent, after responses + follow-ups)
