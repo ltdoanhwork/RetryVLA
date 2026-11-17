@@ -519,17 +519,3 @@ Full plan: `docs/plans/PHASE_PLAN_2026-11.md` (Vietnamese prose). Summary:
 - Baselines: Back-on-Track-style test-time arm, SAILOR-style, no-WM sim-only search at equal sim, unverified WM data,
   teleop Combined, scripted regrasp, Kintsugi frontier. Milestones N0-N9 with gates (G-P1, G-loop, G-DP); each
   milestone gets its own pre-registered intake section here before it runs.
-
-## Next stage plan (Phase 1 WM-agnostic recovery data engine + suite builder + Phase 2 distillation recipes), 2026-11-17
-Full plan: `docs/plans/PHASE_PLAN_2026-11.md` (PLAN only, no experiment launched; ACR-N F1 / F1b / F2 untouched).
-- Phase 1: one `WorldModel` / `Critic` / `Verifier` interface (adapters WM v1, V-JEPA 2-AC, Cosmos-Predict2.5 AC as
-  tier-2) + WM card; levers aimed at WM over-optimism on search-selected states: L1 DAgger-for-the-WM on verified
-  negatives, L2 recalibrator / critic refit on search-selected states, L3 pessimistic cross-WM LCB, L4 option library
-  + WM (after ACR-N F2), L5 learned proposal, L6 multi-fidelity verification + allocation (objective = unique solved).
-- Suite builder (B): natural-failure harvesting with multiple generators + privileged-state detection + rule-based
-  L1-L4 (LIBERO-Recover's own recipe injects nothing), perturbation injection as a separately labelled extra; first
-  target LIBERO-Goal validated against the 91 official LIBERO-Recover Goal scenes, then LIBERO-10-R.
-- Phase 2: shoot-out on a fixed bank: SFT (control), AWR, RECAP-style advantage conditioning, flow-DPO on paired
-  verified success / failure bridges, DSRL noise-space RL, WiSE-FT guard; then multi-round ExIt with C^{pi_k} refit.
-- Milestones N0-N8 with gates G1-G5 (plan section E). Each milestone gets its own pre-registered design note in this
-  file BEFORE it runs (skill `retryvla-idea-loop`); the rules in the plan are proposals until then.
