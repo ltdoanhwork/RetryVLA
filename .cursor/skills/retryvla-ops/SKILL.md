@@ -33,7 +33,11 @@ Fresh setup: `bash scripts/00_setup_env.sh && bash scripts/01_download_assets.sh
 scripts/launch.sh <session> <python.module> <config.yaml> [key=value ...]
 # logs -> runs/_logs/<session>_<ts>.log ; run outputs -> runs/<ts>_<milestone>_<tag>/
 ```
-- This node is shared. Check `top`/`nvidia-smi` first; use `eval.n_workers` ~ free cores (16-24).
+- Default machine (user 2026-11-17): this container, Determined shell `8b889199` (`vla_cvpr_DoanhLT_4g`, 4x A100 80GB,
+  32 CPU). Pick a GPU explicitly: `CUDA_VISIBLE_DEVICES=<gpu> scripts/launch.sh ...` or
+  `scripts/shells/launch_remote.sh 8b889199 <gpu> ...` (local path, records claim `8b889199:<gpu>`). Prefer GPUs 1-3: GPU0
+  hosts the user's LAWAM server (never kill it). Details: `retryvla-multi-gpu-shells`.
+- This node is shared. Check `top`/`nvidia-smi` first; use `eval.n_workers` ~ free cores (16-24 total across jobs).
 - Never `pkill -f <pattern>`: it matches the agent's own shell. Kill by `tmux kill-session -t <name>`
   or by explicit PID.
 - One model on the GPU per process. Search and eval each load SmolVLA once (about 2 GB). SFT needs about 20-30 GB at bs32.

@@ -19,25 +19,12 @@
   "max_load_per_core": 0.6,
   "tmux_prefix": "rv_"
  },
- "claims": {
-  "cb2b6ab1:0": {
-   "tmux": "rv_acrn_smoke",
-   "args": "retryvla.search.acr_search configs/exp/acrn.yaml acr.max_states=1 acr.out_root=data/acr/n1_smoke",
-   "since": "2026-11-16T04:16:27"
-  }
- },
+ "claims": {},
  "allow_only": {
-  "335de36e": "owner thanhnv; LIGHT JOBS ONLY (user 2026-11-08): <= 8 sim workers / job, retry_oom, never touch non-rv_ processes, back off if the owner ramps up. vla_roboworm_thanhnv_2-1 (335de36e-7f25-4b34-8979-2e74ded69fce), node cn06, container 2ff49dc615a0, 2x A100 80GB, 32 CPU (node load ~15.9 from other containers). Probe 2026-11-08 09:37 UTC: both GPUs 0 MiB / 0 % util, no owner tmux / GPU processes. envcheck: OK video decode, OK sim 50 steps 1.05 s (NVIDIA EGL)",
-  "b936d1d7": "owner thanhnv; LIGHT JOBS ONLY (user 2026-11-08): <= 8 sim workers / job, retry_oom, never touch non-rv_ processes, back off if the owner ramps up. vla_roboworm_thanhnv_2-2 (b936d1d7-8a44-4bb8-8f76-a9edb41eb320), node cn37, container 21a1ed348945, 2x A100 80GB, 32 CPU (load ~2.6). Probe 2026-11-08 09:37 UTC: both GPUs 0 MiB / 0 % util, no owner tmux / GPU processes. envcheck: OK video decode, OK sim 50 steps 0.94 s (NVIDIA EGL)",
-  "cb2b6ab1": "vla_RetryVLA_DoanhLT_acr2 (cb2b6ab1-0ffa-43fc-a595-dfe07138c6cc): USER'S OWN account, requested by the agent 2026-11-16 04:08 UTC for ACR-N (natural-failure causal probing PoC). 1x A100 80GB, 32 CPU, envcheck OK (video decode, sim 50 steps 0.99 s). Kill (det shell kill) when ACR-N is done",
-  "b8c028b9": "owner thanhnv; user 2026-11-16 authorized thanhnv / quang / doanhlt shells for the T2Mem PoC. vla_roboworm_thanhnv_1-1 (b8c028b9-2b65-44dc-a7f8-3ead8bb21ecc), node cn35, container eddb781656dd, 1x A100 80GB, 32 CPU. Probe 2026-11-16 04:00 UTC: GPU 0 MiB / 0 %, load 3.3, no tmux. Light jobs only, never touch non-rv_ sessions.",
-  "f02ea5c5": "vla_RetryVLA_DoanhLT_acr2b (f02ea5c5-ce1a-4538-8795-042482822093): USER'S OWN account, requested by the agent 2026-11-16 04:22 UTC for ACR-N (2nd lane pair). 1x A100 80GB, 32 CPU, envcheck OK (sim 50 steps 1.01 s). Killed by scripts/acrn_chain.py when ACR-N is done"
+  "8b889199": "PRIMARY RetryVLA machine (user 2026-11-17 09:20 UTC: 'from now on run on this machine'). LOCAL = the Cursor agent's own container: vla_cvpr_DoanhLT_4g (8b889199-92c0-42e1-8aaa-79e0681ff3e8, user hn49pymo), node cn21, container 35501b7af179, 4x A100-SXM4-80GB, 32 CPU, driver 610.43.02. No det shell open needed: launch_remote.sh / remote_ctl.sh detect DET_TASK_ID and run probe + tmux locally (CUDA_VISIBLE_DEVICES=MUJOCO_EGL_DEVICE_ID=<gpu>); claims keyed '8b889199:<gpu>'. Probe 2026-11-17 09:22 UTC: GPU0 7.5 GB used by the user's own LAWAM GR1 policy server (VLA/doanh/lerobot-lawam serve_lawam_gr1.py --port 5740, CUDA_VISIBLE_DEVICES=0, up since 2026-11-16 07:20; never kill it), GPUs 1-3 0 MiB / 0 %; load ~7-8 (other tmux: autopilot, aw_score_local, gpu_watchdog, sd_verify are not rv_ - never touch). Prefer GPUs 1-3; GPU0 only for small jobs. envcheck 2026-11-17: OK video decode, OK sim 50 steps 0.96 s (GPU1) / 0.95 s (GPU3), NVIDIA EGL"
  },
  "share_ok": {
-  "335de36e": true,
-  "b936d1d7": true,
-  "cb2b6ab1": true,
-  "f02ea5c5": true
+  "8b889199": true
  },
  "gone": {
   "0097c39c": "vla_RetryVLA_DoanhLT_1 (cn69), RetryVLA's GPU 2026-10-27..10-31; not RUNNING since 2026-11-01 (user 2026-11-02: no longer running). Removed from allow_only",
@@ -47,7 +34,12 @@
   "c37611dd": "not in `det shell list` on 2026-11-08 (terminated; last rv_ job there: rv_abl_a4s2_rec rc 0 2026-11-03 09:37). Was: vla_RetryVLA_DoanhLT_1 (new, label 'VLA'; cn43, container 497d28ac2bd7 = also the Cursor agent box), 1x A100 80GB, 32 CPU; authorized for RetryVLA by user 2026-",
   "bd8bdcf6": "not in `det shell list` on 2026-11-08 (terminated; last rv_ job there: rv_diagcpu2 rc 0 2026-11-03 06:50). Was: vla_RetryVLA_DoanhLT_cpu (bd8bdcf6-3558-427a-816e-cf2b1486c982), CPU-ONLY shell (slots 0, 32 CPU, no GPU -> Mesa software EGL ~180 ms/step) requested 2026-11-02",
   "d2ecd68c": "vla_RetryVLA_DoanhLT_rgr: killed by rgr_chain 2026-11-08 22:22 UTC after ALL SWEEPS DONE (TERMINATED). Was: vla_RetryVLA_DoanhLT_rgr (d2ecd68c-9ef7-43e7-be02-31f14c60a74c), USER'S OWN account, requested by the agent 2026-11-08 16:53 UTC for the recursive geometric rec",
-  "e26be342": "vla_RetryVLA_DoanhLT_acr (cn48): agent-requested user-account shell for ACR; killed 2026-11-09 16:46 UTC on the user's request (det shell kill), mid tier-B (2 / 25 states done); acr_chain stopped first"
+  "e26be342": "vla_RetryVLA_DoanhLT_acr (cn48): agent-requested user-account shell for ACR; killed 2026-11-09 16:46 UTC on the user's request (det shell kill), mid tier-B (2 / 25 states done); acr_chain stopped first",
+  "cb2b6ab1": "vla_RetryVLA_DoanhLT_acr2 (ACR-N lane, user's account): not in `det shell list` on 2026-11-17 (gone); stale claim cb2b6ab1:0 (rv_acrn_smoke) removed",
+  "f02ea5c5": "vla_RetryVLA_DoanhLT_acr2b (ACR-N 2nd lane): not in `det shell list` on 2026-11-17 (gone)",
+  "335de36e": "vla_roboworm_thanhnv_2-1 (cn06): not in `det shell list` on 2026-11-17 (gone). thanhnv name rule still applies to new thanhnv shells",
+  "b936d1d7": "vla_roboworm_thanhnv_2-2 (cn37): not in `det shell list` on 2026-11-17 (gone)",
+  "b8c028b9": "vla_roboworm_thanhnv_1-1 (cn35): TERMINATED in `det shell list` on 2026-11-17"
  },
- "_mode": "user 2026-11-16 04:26 UTC: GPU jobs may use shells whose NAME contains thanhnv/Thanhnv, DoanhLT or quang (read-only probe first, clearly idle GPUs only, never disturb others' processes/tmux, light workers + owner back-off watchdog on non-RetryVLA shells, register here + release claims). Prefer existing shells over new requests. | user 2026-11-08: RetryVLA may add a FEW SMALL jobs on thanhnv's 335de36e + b936d1d7 (light only); c37611dd / dedc84ce gone. Agent box now 8e980338 (vla_RetryVLA_DoanhLT_1, cn55) - not in allow_only. Never any other shell | d2ecd68c = agent-requested user-account shell for RGR (kill when done) | cb2b6ab1 = agent-requested user-account shell for ACR-N (2026-11-16; kill when done) | f02ea5c5 = 2nd agent-requested user-account shell for ACR-N (kill when done)"
+ "_mode": "user 2026-11-17 09:20 UTC: DEFAULT = run on THIS machine, 8b889199 (vla_cvpr_DoanhLT_4g, local 4x A100 80GB; GPUs 1-3 free, GPU0 has the user's LAWAM server). Launch locally: scripts/shells/launch_remote.sh 8b889199 <gpu> <name> <module> <cfg> [k=v] (local fast path, no det) or scripts/launch.sh with CUDA_VISIBLE_DEVICES=MUJOCO_EGL_DEVICE_ID=<gpu>; register claims as '8b889199:<gpu>' (dag_run.py: use local:<gpu>:<lane> slots). SECONDARY (user 2026-11-16 04:26 UTC, still valid): extra light GPU work may use shells whose NAME contains thanhnv/Thanhnv, DoanhLT or quang (read-only probe first, clearly idle GPUs only, never disturb others' processes/tmux, <=8 sim workers + owner back-off watchdog, add to allow_only after probing, register + release claims). Prefer the local machine, then existing shells, over new requests. Never any other shell. History: 2026-11-08 thanhnv 335de36e/b936d1d7 light jobs; d2ecd68c/e26be342/cb2b6ab1/f02ea5c5 = agent-requested user-account shells (all gone by 2026-11-17)."
 }

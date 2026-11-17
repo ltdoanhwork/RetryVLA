@@ -18,7 +18,27 @@ and its **32 CPUs are shared across them**. That matters: MuJoCo sim workers are
 
 ## 0. Never touch these
 
-**Current mode (user, 2026-11-16 04:26 UTC; supersedes the 2026-11-08 note below): GPU jobs may use Determined shells
+**Current mode (user, 2026-11-17 09:20 UTC, "from now on run on this machine"): DEFAULT / PRIMARY RetryVLA machine =
+`8b889199` (`vla_cvpr_DoanhLT_4g`, `8b889199-92c0-42e1-8aaa-79e0681ff3e8`, user's account, node cn21, container
+`35501b7af179`) = the Cursor agent's OWN container, 4x A100-SXM4-80GB, 32 CPU. Run GPU / sim work locally here.**
+- GPU0 holds ~7.5 GB from the user's LAWAM GR1 policy server (`VLA/doanh/lerobot-lawam ... serve_lawam_gr1.py --port 5740`,
+  `CUDA_VISIBLE_DEVICES=0`; never kill it). Prefer GPUs 1-3; GPU0 only for small jobs. Non-`rv_` tmux sessions here
+  (`autopilot`, `aw_score_local`, `gpu_watchdog`, `sd_verify`, ...) belong to other agents / the user: never touch.
+  32 CPUs are shared by all 4 GPUs: total sim workers across local jobs ~<= 24.
+- Local launch: `scripts/shells/launch_remote.sh 8b889199 <gpu> <name> <module> <cfg> [k=v]`. It detects
+  `DET_TASK_ID` == the target and runs probe + `remote_tmux.sh` locally (no `det shell open`), sets
+  `CUDA_VISIBLE_DEVICES=MUJOCO_EGL_DEVICE_ID=<gpu>`, and records the claim `8b889199:<gpu>`. `remote_ctl.sh status|stop`
+  use the same local path (tested 2026-11-17 with a trivial job on GPU1). For `dag_run.py` use its native local lanes,
+  e.g. `--slots local:1:0,local:2:0,local:3:0` (claims keyed `local:<gpu>:<lane>`; remote `8b889199:<gpu>` slots would go
+  through `find_free.py` = `det shell open` into itself, avoid). Ad hoc alternative:
+  `CUDA_VISIBLE_DEVICES=<gpu> scripts/launch.sh <name> <module> <cfg>` (it now defaults `MUJOCO_EGL_DEVICE_ID` to that
+  GPU; without it MuJoCo asserts). Register such jobs in `shells.json:claims` as `8b889199:<gpu>` by hand.
+- envcheck 2026-11-17 (GPU1 / GPU3): OK video decode, OK sim 50 steps 0.96 / 0.95 s (NVIDIA EGL).
+- SECONDARY (the 2026-11-16 rule below stays valid): extra light GPU work on `thanhnv` / `DoanhLT` / `quang` shells with
+  probe + owner back-off. All earlier allow_only shells (335de36e, b936d1d7, b8c028b9, cb2b6ab1, f02ea5c5) are gone
+  (`shells.json:gone`).
+
+Earlier mode (user, 2026-11-16 04:26 UTC; still valid as the SECONDARY rule): GPU jobs may use Determined shells
 whose NAME contains `thanhnv` / `Thanhnv`, `DoanhLT` or `quang` (e.g. vla_roboworm_thanhnv_2-*,
 benchmark_RoboWorM_Thanhnv_*, vla_*_DoanhLT_*, vla_robotood_triquang_*, vla_memory_triquang_*).** Rules: read-only probe
 first (`find_free.py`); only GPUs that are clearly idle (low util, enough free memory); never kill or disturb other
@@ -51,7 +71,8 @@ borrowing is OK again. Guide for other agents: `docs/GPU_GUIDE.md`.
 | f6fb5d66 | VLA_doanh_user: the user's own shell. Never probe, launch on, or kill it |
 | 4aec7049, 433d27b6 | VLA_doanh_cpu*: no GPU |
 
-`launch_remote.sh` refuses avoided IDs. The local box (`831c8e6df2ea`, 1x A100) is fine for RetryVLA too
+`launch_remote.sh` refuses avoided IDs. The local box (since 2026-11-17: `35501b7af179` = shell `8b889199`, 4x A100;
+earlier `831c8e6df2ea`, 1x A100) is fine for RetryVLA too
 (`scripts/launch.sh`), but other users' jobs share its CPUs.
 
 ## 1. Find borrowable GPUs (read-only)
