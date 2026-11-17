@@ -275,9 +275,10 @@ def main() -> None:
                                   known=load_known_precheck(mb.get("precheck_from") or []))
             pd.DataFrame(pre).to_csv(run.path("precheck.csv"), index=False)
             log.info("shard %s: %d selected, %d done, %d pi0 failures", mb.shard, len(jobs), len(done), len(insts))
-            proposals = Proposals(policy, sc, H, int(cfg.eval.seed) + 77 * int(mb.shard))
+            off = int(rc.get("seed_offset", 0))  # ACR-N F2: fresh proposal / CEM / continuation seeds, same instances
+            proposals = Proposals(policy, sc, H, int(cfg.eval.seed) + 77 * int(mb.shard) + off)
             for n, inst in enumerate(insts):
-                seed = zlib.crc32(inst.instance_id.encode()) % (2**31)
+                seed = (zlib.crc32(inst.instance_id.encode()) + off) % (2**31)
                 ti = time.time()
                 pool_c, src = proposals(inst, NP)  # drawn for EVERY instance in order -> pools paired with compare_arms
                 if n % nsub != sub or inst.instance_id in done:

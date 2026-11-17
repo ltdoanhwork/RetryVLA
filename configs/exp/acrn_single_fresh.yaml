@@ -1,0 +1,12 @@
+# ACR-N F2 honest comparator (PLAN "ACR-N follow-ups"): the full RGR `single` arm on the same 127 train instances with
+# FRESH proposal / CEM / continuation seeds (rgr.seed_offset; eval.seed unchanged so the instances are identical).
+defaults: [exp/rgr_sweep]
+milestone: ACRN
+tag: single_fresh
+eval:
+  n_workers: 7
+rgr:
+  arms: [single]
+  seed_offset: 1000
+  measure_geom: false
+  out_root: data/recovery/acrn_single_fresh

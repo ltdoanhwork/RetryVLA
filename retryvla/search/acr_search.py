@@ -359,6 +359,90 @@ def collect_n(cfg, pool, policy, srun, run):
         run.log({"acrn/states_done": n + 1}, step=n)
 
 
+F2_OPTIONS = ("grasp_slow", "hover", "grasp_firm")
+
+
+def f2_n(cfg, pool, policy, srun, run):
+    """ACR-N F2 (PLAN "ACR-N follow-ups"): failure latents (DINOv2, pooled per camera) for every instance, then the
+    scripted options in F2_OPTIONS x n_real_var with object / goal position from the RGR geometry head on the real
+    failure latent (observation-only; perception_sigma 0), same variant + continuation seeds as the GT-pose table."""
+    import torch
+
+    from retryvla.geom.features import IDX
+    from retryvla.geom.head import load_head
+    from retryvla.search.wm_search import WMCriticRanker
+
+    a, mb = cfg.acr, cfg.m5b
+    sel = json.loads((REPO_ROOT / a.instances).read_text())
+    ids = sel["order"][int(a.get("lane", 0)):: int(a.get("num_lanes", 1))]
+    out_dir = REPO_ROOT / a.out_root / "F2"
+    lat_dir = REPO_ROOT / a.out_root / "latents"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    lat_dir.mkdir(parents=True, exist_ok=True)
+    todo = [i for i in ids if not (out_dir / f"{i}.json").exists()]
+    log.info("F2: %d states (%d todo)", len(ids), len(todo))
+    if not todo:
+        return
+    dev = torch.device(cfg.policy.device)
+    ranker = WMCriticRanker((REPO_ROOT / mb.wm_link).read_text().strip(), (REPO_ROOT / mb.critic_link).read_text().strip(),
+                            cfg.wm_collect.encoder, int(cfg.wm_collect.pool_grid), dev, 0.0, float(mb.beta_rough))
+    head = load_head((REPO_ROOT / cfg.rgr.geom_head_link).read_text().strip(), dev)
+    insts = restore_instances(pool, policy, cfg, todo, srun)
+    encs = {}
+    for inst in insts:  # latents first (cheap) so the offline F1 can start before the trials finish
+        z0, q0 = ranker.encode(inst.obs0)
+        P = z0.shape[1] // 2
+        encs[inst.instance_id] = (z0, q0)
+        np.save(lat_dir / f"{inst.instance_id}.npy", np.stack([z0[0, :P].float().mean(0).cpu().numpy(),
+                                                               z0[0, P:].float().mean(0).cpu().numpy()]))
+    cont, nv = int(a.cont_steps), int(a.n_real_var)
+    t0 = time.time()
+    for n, inst in enumerate(insts):
+        ti = time.time()
+        base = zlib.crc32(inst.instance_id.encode()) % (2**31)
+        g0 = np.asarray(run_seqs(pool, [[("restore_hidden", (inst.bddl, inst.snapshot, None), {}),
+                                         ("state_info", (), {})]])[0]["geom"])
+        z0, q0 = encs[inst.instance_id]
+        gh = head.predict(z0, q0).cpu().numpy()[0]
+        gp = g0.copy()  # eef = proprioception; object / goal = head prediction
+        for k in ("obj_x", "obj_y", "obj_z", "goal_x", "goal_y", "goal_z"):
+            gp[IDX[k]] = gh[IDX[k]]
+        jobs, own = [], []
+        for o in F2_OPTIONS:
+            oi = OPTIONS_N.index(o)
+            for j in range(nv):
+                rng, ps = seeds(base, 3, oi, j)
+                wps = FAM.build(o, gp, rng, 0.0)
+                jobs.append(Job("restore_family", dict(bddl=inst.bddl, snap=inst.snapshot, hidden=None, wps=wps),
+                                task=inst.task, max_steps=cont, policy_seed=ps))
+                own.append((F2_OPTIONS.index(o), j))
+        res = srun(policy, jobs, noise_scale=float(cfg.policy.noise_scale), desc="f2")
+        O = np.zeros((len(F2_OPTIONS), nv), int) - 1
+        OS = np.zeros_like(O)
+        sub = np.full((len(F2_OPTIONS), nv, 3), np.nan)
+        for (fi, j), r in zip(own, res):
+            O[fi, j] = int(bool(r.success or r.load_out.get("prefix_success", False)))
+            OS[fi, j] = int(r.steps) + int(r.load_out.get("n_prefix", 0))
+            ga = r.load_out.get("geom_after_prefix")
+            if ga is not None:
+                ga = np.asarray(ga)
+                sub[fi, j] = [ga[IDX["obj_z"]] - g0[IDX["obj_z"]],
+                              np.linalg.norm(ga[[IDX["obj_x"], IDX["obj_y"]]] - ga[[IDX["goal_x"], IDX["goal_y"]]]),
+                              ga[IDX["finger_obj_contact"]]]
+        rec = {"instance_id": inst.instance_id, "set": sel["set"].get(inst.instance_id), "options": list(F2_OPTIONS),
+               "O": O, "O_steps": OS, "O_sub": sub, "g0": g0, "g_head": gh,
+               "obj_err_m": float(np.linalg.norm(gh[[IDX["obj_x"], IDX["obj_y"]]] - g0[[IDX["obj_x"], IDX["obj_y"]]])),
+               "goal_err_m": float(np.linalg.norm(gh[[IDX["goal_x"], IDX["goal_y"]]] - g0[[IDX["goal_x"], IDX["goal_y"]]])),
+               "t_s": time.time() - ti}
+        tmp = out_dir / f"{inst.instance_id}.json.tmp"
+        tmp.write_text(json.dumps(_js(rec)))
+        tmp.replace(out_dir / f"{inst.instance_id}.json")
+        log.info("F2 [%d/%d] %s err %.1f cm | %s | %.0fs (total %.0fs)", n + 1, len(insts), inst.instance_id[-40:],
+                 rec["obj_err_m"] * 100, " ".join(f"{o}:{int((O[i] > 0).sum())}" for i, o in enumerate(F2_OPTIONS)),
+                 time.time() - ti, time.time() - t0)
+        run.log({"acrn_f2/states_done": n + 1}, step=n)
+
+
 def postprobe_n(cfg, pool, policy, srun, run):
     """ACR-N honest check: execute the decision file's probe in the real env, then re-run that arm's trial sequence
     (same options / variants / continuation seeds) from the TRUE post-probe state; object-relative options are rebuilt
@@ -421,7 +505,9 @@ def main() -> None:
         with SimPool(int(cfg.eval.n_workers), int(cfg.env.resolution)) as pool:
             srun = make_safe_run(pool, int(cfg.m5b.get("worker_retries", 2)), int(cfg.m5b.get("oom_retries", 3)),
                                  float(cfg.m5b.get("oom_wait_s", 120)))
-            if str(a.tier) == "N" and str(a.get("mode", "collect")) == "collect":
+            if str(a.tier) == "N" and str(a.get("mode", "collect")) == "f2":
+                f2_n(cfg, pool, policy, srun, run)
+            elif str(a.tier) == "N" and str(a.get("mode", "collect")) == "collect":
                 collect_n(cfg, pool, policy, srun, run)
             elif str(a.tier) == "N":
                 postprobe_n(cfg, pool, policy, srun, run)
