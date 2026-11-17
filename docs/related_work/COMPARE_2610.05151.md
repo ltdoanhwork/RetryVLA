@@ -1,193 +1,134 @@
-# RetryVLA vs arXiv 2610.05151 (Recursive Self-Improvement through Local Recovery Supervision)
+# RetryVLA vs arXiv 2610.05151 (Recursive Self-Improvement via Local Recovery Supervision)
 
-Paper: Zhang, Liu, Zhang (Beihang), *Recursive Self-Improvement of Visuomotor Policies through Local Recovery
-Supervision*, [arXiv 2610.05151](https://arxiv.org/abs/2610.05151) (v1, 2026-10-04). Read in full from the arXiv HTML on
-2026-11-17. There is no project page or code link on the abs / HTML page, and none in the paper. The teacher client is
-"derived from Agent as Policy" ([2609.12541](https://arxiv.org/abs/2609.12541)). The prompts are **not** released; only
-their structure is described (Sec. 3.2-3.6).
+Written 2026-11-17. Source: full arXiv HTML v1 (read in full). Code / data / checkpoints: **none released**
+(arXiv abs + HTML have no code link; web search 2026-11-17 found no GitHub / HF / project page).
 
-Gọi tắt paper này là **LRS** (Local Recovery Supervision). Phần re-implementation trong repo cũng dùng tên `lrs`.
+## 1. What the paper actually does (extracted precisely)
 
-> **Sửa lại overlap review (`WM_RECOVERY_OVERLAP.md` A4).** Review cũ viết LRS "accepts a fix only if the frozen policy
-> can then finish". Điều này **không đúng**. Acceptance (Eq. 7) là một bài test *short-horizon* có hai bước:
-> **progress + confirmation**. Student đóng băng chạy tối đa H_S = 60 action. Cứ Δ = 10 action, một **observer** (một
-> model, chấm theo một spec bằng natural language) kiểm tra hai điều: các quan hệ đã đạt vẫn giữ, và có một
-> "early progress" condition trong P_r được thỏa. Nếu có, student chạy thêm C = 10 action và progress đó phải vẫn
-> đứng. Paper tự nói rõ: "Acceptance supplies evidence of short-term handoff usability, rather than a guarantee of
-> eventual full-task success." RetryVLA thì chấp nhận một bridge chỉ khi π0 chạy tiếp **hoàn thành task** (BDDL goal),
-> trong <= 300 step, từ exact snapshot. Hai quy tắc **khác nhau**. Pilot dưới đây đo xem chúng bất đồng bao nhiêu.
+**Correction to our overlap review (WM_RECOVERY_OVERLAP A4):** acceptance is NOT "the frozen policy finishes the
+task". It is a short-horizon handoff test: the frozen student runs from the teacher endpoint for at most
+H_S = 60 actions, an observer checks every Delta = 10 actions for one of 1-2 LLM-written "early progress" conditions
+(OR a completed-task alternative), then C = 10 more actions of confirmation; protected relations must hold
+(Eq. 7). The observer is an LLM judging structured natural-language checks, not a sim success oracle. The paper says
+so itself: "short-term handoff usability, rather than a guarantee of eventual full-task success".
 
-## 1. What LRS does, precisely (from the paper)
-
-**Failure collection (audit).** The frozen student M0 is rolled out on training scenes. Example: pi0 on LIBERO-Goal,
-300 training scenes, 233 successes / 67 failures. An offline **auditor** (multimodal model) then picks the entry:
-- It reads a coarse view of the failed rollout: about 1 frame/s, plus at most 8 "change centers" (motion start / stop,
-  direction change, gripper change).
-- It names one unresolved event (expected relation, observed discrepancy, evidence that the student does not fix it).
-- A dense window follows: about ±0.5 s, up to ~96 frames, plus one extra targeted look.
-- It returns 0-3 entries (exactly one primary). Mode Focus = earliest supported state at which a correction is still
-  useful. Mode Coverage = also prevention / early-correction entries.
-- It may use privileged physical-state summaries offline. The entry state is restored "immediately before a_t".
-
-**Specification.** A spec model writes Γ_r = (g_r, E_r, b_r; P_r, f_r, c_r) as structured natural language. It is
-frozen before each stage.
-- Teacher side: local goal g_r, 1-3 completion checks E_r (AND, each with its nearest false positive), and the
-  relations to preserve b_r.
-- Student side: 1-2 early-progress conditions P_r (OR), a completed-task alternative f_r, and confirmation conditions c_r.
-
-**Proposal generator = tool-using LLM teacher** (gpt-6.1-sol, medium reasoning; weights fixed). One persistent tool
-session per stage:
-- The teacher sees the same RGB views (agent + wrist, 128 -> 224 px) and 8-d robot state as the student. It gets no
-  depth, contacts, hidden object state or task oracle (the earlier robomimic-Can teacher *did* see simulator geometry).
-- Tools: state / image queries, native actions, end-effector motion helpers (coordinates, units, limits), gripper
-  commands, complete, abort. It may compute targets or write a short program.
-- A native-action request is 1-40 steps. Each session allows <= 100 robot requests and <= 1,200 s.
-- Completion is the teacher's own semantic claim: it cites every check plus the observation records. There is no
-  local-success oracle.
-- Only executed robot actions become targets. Retreats and failed adjustments are kept in the path.
-- There is no fixed primitive library ("motion helpers ... do not select a task-specific recovery script").
-
-**Verification = student handoff test + endpoint extension.**
-- After a stage, the teacher endpoint is saved and the frozen student runs from it (pending chunks cleared).
-- The observer applies Eq. 7: ReceiptValid ∧ B(V) ∧ A(V) ∧ B(V⁺) ∧ R(V⁺), with (H_S, Δ, C) = (60, 10, 10). If the task
-  is already complete, completion must hold in >= 2 observations, then confirmation.
-- If the test fails, the student branch is kept only as diagnosis. The system restores the **teacher endpoint**
-  (replay of audit prefix + teacher actions, with a physical / controller state check) and runs a new stage. The new
-  spec uses the endpoint + the latest student behaviour. The new session gets the previous stage's last 6 commands.
-- Limits per attempt: <= 5 stages, <= 300 teacher actions, <= 7,200 s.
-- Attempts per entry: 3 early in development, 1 in the final configuration. Student actions are never imitation labels.
-
-**Action quality → training windows.**
-- An offline evaluator grades every executed teacher action q ∈ {0, .25, .5, .75, 1}, in the state where it was
-  actually taken. It may use privileged sim records and the official task predicates (the teacher's local goal is
-  excluded from scoring).
-- Maximal runs with q >= η = 0.75 become intervals. Anchors j ∈ [s, e - L_min], with L_min = 5 and H_A = 50.
-- Each window has a validity mask over the 50 action positions, applied to targets, noisy action inputs, flow targets,
-  attention and loss. The loss is quality-weighted (Eq. 10).
-
-**Training recipe (pi0 study).**
-- Init: the public pi0 base, fine-tuned 5k updates on LIBERO-Goal (50 demos / task). M0 = the 3k checkpoint, chosen on
-  the same validation scenes that are reported later.
-- Data: 27 accepted teacher paths (3,974 actions) → 2,095 actions after the quality cut, in 114 runs → 1,639 windows
-  (mean 17.5 valid actions). That is 4.14 % of anchors and 1.49 % of valid targets, pooled with 37,907 original windows.
-  No oversampling (≈ "nominal replay" at ~96 % ratio).
-- Optimiser: +2,000 updates for both arms. Batch 48, AdamW, lr 2.5e-5 with 200 warmup steps, cosine schedule to
-  2.5e-6, seed 7, 3x RTX A6000.
-- openpi low-memory LoRA config: about 468M of 3.288B parameters trainable.
-- The data were gathered across successive prompt / code revisions. The paper itself says acquisition yield is "not
-  a fixed-protocol teacher success rate".
-
-**Benchmark / protocol.**
-- Custom LIBERO-Goal split, seed 7: 30 / 10 / 10 scenes per task (train / val / test). Only the 100 **validation**
-  scenes are reported; the test split is not evaluated.
-- Episodes start from the nominal initial state, so this is nominal task success, not recovery from failure states.
-- Max 300 env steps per episode; the policy predicts 50 actions and executes 5 before replanning.
-
-**Numbers.**
-- pi0 validation: M0 77, original-only continuation 78, recovery continuation **88 / 100**.
-- Paired against continuation: 18 failures fixed, 8 successes lost, exact McNemar p = 0.0755. One seed.
-- BC-RNN on robomimic Can: 91 → 102 (continuation) → **112 / 130**, from 26 segments of 9 parent failures.
-
-**Compute.** Not reported in sim steps or LLM tokens. Every LLM wall-clock bound above is a *limit*, not a measured
-cost. Sec. 5 lists "audits, replay, failed teacher attempts, student checks, scoring calls" as costs to charge, but no
-figure is given.
+| item | 2610.05151 |
+|---|---|
+| failure source | natural failures of the current student: audit M0 on 300 TRAIN init scenes of LIBERO-Goal (233 succ / 67 fail) |
+| entry (where to start) | offline LLM auditor: coarse view (~1 frame/s + <= 8 motion / gripper change centres), then a dense window (+-0.5 s, ~96 frames), one extra inspection; Focus mode (earliest supported correctable state); 0-3 entries / event; may use privileged physical summaries offline |
+| spec | LLM writes a frozen local spec Gamma_r = (local goal, 1-3 AND completion checks, relations to preserve; student: 1-2 OR progress conditions + completed-task alternative + confirmation) |
+| proposal generator | fixed multimodal LLM (gpt-6.1-sol, medium reasoning) as a closed-loop tool teacher (client from "Agent as Policy" 2609.12541): state / image queries, native actions (1-40 steps per request), eef motion helpers with units / limits, gripper, complete, abort; can compute targets or write short programs; same RGB views + 8-d robot state as the student, no hidden object state / depth / contacts. No primitive library, no search, no sampling of the policy |
+| budgets | <= 5 stages, <= 300 teacher actions, <= 7,200 s per attempt; per session <= 100 robot requests, <= 1,200 s. Extensions see the last 6 commands; retries changed from 3 to 1 per entry during development |
+| verification | restore teacher endpoint (replay audit prefix + teacher actions, verify physics + controller state), frozen student test (60 + 10 actions, LLM observer); fail -> restore endpoint, LLM writes a new spec, teacher EXTENDS the path. Student actions are never labels |
+| scorer / selection | none (one path per attempt); after acceptance an offline LLM evaluator (with privileged sim records, BDDL predicates) grades every teacher action q in {0, .25, .5, .75, 1} |
+| data | 27 accepted paths, 3,974 actions -> windows of q >= 0.75, L_min 5: 2,095 actions, 114 runs, 1,639 windows (5-50, mean 17.5), 28,649 valid targets = 4.14 % of anchors / 1.49 % of targets next to 37,907 original windows |
+| training | pi0 (openpi, public base) M0 = 3,000 of 5,000 updates (val SR 24/73/77/75/76 at 1k-5k, chosen ON the reported val scenes); post-train 2,000 updates from M0, AdamW restart, bs 48, seed 7, warmup 200 to 2.5e-5, cosine to 2.5e-6, betas (0.9, 0.95), eps 1e-8, wd 1e-10, clip 1, no EMA; openpi low-mem config (LoRA + other trainable modules, ~468 M of 3.288 B params); loss = quality-weighted, validity-masked flow matching (mask also on noisy action tokens / attention); uniform shuffle, no recovery oversampling |
+| nominal handling | original demos always in the mix (96 % of anchors); control "Original" = same 2,000 updates on original data only |
+| benchmark | custom LIBERO-Goal split: 10 tasks x 50 demos, seed-7 split 30 / 10 / 10 scenes per task (scene = task + XML + initial physical state); 7-d actions 20 Hz; agentview + wrist 128x128 -> pad + bilinear to 224; 8-d state; obs index i paired with action i+1 (replay-checked) |
+| eval | 100 VALIDATION scenes (10 / task), restore XML + init state, policy seed 7, <= 300 actions, chunk 50, execute 5 then replan, native success check. Reserved test never evaluated. NO separate recovery metric |
+| numbers | M0 77, Original 78, Recovery 88 / 100; paired 18 fixed / 8 broken, McNemar p 0.0755; per task: 5 up, 4 same, 1 down. BC-RNN robomimic Can: 91 -> 102 (orig) -> 112 / 130 with 26 segments (2,547 labels; that teacher saw sim geometry) |
+| compute | not reported (3 x RTX A6000 for training; LLM / collection cost not given) |
+| caveats they state | 1 seed; val also used to pick M0; collection protocol changed during collection (yield not a fixed-protocol rate); single round only |
 
 ## 2. Side by side
 
-| | **LRS (2610.05151)** | **RetryVLA (current pi1 pipeline)** |
+| axis | 2610.05151 | RetryVLA (current pi1 pipeline) |
 |---|---|---|
-| Failure source | Own failed rollouts of M0 on train scenes; an LLM auditor picks the entry state (Focus / Coverage) | LIBERO-Recover failure states (benchmark scenes x gripper init x ±2 cm noise) where pi0 fails a 520-step pre-check; entry = the given failure state |
-| Proposal generator | Closed-loop LLM tool teacher (gpt-6.1-sol): observe → compute targets / code → bounded native or EEF actions → feedback; variable length (<= 300 actions over <= 5 stages) | Open-loop 50-step bridges: pool of 256 = SmolVLA chunk samples (2 noise scales) + smooth perturbations + 8 hand primitives (+ random variants); 2 latent-CEM rounds (768 imagined bridges) |
-| Scorer / selection | None before the sim (the teacher judges its own local completion) | WM v1 (DINOv2 latent) imagines the end state; C^pi(z_H, g) − μ·roughness; diverse top-8 |
-| Verification | Frozen student from the teacher endpoint: progress + confirmation in 60 + 10 actions (Eq. 7) by a model observer; on failure, restore the endpoint and extend the teacher path (<= 5 stages) | Bit-exact replay from the failure snapshot: bridge, then π0 for <= 300 steps; accept iff the **task succeeds** (BDDL) |
-| Imitation targets | Teacher actions only, quality windows (q >= 0.75) with validity mask + quality weight | Bridge (segment 0) **and** π0's successful continuation (segment 1), <= 4 per instance, round-robin over instances |
-| Training | pi0 LoRA-ish (468M trainable), +2k updates, recovery 4 % of anchors, no oversampling | SmolVLA full fine-tune, init pi1-nominal, 6k steps, bs 32, lr 5e-5, 50 % recovery / 50 % nominal |
-| Nominal handling | Original demos pooled (96 %); evaluation is nominal-start success only | 50 % LIBERO demos replay; nominal SR reported (pi1 0.785-0.808 vs pi1-nominal 0.796, eps 2 pt) |
-| Benchmark | LIBERO-Goal custom split, 100 val episodes (nominal starts), 1 seed; robomimic Can 130 | LIBERO-Recover Spatial test (56 scenes x 10 = 560 recovery episodes, 520 steps) + nominal Spatial 500; Object held-out; 3 seeds on the main rows |
-| Recursion | Defined (audit → collect → update), only one round evaluated | Rounds tried (M6 pi2: no gain over extra training); not claimed |
-| Cost | LLM sessions (unreported) + sim (unreported) | Per instance <= 8 x 350 sim steps (mean 2,509 measured) + 768 WM rollouts; WM / critic training amortised |
-| Result | +10 pt nominal (78 → 88, p 0.076) | RSR pi0 0.118 → pi1 0.418 ± 0.021 (3 seeds), nominal preserved |
+| policy | pi0 3.3 B (LoRA-style, 468 M trainable) | SmolVLA 450 M (`HuggingFaceVLA/smolvla_libero`) |
+| failure source | natural failures of M0 on train init scenes (67) | LIBERO-Recover failure states (Spatial train scenes x 5 close + 5 open gripper x +-2 cm noise), pi0 fails them |
+| entry | LLM auditor picks 0-3 pre-failure states | given by the benchmark (the failure snapshot itself) |
+| proposals | ONE closed-loop LLM tool-teacher path per attempt, extended on failure | 256 open-loop 50-step bridges: SmolVLA chunk samples + perturbations + primitive library, + 2 latent-CEM rounds |
+| scorer / selection | none; LLM spec + LLM observer | WM v1 (DINOv2 latent) imagination + C^pi(s, g) (learned from real continuations of pi), diverse top-8/16 |
+| verification | frozen student 60 + 10 actions, LLM-judged progress (proxy) | bit-exact snapshot, bridge, frozen pi continues to the BDDL goal (300 steps); ground-truth success only |
+| labels | teacher actions only, LLM-graded, quality-weighted windows | bridge + pi continuation (segment 0 / 1), unweighted |
+| data size | 1,639 windows (1.5 % of targets) | 208 trajectories (round robin over instances) |
+| training | 2,000 updates from M0, uniform mix (no oversampling) | 6,000 steps from pi1-nominal, recovery ratio 0.5, bs 32, lr 5e-5 |
+| nominal | measured only (Original control) | constraint NSR >= ref - 2 pt (pi1 0.785 vs 0.796, 3 seeds) |
+| benchmark / metric | 100 nominal LIBERO-Goal val scenes, 1 trial each | test RSR (56 held-out failure scenes x 10 trials) + nominal Spatial 500 |
+| statistics | 1 seed, McNemar p 0.076 | 3 SFT seeds, scene x seed bootstrap |
+| cost driver | LLM wall-clock (up to 2 h / attempt), few sim steps | sim verifications (~2.5k env steps / instance) + WM / critic training |
 
-### Equivalent (same idea in both)
-1. Exact sim restore at a failure state, generating corrections offline, letting the **frozen** deployed policy run from
-   the endpoint as the acceptance signal, and distilling into the *same* policy with original data mixed in. Only the
-   student is deployed (no test-time module).
-2. Failed student branches are never imitation labels; only accepted correction actions (+ in our case the successful
-   continuation) are.
-3. Matched-optimisation controls ("original-data continuation" = our pi1-nominal / demo-only SFT at the same steps).
+**Equivalent:** restore-from-sim-state branching; the frozen policy's own continuation as the acceptance signal; distill
+into the same policy with original data kept; "Original continuation at the same number of updates" as the control
+(= our pi1-nominal / demo-only control).
 
-### Different
-1. **Acceptance strength.** LRS uses short-horizon progress, judged by an LLM against a spec. We use full task success
-   by the frozen π, in ground truth. Ours is a strictly stronger label but needs more sim per test (<= 300 vs <= 70
-   steps).
-2. **Where proposals come from.** LRS uses one closed-loop expert-like agent that reasons per instance. We use many
-   cheap open-loop candidates selected by a learned model (WM + C^pi). These are opposite ends of the
-   "smart generator vs cheap generator + selector" axis.
-3. **Endpoint extension.** LRS makes the teacher go further when the student cannot continue. We have no extension;
-   the closest is RGR's executed 2-bridge chains (negative at equal sim budget).
-4. **Targets.** Teacher-only, quality-masked vs bridge + continuation. Our continuation segment is pi0's own behaviour
-   from a competent state; LRS deliberately excludes student actions.
-5. **Evaluation.** LRS reports nominal-start success on a validation set that was also used for checkpoint selection.
-   We report recovery from held-out failure states plus nominal. LRS never measures recovery-from-failure, even though
-   it cites LIBERO-RECOVER as the right target.
-6. **Teacher dependence.** LRS's yield hangs on a frontier LLM (gpt-6.1-sol) and on revised prompts. Ours hangs on a WM
-   + critic trained on ~10^4 sim rollouts.
+**Different:** where proposals come from (LLM tool teacher vs sampled pool + WM / C^pi ranking); acceptance strength
+(short-horizon LLM-judged progress vs full-task ground-truth success); labels (teacher only vs bridge + continuation);
+benchmark (nominal Goal scenes vs held-out failure states, i.e. they never measure recovery directly).
 
-### Which of our claims it undermines / leaves intact
-- **Undermined (already marked in the overlap review):** "verify a correction by the frozen policy's own
-  continuation" as a novelty. LRS has a weaker (short-horizon, LLM-judged) version of the same rule, plus endpoint
-  extension. Our *full-task, ground-truth* continuation rule is a difference in strength, not in kind. We must cite it
-  and must not claim the handoff idea.
-- **Undermined in part:** "distill verified recoveries into the same VLA with nominal data". LRS does this too, with
-  a matched-steps control. Still ours: the nominal-preservation constraint (eps 2 pt over 3 seeds), the
-  recovery-ratio Pareto (P3), and evaluation on failure states.
-- **Intact:** (a) WM + C^pi *selection* over a large proposal pool, at equal sim budget, with its quantified
-  efficiency (3.1x hits / sim vs random). (b) The imagined-vs-true C^pi optimism analysis (RQ3, RGR, xwm). (c) The
-  competence- vs goal- / progress-critic results. (d) LIBERO-Recover RSR numbers (LRS has none). (e) Recovery-specific
-  evidence: LRS's +10 pt is nominal success after training on corrections, a different outcome.
-- **New question LRS raises for us:** is a closed-loop reasoning teacher a better *proposal source* than our open-loop
-  pool? And is our C^pi useful *on top of* such a teacher? This is what arms (a) / (d) below test.
+**Our claims it undermines:** "accept a correction only if the deployed policy's continuation succeeds" as a novelty
+(theirs is a weaker, proxy version but the idea is the same); "self-improvement by distilling verified recoveries into
+the same VLA" (they also run the outer loop, though only one round). **Left intact:** WM + C^pi selection over a large
+pool and its sim-efficiency; ground-truth full-task verification; the optimism-under-search measurements; recovery
+measured on held-out failure states with nominal preserved (they only report nominal-start success); 3-seed statistics.
 
-## 3. Faithful re-implementation in our stack (arm design; pre-registered in `experiments/PLAN.md` "LRS")
+## 3. PRIORITY (user 2026-11-17 10:14 UTC): RetryVLA on THEIR protocol
 
-Code: `retryvla/baselines/lrs_teacher.py`, config `configs/exp/lrs_pilot.yaml`. Arms:
+Goal: numbers directly comparable to their Table 1 (M0 77, Original 78, Recovery 88 / 100).
 
-| arm | proposal | selection | acceptance | sim budget / instance |
-|---|---|---|---|---|
-| (a) `lrs` | LLM tool teacher (their interface), 1 attempt (their final setting), <= 5 stages / 300 actions | none | **their** handoff test (60 / 10 / 10, progress + confirmation) | charged: teacher steps + student tests (+ full check, reported separately) |
-| (a3) `lrs3` | same, up to 3 independent attempts (their early setting) | none | their rule | <= 2,800 |
-| (b) `single` = pi1 generator | 256 pool + 2 CEM, WM + C^pi, diverse top-8 | WM + C^pi | ours (full task, 300 steps) | 8 x 350 = 2,800 |
-| (c) `random` (no WM, no critic) | same 256 pool | uniform random 8 | ours | 2,800 |
-| (d) `lrs3_cpi` | the same 3 stage-1 teacher paths as (a3) | C^pi on the **real** teacher endpoint decides which attempt to hand-off-test / extend first | their rule | <= 2,800 |
+### 3.1 What is released / reconstructable
+- Code, split file, checkpoints, recovery data: **none**. Everything below is rebuilt from the paper text.
+- Their eval matches openpi's LIBERO example almost exactly (libero_goal max 300 steps, replan every 5 of the 50-step
+  chunk, pad + resize to 224, seed 7), adapted to restore their own scene states. We copy that.
+- Data: original LIBERO-Goal hdf5 (`yifengzhu-hf/LIBERO-datasets`, downloaded): 10 tasks x 50 demos, 128x128
+  agentview + wrist, `init_state` per demo = their "scene". 300 train demos x ~126 steps ~= their 37,907 windows.
+- Base model: `lerobot/pi0_base` (PyTorch port of the openpi pi0 base, downloaded). lerobot 0.5.1 has `use_peft`.
 
-Every accepted path also gets our full-continuation check, reported as "full-verified". So each arm can be scored
-under both acceptance rules.
+### 3.2 Deviations we cannot avoid (logged before any result)
+- D1 split: their seed-7 assignment procedure is unknown. Ours: per task `np.random.default_rng(7).permutation(50)`,
+  first 30 train, next 10 val, last 10 test (`data/splits/goal_rsi_v1.json`). Same sizes, different scenes.
+- D2 framework: lerobot PyTorch pi0 instead of openpi JAX; LoRA via peft approximating openpi `*_low_mem` (LoRA r16
+  on Gemma-2B, r32 on the 300M expert, SigLIP + projections trainable, ~470 M trainable). Same optimizer numbers.
+- D3 eval sim: our `LiberoSim` (robosuite / MuJoCo from hf-libero), render at 128 to match the training images.
+  We keep openpi's 10 no-op settle steps after the restore (not stated in the paper).
+- D4 teacher: not needed for the priority track (we run OUR method on their protocol and compare with their
+  reported numbers; their method is not re-run because the LLM teacher is not available, see section 4).
 
-**Deviations (unavoidable, documented):**
-1. **Teacher model.** There is no API LLM in this environment (no OpenAI / Anthropic / Gemini key; only local
-   weights). The teacher is **Qwen3-VL-8B-Instruct** (local HF transformers, bf16, temperature 0.7), not gpt-6.1-sol.
-   This is far weaker, so the absolute yield is a lower bound on what LRS would get with a frontier model. A secondary
-   variant `lrs_geo` also gives the teacher the 3-D positions of the two task objects (the access level of LRS's own
-   robomimic-Can teacher).
-2. **No auditor.** LIBERO-Recover already provides the failure state, and all arms start there (same entry for
-   everyone). LRS's auditor would choose an earlier pre-action state from a full rollout, which we don't have for
-   benchmark states.
-3. **Spec + teacher in one model.** The teacher writes its own local goal + completion checks as the first part of
-   each stage (one model rather than a separate spec model).
-4. **Observer = programmatic, privileged predicates** instead of an LLM observer. The spec for Spatial tasks is fixed
-   (all tasks are "pick up the black bowl ... place it on the plate"):
-   - P = {possession newly established (finger contact + bowl lifted >= 2 cm); bowl-plate xy distance reduced by
-     >= 4 cm while held}.
-   - f = task success (BDDL) at 2 consecutive checks.
-   - b = possession achieved by the teacher must not be lost unless the bowl is placed.
-   - Checks every Δ = 10 actions (= our n_action_steps), up to H_S = 60, then C = 10 confirmation actions.
-   This observer is *more* reliable than an LLM observer, so it is an upper bound on their acceptance precision.
-5. **LLM turn cap.** <= 12 LLM turns per stage instead of <= 100 requests / 1,200 s, for compute. Each turn may issue
-   several commands.
-6. **Training view.** No LLM action-quality grader. For (a) we train on the whole accepted teacher path (the
-   "whole-path imitation" control listed in their Sec. 5). We use our SFT recipe (6k steps, r 0.5), optionally
-   teacher-segment only (`train.recovery_segments=[recovery]`, closer to theirs).
+### 3.3 What we must build
+1. `goal_rsi_v1` split + converter hdf5 -> LeRobotDataset (300 train demos; image flip = our sim convention; state
+   = eef pos + axis-angle + 2 gripper qpos; their alignment obs[i] -> action[i+1], checked by replay).
+2. `Pi0Wrapper` with the same `predict_chunk` interface as `SmolVLAWrapper` (so `run_jobs`, search, verification
+   work unchanged) + `eval_goal` (their protocol on any scene list).
+3. pi0 SFT entry point (LoRA, bs 48, their schedules): M0 = 5,000 updates from pi0_base, checkpoints every 1,000;
+   continuation = 2,000 updates from M0 (Original / Recovery mixes).
+4. RetryVLA on Goal: audit M0 on the 300 train scenes (1 rollout, snapshots every 20 steps) -> failed rollouts;
+   C^pi for M0 (real continuations of M0 from train-scene states, our critic code); WM v1 retrained on Goal
+   (DINOv2 latent, our wm code; data = train demos + M0 rollouts + random bridges); entries = snapshots of failed
+   rollouts (rule below); search = our pool (pi0 chunk samples + perturbations + primitives) + WM / C^pi + 2 CEM
+   rounds, diverse top-16, sim verification = bridge + M0 continuation to the BDDL goal; bank = bridge + continuation.
+5. Distill with THEIR recipe (2,000 updates from M0, D0 + recovery windows shuffled uniformly, no oversampling) as the
+   primary comparison; our recipe (recovery ratio 0.5) as secondary.
 
-## 4. Pilot results
+### 3.4 Compute (shell 8b889199, GPUs 1-3 only; measured numbers go to NOTES)
+- pi0 3.3 B bf16 inference ~8 GB; LoRA training at bs 48 with gradient checkpointing ~40-60 GB, one A100.
+- Estimates (to be replaced by measurements): train ~1 s / update -> M0 5k ~1.5 h, each 2k continuation ~35 min;
+  eval 100 episodes ~10-15 min with 8 sim workers; audit 300 rollouts ~30 min; C^pi data (~3k continuations) ~1.5 h;
+  WM training ~3-5 h; search on ~70 failures x 2-3 entries ~3-4 h. Total ~1.5-2 GPU-days incl. 3 seeds.
+- GPUs 1-3 are held by ACR-N F2 (`acrn_f2_chain`, ETA ~13:30-14:00 UTC); node CPU load ~46 / 32. Only CPU-light prep
+  and short smoke tests run before that; heavy jobs are queued behind it (claims in `shells.json`).
+- Cheaper first step: SmolVLA on their protocol. `smolvla_libero` saw ALL Goal demos (incl. our val scenes), so it is
+  only an interface smoke test, never a baseline. A clean SmolVLA track = `smolvla_base` + the same 300 train demos.
 
-See `experiments/RESULTS.md` section "LRS". The numbers are copied there once the pilot is done.
+### 3.5 Decision rules (pre-registered in experiments/PLAN.md, 2026-11-17)
+- **G0 reproduction gate** (before any RetryVLA number counts): our M0 (best of 1k-5k on val, same selection as
+  theirs) in [67, 87] / 100 (77 +- 10 ~ binomial 95 % half-width + split slack) AND Original (M0 + 2k on D0) in
+  [68, 88]. Fail -> interface debug (image flip, state, alignment, normalisation), then at most one recipe change
+  (train-expert-only) logged as a deviation; no RetryVLA claim on their protocol until G0 passes.
+- **Main comparison** (3 post-training seeds; paired on the 100 val scenes): Delta = Recovery_RetryVLA - Original.
+  "matches theirs" if mean Delta >= +5 and the scene x seed bootstrap CI excludes 0; "beats theirs" if mean
+  Delta >= +10 (their gain) with CI lower bound > +5; "below" otherwise. Cross-paper numbers (88 vs ours) are
+  reported with D1-D3 attached, never as a paired test.
+- Equal-sim-budget no-WM arm (random pool + sim verification, same verifications) decides whether WM / C^pi matter
+  on their protocol: McNemar on solved entries, p < 0.10.
+- Power: at n = 100 paired scenes a +10 pt gain with ~25 discordant pairs gives p ~0.08 (theirs 0.076); hence 3 seeds.
+
+## 4. Secondary: their method on our stack (only if cheap)
+No LLM API in this environment (no OpenAI / Anthropic / Gemini keys). Local open models exist (Qwen3-VL-8B-Instruct,
+Qwen3-8B, Qwen3.8-27B in the HF cache; transformers 5.3 supports Qwen3-VL; the local vLLM env is 0.7.2, too old
+for Qwen3-VL). A faithful re-run would need a Qwen3-VL-8B tool teacher (far weaker than gpt-6.1-sol) plus an LLM
+observer; closest cheaper substitute = our primitive library executed closed-loop as the "teacher" with their
+60 + 10 handoff test. Arms (a) theirs, (b) ours pi1, (c) ours without WM at equal sim, (d) theirs + C^pi ranking are
+designed but deferred until the priority track has passed G0.
+
+## 5. Status
+See experiments/PLAN.md section "2610.05151 comparison" and experiments/NOTES.md for live status / ETA.

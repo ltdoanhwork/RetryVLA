@@ -557,3 +557,24 @@ Full plan: `docs/plans/PHASE_PLAN_2026-11.md` (Vietnamese prose). Summary:
 - Baselines: Back-on-Track-style test-time arm, SAILOR-style, no-WM sim-only search at equal sim, unverified WM data,
   teleop Combined, scripted regrasp, Kintsugi frontier. Milestones N0-N9 with gates (G-P1, G-loop, G-DP); each
   milestone gets its own pre-registered intake section here before it runs.
+
+## 2610.05151 comparison: RetryVLA on THEIR protocol, design note (user request 2026-11-17 10:14 UTC; written BEFORE any result)
+Full doc: `docs/related_work/COMPARE_2610.05151.md` (extraction, side-by-side, deviations D1-D4, compute).
+- Research question: on 2610.05151's own protocol (pi0, custom LIBERO-Goal split, 100 val scenes, 300 steps, replan 5,
+  seed 7), does RetryVLA data (WM + C^pi search, full-task sim verification by M0's continuation) give a post-training
+  gain over "Original continuation" at least as large as their LLM-teacher data (78 -> 88)?
+- Hypothesis: yes, Delta >= +5 pt (our Spatial gain over demo-only is +29 pt RSR, but their metric is nominal-start
+  success where the headroom is only ~22 failures / 100).
+- Falsified if: G0 passes and mean Delta (3 seeds) < +5 or CI includes 0.
+- Closest prior work: 2610.05151, Kintsugi-VLA 2609.31048, Back on Track 2610.19579, MAGMA-GEN 2609.20056.
+- Arms: Original (M0 + 2k on D0), RetryVLA (M0 + 2k on D0 + verified bank, their mix), no-WM sim search at equal
+  verifications, RetryVLA with our mix (ratio 0.5). Their method itself: reported numbers only (no code, no LLM API).
+- Instances: failures of M0 on the 300 train scenes only; val (100) for evaluation only; test (100) untouched.
+- **G0 reproduction gate**: M0 (best of 1k-5k on val, as theirs) in [67, 87] and Original in [68, 88]; otherwise
+  debug interface, at most one logged recipe change, no claims.
+- Decision: "matches" mean Delta >= +5 with bootstrap CI > 0; "beats" mean Delta >= +10 with CI lower bound > +5;
+  else "below". Cross-paper 88 vs ours reported only with deviations D1-D3. Power: n 100 paired, +10 pt ~ p 0.08 per
+  seed -> 3 seeds.
+- MDE (alpha 0.10, power 0.8, 3 seeds pooled, ~25 % discordant): ~7 pt.
+- Status 2026-11-17: building infra (split, converter, Pi0Wrapper, eval_goal, pi0 LoRA SFT); heavy jobs queued
+  behind ACR-N F2 (GPUs 1-3).
