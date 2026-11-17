@@ -343,6 +343,11 @@ with 2.5 cm perception noise); success is still counted after the pi continuatio
 ## ACR-N: "Act Before You Imagine" on NATURAL failures, design note (user pivot 2026-11-16; written BEFORE any ACR-N result)
 Supersedes the 2026-11-09 ACR plan for the next round (ACR Tier B was stopped at 2 / 25 states on the user's request;
 its code is reused). Results -> RESULTS "ACR-N", ops -> NOTES, adversarial review afterwards (`retryvla-idea-review`).
+**Status 2026-11-17: G0 / G1 FAILED at 2800 and 1400 -> independent review `docs/reviews/ACRN_REVIEW.md`: PIVOT, not
+close.** Probe-to-identify-a-discrete-cause is closed as tested (oracle cause 0.192 vs no_probe 0.219 on U; bias-corrected
+MI ~0.12 bits; power ~0.5 for +8 pt). Kept findings: a cross-fitted fixed `grasp_slow` beats the allocator (U 0.274, S
+1.000) and hindsight 0.52 is mostly noise (split-half ceiling ~0.21). Next: F1 selector shoot-out (offline), F1b probe
+features in a learned option-outcome predictor, F2 observation-only pose + fresh `single` (~2 GPU-h) before any distill.
 Code: `retryvla/causal/{oracle,families,probes,belief}.py`, `retryvla/search/acr_search.py` (tier `N`),
 `configs/exp/acrn.yaml`, `scripts/acrn_select_instances.py`, `scripts/analyze_acrn.py`, `scripts/acrn_chain.py`.
 
