@@ -325,6 +325,8 @@ drop (mean 3 seeds), per-level L1-L4, McNemar + scene x seed bootstrap.
 | A7 L5 learned proposal | WM v1 | q(a|s_f) + CEM warm-start | sim | lever |
 | A8 L6 multi-fidelity | WM v1 -> sim bridge-only -> full | | sim | lever |
 | A9 best combo | 2 WM | | sim | xác nhận WM-agnostic |
+| A10 SAILOR-style scorer | WM v1 | discriminator reward (expert-like vs learner state) + critic ensemble mean - std, cùng CEM / budget | sim | baseline scorer (2506.05294) |
+| A11 liveness value | WM v1 | discounted liveness value (2605.11479) train trên cùng continuations, thay C^pi | sim | baseline critic kiểu Back on Track |
 Metric: solved, hits / 1k sim, unique-solved / 1k sim, FP / gap / ECE theo N, solved trên U, per level; wall-clock.
 
 ### 5.2 Policy-level (Phase 2; S1 VLA, S3 DP)
@@ -405,6 +407,9 @@ bởi F1 / F2: N0 / N1 bắt đầu trên CPU + GPU trống sau khi F2 xong.
 | Recipe distill | - | BC distill (ExIt) | so sánh có kiểm soát SFT / RECAP / flow-DPO / ExIt / RL dưới ràng buộc nominal |
 Rủi ro novelty: CureWM / VLAW đã sửa WM bằng failure thật (thụ động / real); khác biệt phải nằm ở "negatives do search
 chọn + đo theo search pressure + hạ nguồn tới student". 2610.05151 đã có "continuation acceptance": không claim.
+Trước khi claim S2, intake của L1 phải chạy một targeted search (2025-11 -> 2026-11) về "world model fine-tuning on
+planner-selected / adversarial candidates". Review đối kháng (`retryvla-idea-review`) chạy sau G-P1, sau N4, sau G-DP và
+trước N8.
 
 ## 9. Câu hỏi mở cho user
 1. Held-out suite mới: chọn **LIBERO-Goal** (có 91 scene chính thức để kiểm chứng) làm chính, LIBERO-10 hay LIBERO-Plus /
