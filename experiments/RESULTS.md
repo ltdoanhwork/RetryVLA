@@ -661,14 +661,108 @@ Reading (negative result):
   0.86 on real latents), the same diagnosis as RQ3 / V-JEPA: better selection rules on the same imagination do not lift
   the solved rate at equal sim budget.
 
-## ACR-N: Act Before You Imagine on natural failures (2026-11-16; train split only; IN PROGRESS)
-Design + pre-registered gates G0-G2: PLAN "ACR-N". Data: data/acr/n1/N/<instance>.json (oracle cause tests, 11 probe
-responses, 10 options x 8 variants outcome table); table `python scripts/analyze_acrn.py` -> runs/_analysis/acrn/
-{acrn.md, decision.json, rows_b2800.jsonl, rows_b1400.jsonl}; honest post-probe re-run -> data/acr/n1/postprobe_N.jsonl.
-Status 04:45 UTC: collection running (97 states = U 73 + S 24, 4 lanes, ~300 s / state / lane, ETA ~06:40 UTC), then
-postprobe + final analysis by `acrn_chain`. No numbers are reported until the chain finishes (first 5 states only
-used to check that the analysis runs end-to-end, not looked at for decisions).
+## ACR-N: Act Before You Imagine on natural failures (2026-11-16/17; train split only; FINAL: inconclusive on cause, negative point estimate; probing closed as tested)
+Design + pre-registered gates G0-G2: PLAN "ACR-N"; follow-ups F1 / F1b / F2: PLAN "ACR-N follow-ups". Review:
+`docs/reviews/ACRN_REVIEW.md` (verdict PIVOT; offline checks docs/reviews/acrn_checks/). Data: data/acr/n1/N/<instance>.json
+(oracle cause tests, 11 probe responses, 10 options x 8 variants outcome table), data/acr/n1/{latents,F2}/;
+tables: runs/_analysis/acrn/acrn.md (main), runs/_analysis/acrn_f1/f1.md, runs/_analysis/acrn_f2/f2.md.
 
+**Cause distribution (oracle, U 73 / S 24):** contact_free 31 / 15, free 13 / 0, held_slip 12 / 1, obstructed 8 / 3,
+tipped 6 / 0, held_ok 3 / 5, stuck 0 / 0 (no class < 4 -> no merging). Probe safety: EVI-chosen probes risk 0.03.
+
+**Main table (budget 2800 env steps = `single`'s 8 x 350; paired table look-up; U = single-unsolved):**
+
+| arm | U solved | McNemar vs no_probe | S solved |
+|---|---|---|---|
+| single (historical; 0 on U by selection) | 0.000 | 0/16 | 1.000 |
+| wm_only (fresh single-like scorer, honest U comparator) | 0.137 | 6/12, p 0.24 | 0.917 |
+| no_probe (belief b0 from failure obs) | 0.219 | - | 0.917 |
+| passive / random_probe / infogain_probe | 0.205 / 0.219 / 0.219 | 3/4 / 4/4 / 4/4 | 0.833 / 0.875 / 0.833 |
+| evi_probe (probes on 4 / 97; "none" 93) | 0.233 | 1/0, p 1.0 | 0.917 |
+| oracle_cause (= oracle_cause_free) | 0.192 | 3/5, p 0.73 | 0.833 |
+| hindsight_best / coverage_any (noisy max, not reachable) | 0.521 / 0.534 | | 1.000 |
+
+At 1400: no_probe 0.068, oracle_cause 0.110 (3/0, p 0.25), wm_only 0.082; S: no_probe 0.542, oracle 0.792, wm_only
+0.833. **Gates: G0 FAILED at both budgets** (oracle_cause - no_probe -0.027 at 2800, +0.041 at 1400, p >= 0.25), G1
+failed, G2 unevaluable (see Q4).
+
+**Diagnosis (pre-registered checklist).**
+- Bottleneck = the component tested? No. Even oracle cause does not beat the cause-free belief (2800: -2.7 pt;
+  changed decisions -0.07, n 27): causes do not map to options (bias-corrected MI(cause; best option) ~0.12 bits,
+  review c3; per-cause best options are within noise of the marginal best `grasp_slow`).
+- Budget-split artifact? No: probes cost <= 45 steps and EVI almost never probes; oracle_cause_free = oracle_cause.
+- Option set too weak? Partly: coverage 0.53 on U, but most covered instances have 1-2 successes in 80 trials; the
+  split-half (reachable) ceiling is 0.205 (F1), i.e. the 0.22 -> 0.52 gap is mostly unlearnable noise.
+- Continuation competence: grasp prefixes lift the object (>= 3 cm) in 31 % of trials but only 21-25 % of those finish;
+  place_goal reaches the goal xy in 12 % and finishes 22 % of those: the frozen pi continuation, not the diagnosis,
+  limits recovery.
+- Power: exact McNemar power for +8 pt at the observed discordance is ~0.45-0.58 (review c3) -> **inconclusive at
+  n = 73 for effects <= ~+8 pt; the point estimate is negative at 2800**.
+- Bugs / deviations: movability test shortened before the run (NOTES); the post-probe re-run crashed (Q4).
+**What would need to be true:** an option set in which the best option differs by cause by more than the per-cause
+sampling noise (e.g. >= 2 SE above the marginal best in >= 2 causes), and a continuation that finishes from the
+sub-goal states the prefixes reach.
+**Weakest assumptions (ranked):** (1) the hand-written taxonomy is the decision-relevant latent (MI ~0.12 bits says
+no); (2) per-cause V tables from ~8-46 instances x 8 variants are informative (they are noise-dominated); (3) scripted
+options' sim-GT pose + 2.5 cm noise ~ deployable perception (tested in F2); (4) trials independent given cause
+(within-option successes are ~6x correlated); (5) U selection on `single` failure (only wm_only is an honest
+comparator); (6) noise-free simulated probe responses (optimistic for probing).
+
+**Responses to the review's questions (docs/reviews/ACRN_REVIEW.md section 6).**
+1. Diagnosis / weakest assumptions: above (they were missing at review time; the chain finished but the RESULTS stub
+   was not updated).
+2. Why no_probe < fixed grasp_slow (0.219 vs 0.274): the allocator mixes near-tied options. grasp_firm's variant-0
+   rate (0.119) ties grasp_slow's (0.121), so it is the first trial on 37 / 73 U instances, and the per-variant-index
+   V[c, o, k] (k is only a seed index; noisy, e.g. grasp_firm 0.119 -> 0.064 at k 1) pushes later trials to wm_prim
+   (72 of 465 trials), hover (48), push_goal (27); grasp_slow gets 217. It is not the S-inflated prior: V fitted on
+   U-train only gives U 0.233 (S drops to 0.75); dropping the k-decay gives U 0.233 / S 0.79. Variance, not bias.
+3. Split-half ceiling (choose by variants 0-3, evaluate on 4-7): 0.205 vs fixed-marginal 0.164 vs hindsight-on-4-7
+   ~0.49 (F1 and review c1 agree).
+4. Post-probe honest re-run: launched by the chain but every attempt crashed (`KeyError: nan`: no-probe decision rows
+   carry a pandas NaN probe; fixed 2026-11-17 in acr_search.postprobe_n). Not re-run because G1 failed (the EVI arm
+   probed on 4 / 97 instances, so the re-run could not change any decision); G2 is unevaluable.
+5. grasp_slow's U advantage under observation-only pose: F2 below.
+6. 1400 / S (oracle 0.79 vs no_probe 0.54; wm_only 0.83): an allocator regime effect, not a bug. At 1400 only 3
+   scripted trials (worst case 440) fit vs 4 WM trials (350); the pooled V makes wm_single look weak at variant 0
+   (0.06 vs 0.10-0.14 at later variants: its diverse top-8 order is by imagined C^pi, which is over-optimistic for
+   the top pick), so the state-blind belief planner commits to grasp_firm / grasp_slow on S states where WM search is
+   the cheapest solver. Oracle cause helps there because S causes (contact_free / held_ok) shift weight; n01 + n10 = 6.
+
+**F1 selector shoot-out (offline, cross-fitted, `scripts/acrn_f1.py` -> runs/_analysis/acrn_f1/f1.md; features incl.
+DINOv2 failure-latent PCA-16).**
+
+| arm | U 2800 | S 2800 | U 1400 | S 1400 |
+|---|---|---|---|---|
+| (a) fixed (grasp_slow in 5 / 5 folds at 2800) | **0.274** | 1.000 | 0.096 | 0.583 |
+| (b) cause_s20 / cause_tie (oracle cause) | 0.219 / 0.274 | 0.833 / 0.917 | 0.082 / 0.082 | 0.792 / 0.667 |
+| (c) learned per-option predictor | 0.274 (6/6 vs a) | 0.833 | 0.137 | 0.583 |
+| (d) learned + outcome-informed sequencing | 0.274 (5/5, p 1.0) | 0.958 | 0.164 (8/3, p 0.23) | 0.708 |
+| ceilings: split-half fixed / split-half oracle / hindsight | 0.164 / 0.205 / 0.521 | | 0.164 / 0.205 / 0.397 | |
+
+**Rule applied:** (d) - (a) = +0.000 on U at 2800 (McNemar 5/5, p 1.0) -> **"selection matters" FAILS: a fixed scripted
+prior (`grasp_slow` x 6) is the result; selection is noise-limited at n 73.** (At 1400 the learned selectors are
++4 to +7 pt, n.s.: with ~3 trials, choosing the option matters more than at 6.) Cause reopened only if (b) >= (c) on
+both budgets: 2800 0.274 = 0.274, 1400 0.082 < 0.137 -> **not reopened**.
+
+**F1b probe features (same predictor + PCA-16 of all 11 probes' responses):** pooled option-outcome AUC learned 0.727
+(U 0.683) -> proprio 0.742, obs (proprio + visual) 0.741, tactile 0.740, oracle perception 0.742; dAUC +0.013 to
++0.015, 90 % cluster-bootstrap CIs all include 0; solved vs (c) on U -0.14 to -0.04 at 2800, -0.06 to +0.03 at 1400.
+**Rule: probing does NOT continue -> probing closed as tested.** The AUC ladder is flat (proprio ~ obs ~ tactile ~
+oracle perception). Without the failure latent the probe sets gained +0.04-0.05 AUC (preliminary run, latents not
+yet extracted): what a probe reveals is largely already visible in the failure frame (DINOv2 latent).
+
+**F2 deployability (observation-only pose; RUNNING, tmux `acrn_f2_chain` on 8b889199 GPUs 1-3, ETA ~13:30 UTC;
+analysis `scripts/analyze_acrn_f2.py` -> runs/_analysis/acrn_f2/f2.md runs automatically at the end).** Pre-registered
+rule: distillation PROPOSAL iff head-pose fixed grasp_slow on U >= 0.22 at 2800 AND >= fresh `single` + 8 pt (exact
+McNemar p < 0.10). Head pose error at the failure state (97 instances): object xy median 2.8 cm, p90 ~34 cm (the head
+fails badly when the bowl is held / occluded), goal xy median 0.6 cm.
+
+**Verdict (2026-11-17, after review + F1 / F1b; F2 pending).** Inconclusive on cause at n = 73 (power ~0.5 for +8 pt),
+negative point estimate (oracle cause -2.7 pt at 2800); **cause-conditioned probing is closed as tested** (EVI
+correctly declines to probe; probe features add no decision value over the failure frame). The surviving finding is
+cause-free: a fixed scripted re-grasp prior (`grasp_slow` x 6) solves 0.274 of `single`-unsolved train failures with
+S 24 / 24, vs 0.137 for a fresh single-like WM scorer on the same table; no state-conditioned selector beats it at
+2800. Whether it survives observation-only pose (and a fresh full `single`) is F2.
 ## T2Mem: test-time memory for fail -> recovery (2026-11-16; 0 new sim; PoC 1 on train only)
 Design / pre-registrations: NOTES "T2Mem PoC". Outputs: runs/_analysis/t2mem/{poc0_repeat_touch_*.md, poc1.md,
 poc1_followup.md}. Code: scripts/poc_mem_repeat.py, scripts/t2mem_cache.py, scripts/t2mem_poc1.py.
