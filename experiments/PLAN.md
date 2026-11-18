@@ -451,7 +451,7 @@ from the same simulator (no sensor noise beyond rendering). Scripted options use
 observation-only head. U is selected on `single` failure. No policy claim without distillation + test RSR.
 
 ## ACR-N follow-ups F1 / F1b / F2, pre-registration (2026-11-17, from docs/reviews/ACRN_REVIEW.md section 5; written BEFORE any F1 / F1b / F2 result)
-**Status 2026-11-17 10:30 UTC:** F1 "selection matters" FAILED ((d) - (a) = 0.000, 5/5), cause not reopened, F1b probing closed as tested; F2 running (RESULTS "ACR-N").
+**Status 2026-11-18:** F1 "selection matters" FAILED ((d) - (a) = 0.000, 5/5), cause not reopened, F1b probing closed as tested; F2 FAILED (head-pose grasp_slow 0.233 vs fresh single 0.164 on U, +6.8 pt, p 0.33; S 0.917) -> no distillation; only lead: localisation-gated re-grasp (needs new failures + pre-registration). RESULTS "ACR-N".
 Same 97 instances (U 73 single-unsolved, S 24), same outcome table (data/acr/n1/N), same executor (`analyze_acrn.execute`:
 a trial starts only if used + worst-case cost <= budget, actual table steps charged, stop at the first success), same
 5 episode folds; budgets 2800 (primary) and 1400. Code: `scripts/acrn_f1.py` (offline), `retryvla/search/acr_search.py`

@@ -1024,3 +1024,7 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
   rv_acrnf2_0 / 1 (GPU 3 / 1, 5 workers; head-pose table; ~240 s / state) + rv_acrnsf_0..3 (GPU 2, 2, 3, 1; 3 workers;
   fresh single, ~70-150 s / instance). GPUs 1-3 are shared with other users' cab_prod2_label jobs (8-20 GB, up to
   99 % util); GPU0 untouched. Node load 26-35 / 32.
+- 2026-11-17 12:45 UTC: acrn_f2_chain finished, all 6 lanes rc 0 (F2 table 97 / 97, fresh single 127 / 127; no
+  watchdog restarts); analyze_acrn_f2 ran automatically. Claims released by the chain; nothing of ACR-N is running
+  on 8b889199 any more (GPUs 1-3 free for the 2610.05151 reproduction agent). Analysis + RESULTS F2 / final verdict
+  written 2026-11-18 (F2 FAILED its rule; no distillation proposal).

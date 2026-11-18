@@ -661,7 +661,7 @@ Reading (negative result):
   0.86 on real latents), the same diagnosis as RQ3 / V-JEPA: better selection rules on the same imagination do not lift
   the solved rate at equal sim budget.
 
-## ACR-N: Act Before You Imagine on natural failures (2026-11-16/17; train split only; FINAL: inconclusive on cause, negative point estimate; probing closed as tested)
+## ACR-N: Act Before You Imagine on natural failures (2026-11-16/18; train split only; FINAL: inconclusive on cause, negative point estimate; probing closed as tested; F2 failed -> no distillation)
 Design + pre-registered gates G0-G2: PLAN "ACR-N"; follow-ups F1 / F1b / F2: PLAN "ACR-N follow-ups". Review:
 `docs/reviews/ACRN_REVIEW.md` (verdict PIVOT; offline checks docs/reviews/acrn_checks/). Data: data/acr/n1/N/<instance>.json
 (oracle cause tests, 11 probe responses, 10 options x 8 variants outcome table), data/acr/n1/{latents,F2}/;
@@ -751,19 +751,63 @@ both budgets: 2800 0.274 = 0.274, 1400 0.082 < 0.137 -> **not reopened**.
 oracle perception). Without the failure latent the probe sets gained +0.04-0.05 AUC (preliminary run, latents not
 yet extracted): what a probe reveals is largely already visible in the failure frame (DINOv2 latent).
 
-**F2 deployability (observation-only pose; RUNNING, tmux `acrn_f2_chain` on 8b889199 GPUs 1-3, ETA ~13:30 UTC;
-analysis `scripts/analyze_acrn_f2.py` -> runs/_analysis/acrn_f2/f2.md runs automatically at the end).** Pre-registered
-rule: distillation PROPOSAL iff head-pose fixed grasp_slow on U >= 0.22 at 2800 AND >= fresh `single` + 8 pt (exact
-McNemar p < 0.10). Head pose error at the failure state (97 instances): object xy median 2.8 cm, p90 ~34 cm (errors > 10 cm are concentrated in
-the `free` cause: median 22.6 cm, 9 / 13 > 10 cm, i.e. a displaced bowl far from the demonstrations; held_ok /
-obstructed / contact_free medians 1.6-2.3 cm), goal xy median 0.6 cm.
+**F2 deployability (observation-only pose; FINAL 2026-11-17 12:45 UTC, all lanes rc 0; `scripts/analyze_acrn_f2.py`
+-> runs/_analysis/acrn_f2/f2.md).** grasp_slow / hover / grasp_firm x 8 re-run on all 97 instances with object / goal
+pose from the RGR geometry head on the real failure latent (no sim GT, no added noise; same variant / continuation
+seeds), plus a fresh full `single` (new proposal / CEM / continuation seeds) on all 127 RGR instances.
 
-**Verdict (2026-11-17, after review + F1 / F1b; F2 pending).** Inconclusive on cause at n = 73 (power ~0.5 for +8 pt),
-negative point estimate (oracle cause -2.7 pt at 2800); **cause-conditioned probing is closed as tested** (EVI
-correctly declines to probe; probe features add no decision value over the failure frame). The surviving finding is
-cause-free: a fixed scripted re-grasp prior (`grasp_slow` x 6) solves 0.274 of `single`-unsolved train failures with
-S 24 / 24, vs 0.137 for a fresh single-like WM scorer on the same table; no state-conditioned selector beats it at
-2800. Whether it survives observation-only pose (and a fresh full `single`) is F2.
+| budget 2800 | U solved (n 73) | McNemar vs fresh single (U) | S solved (n 24) |
+|---|---|---|---|
+| single, historical (0 on U by selection) | 0.000 | 0/12 | 1.000 |
+| **single, fresh seeds (honest comparator)** | **0.164** | - | 0.917 |
+| wm_only (table) | 0.137 | 5/7, p 0.77 | 0.917 |
+| grasp_slow x 6, GT pose + 2.5 cm noise | 0.274 | 10/2, p 0.039 | 1.000 |
+| **grasp_slow x 6, head pose (observation-only)** | **0.233** | **11/6, p 0.33** | **0.917** |
+| hover / grasp_firm, head pose | 0.247 / 0.192 | 11/5 p 0.21 / 7/5 p 0.77 | 0.417 / 0.917 |
+| cross-fitted fixed choice, head pose (grasp_slow 5 / 5 folds) | 0.233 | 11/6, p 0.33 | 0.917 |
+
+At 1400: head grasp_slow 0.096 vs fresh single 0.164 (4/9), GT grasp_slow 0.164.
+**Rule (PLAN "ACR-N follow-ups"): FAILS.** U >= 0.22 holds (0.233; 85 % of the GT-pose rate, but only 63 % of the
+GT-pose GAIN over fresh single: +0.069 vs +0.110), the margin over fresh `single` is +6.8 pt (< 8, McNemar 11/6,
+p 0.33) and S is 0.917 (< 0.95). -> **no distillation proposal; the library gain is reported as privileged-pose-only
+at the pre-registered margin.**
+
+Breakdown (U, 2800; fresh single / GT grasp_slow / head grasp_slow):
+- by head object-pose error: <= 3 cm (n 32) 0.16 / 0.28 / **0.41**; 3-6 cm (n 10) 0.20 / 0.30 / 0.20; > 6 cm (n 31)
+  0.16 / 0.26 / **0.06**. With a good estimate the observation-only option is BETTER than GT + 2.5 cm noise (the
+  noise is the larger error there); the whole deficit is the heavy pose-error tail (42 % of U > 6 cm).
+- by cause: free (n 13; head error median 22.6 cm) 0.15 / 0.23 / 0.08; held_slip (12) 0.25 / 0.58 / 0.33;
+  contact_free (31) 0.10 / 0.16 / 0.19; obstructed (8) 0.25 / 0.38 / 0.50; tipped (6) 0.17 / 0.17 / 0.17; held_ok (3)
+  0.33 / 0.33 / 0.33.
+- by level: L1 (5) 0.20 / 0.00 / 0.20; L2 (28) 0.18 / 0.32 / 0.18; L3 (40) 0.15 / 0.28 / 0.28.
+- S misses (head): held_ok 4 / 5, obstructed 2 / 3, L2 4 / 5.
+- Complementarity: head grasp_slow and fresh single both solve 6 U instances; 11 only grasp_slow, 6 only single.
+- Regression to the mean: fresh `single` solves 12 / 73 (0.164) of the instances the historical run solved 0 of, so
+  any "vs single = 0" contrast on U overstates gains by ~16 pt; only the fresh comparator is used for decisions.
+
+**Diagnosis (F2).** The component that breaks is localisation, not the recovery primitive: grasp_slow with the head
+pose matches or beats the GT-pose version when the head is within 3 cm and collapses beyond 6 cm. The head (trained on
+collect_v1 bridges) fails on displaced bowls far from the demonstration distribution (`free`) and on bowls in a
+slipping grasp (`held_slip`), which are exactly the states where a re-grasp is needed. **What would need to be true:**
+an observation-only object position with error <= 3 cm on >= ~80 % of U failures (now 44 %), or a reliable
+confidence signal so that the re-grasp is used only when the estimate is good. Weakest assumptions: (1) one
+pooled-token head is the best available observation-only pose (a dedicated detector / wrist-camera estimate was not
+tried); (2) 8 variants share one pose estimate (no re-estimation after a failed trial); (3) n = 73 (power for +8 pt
+~0.5).
+**Next question (not run; would need its own pre-registration):** a confidence-gated recovery prior (re-grasp with the
+head pose when the head's agent-view vs wrist-view estimates agree within 3 cm, else fresh `single`) and/or a better
+pose estimator, evaluated on NEW natural failures (the 0-3 / > 6 cm split above was seen here, so a gate threshold
+chosen on these 73 instances would be tuned on the evaluation set).
+
+**Final verdict (2026-11-18).** ACR-N: inconclusive on cause at n = 73 (power ~0.5 for +8 pt), negative point
+estimate (oracle cause -2.7 pt); **cause-conditioned probing closed as tested** (F1b: probe features add no decision
+value over the failure frame); **selection is noise-limited** (F1: no selector beats fixed grasp_slow); **the
+scripted re-grasp prior is not deployable at the pre-registered margin** (F2: observation-only 0.233 vs fresh single
+0.164, +6.8 pt, p 0.33; S 0.917). No distillation. What survives: (i) an analysis result: on natural VLA failures
+in LIBERO the decision value of a physical-cause taxonomy and of short probes is ~0, and the 0.22 -> 0.52 hindsight
+gap is mostly sampling noise (split-half ceiling 0.205); (ii) a localisation-gated re-grasp prior is the only lead
+(0.41 vs 0.16 when the observation-only pose is within 3 cm), to be tested out-of-sample.
+
 ## T2Mem: test-time memory for fail -> recovery (2026-11-16; 0 new sim; PoC 1 on train only)
 Design / pre-registrations: NOTES "T2Mem PoC". Outputs: runs/_analysis/t2mem/{poc0_repeat_touch_*.md, poc1.md,
 poc1_followup.md}. Code: scripts/poc_mem_repeat.py, scripts/t2mem_cache.py, scripts/t2mem_poc1.py.

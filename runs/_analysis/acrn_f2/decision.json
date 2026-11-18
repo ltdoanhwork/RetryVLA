@@ -1,0 +1,27 @@
+{
+ "2800": {
+  "head_grasp_slow_U": 0.2328767123287671,
+  "gt_grasp_slow_U": 0.273972602739726,
+  "single_fresh_U": 0.1643835616438356,
+  "head_minus_fresh_U": 0.0684931506849315,
+  "mcnemar_vs_fresh": [
+   11,
+   6,
+   0.332305908203125
+  ],
+  "head_grasp_slow_S": 0.9166666666666666
+ },
+ "1400": {
+  "head_grasp_slow_U": 0.0958904109589041,
+  "gt_grasp_slow_U": 0.1643835616438356,
+  "single_fresh_U": 0.1643835616438356,
+  "head_minus_fresh_U": -0.0684931506849315,
+  "mcnemar_vs_fresh": [
+   4,
+   9,
+   0.266845703125
+  ],
+  "head_grasp_slow_S": 0.6666666666666666
+ },
+ "F2_pass": false
+}
