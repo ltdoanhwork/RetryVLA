@@ -20,20 +20,25 @@
   "tmux_prefix": "rv_"
  },
  "claims": {
-  "8b889199:1:rv_goal_audit_s7": {
-   "tmux": "rv_goal_audit_s7",
-   "args": "goal_audit seed 7 (pi0 M0 + 12 sim workers)",
-   "since": "2026-11-18T17:18:04"
-  },
-  "8b889199:2:rv_goal_audit_s8": {
-   "tmux": "rv_goal_audit_s8",
-   "args": "goal_audit seed 8 (pi0 M0 + 12 sim workers)",
-   "since": "2026-11-18T17:18:04"
-  },
   "8b889199:3:rv_goal_orig": {
    "tmux": "rv_goal_orig",
    "args": "Original continuation seeds 8, 9 (pi0 LoRA 2k, accum 3) + val eval",
    "since": "2026-11-18T17:18:30"
+  },
+  "8b889199:1:rv_goal_rv": {
+   "tmux": "rv_goal_rv",
+   "args": "goal_rv_chain (collect / WM / C^pi / search shards / pi0 distillation + eval), 1 job per GPU, 8 sim workers",
+   "since": "2026-11-18T17:42:47"
+  },
+  "8b889199:2:rv_goal_rv": {
+   "tmux": "rv_goal_rv",
+   "args": "goal_rv_chain (collect / WM / C^pi / search shards / pi0 distillation + eval), 1 job per GPU, 8 sim workers",
+   "since": "2026-11-18T17:42:47"
+  },
+  "8b889199:3:rv_goal_rv": {
+   "tmux": "rv_goal_rv",
+   "args": "goal_rv_chain (collect / WM / C^pi / search shards / pi0 distillation + eval), 1 job per GPU, 8 sim workers",
+   "since": "2026-11-18T17:42:47"
   }
  },
  "allow_only": {

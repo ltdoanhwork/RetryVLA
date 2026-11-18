@@ -1048,3 +1048,19 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
 - 08:56 UTC: G0 chain finished rc 0, **G0 PASS** (M0 4k 85, Original 82; RESULTS "G0"). Eval wall-clock per 100
   episodes was 6-15 min. GPUs 1-3 then sat idle 08:56-17:15 UTC (agent turn ended, nothing queued; lesson: queue the
   next stage inside the chain). 17:20 UTC: stale claims `8b889199:{1,2,3}:rv_goal_g0` released.
+- 17:18-17:34 UTC: M0 audit on the 300 train scenes (GPUs 1 / 2, tmux rv_goal_audit_s7 / _s8). Both seeds give
+  244 / 300 successes (0.813) and 56 failures, i.e. 168 entries each. Failures concentrate on cream_cheese (18 / 18)
+  and wine_rack (14 / 8). The paper has 67 / 300 failures. Claims released.
+- Smoke tests of the stage-2 path:
+  - Goal collect (1 entry, 8 candidates): 72 s, 5 / 8 succeed. Caveat: entries have no M0 pre-check, so early
+    entries (T/4) may be states M0 could still solve. This is accepted per the pre-registration and noted for the
+    reading of solved rates.
+  - Goal search (1 entry, Spatial WM as a plumbing stand-in): random 0 / 2, wm_diverse 2 / 2.
+  - Distillation with a bank (3 steps, max_traj 2): runs end to end.
+- 17:42 UTC: **chain `rv_goal_rv` launched** (`scripts/goal_rv_chain.py`, watchdog wrapper restarts it up to 3x).
+  Claims `8b889199:{1,2,3}:rv_goal_rv`.
+  - Stages: collect (3 shards, GPUs 1-3, 8 workers each) -> WM + C^pi (GPU 1) -> search (3 shards) -> 6 distillation
+    runs (wm / rand x seeds 7-9, one per GPU, accum 3) + val evals -> analyze_goal_rsi.
+  - In parallel, `rv_goal_orig` on GPU 3 trains Original seeds 8 and 9 (4.8 s/it shared, ~2.8 h each).
+  - ETA: collect ~21:15, WM / C^pi ~22:45, search ~01:45, distillation + evals ~08:00 UTC 2026-11-19, then
+    `runs/goal_rsi/main.{json,md}`.
