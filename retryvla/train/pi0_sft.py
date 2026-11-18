@@ -42,18 +42,41 @@ def lr_at(step, peak, warmup, decay_steps, decay_lr):
 class Pool(torch.utils.data.Dataset):
     """Concatenation of LeRobotDatasets; optional anchor filter on the `segment` column for recovery sets."""
 
-    def __init__(self, roots, chunk, seg_filter=None):
+    def __init__(self, roots, chunk, seg_filter=None, max_traj: int = 0, seed: int = 0):
+        """max_traj > 0: keep at most that many recovery trajectories over ALL recovery roots, round-robin over
+        instances (= train.subset_mode roundrobin / match_trajectory_count_of of the SmolVLA recipe)."""
         from lerobot.datasets.lerobot_dataset import LeRobotDataset
 
         self.ds, self.idx = [], []
+        keep_eps = None
+        if max_traj:
+            per_inst = {}
+            rng = np.random.default_rng(seed)
+            for k, r in enumerate(roots[1:], 1):
+                for l in open(Path(r) / "retryvla/trajectories.jsonl"):
+                    t = json.loads(l)
+                    per_inst.setdefault(t["instance_id"], []).append((k, int(t["episode_index"])))
+            insts = sorted(per_inst)
+            rng.shuffle(insts)
+            sel, rnd = [], 0
+            while len(sel) < max_traj and any(len(v) > rnd for v in per_inst.values()):
+                for i in insts:
+                    if len(per_inst[i]) > rnd and len(sel) < max_traj:
+                        sel.append(per_inst[i][rnd])
+                rnd += 1
+            keep_eps = set(sel)
+            self.n_traj = len(sel)
         for k, r in enumerate(roots):
             meta_fps = json.loads((Path(r) / "meta/info.json").read_text())["fps"]
             d = LeRobotDataset(f"local/{Path(r).name}", root=r,
                                delta_timestamps={"action": [i / meta_fps for i in range(chunk)]})
             keep = np.arange(len(d))
+            if keep_eps is not None and k > 0:
+                ep = np.asarray(d.hf_dataset.with_format(None).select_columns(["episode_index"])["episode_index"]).reshape(-1)
+                keep = np.nonzero(np.isin(ep, [e for kk, e in keep_eps if kk == k]))[0]
             if seg_filter is not None and k > 0 and "segment" in d.features:
                 seg = np.asarray(d.hf_dataset.with_format(None).select_columns(["segment"])["segment"]).reshape(-1)
-                keep = np.nonzero(np.isin(seg, seg_filter))[0]
+                keep = keep[np.isin(seg[keep], seg_filter)]
             self.ds.append(d)
             self.idx += [(len(self.ds) - 1, int(i)) for i in keep]
 
@@ -75,6 +98,7 @@ def main():
     ap.add_argument("--init", default=None)
     ap.add_argument("--recovery", nargs="*", default=[])
     ap.add_argument("--recovery_segments", nargs="*", type=int, default=None)
+    ap.add_argument("--max_traj", type=int, default=0)
     ap.add_argument("--steps", type=int, default=5000)
     ap.add_argument("--save_every", type=int, default=1000)
     ap.add_argument("--bs", type=int, default=48)
@@ -84,6 +108,7 @@ def main():
     ap.add_argument("--decay_steps", type=int, default=30000)
     ap.add_argument("--seed", type=int, default=7)
     ap.add_argument("--workers", type=int, default=6)
+    ap.add_argument("--accum", type=int, default=1, help="gradient accumulation micro-steps (global bs unchanged)")
     a = ap.parse_args()
 
     ddp = "RANK" in os.environ
@@ -113,14 +138,16 @@ def main():
     stats = LeRobotDatasetMetadata("local/d0_train", root=REPO_ROOT / D0).stats
     pre, post = make_pre_post_processors(cfg, dataset_stats=stats,
                                          preprocessor_overrides={"device_processor": {"device": str(dev)}})
-    data = Pool([REPO_ROOT / D0] + [REPO_ROOT / r for r in a.recovery], cfg.chunk_size, a.recovery_segments)
+    import glob as _g
+    rec_roots = sorted({p for r in a.recovery for p in _g.glob(str(REPO_ROOT / r))})
+    data = Pool([REPO_ROOT / D0] + rec_roots, cfg.chunk_size, a.recovery_segments, a.max_traj, a.seed)
     n_src = np.bincount([k for k, _ in data.idx])
     if rank == 0:
         print("anchors per source", n_src.tolist(), flush=True)
     g = torch.Generator().manual_seed(a.seed * 1000 + rank)
-    sampler = torch.utils.data.RandomSampler(data, replacement=True, num_samples=a.steps * a.bs // world + 1,
+    sampler = torch.utils.data.RandomSampler(data, replacement=True, num_samples=a.steps * a.bs // world + a.bs,
                                              generator=g)
-    dl = torch.utils.data.DataLoader(data, batch_size=a.bs // world, sampler=sampler, num_workers=a.workers,
+    dl = torch.utils.data.DataLoader(data, batch_size=a.bs // world // a.accum, sampler=sampler, num_workers=a.workers,
                                      drop_last=True, persistent_workers=True, prefetch_factor=4)
     params = [p for p in policy.parameters() if p.requires_grad]
     opt = torch.optim.AdamW(params, lr=a.peak, betas=(0.9, 0.95), eps=1e-8, weight_decay=1e-10)
@@ -128,19 +155,21 @@ def main():
         model = torch.nn.parallel.DistributedDataParallel(policy, device_ids=[dev.index], find_unused_parameters=True)
     else:
         model = policy
-    meta = {"base": P.BASE, "parent": a.init, "args": vars(a), "params": info, "anchors_per_source": n_src.tolist()}
+    meta = {"base": P.BASE, "parent": a.init, "args": vars(a), "params": info, "anchors_per_source": n_src.tolist(),
+            "recovery_roots": [str(r) for r in rec_roots], "n_recovery_traj": getattr(data, "n_traj", None)}
     t0, it = time.time(), iter(dl)
     policy.train()
     for step in range(a.steps):
-        b = next(it)
-        b.pop("src")
-        b = pre(b)
         for gr in opt.param_groups:
             gr["lr"] = lr_at(step, a.peak, a.warmup, a.decay_steps, a.decay_lr)
-        with torch.autocast("cuda", dtype=torch.bfloat16):
-            loss, _ = model(b)
         opt.zero_grad(set_to_none=True)
-        loss.backward()
+        for _ in range(a.accum):
+            b = next(it)
+            b.pop("src")
+            b = pre(b)
+            with torch.autocast("cuda", dtype=torch.bfloat16):
+                loss, _ = model(b)
+            (loss / a.accum).backward()
         gn = torch.nn.utils.clip_grad_norm_(params, 1.0)
         opt.step()
         if rank == 0 and (step % 50 == 0 or step == a.steps - 1):

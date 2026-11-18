@@ -109,9 +109,13 @@ def main() -> None:
     setup_logging()
     cfg = cli_config()
     wc = cfg.wm_collect
-    split = load_split(REPO_ROOT / cfg.split.file)
-    scenes = scenes_for(split, wc.split, REPO_ROOT / cfg.recover.scene_root)
-    assert_allowed([s.tag for s in scenes], split)
+    goal = cfg.get("goal")  # 2610.05151 reverse direction (opt-in): LIBERO-Goal entries from the M0 audit
+    if goal:
+        scenes = []
+    else:
+        split = load_split(REPO_ROOT / cfg.split.file)
+        scenes = scenes_for(split, wc.split, REPO_ROOT / cfg.recover.scene_root)
+        assert_allowed([s.tag for s in scenes], split)
     if wc.get("exclude_instances_file"):
         ex = {group_of(l.strip()) for l in open(REPO_ROOT / wc.exclude_instances_file) if l.strip()}
         scenes = [s for s in scenes if s.group not in ex]
@@ -122,13 +126,24 @@ def main() -> None:
     H, stride, K = int(cfg.search.horizon), int(wc.stride), int(wc.n_candidates)
     log.info("collect: %d scenes, %d candidates/instance, H=%d stride=%d -> %s", len(scenes), K, H, stride, out)
     with tracking.start(cfg) as run:
-        policy = SmolVLAWrapper(cfg.policy.path, cfg.policy.device, cfg.policy.n_action_steps)
+        if goal:
+            from retryvla.policy.pi0_wrapper import Pi0Wrapper
+            policy = Pi0Wrapper(cfg.policy.path, cfg.policy.device, int(cfg.policy.n_action_steps))
+        else:
+            policy = SmolVLAWrapper(cfg.policy.path, cfg.policy.device, cfg.policy.n_action_steps)
         enc = DinoEncoder(wc.encoder, pool_grid=int(wc.pool_grid), device=cfg.policy.device)
         cfg.search_on.precheck_rollouts = 0
         proposals = Proposals(policy, cfg.search, H, int(cfg.eval.seed) + 1000 * int(wc.shard))
         t0, n_done, n_succ, n_traj = time.time(), 0, 0, 0
         with SimPool(int(cfg.eval.n_workers), int(cfg.env.resolution)) as pool:
-            insts, _ = build_instances(pool, policy, scenes, cfg, wc.split)
+            if goal:
+                from retryvla.search.goal_instances import build_goal_instances, load_entries
+                ents = load_entries(goal.audit_dir, int(goal.audit_seed), int(wc.shard), int(wc.num_shards),
+                                    int(goal.get("max_entries", 0)))
+                ents = [e for e in ents if not (out / f"{e['entry_id']}.pt").exists()]
+                insts = build_goal_instances(pool, ents, goal.audit_dir)
+            else:
+                insts, _ = build_instances(pool, policy, scenes, cfg, wc.split)
             for inst in insts:
                 fn = out / f"{inst.instance_id}.pt"
                 Path(str(fn) + ".tmp").unlink(missing_ok=True)   # leftover of a killed write

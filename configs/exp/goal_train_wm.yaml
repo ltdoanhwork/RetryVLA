@@ -1,0 +1,7 @@
+# 2610.05151 reverse direction: latent WM on LIBERO-Goal collect data (Spatial WM v1 recipe, m2_train_wm).
+defaults: [exp/m2_train_wm]
+milestone: GOAL
+tag: goal_train_wm
+wm:
+  data_roots: [data/wm/goal_collect]
+  out_link: data/wm/goal_latest_wm.txt

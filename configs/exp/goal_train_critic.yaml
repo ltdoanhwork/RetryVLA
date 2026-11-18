@@ -1,0 +1,8 @@
+# 2610.05151 reverse direction: C^pi for M0 on LIBERO-Goal (Spatial critic v1 recipe, m2_train_critic).
+defaults: [exp/m2_train_critic]
+milestone: GOAL
+tag: goal_train_critic
+critic:
+  data_roots: [data/wm/goal_collect]
+  wm_link: data/wm/goal_latest_wm.txt
+  out_link: data/wm/goal_latest_critic.txt

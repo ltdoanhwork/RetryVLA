@@ -161,9 +161,13 @@ def main() -> None:
     setup_logging()
     cfg = cli_config()
     mb, sc = cfg.m5b, cfg.search
-    split = load_split(REPO_ROOT / cfg.split.file)
-    scenes = scenes_for(split, "train", REPO_ROOT / cfg.recover.scene_root)
-    assert_allowed([s.tag for s in scenes], split)
+    goal = cfg.get("goal")  # 2610.05151 reverse direction (opt-in): LIBERO-Goal entries from the M0 audit
+    if goal:
+        scenes = []
+    else:
+        split = load_split(REPO_ROOT / cfg.split.file)
+        scenes = scenes_for(split, "train", REPO_ROOT / cfg.recover.scene_root)
+        assert_allowed([s.tag for s in scenes], split)
     cfg.tag = f"{cfg.tag}_s{mb.shard}of{mb.num_shards}"
     if int(mb.get("num_sub_shards", 1)) > 1:
         cfg.tag += f"_sub{int(mb.sub_shard)}of{int(mb.num_sub_shards)}"
@@ -182,14 +186,18 @@ def main() -> None:
     part.mkdir()
     vdir = REPO_ROOT / mb.verif_out
     vdir.mkdir(parents=True, exist_ok=True)
-    jobs = select_jobs(scenes, cfg, mb)
+    jobs = [] if goal else select_jobs(scenes, cfg, mb)
     canon = {s.tag: s.language_canonical for s in scenes}
     goal_feats = None
     if any(a in ("wm_goal", "wm_goal_comp") for a in arms):
         goal_feats = torch.load(REPO_ROOT / mb.get("goal_feats", "data/wm/goal_feats.pt"), weights_only=False)
     with tracking.start(cfg) as run:
         run.summary.update({"wm_ckpt": wm_ck, "critic_ckpt": cr_ck, "part": str(part), "resumed_done": len(done)})
-        policy = SmolVLAWrapper(cfg.policy.path, cfg.policy.device, cfg.policy.n_action_steps)
+        if goal:
+            from retryvla.policy.pi0_wrapper import Pi0Wrapper
+            policy = Pi0Wrapper(cfg.policy.path, cfg.policy.device, int(cfg.policy.n_action_steps))
+        else:
+            policy = SmolVLAWrapper(cfg.policy.path, cfg.policy.device, cfg.policy.n_action_steps)
         if str(mb.get("ranker", "dino")) == "vjepa2_ac":  # foundation-WM test: V-JEPA 2-AC + C^pi on its latents
             from retryvla.wm.vjepa2_ac import VJRanker
 
@@ -231,7 +239,8 @@ def main() -> None:
                 ck_ = (REPO_ROOT / mb[key]).read_text().strip()
                 value_rk[a_] = A.value_ranker_from(ranker, ck_)
                 run.summary[f"{a_}_critic_ckpt"] = ck_
-        writers = {a: RecoveryWriter(part / a, overwrite=True, write_retries=int(mb.get("write_retries", 0)))
+        writers = {a: RecoveryWriter(part / a, overwrite=True, write_retries=int(mb.get("write_retries", 0)),
+                                     res=int(cfg.env.resolution))
                    for a in arms}
         rows, t0 = [], time.time()
         with SimPool(int(cfg.eval.n_workers), int(cfg.env.resolution)) as pool:
@@ -245,8 +254,15 @@ def main() -> None:
             if paired:
                 for p_ in root.glob("p*/done.jsonl"):
                     done |= {json.loads(x)["instance_id"] for x in p_.read_text().splitlines() if x.strip()}
-            insts, pre = precheck(pool, policy, jobs, set() if paired else done, run=srun,
-                                  known=load_known_precheck(mb.get("precheck_from") or []))
+            if goal:
+                from retryvla.search.goal_instances import build_goal_instances, load_entries
+                ents = load_entries(goal.audit_dir, int(goal.audit_seed), int(mb.shard), int(mb.num_shards),
+                                    int(goal.get("max_entries", 0)))
+                ents = [e for e in ents if paired or e["entry_id"] not in done]
+                insts, pre = build_goal_instances(pool, ents, goal.audit_dir), []
+            else:
+                insts, pre = precheck(pool, policy, jobs, set() if paired else done, run=srun,
+                                      known=load_known_precheck(mb.get("precheck_from") or []))
             pd.DataFrame(pre).to_csv(run.path("precheck.csv"), index=False)
             log.info("shard %s: %d selected, %d already done, %d pi0 failures to search", mb.shard, len(jobs),
                      len(done), len(insts))

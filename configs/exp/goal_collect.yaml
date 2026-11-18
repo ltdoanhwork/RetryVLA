@@ -1,0 +1,22 @@
+# 2610.05151 reverse direction: WM + C^pi data on LIBERO-Goal (seed-8 audit entries of M0 ONLY; search uses seed 7).
+# 32 candidates / entry (12 pi0 samples, 12 perturbations, primitives), H 50, M0 continues <= 300 steps.
+defaults: [exp/m2_collect]
+milestone: GOAL
+tag: goal_collect
+env:
+  resolution: 128
+policy:
+  path: runs/goal_rsi/m0_s7/ckpt_04000
+  n_action_steps: 5
+eval:
+  n_workers: 10
+goal:
+  audit_dir: data/goal_rsi/audit_m0_s8
+  audit_seed: 8
+  max_entries: 0
+wm_collect:
+  exclude_instances_file: null
+  n_candidates: 32
+  out_root: data/wm/goal_collect
+  shard: 0
+  num_shards: 1
