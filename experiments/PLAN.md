@@ -578,3 +578,25 @@ Full doc: `docs/related_work/COMPARE_2610.05151.md` (extraction, side-by-side, d
 - MDE (alpha 0.10, power 0.8, 3 seeds pooled, ~25 % discordant): ~7 pt.
 - Status 2026-11-17: building infra (split, converter, Pi0Wrapper, eval_goal, pi0 LoRA SFT); heavy jobs queued
   behind ACR-N F2 (GPUs 1-3).
+- **Status 2026-11-18: G0 PASS** (M0 4k = 85, Original = 82 / 100 val; RESULTS "G0").
+- **Stage-2 pre-registration (2026-11-18 17:30 UTC, written BEFORE any audit / search result):**
+  - Audit: M0 (4k) rolls out once per train scene with policy seeds 7 and 8 (300 + 300 rollouts, their protocol).
+    Seed-7 failures = search instances. Seed-8 failures = WM / critic training data only.
+  - Entries per failed rollout of length T: t in {T/4, T/2, 3T/4}, rounded down to a multiple of 5. An entry is
+    restored bit-exactly by replaying M0's recorded action prefix from the init state.
+  - WM / critic data (seed-8 entries): 32 candidates per entry (12 pi0 chunk samples at noise 1.0 / 1.5, 12
+    perturbations, primitives), H = 50, then M0 continues for <= 300 steps. The outcome is the C^pi label.
+    DINOv2-small 6x6 tokens every 5 steps.
+  - The Goal WM and C^pi are trained with the Spatial v1 recipes (`m2_train_wm`, `m2_train_critic`, same
+    hyper-parameters).
+  - Search on seed-7 entries, 16 sim verifications per entry per arm, paired continuation seeds:
+    - `random`: 16 random members of the 256 pool.
+    - `wm_diverse`: 256 pool + 2 CEM rounds in imagination, J = C^pi - mu R, diverse top-16 (= the pi1 generator).
+  - Bank: verified bridge + M0 continuation, <= 4 per entry.
+  - Distillation, their recipe: 2,000 updates from M0, D0 + bank pooled uniformly (no oversampling), warmup 200,
+    cosine. 3 seeds (7, 8, 9) for Original, RetryVLA(`wm_diverse`) and RetryVLA(`random`). Same trajectory count
+    per arm (`random` bank subsampled to the `wm_diverse` count, round-robin over entries).
+  - Primary: Δ = RetryVLA(`wm_diverse`) − Original on the 100 val scenes, scene x seed bootstrap. Decision rules as
+    above ("matches" / "beats" / "below"). Secondary: `wm_diverse` vs `random` (solved entries, McNemar p < 0.10;
+    SFT Δ, bootstrap).
+  - Test split untouched until the recipe is frozen. The cross-paper reference stays their 88.
