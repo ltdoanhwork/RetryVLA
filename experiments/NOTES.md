@@ -1041,3 +1041,7 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
   (orphan torchrun children killed by PID) and relaunched at 04:33 UTC on GPUs 1-3, 16 / GPU, global bs 48 unchanged,
   with eval co-located on GPU 2 (8 sim workers). Claims `8b889199:{1,2,3}:rv_goal_g0`. The stale claim
   `8b889199:2:rv_lrs_smoke` (session gone) was dropped.
+- 04:50 UTC: M0 runs at 2.43 s/it on 3 GPUs (global bs 48), so 5k steps take ~3.4 h (ETA ~08:00 UTC). Each 1k ckpt
+  gets a val eval on GPU 2 while training continues. Then Original (2k steps, ~1.4 h) and its val eval. **G0 verdict
+  ETA ~10:00 UTC** (`runs/goal_rsi/g0.json`). Next, only if G0 passes: M0 audit on the 300 train scenes, then C^pi
+  data and the Goal WM.
