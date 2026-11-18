@@ -1045,3 +1045,6 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
   gets a val eval on GPU 2 while training continues. Then Original (2k steps, ~1.4 h) and its val eval. **G0 verdict
   ETA ~10:00 UTC** (`runs/goal_rsi/g0.json`). Next, only if G0 passes: M0 audit on the 300 train scenes, then C^pi
   data and the Goal WM.
+- 08:56 UTC: G0 chain finished rc 0, **G0 PASS** (M0 4k 85, Original 82; RESULTS "G0"). Eval wall-clock per 100
+  episodes was 6-15 min. GPUs 1-3 then sat idle 08:56-17:15 UTC (agent turn ended, nothing queued; lesson: queue the
+  next stage inside the chain). 17:20 UTC: stale claims `8b889199:{1,2,3}:rv_goal_g0` released.

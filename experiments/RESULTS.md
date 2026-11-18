@@ -865,3 +865,35 @@ negative.** The PoC 1 claim "worse than its control" is withdrawn (cluster p 0.4
 Recalibrator with realistic labels (prequential, own 16 picks only): second-half gain +0.31 (p 0.12) / +0.48 (p 0.003) /
 +0.12 (p 0.41) across 3 stream orders -> **inconclusive**; not used. Budget reallocation (r1-miss capped at 8): hits per
 verification +29-35 % but solved -4 to -5 pt (trade-off, rule failed).
+
+## 2610.05151 reverse direction: G0 reproduction gate (2026-11-18; their protocol, custom LIBERO-Goal VAL split)
+Design: PLAN "2610.05151 comparison" (G0 pre-registered 2026-11-17). Doc: docs/related_work/COMPARE_2610.05151.md
+(deviations D1-D3, 3.2b). Chain `scripts/goal_g0_chain.py` -> `runs/goal_rsi/{g0.json, m0_selection.json}`, local
+8b889199 GPUs 1-3, 04:33-08:56 UTC. Setup: pi0 + LoRA (451.5 M trainable), 100 val scenes (10 / task), 1 trial each,
+policy seed 7, <= 300 steps, replan 5. **Single training seed (7), n = 100, val split only. The val split is also used to
+select M0, exactly as in the paper.**
+
+| policy | ours (/ 100) | Wilson 95 % CI | paper (/ 100) | paper CI | pre-registered band | ok |
+|---|---|---|---|---|---|---|
+| M0 checkpoints 1k / 2k / 3k / 4k / 5k | 14 / 56 / 55 / **85** / 69 | - | 24 / 73 / 77 / 75 / 76 | - | - | - |
+| M0 (best on val = 4k; theirs 3k) | **85** | [0.77, 0.91] | 77 | [0.68, 0.84] | [67, 87] | yes |
+| Original = M0 + 2k on D0 | **82** | [0.73, 0.88] | 78 | [0.69, 0.85] | [68, 88] | yes |
+| Recovery (their LLM-teacher data) | - | - | 88 | [0.80, 0.93] | - | - |
+
+**G0: PASS.**
+- M0 is 8 pt above the paper's 77. That is within the pre-registered ±10 tolerance and inside the band [67, 87], but
+  only 2 successes from its upper edge. A binomial test of 85 / 100 against p = 0.77 gives p = 0.058, so the gap is
+  borderline, not a clear difference.
+- Two reasons to expect a gap. First, the split differs (D1). Second, our checkpoint curve is far noisier than theirs
+  (55 → 85 → 69 between 3k and 5k vs their 75-77). Picking the best of 5 noisy checkpoints on the same val scenes
+  inflates M0 by selection, both for us and for them, and our noise makes this worse. Our M0 is therefore optimistic.
+- Original (not selected on val) is 82, 4 pt above theirs (p = 0.40 vs 0.78).
+- M0 → Original, paired on the same 100 scenes: 6 failures fixed, 9 successes lost, McNemar p = 0.61. Original is not
+  better than M0, the same as in the paper (77 → 78).
+- Per task, the weak tasks are `push_the_plate_to_the_front_of_the_stove` (5 / 10), `put_the_wine_bottle_on_the_rack`
+  (6) and `put_the_cream_cheese_in_the_bowl` (5). The paper's per-task table has the same weak tasks.
+
+**What G0 means for the main comparison.** Original fails 18 / 100 val scenes. The pre-registered "matches theirs"
+threshold (mean Δ vs Original >= +5 with CI > 0) means RetryVLA Recovery needs >= 87 / 100 averaged over 3 seeds.
+"Beats theirs" (Δ >= +10) means >= 92. Their 88 is a different split and framework, so it is a cross-paper reference
+only, never a paired test.
