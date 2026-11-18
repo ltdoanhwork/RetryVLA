@@ -84,6 +84,25 @@ Goal: numbers directly comparable to their Table 1 (M0 77, Original 78, Recovery
 - D4 teacher: not needed for the priority track (we run OUR method on their protocol and compare with their
   reported numbers; their method is not re-run because the LLM teacher is not available, see section 4).
 
+### 3.2b As implemented (2026-11-18, before any G0 number)
+- Split `data/splits/goal_rsi_v1.json` (`scripts/goal_rsi_build.py`): per task `default_rng(7).permutation(50)` ->
+  30 / 10 / 10 demo ids; a scene = task + that demo's `init_state`.
+- D0 = the ORIGINAL hdf5 records of the 300 train demos, aligned as in the paper (post-action obs i paired with action
+  i + 1, last frame dropped), images flipped H + W to our sim convention (flipped hdf5 frame vs our render at the same
+  state: MAE 5-7 / 255; unflipped 73), state = `ee_states` (pos + axis-angle) + 2 gripper qpos (= our sim state to
+  < 2 mm). 38,240 windows (theirs 37,907). We do NOT replay the demos in our sim: replay drifts (82 % of replays
+  succeed), which would mislabel 18 % of the data. `data/goal_rsi/d0_train` (LeRobotDataset, 128 px, fps 20).
+- pi0: `lerobot/pi0_base` + peft LoRA r16 (LLM attention + MLP) and r32 (expert), SigLIP + projector + state / action /
+  time projections trainable: **451.5 M trainable** of 4.06 B in the lerobot port (theirs ~468 M of 3.288 B).
+  `retryvla/policy/pi0_lora.py`, trainer `retryvla/train/pi0_sft.py` (DDP, bf16 autocast, gradient checkpointing).
+  M0 schedule = openpi defaults (warmup 1,000, cosine 2.5e-5 -> 2.5e-6 over 30k steps; the paper gives no M0
+  schedule). Continuation: warmup 200, cosine to 2.5e-6 at 2,000 (paper). Continuation re-injects a fresh LoRA on
+  the merged M0 weights (functionally identical start, AdamW restarted as theirs).
+- Eval `retryvla/eval/eval_goal.py`: restore the init state, 10 no-op steps, <= 300 actions, chunk 50 / execute 5,
+  policy noise seeded from 7, 128 px renders.
+- Chain `scripts/goal_g0_chain.py` (tmux `rv_goal_g0`, local 8b889199, train DDP on GPUs 1-3 with 16 / GPU, eval
+  co-located on GPU 2): M0 5k + val eval of every 1k ckpt -> selection -> Original 2k -> val -> `runs/goal_rsi/g0.json`.
+
 ### 3.3 What we must build
 1. `goal_rsi_v1` split + converter hdf5 -> LeRobotDataset (300 train demos; image flip = our sim convention; state
    = eef pos + axis-angle + 2 gripper qpos; their alignment obs[i] -> action[i+1], checked by replay).

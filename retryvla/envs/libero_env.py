@@ -289,6 +289,22 @@ class LiberoSim:
         return {"obs": format_obs(self._raw_obs()), "language": task.language, "task_name": task.name,
                 "bddl": bddl}
 
+    def load_init_state(self, bddl: str, state, num_steps_wait: int = 10, seed: int = 0,
+                        return_snapshot: bool = True) -> dict[str, Any]:
+        """2610.05151 protocol (opt-in): reset to a recorded LIBERO demo initial state (``init_state`` of an hdf5
+        demo = one of their "scenes"), then ``num_steps_wait`` no-op steps (openpi LIBERO example). Same steps as
+        ``load_nominal``, with the state given explicitly instead of an ``.init`` file index."""
+        self._build(bddl, seed)
+        self._reset(seed)
+        self._env.set_init_state(np.asarray(state, dtype=np.float64))
+        for _ in range(num_steps_wait):
+            self._env.step(DUMMY_ACTION.tolist())
+        self.t = 0
+        out = {"obs": format_obs(self._raw_obs()), "language": parse_bddl_language(bddl), "bddl": bddl}
+        if return_snapshot:
+            out["snapshot"] = self.snapshot()
+        return out
+
     def load_scene(self, bddl: str, npy: str, gripper_close: bool | None, noise_xy: float = 0.02,
                    noise_seed: int = 0, settle_steps: int = 20, num_steps_wait: int = 0,
                    build_seed: int = 0) -> dict[str, Any]:

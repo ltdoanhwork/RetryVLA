@@ -1028,3 +1028,16 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
   watchdog restarts); analyze_acrn_f2 ran automatically. Claims released by the chain; nothing of ACR-N is running
   on 8b889199 any more (GPUs 1-3 free for the 2610.05151 reproduction agent). Analysis + RESULTS F2 / final verdict
   written 2026-11-18 (F2 FAILED its rule; no distillation proposal).
+
+## 2610.05151 reverse direction (RetryVLA on their pi0 / LIBERO-Goal protocol), ops log 2026-11-18 (design: PLAN "2610.05151 comparison"; doc: docs/related_work/COMPARE_2610.05151.md)
+- 03:55 UTC: coordinator says GPUs 1-3 free (ACR-N F2 done). Invisible processes from other containers keep 6-14 GB /
+  20-60 % util on GPUs 1-3 at times. We share them, memory is ample.
+- Infra (logged as D-deviations in the doc section 3.2b): split goal_rsi_v1, D0 built from the original hdf5 records
+  (38,240 windows). A replay-built D0 was dropped after the first 40 demos: only 82 % of demo replays succeed in our
+  sim. Also built: pi0 LoRA (451.5 M trainable), DDP trainer, eval_goal, Pi0Wrapper, G0 chain.
+- Smoke tests: 12 SFT steps at bs 24 on 1 GPU take 2.7 s/it; eval on 4 val scenes runs end to end (63 s, 4 workers).
+  The checkpoint round-trip works (LoRA merge on load).
+- 04:20 UTC: first M0 launch on GPUs 1, 3 (bs 24 / GPU) measured 3.3 s/it, ETA 4.5 h. It was killed at step ~60
+  (orphan torchrun children killed by PID) and relaunched at 04:33 UTC on GPUs 1-3, 16 / GPU, global bs 48 unchanged,
+  with eval co-located on GPU 2 (8 sim workers). Claims `8b889199:{1,2,3}:rv_goal_g0`. The stale claim
+  `8b889199:2:rv_lrs_smoke` (session gone) was dropped.

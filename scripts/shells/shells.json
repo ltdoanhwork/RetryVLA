@@ -19,7 +19,23 @@
   "max_load_per_core": 0.6,
   "tmux_prefix": "rv_"
  },
- "claims": {},
+ "claims": {
+  "8b889199:1:rv_goal_g0": {
+   "tmux": "rv_goal_g0",
+   "args": "pi0 LoRA M0 / Original training rank 0 (scripts/goal_g0_chain.py, DDP 2 GPUs, ~45 GB)",
+   "since": "2026-11-18T04:20:49"
+  },
+  "8b889199:3:rv_goal_g0": {
+   "tmux": "rv_goal_g0",
+   "args": "pi0 LoRA training rank 1 (goal_g0_chain)",
+   "since": "2026-11-18T04:20:49"
+  },
+  "8b889199:2:rv_goal_g0": {
+   "tmux": "rv_goal_g0",
+   "args": "pi0 LoRA training rank 2 (16 / GPU) + co-located eval_goal val (pi0 ~10 GB + 8 sim workers)",
+   "since": "2026-11-18T04:20:49"
+  }
+ },
  "allow_only": {
   "8b889199": "PRIMARY RetryVLA machine (user 2026-11-17 09:20 UTC: 'from now on run on this machine'). LOCAL = the Cursor agent's own container: vla_cvpr_DoanhLT_4g (8b889199-92c0-42e1-8aaa-79e0681ff3e8, user hn49pymo), node cn21, container 35501b7af179, 4x A100-SXM4-80GB, 32 CPU, driver 610.43.02. No det shell open needed: launch_remote.sh / remote_ctl.sh detect DET_TASK_ID and run probe + tmux locally (CUDA_VISIBLE_DEVICES=MUJOCO_EGL_DEVICE_ID=<gpu>); claims keyed '8b889199:<gpu>'. Probe 2026-11-17 09:22 UTC: GPU0 7.5 GB used by the user's own LAWAM GR1 policy server (VLA/doanh/lerobot-lawam serve_lawam_gr1.py --port 5740, CUDA_VISIBLE_DEVICES=0, up since 2026-11-16 07:20; never kill it), GPUs 1-3 0 MiB / 0 %; load ~7-8 (other tmux: autopilot, aw_score_local, gpu_watchdog, sd_verify are not rv_ - never touch). Prefer GPUs 1-3; GPU0 only for small jobs. envcheck 2026-11-17: OK video decode, OK sim 50 steps 0.96 s (GPU1) / 0.95 s (GPU3), NVIDIA EGL"
  },

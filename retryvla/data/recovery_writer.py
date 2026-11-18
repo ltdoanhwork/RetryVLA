@@ -16,8 +16,8 @@ import numpy as np
 FPS = 10  # matches lerobot/libero metadata (one frame per env step)
 
 
-def features(use_videos: bool = False) -> dict:
-    img = {"dtype": "video" if use_videos else "image", "shape": (256, 256, 3),
+def features(use_videos: bool = False, res: int = 256) -> dict:
+    img = {"dtype": "video" if use_videos else "image", "shape": (int(res), int(res), 3),
            "names": ["height", "width", "channel"]}
     return {
         "observation.images.image": dict(img),
@@ -42,7 +42,7 @@ def _png_ok(path: Path) -> bool:
 
 class RecoveryWriter:
     def __init__(self, root: str | Path, repo_id: str = "retryvla/recovery", overwrite: bool = False,
-                 use_videos: bool = False, write_retries: int = 0, retry_wait_s: float = 60.0):
+                 use_videos: bool = False, write_retries: int = 0, retry_wait_s: float = 60.0, res: int = 256):
         """write_retries > 0 (opt-in; default keeps the old behaviour): before ``save_episode`` every PNG of the
         episode is checked and any unreadable one (lerobot's async image writer only LOGS write errors, e.g.
         EDQUOT 2026-10-22) is rewritten synchronously from the in-memory frame, retrying with linear backoff."""
@@ -54,7 +54,7 @@ class RecoveryWriter:
             if not overwrite:
                 raise FileExistsError(f"{self.root} exists (pass overwrite=True)")
             shutil.rmtree(self.root)
-        self.ds = LeRobotDataset.create(repo_id=repo_id, fps=FPS, features=features(use_videos), root=self.root,
+        self.ds = LeRobotDataset.create(repo_id=repo_id, fps=FPS, features=features(use_videos, res), root=self.root,
                                         robot_type="panda", use_videos=use_videos, image_writer_threads=4)
         self.side = self.root / "retryvla"
         self.side.mkdir(parents=True, exist_ok=True)
