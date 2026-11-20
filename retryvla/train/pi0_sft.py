@@ -99,6 +99,9 @@ def main():
     ap.add_argument("--recovery", nargs="*", default=[])
     ap.add_argument("--recovery_segments", nargs="*", type=int, default=None)
     ap.add_argument("--max_traj", type=int, default=0)
+    ap.add_argument("--resume_every", type=int, default=0,
+                    help="> 0 (opt-in, single process): save trainable + AdamW state every N steps to <out>/resume.pt "
+                         "and continue from it on restart (back-off kills on borrowed GPUs)")
     ap.add_argument("--steps", type=int, default=5000)
     ap.add_argument("--save_every", type=int, default=1000)
     ap.add_argument("--bs", type=int, default=48)
@@ -157,9 +160,20 @@ def main():
         model = policy
     meta = {"base": P.BASE, "parent": a.init, "args": vars(a), "params": info, "anchors_per_source": n_src.tolist(),
             "recovery_roots": [str(r) for r in rec_roots], "n_recovery_traj": getattr(data, "n_traj", None)}
+    start = 0
+    rp = out / "resume.pt"
+    if a.resume_every and rp.exists():
+        st = torch.load(rp, map_location="cpu", weights_only=False)
+        named = dict(policy.named_parameters())
+        for k, v in st["trainable"].items():
+            named[k].data.copy_(v.to(named[k].device, named[k].dtype))
+        opt.load_state_dict(st["opt"])
+        start = int(st["step"])
+        g.manual_seed(a.seed * 1000 + rank + 7919 * start)   # fresh sample order after a resume (logged)
+        print(f"RESUMED from step {start}", flush=True)
     t0, it = time.time(), iter(dl)
     policy.train()
-    for step in range(a.steps):
+    for step in range(start, a.steps):
         for gr in opt.param_groups:
             gr["lr"] = lr_at(step, a.peak, a.warmup, a.decay_steps, a.decay_lr)
         opt.zero_grad(set_to_none=True)
@@ -173,11 +187,16 @@ def main():
         gn = torch.nn.utils.clip_grad_norm_(params, 1.0)
         opt.step()
         if rank == 0 and (step % 50 == 0 or step == a.steps - 1):
-            el = time.time() - t0
+            el, nd = time.time() - t0, step - start + 1
             print(f"step {step} loss {loss.item():.4f} gn {gn.item():.2f} lr {opt.param_groups[0]['lr']:.2e} "
-                  f"{el / (step + 1):.2f}s/it eta {el / (step + 1) * (a.steps - step - 1) / 60:.0f} min", flush=True)
+                  f"{el / nd:.2f}s/it eta {el / nd * (a.steps - step - 1) / 60:.0f} min", flush=True)
             with open(out / "metrics.jsonl", "a") as f:
                 f.write(json.dumps({"step": step, "loss": loss.item(), "gn": gn.item()}) + "\n")
+        if a.resume_every and rank == 0 and (step + 1) % a.resume_every == 0 and step + 1 < a.steps:
+            torch.save({"step": step + 1, "opt": opt.state_dict(),
+                        "trainable": {k: v.detach().cpu() for k, v in policy.named_parameters() if v.requires_grad}},
+                       str(rp) + ".tmp")
+            Path(str(rp) + ".tmp").replace(rp)
         if rank == 0 and ((step + 1) % a.save_every == 0 or step + 1 == a.steps):
             P.save_ckpt(policy, out / f"ckpt_{step + 1:05d}", meta | {"step": step + 1}, pre, post)
             print("saved", step + 1, flush=True)
@@ -186,6 +205,7 @@ def main():
         dist.destroy_process_group()
     if rank == 0:
         (out / "DONE").write_text(time.strftime("%Y-%m-%dT%H:%M:%S"))
+        rp.unlink(missing_ok=True)
 
 
 if __name__ == "__main__":

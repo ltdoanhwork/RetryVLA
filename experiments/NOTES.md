@@ -1076,3 +1076,22 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
   owner tmux egoprm / nativemem / robotood + 3 `search.py` jobs at 100 % CPU, so **not idle**. No other
   roboworm / RoboWorM shell is running. Not registered, no job launched there. The follow-up F1 (pre-registered in
   RESULTS) is ready to launch on any 2 free GPUs: 6 runs x ~3 h single-GPU, i.e. ~9 h with 2 GPUs.
+- 2026-11-20 07:20 UTC: user decision: run F1 on 63e0f914 (vla_roboworm_1) ONLY when it is idle. Local watcher
+  **tmux `rv_f1_watch`** on the agent box (42f3ad7fd1c0, Determined task $DET_TASK_ID 1400feb4) runs
+  `scripts/goal_f1_watch.py`. Poll log: runs/goal_rsi/f1_watch.jsonl.
+  - Poll: every 12 min, read-only `probe_owner.sh` via det shell open.
+  - Launch rule, 2 consecutive polls of:
+    - both GPUs < 10 % max util over 5 samples and >= 45 GB free;
+    - no owner GPU process > 1 GB;
+    - no owner process >= 50 % CPU (3 s top sample);
+    - load per core < 0.5.
+  - At the first launch: envcheck, then shells.json allow_only / share_ok + claims. Lanes `rv_f1_g0` (wm s7-9) and
+    `rv_f1_g1` (random s7-9) run `scripts/goal_f1_lane.sh`: bridges only, 36 bridges (~1,645 anchors ≈ 4.1 %;
+    the pre-registration's "≈ 33" assumed 50-frame bridges, the measured mean is 45.7). Trainer `--resume_every 250`.
+  - Back-off (kill only rv_f1_* via `kill_rv.sh`, requeue): an owner GPU process > 1 GB, or owner CPU >= 150 % on
+    2 consecutive polls.
+  - Give-up: 72 h without a launch.
+  - At the end: `analyze_goal_f1.py`, auto-appended RESULTS / NOTES, claims released, commit + push.
+  - First probe 07:15 UTC: GPU0 100 % (owner 3 GPU procs, 12.7 GB), owner CPU ~300 % -> busy, waiting.
+  - Deviation (logged): the action chunks of bridge anchors near the bridge end still contain M0-continuation
+    actions (no validity mask as in theirs).
