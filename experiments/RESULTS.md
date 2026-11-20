@@ -897,3 +897,64 @@ select M0, exactly as in the paper.**
 threshold (mean Δ vs Original >= +5 with CI > 0) means RetryVLA Recovery needs >= 87 / 100 averaged over 3 seeds.
 "Beats theirs" (Δ >= +10) means >= 92. Their 88 is a different split and framework, so it is a cross-paper reference
 only, never a paired test.
+
+## 2610.05151 reverse direction: RetryVLA on their protocol, main comparison (FINAL 2026-11-19 09:31 UTC; val split)
+Pre-registered: PLAN "2610.05151 comparison", stage-2 bullet (2026-11-18 17:30 UTC). Chain `scripts/goal_rv_chain.py`
+(`runs/_logs/rv_goal_rv.log`, CHAIN DONE), table `scripts/analyze_goal_rsi.py` -> `runs/goal_rsi/main.{json,md}`.
+Setup:
+- M0 = pi0 + LoRA 4k (val 85).
+- Search on 168 seed-7 audit entries (56 failed train rollouts x 3), 16 verifications / entry / arm.
+- WM / C^pi trained on 168 seed-8 entries x 32 candidates.
+- Distillation = their recipe: M0 + 2k updates, D0 + bank pooled uniformly, warmup 200, cosine; bank trajectory
+  count matched (282, round-robin over entries); 3 seeds; 100 val scenes.
+
+| arm | val successes s7 / s8 / s9 | mean | Δ vs Original (scene x seed bootstrap 95 %) | pooled fixed / broken vs Original |
+|---|---|---|---|---|
+| M0 (4k, selected on val) | 85 | - | - | - |
+| Original (M0 + 2k on D0) | 82 / 77 / 79 | **79.3** | - | - |
+| RetryVLA `wm_diverse` bank (WM + C^pi) | 65 / 76 / 63 | **68.0** | **−11.3 [−23.7, +2.0]** | 34 / 68 |
+| RetryVLA `random` bank (no WM) | 67 / 67 / 69 | 67.7 | −11.7 [−21.0, −3.0] | 31 / 66 |
+| paper: Original / Recovery (LLM teacher) | 78 / 88 | - | +10 (1 seed, McNemar p 0.076) | 8 / 18 |
+
+Search (seed-7 entries, n = 168):
+- solved: `wm_diverse` 0.589 vs `random` 0.571 (McNemar 15 / 12, p 0.70).
+- hits / verification: 0.243 vs 0.163 (+49 %); hits / 1k sim steps: 0.84 vs 0.52 (+60 %).
+- banks: 308 vs 282 trajectories.
+- WM vs random after SFT: +0.3 [−11.3, +12.0].
+
+**Decision (pre-registered rule): "below".** Mean Δ = −11.3 < +5. RetryVLA data does NOT reproduce their +10 on their
+nominal-start metric; it costs ~11 pt. Paired per seed vs Original, `wm` is significantly worse on seeds 7 and 9
+(McNemar p 0.008 / 0.009) and neutral on seed 8 (15 / 16). The WM's sim-efficiency advantage in search replicates
+on Goal (+49 % hits / verification), but its solved rate does not differ from random, and neither bank helps
+downstream.
+
+Per task (mean of 3 seeds; Original -> `wm`):
+- gains: push_plate 4.0 -> 7.0, cream_cheese 7.0 -> 8.0 (the tasks with the most failures).
+- losses: open_middle_drawer 9.7 -> 5.0, put_bowl_on_stove 9.7 -> 6.7, bowl_on_plate 8.7 -> 7.0,
+  bowl_on_cabinet 9.0 -> 7.7, wine_rack 4.0 -> 3.0, wine_cabinet 9.3 -> 7.7.
+
+Diagnosis (idea-loop step 3; not a verdict on recovery data in general):
+- **Mix magnitude, not the generator, is the first suspect.** "Their mix" (uniform pooling, no oversampling) was
+  pre-registered, but the volumes differ by 10x.
+  - Our matched bank = 282 trajectories = 34,078 recovery anchors next to 38,240 D0 anchors: **47 % of anchors**.
+    In the `wm_diverse` bank 14.1k frames are bridges and 22.4k are M0's own continuations.
+  - Theirs = 1,639 quality-filtered teacher windows = **4.1 % of anchors** (1.5 % of targets).
+  - Our continuation segments also re-imitate M0's own (imperfect) behaviour from off-nominal states, and the bridges
+    include open-loop primitives / perturbations. Both are far from nominal-start behaviour, so a flood of them
+    plausibly hurts the nominal tasks M0 already solved (losses concentrate on tasks with ~0 failures in the audit,
+    e.g. bowl_on_stove 0 failures, 9.7 -> 6.7).
+- Recovery from failure states is not measured on this protocol, and nor is it measured in theirs. Our Spatial result
+  (RSR +29 pt with nominal preserved at a 50 % ratio) used a different metric, so nothing here contradicts it.
+- The generator comparison is a null: `wm` ≈ `random` both in solved entries and after SFT. With 47 % of anchors from
+  either bank, the shared nominal damage dominates any bank-quality difference.
+- Entries have no M0 pre-check (pre-registered), so some early entries are easy states (solved ~0.58 for both arms).
+- Cross-paper caveats: different split (D1), framework (D2), 3 seeds vs their 1. Our Original 79.3 ≈ their 78, so
+  the baseline reproduces.
+
+Pre-registered follow-up F1 (written 2026-11-20 BEFORE running; not launched, no idle GPUs, see NOTES): same banks,
+**share-matched to theirs**.
+- Bridge segments only (`--recovery_segments 0`, their "teacher actions only"), subsampled round-robin to ≈ 1,640
+  anchors (≈ 33 bridges ≈ 4.1 % of anchors).
+- Arms `wm` / `random` x seeds 7-9, otherwise identical.
+- Rule: "matches theirs" if Δ vs Original >= +5 with CI > 0. "Mix volume caused the drop" if F1 Δ > F0 Δ + 8 (CI of
+  the difference > 0). WM matters iff F1 `wm` − `random` >= +3 with CI > 0.

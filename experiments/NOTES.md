@@ -1064,3 +1064,15 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
   - In parallel, `rv_goal_orig` on GPU 3 trains Original seeds 8 and 9 (4.8 s/it shared, ~2.8 h each).
   - ETA: collect ~21:15, WM / C^pi ~22:45, search ~01:45, distillation + evals ~08:00 UTC 2026-11-19, then
     `runs/goal_rsi/main.{json,md}`.
+- 2026-11-19 03:19-09:31 UTC: distillation waves ran (rec_wm s7-9, then rec_rand s7-9, one per GPU, ~3.3 h / ~2.9 h
+  per wave incl. val eval). All rc 0, **CHAIN DONE 09:31 UTC**. Original seeds 8 / 9 (rv_goal_orig) also finished:
+  77 / 79. Results: RESULTS "main comparison" (verdict "below": Δ −11.3).
+- 2026-11-20 05:58 UTC (coordinator: "shell killed?"): `det shell list` shows 8b889199 (vla_cvpr_DoanhLT_4g)
+  **TERMINATED** ("allocation exited successfully"). It ended AFTER the chain finished, so **nothing was lost**: every
+  run has DONE + ckpt_02000/eval_val/summary.json (orig_s7-9, rec_wm_s7-9, rec_rand_s7-9) and main.json exists.
+  Stale claims `8b889199:*` released; 8b889199 moved to `shells.json:gone`.
+- Roboworm shells (user: continue on a roboworm shell with 2 GPUs): the only RUNNING roboworm-named shell is
+  `63e0f914` (vla_roboworm_1). Read-only probe 06:00 UTC: 2x A100, GPU0 99 % util / 7.9 GB, GPU1 29-71 % / 5.4 GB,
+  owner tmux egoprm / nativemem / robotood + 3 `search.py` jobs at 100 % CPU, so **not idle**. No other
+  roboworm / RoboWorM shell is running. Not registered, no job launched there. The follow-up F1 (pre-registered in
+  RESULTS) is ready to launch on any 2 free GPUs: 6 runs x ~3 h single-GPU, i.e. ~9 h with 2 GPUs.

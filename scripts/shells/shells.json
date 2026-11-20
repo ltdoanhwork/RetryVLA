@@ -19,34 +19,9 @@
   "max_load_per_core": 0.6,
   "tmux_prefix": "rv_"
  },
- "claims": {
-  "8b889199:3:rv_goal_orig": {
-   "tmux": "rv_goal_orig",
-   "args": "Original continuation seeds 8, 9 (pi0 LoRA 2k, accum 3) + val eval",
-   "since": "2026-11-18T17:18:30"
-  },
-  "8b889199:1:rv_goal_rv": {
-   "tmux": "rv_goal_rv",
-   "args": "goal_rv_chain (collect / WM / C^pi / search shards / pi0 distillation + eval), 1 job per GPU, 8 sim workers",
-   "since": "2026-11-18T17:42:47"
-  },
-  "8b889199:2:rv_goal_rv": {
-   "tmux": "rv_goal_rv",
-   "args": "goal_rv_chain (collect / WM / C^pi / search shards / pi0 distillation + eval), 1 job per GPU, 8 sim workers",
-   "since": "2026-11-18T17:42:47"
-  },
-  "8b889199:3:rv_goal_rv": {
-   "tmux": "rv_goal_rv",
-   "args": "goal_rv_chain (collect / WM / C^pi / search shards / pi0 distillation + eval), 1 job per GPU, 8 sim workers",
-   "since": "2026-11-18T17:42:47"
-  }
- },
- "allow_only": {
-  "8b889199": "PRIMARY RetryVLA machine (user 2026-11-17 09:20 UTC: 'from now on run on this machine'). LOCAL = the Cursor agent's own container: vla_cvpr_DoanhLT_4g (8b889199-92c0-42e1-8aaa-79e0681ff3e8, user hn49pymo), node cn21, container 35501b7af179, 4x A100-SXM4-80GB, 32 CPU, driver 610.43.02. No det shell open needed: launch_remote.sh / remote_ctl.sh detect DET_TASK_ID and run probe + tmux locally (CUDA_VISIBLE_DEVICES=MUJOCO_EGL_DEVICE_ID=<gpu>); claims keyed '8b889199:<gpu>'. Probe 2026-11-17 09:22 UTC: GPU0 7.5 GB used by the user's own LAWAM GR1 policy server (VLA/doanh/lerobot-lawam serve_lawam_gr1.py --port 5740, CUDA_VISIBLE_DEVICES=0, up since 2026-11-16 07:20; never kill it), GPUs 1-3 0 MiB / 0 %; load ~7-8 (other tmux: autopilot, aw_score_local, gpu_watchdog, sd_verify are not rv_ - never touch). Prefer GPUs 1-3; GPU0 only for small jobs. envcheck 2026-11-17: OK video decode, OK sim 50 steps 0.96 s (GPU1) / 0.95 s (GPU3), NVIDIA EGL"
- },
- "share_ok": {
-  "8b889199": true
- },
+ "claims": {},
+ "allow_only": {},
+ "share_ok": {},
  "gone": {
   "0097c39c": "vla_RetryVLA_DoanhLT_1 (cn69), RetryVLA's GPU 2026-10-27..10-31; not RUNNING since 2026-11-01 (user 2026-11-02: no longer running). Removed from allow_only",
   "8a2808f9": "removed from allow_only 2026-11-02 (user: RetryVLA only on dedc84ce + c37611dd). Was: vla_BSC_DoanhLT_1 (user's own; 2026-10-19 user: submit a few LIGHT jobs here; owner job gg_8a2808f9 uses the GPU -> share_ok, <=8 workers)",
@@ -60,7 +35,11 @@
   "f02ea5c5": "vla_RetryVLA_DoanhLT_acr2b (ACR-N 2nd lane): not in `det shell list` on 2026-11-17 (gone)",
   "335de36e": "vla_roboworm_thanhnv_2-1 (cn06): not in `det shell list` on 2026-11-17 (gone). thanhnv name rule still applies to new thanhnv shells",
   "b936d1d7": "vla_roboworm_thanhnv_2-2 (cn37): not in `det shell list` on 2026-11-17 (gone)",
-  "b8c028b9": "vla_roboworm_thanhnv_1-1 (cn35): TERMINATED in `det shell list` on 2026-11-17"
+  "b8c028b9": "vla_roboworm_thanhnv_1-1 (cn35): TERMINATED in `det shell list` on 2026-11-17",
+  "8b889199": "vla_cvpr_DoanhLT_4g TERMINATED (det shell list 2026-11-20 05:58 UTC: allocation exited successfully); rv_goal_rv chain had already finished (CHAIN DONE 2026-11-19 09:31 UTC)"
  },
- "_mode": "user 2026-11-17 09:20 UTC: DEFAULT = run on THIS machine, 8b889199 (vla_cvpr_DoanhLT_4g, local 4x A100 80GB; GPUs 1-3 free, GPU0 has the user's LAWAM server). Launch locally: scripts/shells/launch_remote.sh 8b889199 <gpu> <name> <module> <cfg> [k=v] (local fast path, no det) or scripts/launch.sh with CUDA_VISIBLE_DEVICES=MUJOCO_EGL_DEVICE_ID=<gpu>; register claims as '8b889199:<gpu>' (dag_run.py: use local:<gpu>:<lane> slots). SECONDARY (user 2026-11-16 04:26 UTC, still valid): extra light GPU work may use shells whose NAME contains thanhnv/Thanhnv, DoanhLT or quang (read-only probe first, clearly idle GPUs only, never disturb others' processes/tmux, <=8 sim workers + owner back-off watchdog, add to allow_only after probing, register + release claims). Prefer the local machine, then existing shells, over new requests. Never any other shell. History: 2026-11-08 thanhnv 335de36e/b936d1d7 light jobs; d2ecd68c/e26be342/cb2b6ab1/f02ea5c5 = agent-requested user-account shells (all gone by 2026-11-17)."
+ "_mode": "user 2026-11-17 09:20 UTC: DEFAULT = run on THIS machine, 8b889199 (vla_cvpr_DoanhLT_4g, local 4x A100 80GB; GPUs 1-3 free, GPU0 has the user's LAWAM server). Launch locally: scripts/shells/launch_remote.sh 8b889199 <gpu> <name> <module> <cfg> [k=v] (local fast path, no det) or scripts/launch.sh with CUDA_VISIBLE_DEVICES=MUJOCO_EGL_DEVICE_ID=<gpu>; register claims as '8b889199:<gpu>' (dag_run.py: use local:<gpu>:<lane> slots). SECONDARY (user 2026-11-16 04:26 UTC, still valid): extra light GPU work may use shells whose NAME contains thanhnv/Thanhnv, DoanhLT or quang (read-only probe first, clearly idle GPUs only, never disturb others' processes/tmux, <=8 sim workers + owner back-off watchdog, add to allow_only after probing, register + release claims). Prefer the local machine, then existing shells, over new requests. Never any other shell. History: 2026-11-08 thanhnv 335de36e/b936d1d7 light jobs; d2ecd68c/e26be342/cb2b6ab1/f02ea5c5 = agent-requested user-account shells (all gone by 2026-11-17).",
+ "probes": {
+  "63e0f914": "vla_roboworm_1 (only roboworm-named RUNNING shell), probe 2026-11-20 06:00 UTC: 2x A100 80GB, GPU0 99 % / 7.9 GB, GPU1 29-71 % / 5.4 GB, owner tmux egoprm / nativemem / robotood + 3 search.py jobs -> NOT idle, not used"
+ }
 }
