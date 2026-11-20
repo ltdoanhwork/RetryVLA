@@ -600,3 +600,22 @@ Full doc: `docs/related_work/COMPARE_2610.05151.md` (extraction, side-by-side, d
     above ("matches" / "beats" / "below"). Secondary: `wm_diverse` vs `random` (solved entries, McNemar p < 0.10;
     SFT Δ, bootstrap).
   - Test split untouched until the recipe is frozen. The cross-paper reference stays their 88.
+
+## Agentic recovery data vs search + verify, and jerkiness of searched recoveries (user request 2026-11-20; review + offline analysis only, written BEFORE any SMOOTH-V result)
+Full doc: `docs/reviews/AGENTIC_SMOOTHNESS_REVIEW.md` (smoothness numbers, literature with verified IDs, reviewer Q&A,
+ranked merge designs). Analysis: `scripts/analyze_smoothness.py`, `scripts/smoothness_policy_proxy.py` ->
+`runs/_analysis/smoothness/`.
+- Finding (CPU, 0 sim): pi1-bank bridges have mean ||Δ³a|| 4.7x the Spatial demos (Goal 3.4x), but pi0's own
+  continuations are 4.2-4.3x with replan seams 2.9-4.4x; jerk is not associated with success in the pool, and 81 % of
+  solved instances have a smooth (primitive / VLA s1.0) solution. Smoothing shifts the open-loop path ~4 mm -> must be
+  re-verified. Offline proxy (same obs + noise): pi1 chunks are ~2.4x jerkier than pi1-nominal at failure states
+  (Δd3 +0.41 [+0.31, +0.51], n 40), so the jerk is distilled into the policy.
+- Novelty: agentic failure-driven data engines are taken (2610.05151, 2611.17394 Agentic-Teacher, 2610.01178,
+  2610.29161); so is policy-compatibility filtering (2611.17394 FM-loss filter). Open: C^pi as selector / acceptance
+  for any generator (agent arm already pre-registered as LRS `lrs3_cpi`).
+- Next (pre-registration draft in the doc, section 5): **SMOOTH-V** = `smooth_select` / `smooth_reverify` /
+  `smooth_bridge_only` vs pi1 at equal trajectory count, 3 SFT seeds, gate G0 re-verify yield >= 70 %, closed-loop
+  action logging added to eval. Rules: "helps" ΔRSR >= +3 (CI > 0) or nominal >= +2 with RSR non-inferior; "free"
+  |ΔRSR| < 3 and closed-loop d3 -25 %; "hurts" ΔRSR <= -3 (CI < 0). MDE ~4-5 pt. Not launched (no GPU used; the
+  2610.05151 chain and its GPUs untouched). Then merge (i) agent-written option library ranked by WM + C^pi on ACR-N U.
+- Status 2026-11-20: intake only; adversarial review (idea-loop step 4) required after the SMOOTH-V PoC.
