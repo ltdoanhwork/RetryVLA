@@ -1,0 +1,28 @@
+# Reproduction of diagram-design docs/screenshots/it-state.png (Northwind Retail example)
+slug: it-state-repro
+legend_items: [flow, pain, external, bottleneck]   # same four swatches as the reference
+columns:
+  - name: COLLECTION
+    nodes:
+      - {id: pos, icon: file, title: Point-of-Sale Exports, subtitle: "nightly · CSV"}
+      - {id: online, icon: file, title: Online Store Export, subtitle: "orders · flat file"}
+      - {id: supplier, icon: file, title: Supplier Price Lists, subtitle: "external · XLSX", kind: external}
+  - name: PROCESSING
+    nodes:
+      - {id: drive, icon: file, title: Shared Drive, note: no version control, subtitle: department folders, kind: bottleneck}
+      - {id: sheets, icon: desktop, title: Spreadsheet Handoffs, subtitle: ["local workbooks · macros", manual reconciliation]}
+      - {id: rdbms, icon: database, title: On-prem RDBMS, subtitle: "inventory · finance", kind: storage}
+  - name: DISSEMINATION
+    nodes:
+      - {id: portal, icon: desktop, title: Reporting Portal, note: manual refresh, kind: bottleneck}
+      - {id: email, icon: file, title: Email Report Packs, subtitle: "weekly · PDF"}
+      - {id: managers, icon: users, title: Regional Managers, subtitle: 12 store regions, kind: external}
+edges:
+  - {from: pos, to: drive, label: CSV}
+  - {from: online, to: drive, label: EXPORT}
+  - {from: supplier, to: drive, label: XLSX, dashed: true}
+  - {from: drive, to: sheets, label: COPY, kind: pain, dashed: true}
+  - {from: sheets, to: rdbms, label: LOAD, kind: neutral}
+  - {from: sheets, to: portal, label: XLSX, kind: pain, route: top}
+  - {from: portal, to: email, label: PDF}
+  - {from: email, to: managers, label: EMAIL, dashed: true}

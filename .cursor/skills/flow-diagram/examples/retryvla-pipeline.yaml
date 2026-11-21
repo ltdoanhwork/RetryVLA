@@ -1,0 +1,38 @@
+# RetryVLA current pipeline: failure states -> WM imagination -> critic -> sim verification -> bank -> SFT -> pi1
+slug: retryvla-pipeline
+eyebrow: RetryVLA · recovery distillation
+title: World-model-guided recovery learning
+subtitle: "Imagined recoveries are verified in sim before distillation; WM over-optimism is the main leak."
+columns:
+  - name: FAILURES
+    nodes:
+      - {id: bench, icon: test, title: LIBERO-Recover, subtitle: "benchmark · L1–L4 scenes", kind: external}
+      - {id: pi0, icon: robot, title: "π0 rollouts", subtitle: "SmolVLA · nominal ckpt"}
+      - {id: fail, icon: alert, title: Failure states, subtitle: "exact sim snapshots"}
+  - name: IMAGINE + SCORE
+    nodes:
+      - {id: wm, icon: cube, title: Latent world model, note: "over-optimistic rollouts", subtitle: "imagine K candidates · CEM", kind: bottleneck}
+      - {id: critic, icon: chart-line, title: "Critic C^π", subtitle: "value of π0 continuation"}
+  - name: VERIFY
+    nodes:
+      - {id: verify, icon: search, title: Sim verification, subtitle: "replay + π0 continuation"}
+      - {id: sim, icon: server, title: MuJoCo sim, subtitle: "restore snapshot · ground truth", kind: storage}
+      - {id: bank, icon: database, title: Verified recovery bank, subtitle: "LeRobotDataset v3 · successes only"}
+  - name: DISTILL
+    nodes:
+      - {id: nominal, icon: file, title: Nominal demos, subtitle: "LIBERO dataset", kind: external}
+      - {id: sft, icon: refresh, title: Distillation SFT, subtitle: "50 % nominal replay"}
+      - {id: pi1, icon: rocket, title: "π1 policy", subtitle: "recovers without search"}
+edges:
+  - {from: bench, to: pi0, label: SCENES, dashed: true}
+  - {from: pi0, to: fail, label: FAIL}
+  - {from: fail, to: wm, label: ENCODE}
+  - {from: wm, to: critic, label: IMAGINE, kind: pain}
+  - {from: critic, to: verify, label: TOP-K, kind: pain}
+  - {from: verify, to: sim, label: ROLLOUT, kind: neutral}
+  - {from: sim, to: bank, label: PASS}
+  - {from: bank, to: sft, label: DATA}
+  - {from: nominal, to: sft, label: 50% MIX, dashed: true}
+  - {from: sft, to: pi1, label: CKPT}
+  - {from: pi1, to: bench, label: RSR EVAL, kind: neutral, dashed: true}
+legend: {neutral: "control / eval", dashed: "optional / mix"}
