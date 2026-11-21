@@ -1095,3 +1095,30 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
   - First probe 07:15 UTC: GPU0 100 % (owner 3 GPU procs, 12.7 GB), owner CPU ~300 % -> busy, waiting.
   - Deviation (logged): the action chunks of bridge anchors near the bridge end still contain M0-continuation
     actions (no validity mask as in theirs).
+
+## Disk cleanup round 4, 2026-11-21 (~04:15-04:35 UTC; ~15.6 GB freed on /pfss)
+- Trigger: the F1 watcher's probes failed with `[Errno 122] Disk quota exceeded` at 03:58 and 04:10 UTC (det CLI
+  temp write). A write test at 04:20 succeeded. F1 lanes were in back-off at that time (owner GPU > 1 GB, 03:46).
+  `rv_f1_watch` and every other tmux session / process were left untouched.
+- Measured (du): runs 66 G (goal_rsi 23.6 G, _logs 24 M, _analysis 273 M), data 176 G (recovery 117 G, wm 39 G,
+  foundation 19 G, goal_rsi 1.4 G, acr 9 M, geom 5 M). Workspace ~/.cache 484 G: HF hub 250 G (mostly other projects),
+  HF datasets 14 G, xet 7.5 G, openpi 12 G, torch 4.3 G, uv 6.4 G, pip 29 M. miniforge3/pkgs 22 G, ~/.conda-pkgs-gpu 8.1 G.
+- Deleted (dry-run table first):
+  - `runs/goal_rsi/m0_s7/ckpt_{01000,02000,03000,05000}/trainable.pt` (4 x 1.8 GB = 6.7 GB). These are non-selected
+    M0 checkpoints of a finished run. ckpt_04000 (the M0 init used by F1) is kept in full. Each ckpt keeps eval_val/,
+    meta.json and its processors. A note is in `m0_s7/DELETED_CHECKPOINTS.txt`.
+  - `~/.cache/huggingface/datasets/parquet`: the 78 of 101 Arrow cache dirs last written before 2026-11-14 (8.9 GB,
+    14 G -> 4.7 G). They are regenerated on the next load. List: `runs/_logs/cleanup_20261121_hfcache_list.txt`.
+  - Scratch: `/tmp/diagram-design` git clone (57 MB, container overlay; the flow-diagram skill is self-contained),
+    the 2 RGR smoke runs `runs/20261108-17*_RGR_rgr_smoke_s0of8` (166 KB), and 19 `__pycache__` dirs outside env/.
+- Checked, nothing to free: orig_s7-9 / rec_wm_s7-9 / rec_rand_s7-9 already hold only the final ckpt_02000.
+  Their `trainable.pt` is fp32 weights only (451.5 M params, no optimizer state). `conda clean -a --dry-run` found
+  nothing. `uv cache` is only 6.4 G and shared, so it was not pruned. No SFT run has intermediate step dirs
+  (006000 + last only). runs/_logs is 24 M (no rotation needed). No /tmp/acrn_* or /tmp/lrs* left.
+- Left for the user to decide (not deleted): the 9 goal_rsi final checkpoints (15 G; results already in main.json);
+  closed-idea raw data (RGR rgr_sweep 9.4 G, xwm_sweep 3.7 G + verif_xwm_sweep, ACR-N acrn_single_fresh 1.7 G,
+  rq3_sweep 3.9 G + verif_rq3_sweep, vj_rq3_sweep 1.7 G, foundation/vj_latents 12.8 G + frames 2.6 G);
+  old M1 / M1b / M3 / M5 recovery banks (~13 G); data/recovery/obj 19.6 G and m5b 14 G (code-referenced);
+  ~/.cache/openpi pi0_base (12 G, JAX copy next to HF lerobot/pi0_base 14 G; owner unclear);
+  HF paligemma-3b-pt/mix-224 (22 G); HF xet chunk cache 7.5 G. The .env HF token is read-only, so offloading
+  to HF is not possible yet.
