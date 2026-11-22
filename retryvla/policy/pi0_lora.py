@@ -104,9 +104,10 @@ def load_policy(ckpt: str | None, res: int = 128, n_action_steps: int = 5, devic
     return policy, cfg, info
 
 
-def save_ckpt(policy, out: Path, meta: dict, pre=None, post=None) -> None:
+def save_ckpt(policy, out: Path, meta: dict, pre=None, post=None, dtype=torch.float32) -> None:
+    """dtype bf16 (opt-in) halves trainable.pt; load_policy casts it back into the fp32 parameters."""
     out.mkdir(parents=True, exist_ok=True)
-    sd = {k: v.detach().float().cpu() for k, v in policy.named_parameters() if v.requires_grad}
+    sd = {k: v.detach().to(dtype).cpu() for k, v in policy.named_parameters() if v.requires_grad}
     torch.save(sd, out / "trainable.pt.tmp")
     (out / "trainable.pt.tmp").replace(out / "trainable.pt")
     (out / "meta.json").write_text(json.dumps(meta, indent=1, default=str))

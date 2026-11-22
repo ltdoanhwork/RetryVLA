@@ -27,7 +27,7 @@ for R in wm:7 rand:7 wm:8 rand:8 wm:9 rand:9; do
     echo "[f1] train $O $(date -Is)"
     torchrun --nproc_per_node 1 --master_port $((29800 + 10 * G + S)) -m retryvla.train.pi0_sft --out $O --init $M0 \
       --steps 2000 --save_every 2000 --bs 48 --accum 3 --warmup 200 --decay_steps 2000 --seed $S \
-      --max_traj 36 --recovery_segments 0 --recovery "data/recovery/goal_search/s*/p*/$BANK" --resume_every 250 \
+      --max_traj 36 --recovery_segments 0 --recovery "data/recovery/goal_search/s*/p*/$BANK" --resume_every 250 --save_dtype bf16 \
       || { echo "[f1] train $O FAILED"; exit 1; }
   fi
   echo "[f1] eval $O $(date -Is)"

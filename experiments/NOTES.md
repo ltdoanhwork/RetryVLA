@@ -1146,3 +1146,32 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
     09:50, so the expected launch on 63e0f914:1 is ~10:03 UTC.
   - The 09:29 "Disk quota exceeded" was a transient /pfss quota error inside det's ssh setup (probe failed, no write
     by us). Later polls are fine.
+- 2026-11-22 11:03 / 11:16 UTC: **both F1 lanes died on /pfss quota** (EDQUOT) while writing the 250-step resume
+  checkpoint.
+  - Root cause: the workspace-wide /pfss quota is full. Other projects consume it; write tests show 0-3 GB headroom,
+    fluctuating. Our resume format then needed two full copies of 5.26 GB (trainable fp32 1.8 GB + AdamW moments
+    3.6 GB, plus a .tmp before the rename). `torch.save` raised `inline_container.cc:668 unexpected pos` and killed
+    the run. The lane logs also show `--- Logging error ---`: even log writes fail under EDQUOT.
+  - State saved: f1_wm_s7 resume step 500 (training reached ~700), f1_rand_s7 resume step 250 (reached ~450). Both
+    resume.pt are valid zip files; the truncated resume.pt.tmp (0.99 + 2.3 GB) were deleted.
+  - Space: converting both resume.pt to the compact format went via the agent box's local /tmp (the /pfss write
+    failed at 0 GB headroom). Measured headroom afterwards: >= 7 GB.
+  - Freed in total: 3.3 GB (truncated .tmp) + 5.3 GB (compact resume: 2 x 5.26 -> 2 x 2.63 GB) = 8.6 GB.
+  - Fix:
+    - `save_resume` stores trainable params + AdamW moments in bf16 (2.63 GB), ONE copy (old deleted before the
+      write), and skips on failure instead of crashing. Moments are cast back to fp32 on load (logged deviation).
+    - The final ckpt is retried on EDQUOT (12 x 5 min) and written in bf16 for F1 (`--save_dtype bf16`, 0.9 GB).
+      Logged deviation: eval loads bf16-rounded trainable weights; inference already runs in bf16 autocast.
+    - metrics.jsonl and eval episode / summary writes are EDQUOT-tolerant (retry / warn).
+    - tmux_start.sh pipes the job output through a restartable grep, so a log-file EDQUOT can't raise inside the job.
+    - No intermediate ckpts (save_every 2000 = final only).
+  - Peak F1 footprint: 2 lanes x (2.63 resume + 0.9 final) ≈ 7 GB, ~5.4 GB of final ckpts at the end.
+  - NOT deleted (cleanup round-4 decision list, needs the user's OK):
+    - the 9 finished goal_rsi final ckpts (orig / rec_wm / rec_rand x 3, 1.7 GB each = 15 GB; could also be
+      halved to bf16);
+    - data/wm/goal_verif 3.1 GB (search verification log with latents);
+    - data/wm/goal_collect 3.1 GB (WM / C^pi training data);
+    - the closed-idea data listed in round 4.
+    The M0 init `m0_s7/ckpt_04000` is required by F1.
+  - Owner at 11:28 UTC: in-container GPU jobs on both GPUs (4.8 / 6.1 GB, 29-59 % util) -> the watcher waits per its
+    rules (lanes relaunch after 2 idle polls; fails 1 / 3 each).

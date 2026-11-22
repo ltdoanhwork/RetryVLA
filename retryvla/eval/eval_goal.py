@@ -64,16 +64,28 @@ def main():
     with SimPool(a.workers, 128) as pool:
         res = run_jobs(pool, policy, jobs, desc=f"goal_{a.split}")
     rows = [{**r.meta, "success": bool(r.success), "steps": int(r.steps)} for r in res]
-    with open(out / "episodes.jsonl", "w") as f:
-        for r in rows:
-            f.write(json.dumps(r) + "\n")
+    for k in range(12):   # /pfss quota (EDQUOT): wait it out instead of losing the 100 rollouts
+        try:
+            with open(out / "episodes.jsonl", "w") as f:
+                for r in rows:
+                    f.write(json.dumps(r) + "\n")
+            break
+        except OSError as e:
+            print(f"episodes write failed ({e}), retry {k + 1}/12 in 5 min", flush=True)
+            time.sleep(300)
     by = {}
     for r in rows:
         by.setdefault(r["task"], []).append(r["success"])
     summ = {"ckpt": a.ckpt, "split": a.split, "n": len(rows), "successes": int(sum(r["success"] for r in rows)),
             "sr": float(np.mean([r["success"] for r in rows])), "by_task": {k: int(sum(v)) for k, v in by.items()},
             "wall_s": time.time() - t0}
-    (out / "summary.json").write_text(json.dumps(summ, indent=1))
+    for k in range(12):
+        try:
+            (out / "summary.json").write_text(json.dumps(summ, indent=1))
+            break
+        except OSError as e:
+            print(f"summary write failed ({e}), retry {k + 1}/12 in 5 min", flush=True)
+            time.sleep(300)
     print(json.dumps(summ), flush=True)
 
 

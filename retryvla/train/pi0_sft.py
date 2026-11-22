@@ -92,6 +92,28 @@ class Pool(torch.utils.data.Dataset):
                 "src": k}
 
 
+def save_resume(rp: Path, step: int, opt, policy) -> None:
+    """Quota-safe resume state (2026-11-22): trainable params + AdamW moments in bf16 (~2.7 GB instead of 5.3 GB),
+    ONE copy. The old copy is deleted BEFORE writing (the shared /pfss quota cannot hold two). A failed write is logged
+    and skipped: training continues, and the next resume point retries. Moments are cast back to fp32 on load (logged
+    deviation: a resumed run continues from bf16-rounded optimizer state)."""
+    sd = opt.state_dict()
+    st = {k: {kk: (vv.to(torch.bfloat16) if torch.is_tensor(vv) and vv.is_floating_point() and vv.ndim else vv)
+              for kk, vv in v.items()} for k, v in sd["state"].items()}
+    obj = {"step": step, "opt": {"state": st, "param_groups": sd["param_groups"]}, "compact": True,
+           "trainable": {k: v.detach().to(torch.bfloat16).cpu() for k, v in policy.named_parameters() if v.requires_grad}}
+    tmp = Path(str(rp) + ".tmp")
+    try:
+        rp.unlink(missing_ok=True)
+        tmp.unlink(missing_ok=True)
+        torch.save(obj, tmp)
+        tmp.replace(rp)
+        print(f"resume state saved at step {step}", flush=True)
+    except (OSError, RuntimeError) as e:
+        tmp.unlink(missing_ok=True)
+        print(f"WARNING resume save failed at step {step} ({str(e)[:100]}); continuing without a resume point", flush=True)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", required=True)
@@ -99,6 +121,8 @@ def main():
     ap.add_argument("--recovery", nargs="*", default=[])
     ap.add_argument("--recovery_segments", nargs="*", type=int, default=None)
     ap.add_argument("--max_traj", type=int, default=0)
+    ap.add_argument("--save_dtype", default="fp32", choices=["fp32", "bf16"],
+                    help="dtype of the final trainable.pt (bf16 halves it: 0.9 GB; /pfss quota, F1 2026-11-22)")
     ap.add_argument("--resume_every", type=int, default=0,
                     help="> 0 (opt-in, single process): save trainable + AdamW state every N steps to <out>/resume.pt "
                          "and continue from it on restart (back-off kills on borrowed GPUs)")
@@ -167,7 +191,11 @@ def main():
         named = dict(policy.named_parameters())
         for k, v in st["trainable"].items():
             named[k].data.copy_(v.to(named[k].device, named[k].dtype))
-        opt.load_state_dict(st["opt"])
+        opt.load_state_dict(st["opt"])   # floating moments are cast to the param dtype (fp32) by torch
+        for v in opt.state.values():
+            for kk, vv in list(v.items()):
+                if torch.is_tensor(vv) and vv.is_floating_point() and vv.ndim:
+                    v[kk] = vv.float()
         start = int(st["step"])
         g.manual_seed(a.seed * 1000 + rank + 7919 * start)   # fresh sample order after a resume (logged)
         print(f"RESUMED from step {start}", flush=True)
@@ -190,15 +218,25 @@ def main():
             el, nd = time.time() - t0, step - start + 1
             print(f"step {step} loss {loss.item():.4f} gn {gn.item():.2f} lr {opt.param_groups[0]['lr']:.2e} "
                   f"{el / nd:.2f}s/it eta {el / nd * (a.steps - step - 1) / 60:.0f} min", flush=True)
-            with open(out / "metrics.jsonl", "a") as f:
-                f.write(json.dumps({"step": step, "loss": loss.item(), "gn": gn.item()}) + "\n")
+            try:   # /pfss quota (EDQUOT) must not kill training
+                with open(out / "metrics.jsonl", "a") as f:
+                    f.write(json.dumps({"step": step, "loss": loss.item(), "gn": gn.item()}) + "\n")
+            except OSError as e:
+                print(f"WARNING metrics write failed ({e})", flush=True)
         if a.resume_every and rank == 0 and (step + 1) % a.resume_every == 0 and step + 1 < a.steps:
-            torch.save({"step": step + 1, "opt": opt.state_dict(),
-                        "trainable": {k: v.detach().cpu() for k, v in policy.named_parameters() if v.requires_grad}},
-                       str(rp) + ".tmp")
-            Path(str(rp) + ".tmp").replace(rp)
+            save_resume(rp, step + 1, opt, policy)
         if rank == 0 and ((step + 1) % a.save_every == 0 or step + 1 == a.steps):
-            P.save_ckpt(policy, out / f"ckpt_{step + 1:05d}", meta | {"step": step + 1}, pre, post)
+            for k in range(12):   # /pfss quota is shared workspace-wide: wait it out instead of losing the run
+                try:
+                    P.save_ckpt(policy, out / f"ckpt_{step + 1:05d}", meta | {"step": step + 1, "save_dtype": a.save_dtype},
+                                pre, post, dtype=torch.bfloat16 if a.save_dtype == "bf16" else torch.float32)
+                    break
+                except (OSError, RuntimeError) as e:
+                    Path(out / f"ckpt_{step + 1:05d}" / "trainable.pt.tmp").unlink(missing_ok=True)
+                    print(f"final ckpt save failed ({str(e)[:80]}), retry {k + 1}/12 in 5 min", flush=True)
+                    time.sleep(300)
+            else:
+                raise SystemExit("could not save the final checkpoint (quota)")
             print("saved", step + 1, flush=True)
     if ddp:
         dist.barrier()
