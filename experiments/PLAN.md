@@ -619,3 +619,20 @@ ranked merge designs). Analysis: `scripts/analyze_smoothness.py`, `scripts/smoot
   |ΔRSR| < 3 and closed-loop d3 -25 %; "hurts" ΔRSR <= -3 (CI < 0). MDE ~4-5 pt. Not launched (no GPU used; the
   2610.05151 chain and its GPUs untouched). Then merge (i) agent-written option library ranked by WM + C^pi on ACR-N U.
 - Status 2026-11-20: intake only; adversarial review (idea-loop step 4) required after the SMOOTH-V PoC.
+
+## Cut-point study: where to cut failed rollouts for recovery data (user request 2026-11-21; research + offline analysis only, written BEFORE any CUT-1 result)
+Full doc: `docs/research/CUT_POINT_STUDY.md` (LIBERO-Recover generation recipe + replication on Goal, sim / real-world
+cut-point taxonomy, real-world detector -> WM-branched recoverability pipeline, offline numbers, CUT-1
+pre-registration, open questions). Analysis: `scripts/analyze_cut_point.py` -> `runs/_analysis/cut_point/summary.json`
+(CPU, no sim).
+- Findings: the LIBERO-Recover release cuts on a fixed step grid (~T/4, T/2, 3T/4 of time-outs; eval scenes = the late
+  point + 20) and injects its L4 scenes (181 `l4_injected`), despite the paper text; the level depends on the cut.
+  On Goal (wm_diverse), T/4 -> T/2 -> 3T/4: solved 0.77 / 0.66 / 0.34, hits / 1k sim 1.52 / 0.84 / 0.31, bridge
+  ||Δ³a|| 0.17 / 0.32 / 0.44; T/4 entries are largely pre-onset (M0 re-succeeds from 46 %, EEF 6 mm from D0) and are
+  48 % of the F0 recovery anchors (22.5 % of the whole mix); tasks with no recovery data also lost, so part of the F0
+  drop is volume, not cut.
+- Pre-registered CUT-1 (doc section 4.4): cut rule {fixed, onset (sim branching oracle), onset + 2 s, pre-onset,
+  injected, critic drop} at the F1 bridge-only 4.1 % share, 3 SFT seeds, pooled seed-9 own-failure RSR (cross-cut
+  matrix) + nominal val. "Onset helps" iff ΔRSR vs fixed >= +5 (CI > 0) with nominal >= Original − 2; MDE ~5 pt.
+  Gated on F1. Cheapest next step: 20-step branching scan of the 56 seed-7 rollouts (p_pi(t) curves, t_on).
+- Status 2026-11-22: intake + offline analysis only; not launched; adversarial review (idea-loop step 4) after CUT-1.
