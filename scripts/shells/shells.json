@@ -24,6 +24,11 @@
    "tmux": "rv_f1_g1",
    "args": "goal_f1_lane.sh 1 rv_f1_g1 (F1 shared queue)",
    "since": "2026-11-22T10:02:56"
+  },
+  "63e0f914:0:rv_f1_g0": {
+   "tmux": "rv_f1_g0",
+   "args": "goal_f1_lane.sh 0 rv_f1_g0 (F1 shared queue)",
+   "since": "2026-11-22T10:15:12"
   }
  },
  "allow_only": {
