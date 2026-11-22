@@ -2,7 +2,10 @@
 # Read-only owner-activity probe (runs ON a borrowed shell via `det shell open <id> -- bash probe_owner.sh`).
 # Lines:
 #   GPU <idx> <mem_used_MiB> <mem_total_MiB> <util_max_of_5_samples>
-#   APP <gpu_uuid_suffix> <pid> <used_MiB> <ours 0|1>
+#   APP <gpu_uuid> <pid> <used_MiB> <ours 0|1>
+#     NOTE (2026-11-22): nvidia-smi reports HOST pids inside a Determined container, so <ours> is unreliable for GPU apps
+#     (the pid is not in this container's /proc). Processes of OTHER containers are not listed at all. Attribute GPU
+#     memory per GPU instead: other-container use = mem_used - sum(listed apps) (see goal_f1_watch.py).
 #   GUUID <idx> <uuid>
 #   CPU <nproc> <load1>
 #   PROC <pid> <cpu_pct_now> <ours 0|1> <cmd...>   (processes >= 20 % CPU in a 3 s top sample)

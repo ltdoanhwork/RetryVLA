@@ -20,6 +20,23 @@ Every POLL_S (12 min) a READ-ONLY probe (scripts/shells/probe_owner.sh via `det 
 - Give up if F1 was never launched within 72 h (NOTES entry + commit).
 Owner processes and tmux sessions (egoprm / nativemem / robotood / anything not rv_*) are never touched.
 Log: runs/goal_rsi/f1_watch.jsonl (one row per poll) + stdout.
+
+FIX 2026-11-22 (launch -> back-off loop 2026-11-20 / 21, 6 cycles):
+- Root cause: nvidia-smi inside the container lists HOST pids, so probe_owner.sh could not match them to our
+  processes. Our own two pi0 jobs (2 x 30 GB) were counted as "owner GPU 60 GB" and the watcher killed them every
+  poll. The SIGHUP / SIGTERM in the lane logs came from that back-off kill (kill_rv.sh + tmux kill-session), not from
+  the det session closing: the lanes were alive at the next poll, 12 min after launch.
+- Fix: attribute memory PER GPU.
+  - other = mem_used - sum(listed in-container apps) = processes of OTHER containers (the owner's GPU0 job).
+  - in-container apps are ours while one of our lanes is up on that GPU, and the owner's otherwise.
+  - Back-off on GPU g when other(g) grows > 4 GB above its value at our launch, or free(g) < 6 GB. Also when owner CPU
+    (container processes, pid-resolvable) is >= 600 % on 2 consecutive polls.
+- Per-GPU launch: a lane rv_f1_g<g> starts on any GPU idle for 2 consecutive polls:
+  - util < 10 %, free >= 45 GB, other(g) <= 1 GB, and no owner in-container app on g;
+  - global: owner CPU < 400 %, load per core < 0.5.
+  Lanes share one locked queue of the 6 runs (goal_f1_lane.sh), so one idle GPU runs all seeds sequentially.
+  The owner-CPU gate changed from "no owner process >= 50 %" to "owner CPU < 400 % (4 of 32 cores)": the owner keeps
+  one 100 % CPU search.py running for days.
 """
 
 from __future__ import annotations
@@ -34,7 +51,7 @@ SID = "63e0f914-dd96-4c9a-b110-7d84b8a5d075"
 SHORT = SID[:8]
 POLL_S = 720
 GIVEUP_S = 72 * 3600
-LANES = {"rv_f1_g0": (0, ["wm:7", "wm:8", "wm:9"]), "rv_f1_g1": (1, ["rand:7", "rand:8", "rand:9"])}
+LANES = {"rv_f1_g0": 0, "rv_f1_g1": 1}   # lane session -> GPU; lanes share one locked queue of the 6 runs
 RUNS = [f"f1_{a}_s{s}" for a in ("wm", "rand") for s in (7, 8, 9)]
 LOG = REPO / "runs/goal_rsi/f1_watch.jsonl"
 SH = str(REPO / "scripts/shells")
@@ -58,7 +75,7 @@ def det(*args, timeout=300) -> str:
 
 def probe() -> dict:
     txt = det("bash", f"{SH}/probe_owner.sh", timeout=180)
-    info = {"gpus": {}, "apps": [], "procs": [], "tmux": [], "pfss": False, "raw_err": None}
+    info = {"gpus": {}, "apps": [], "procs": [], "tmux": [], "pfss": False, "raw_err": None, "uuid2idx": {}}
     for line in txt.splitlines():
         f = line.split()
         if not f:
@@ -66,7 +83,9 @@ def probe() -> dict:
         if f[0] == "GPU" and len(f) >= 5:
             info["gpus"][int(f[1])] = {"used": int(f[2]), "total": int(f[3]), "util": int(f[4])}
         elif f[0] == "APP" and len(f) >= 5:
-            info["apps"].append({"pid": int(f[2]), "mib": int(f[3]), "ours": f[4] == "1"})
+            info["apps"].append({"uuid": f[1], "pid": int(f[2]), "mib": int(f[3])})
+        elif f[0] == "GUUID" and len(f) >= 3:
+            info["uuid2idx"][f[2]] = int(f[1])
         elif f[0] == "CPU":
             info["nproc"], info["load"] = int(f[1]), float(f[2])
         elif f[0] == "PROC" and len(f) >= 4:
@@ -80,38 +99,49 @@ def probe() -> dict:
     return info
 
 
-def owner_gpu_mib(i):
-    return sum(a["mib"] for a in i["apps"] if not a["ours"])
+def guuid_apps(i):
+    """per GPU index: sum of listed in-container app MiB."""
+    out = {g: 0 for g in i["gpus"]}
+    for a in i["apps"]:
+        g = i["uuid2idx"].get(a["uuid"])
+        if g is not None:
+            out[g] += a["mib"]
+    return out
+
+
+def other_mib(i) -> dict:
+    """per GPU: memory of processes in OTHER containers (not listed) = used - listed."""
+    la = guuid_apps(i)
+    return {g: max(0, v["used"] - la[g]) for g, v in i["gpus"].items()}
 
 
 def owner_cpu(i):
     return sum(p["cpu"] for p in i["procs"] if not p["ours"])
 
 
-def idle_ok(i) -> tuple[bool, str]:
+def gpu_idle(i, g, lanes_up) -> tuple[bool, str]:
+    v = i["gpus"][g]
+    if v["util"] >= 10 or v["total"] - v["used"] < 45_000:
+        return False, f"gpu{g} util {v['util']} free {v['total'] - v['used']}"
+    if other_mib(i)[g] > 1000:
+        return False, f"gpu{g} other-container {other_mib(i)[g]} MiB"
+    if f"rv_f1_g{g}" not in lanes_up and guuid_apps(i)[g] > 0:
+        return False, f"gpu{g} owner in-container app {guuid_apps(i)[g]} MiB"
+    return True, "idle"
+
+
+def global_ok(i) -> tuple[bool, str]:
     if i["raw_err"] or len(i["gpus"]) < 2 or not i["pfss"]:
         return False, f"probe failed: {i['raw_err']}"
-    for k, g in i["gpus"].items():
-        if g["util"] >= 10 or g["total"] - g["used"] < 45_000:
-            return False, f"gpu{k} util {g['util']} free {g['total'] - g['used']}"
-    if owner_gpu_mib(i) > 1000:
-        return False, f"owner GPU procs {owner_gpu_mib(i)} MiB"
-    heavy = [p for p in i["procs"] if not p["ours"] and p["cpu"] >= 50]
-    if heavy:
-        return False, f"owner heavy CPU {[(p['cmd'], p['cpu']) for p in heavy]}"
+    if owner_cpu(i) >= 400:
+        return False, f"owner CPU {owner_cpu(i):.0f} %"
     if i.get("load", 99) / max(1, i.get("nproc", 1)) >= 0.5:
         return False, f"load {i.get('load')}"
-    return True, "idle"
+    return True, "ok"
 
 
 def complete() -> bool:
     return all((REPO / f"runs/goal_rsi/{r}/ckpt_02000/eval_val/summary.json").exists() for r in RUNS)
-
-
-def lane_complete(name) -> bool:
-    _, runs = LANES[name]
-    return all((REPO / f"runs/goal_rsi/f1_{r.split(':')[0]}_s{r.split(':')[1]}/ckpt_02000/eval_val/summary.json").exists()
-               for r in runs)
 
 
 def shells_json(update):
@@ -129,9 +159,7 @@ def register():
     def up(d):
         d.setdefault("allow_only", {})[SHORT] = note
         d.setdefault("share_ok", {})[SHORT] = True
-        for n, (g, _) in LANES.items():
-            d["claims"][f"{SHORT}:{g}:{n}"] = {"tmux": n, "args": f"goal_f1_lane.sh {g} {' '.join(LANES[n][1])}",
-                                              "since": time.strftime("%Y-%m-%dT%H:%M:%S")}
+        pass
     shells_json(up)
 
 
@@ -163,19 +191,31 @@ def finish():
            ["experiments/RESULTS.md", "experiments/NOTES.md", "scripts/shells/shells.json"])
 
 
+def claim(g, n, on: bool):
+    def up(d):
+        k = f"{SHORT}:{g}:{n}"
+        if on:
+            d["claims"][k] = {"tmux": n, "args": f"goal_f1_lane.sh {g} {n} (F1 shared queue)",
+                              "since": time.strftime("%Y-%m-%dT%H:%M:%S")}
+        else:
+            d["claims"].pop(k, None)
+    shells_json(up)
+
+
 def main():
     t0 = time.time()
-    launched_once, ok_streak, cpu_streak = False, 0, 0
-    fails = {n: 0 for n in LANES}
-    state = "WAIT"
-    log(event="start", lanes=LANES, poll_s=POLL_S)
+    registered = (SHORT in json.loads((REPO / "scripts/shells/shells.json").read_text()).get("allow_only", {}))
+    streak = {g: 0 for g in LANES.values()}
+    base, base_listed = {}, {}
+    cpu_streak, fails = 0, {n: 0 for n in LANES}
+    log(event="start", lanes=LANES, poll_s=POLL_S, version="2026-11-22 per-GPU attribution")
     while True:
         if complete():
             log(event="complete")
             finish()
             log(event="finished")
             return
-        if not launched_once and time.time() - t0 > GIVEUP_S:
+        if not registered and time.time() - t0 > GIVEUP_S:
             log(event="giveup")
             with open(REPO / "experiments/NOTES.md", "a") as f:
                 f.write(f"- {time.strftime('%Y-%m-%d %H:%M UTC')}: F1 watcher GAVE UP: 63e0f914 never idle for 2 "
@@ -183,51 +223,66 @@ def main():
             commit("2610.05151 F1: watcher gave up after 72 h (63e0f914 never idle)", ["experiments/NOTES.md"])
             return
         i = probe()
-        ours_up = [n for n in LANES if n in i["tmux"]]
-        if state == "WAIT":
-            ok, why = idle_ok(i)
-            ok_streak = ok_streak + 1 if ok else 0
-            log(event="poll", state=state, ok=ok, why=why, streak=ok_streak, gpus=i["gpus"], owner_cpu=owner_cpu(i))
-            if ok_streak >= 2:
-                if not launched_once:
+        up = [n for n in LANES if n in i["tmux"]]
+        gok, gwhy = global_ok(i)
+        oc = owner_cpu(i)
+        cpu_streak = cpu_streak + 1 if (not i["raw_err"] and oc >= 600) else 0
+        row = {"event": "poll", "lanes_up": up, "global": gwhy, "owner_cpu": oc, "gpus": i["gpus"],
+               "other_mib": other_mib(i) if not i["raw_err"] else None}
+        if i["raw_err"]:
+            log(**row)
+            time.sleep(POLL_S)
+            continue
+        # back-off of running lanes
+        killed = set()
+        for n in up:
+            g = LANES[n]
+            free = i["gpus"][g]["total"] - i["gpus"][g]["used"]
+            grow = other_mib(i)[g] - base.get(g, 0)
+            # listed in-container apps on g = ours (pi0 SFT <= ~35 GB, eval <= ~15 GB) + any owner in-container app; the
+            # owner adding a big in-container job shows up as listed memory beyond our max
+            lgrow = guuid_apps(i)[g] - base_listed.get(g, 0)
+            if grow > 4096 or lgrow > 45_000 or free < 6000 or cpu_streak >= 2:
+                out = det("bash", f"{SH}/kill_rv.sh", n)
+                killed.add(n)
+                log(event="backoff", lane=n, other_growth_mib=grow, listed_growth_mib=lgrow, free_mib=free, owner_cpu=oc,
+                    out=out.strip().splitlines()[-2:])
+                claim(g, n, False)
+                streak[g] = 0
+        up = [n for n in up if n not in killed]
+        # a lane that ended on its own without finishing the queue counts as a failure (max 3 relaunches)
+        for n, g in LANES.items():
+            if n not in up and n not in killed and f"{SHORT}:{g}:{n}" in json.loads(
+                    (REPO / "scripts/shells/shells.json").read_text())["claims"]:
+                fails[n] += 1
+                claim(g, n, False)
+                log(event="lane_ended", lane=n, fails=fails[n])
+        # launch idle GPUs (killed lanes wait >= 2 fresh idle polls)
+        for n, g in LANES.items():
+            if n in up or n in killed:
+                streak[g] = 0
+                continue
+            ok, why = gpu_idle(i, g, up)
+            streak[g] = streak[g] + 1 if (ok and gok) else 0
+            row[f"gpu{g}"] = f"{why} streak {streak[g]}"
+            if streak[g] >= 2 and fails[n] <= 3:
+                if not registered:
                     env = det("bash", f"{SH}/envcheck.sh", timeout=900)
                     good = "OK video decode" in env and "OK sim" in env
                     log(event="envcheck", ok=good, out=[l for l in env.splitlines() if l.startswith("OK")])
                     if not good:
-                        ok_streak = 0
-                        time.sleep(POLL_S)
+                        streak[g] = 0
                         continue
                     register()
-                    commit("shells: 63e0f914 (vla_roboworm_1) light-share for 2610.05151 F1 (watcher launch)",
-                           ["scripts/shells/shells.json"])
-                for n, (g, runs) in LANES.items():
-                    if not lane_complete(n) and n not in ours_up:
-                        out = det("bash", f"{SH}/tmux_start.sh", n, "scripts/goal_f1_lane.sh", str(g), *runs)
-                        log(event="launch", lane=n, out=out.strip().splitlines()[-1:] if out else None)
-                launched_once, state, cpu_streak = True, "RUN", 0
-        else:  # RUN
-            og, oc = owner_gpu_mib(i), owner_cpu(i)
-            cpu_streak = cpu_streak + 1 if oc >= 150 else 0
-            log(event="poll", state=state, lanes_up=ours_up, owner_gpu_mib=og, owner_cpu=oc, gpus=i["gpus"])
-            if i["raw_err"]:
-                pass  # probe failure: keep running, retry next poll
-            elif og > 1000 or cpu_streak >= 2:
-                out = det("bash", f"{SH}/kill_rv.sh", *LANES)
-                log(event="backoff", owner_gpu_mib=og, owner_cpu=oc, out=out.strip().splitlines()[-2:])
-                state, ok_streak = "WAIT", 0
-            else:
-                for n, (g, runs) in LANES.items():
-                    if n not in ours_up and not lane_complete(n):
-                        fails[n] += 1
-                        if fails[n] <= 3:
-                            out = det("bash", f"{SH}/tmux_start.sh", n, "scripts/goal_f1_lane.sh", str(g), *runs)
-                            log(event="relaunch", lane=n, fails=fails[n], out=out.strip().splitlines()[-1:])
-                        else:
-                            log(event="lane_gave_up", lane=n)
-                if all(fails[n] > 3 or lane_complete(n) for n in LANES) and not complete():
-                    log(event="all_lanes_failed")
-                    release()
-                    return
+                    registered = True
+                out = det("bash", f"{SH}/tmux_start.sh", n, "scripts/goal_f1_lane.sh", str(g), n)
+                base[g], base_listed[g] = other_mib(i)[g], guuid_apps(i)[g]
+                claim(g, n, True)
+                log(event="launch", lane=n, gpu=g, base_other_mib=base[g],
+                    out=[l for l in out.splitlines() if "LAUNCHED" in l or "EXISTS" in l or "REFUSE" in l])
+                commit(f"shells: F1 lane {n} launched on {SHORT}:{g} (watcher)", ["scripts/shells/shells.json"])
+                streak[g] = 0
+        log(**row)
         time.sleep(POLL_S)
 
 

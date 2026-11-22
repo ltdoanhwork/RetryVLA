@@ -1122,3 +1122,27 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
   ~/.cache/openpi pi0_base (12 G, JAX copy next to HF lerobot/pi0_base 14 G; owner unclear);
   HF paligemma-3b-pt/mix-224 (22 G); HF xet chunk cache 7.5 G. The .env HF token is read-only, so offloading
   to HF is not possible yet.
+- 2026-11-22 09:50 UTC: **F1 watcher fixed and restarted** (local tmux `rv_f1_watch`).
+  - Symptom: 6 launch -> back-off cycles (11-20 13:52 / 14:30, 11-21 21:40 / 22:17 / 22:54 / 23:32 UTC). Each one
+    backed off after ~13 min (the first RUN poll) with "owner_gpu_mib ~60 GB, owner_cpu 0". The runs reached only
+    step ~100 (f1_wm_s7 / f1_rand_s7 = args.json + metrics.jsonl).
+  - Root cause = OUR OWN memory. Inside the Determined container nvidia-smi reports HOST pids, which are not in the
+    container's /proc. `probe_owner.sh` could not resolve them to our tmux trees, so our two pi0 SFT jobs
+    (2 x 30.3 GB = 60.6 GB, exactly the logged value) were counted as owner memory, and the watcher killed them.
+  - The lane-log SignalException "signal 1" (SIGHUP) + DataLoader "Terminated" is that back-off kill (kill_rv.sh
+    TERM, then tmux kill-session HUP). It is NOT the det session closing: the lanes were alive 12 min after launch,
+    and tmux on the remote side survives the det session.
+  - Fix (goal_f1_watch.py docstring):
+    - Per-GPU attribution: other-container memory = used − listed apps. In-container listed apps count as ours while
+      our lane is on that GPU.
+    - Back-off when other(g) grows > 4 GB or listed(g) grows > 45 GB since launch, or free < 6 GB, or owner CPU
+      >= 600 % on 2 polls.
+    - Per-GPU launch after 2 idle polls of that GPU.
+    - The 6 runs form a shared, locked queue in paired order (wm:7 rand:7 wm:8 ...), so GPU1 alone runs them in
+      sequence.
+    - Owner-CPU gate relaxed to < 400 % (the owner's single 100 % CPU search.py has run for days).
+  - Stale claims released.
+  - Current: GPU0 owner-busy (in-container app 9.8 GB, 30-60 % util); GPU1 idle (0 MiB / 0 %), first idle poll
+    09:50, so the expected launch on 63e0f914:1 is ~10:03 UTC.
+  - The 09:29 "Disk quota exceeded" was a transient /pfss quota error inside det's ssh setup (probe failed, no write
+    by us). Later polls are fine.

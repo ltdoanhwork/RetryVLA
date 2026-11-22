@@ -19,20 +19,9 @@
   "max_load_per_core": 0.6,
   "tmux_prefix": "rv_"
  },
- "claims": {
-  "63e0f914:0:rv_f1_g0": {
-   "tmux": "rv_f1_g0",
-   "args": "goal_f1_lane.sh 0 wm:7 wm:8 wm:9",
-   "since": "2026-11-20T13:52:36"
-  },
-  "63e0f914:1:rv_f1_g1": {
-   "tmux": "rv_f1_g1",
-   "args": "goal_f1_lane.sh 1 rand:7 rand:8 rand:9",
-   "since": "2026-11-20T13:52:36"
-  }
- },
+ "claims": {},
  "allow_only": {
-  "63e0f914": "vla_roboworm_1 (owner's 2x A100, node shared with tmux egoprm / nativemem / robotood). User 2026-11-20: F1 only when idle. LIGHT SHARE: launched by scripts/goal_f1_watch.py after 2 idle polls; back-off kills only rv_f1_* on owner ramp-up; never touch non-rv sessions / owner processes"
+  "63e0f914": "vla_roboworm_1 (owner's 2x A100, node shared with tmux egoprm / nativemem / robotood). User 2026-11-20: F1 only when idle. LIGHT SHARE: launched by scripts/goal_f1_watch.py after 2 idle polls; back-off kills only rv_f1_* on owner ramp-up; never touch non-rv sessions / owner processes | 2026-11-22: watcher fixed (per-GPU memory attribution; host-pid bug caused 6 self-back-offs 11-20/21)"
  },
  "share_ok": {
   "63e0f914": true
