@@ -1,0 +1,40 @@
+slug: funnel-spatial
+eyebrow: RetryVLA · LIBERO-Recover Spatial · SmolVLA
+title: "Data funnel: 896 trial slots -> 208 distilled trajectories -> RSR 0.118 -> 0.418"
+subtitle: "wm_diverse arm (M5b search -> M5c pi1, 3 seeds); nominal 0.785 vs 0.796 pi1-nominal (n.s.)"
+columns:
+  - name: FAILURE STATES
+    nodes:
+      - {id: split, icon: test, title: "Train split 112 scenes", subtitle: ["L1 4 · L2 34 · L3 74", "x 8 unseen trials = 896 slots"], kind: external}
+      - {id: pre, icon: robot, title: "288 drawn · pi0 pre-check", subtitle: "32 pi0 successes dropped"}
+      - {id: fail, icon: alert, title: "256 pi0 failure states", subtitle: ["98 scenes · L1 11 / L2 83 / L3 162", "drawer 83 · ramekin 76"]}
+  - name: IMAGINE + SCORE
+    nodes:
+      - {id: pool, icon: stack-2, title: "232-candidate pool / state", subtitle: "VLA samples + primitives + perturb."}
+      - {id: wm, icon: cube, title: "WM + C^pi: 696 scored / state", subtitle: "178k imagined in total · 2 CEM iters"}
+      - {id: pick, icon: search, title: "16 diverse picks / state", subtitle: "4,096 sim verifications"}
+  - name: VERIFY
+    nodes:
+      - {id: hits, icon: server, title: "700 verified successes", subtitle: "hit rate 0.171 (random 0.062)", kind: storage}
+      - {id: solved, icon: database, title: "140 / 256 states solved", subtitle: ["0.547 (random 0.363)", "bank 423 traj (<= 4 / state)"], kind: storage}
+      - {id: sel, icon: git-merge, title: "208 traj round-robin", subtitle: ["covers all 140 states", "24.8k frames (9.8k bridge)"], note: "2 of 10 tasks: 0 traj"}
+  - name: DISTILL + RESULT
+    nodes:
+      - {id: nom, icon: file, title: "Nominal demos 53.0k frames", subtitle: "50 % of every batch", kind: external}
+      - {id: sft, icon: refresh, title: "SFT from pi1-nominal", subtitle: ["6k steps x 32 · 3 seeds", "recovery = 32 % of frames"]}
+      - {id: pi1, icon: rocket, title: "pi1: RSR 0.418 ± 0.021", subtitle: ["pi0 0.118 · demo-only 0.136", "L2 0.448 · L3 0.383 (official)"]}
+      - {id: nomr, icon: chart-line, title: "Nominal 0.785 ± 0.021", subtitle: ["pi1-nom 0.796 (McNemar p 0.29)", "demo-only 0.815 (p 0.006)"], kind: bottleneck}
+edges:
+  - {from: split, to: pre, label: SAMPLE}
+  - {from: pre, to: fail, label: "256"}
+  - {from: fail, to: pool, label: SNAPSHOT}
+  - {from: pool, to: wm, label: IMAGINE}
+  - {from: wm, to: pick, label: TOP-16}
+  - {from: pick, to: hits, label: ROLLOUT, kind: neutral}
+  - {from: hits, to: solved, label: PASS}
+  - {from: solved, to: sel, label: "208"}
+  - {from: sel, to: sft, label: "50% MIX"}
+  - {from: nom, to: sft, label: REPLAY, dashed: true}
+  - {from: sft, to: pi1, label: EVAL}
+  - {from: pi1, to: nomr, label: FORGET, kind: pain}
+legend: {neutral: "sim verification", pain: "forgetting check"}

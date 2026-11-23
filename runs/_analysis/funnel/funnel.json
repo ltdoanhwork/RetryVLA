@@ -1,0 +1,2634 @@
+{
+ "spatial": {
+  "split": {
+   "train": 112,
+   "pilot": 60,
+   "test": 56,
+   "train_by_level_all": {
+    "L3": 74,
+    "L2": 34,
+    "L1": 4
+   },
+   "train_by_level_official": {
+    "L3": 37,
+    "unofficial": 56,
+    "L2": 17,
+    "L1": 2
+   },
+   "test_by_level_all": {
+    "L2": 22,
+    "L3": 32,
+    "L1": 2
+   },
+   "test_by_level_official": {
+    "L2": 11,
+    "unofficial": 28,
+    "L3": 16,
+    "L1": 1
+   },
+   "train_trial_slots": 1120,
+   "train_trial_slots_unseen_by_wm": 896
+  },
+  "search": {
+   "precheck_drawn": 288,
+   "precheck_pi0_success": 32,
+   "failure_states": 256,
+   "arms": {
+    "random": {
+     "states": 256,
+     "candidates_scored_per_state": 232.0,
+     "candidates_scored_total": 59392,
+     "sim_verifications": 4096,
+     "verified_successes": 254,
+     "states_solved": 93,
+     "bank_trajectories": 208,
+     "sim_steps_verify": 0,
+     "hit_rate": 0.06201171875,
+     "solve_rate": 0.36328125,
+     "solved_by_level_all": {
+      "L3": 63,
+      "L2": 27,
+      "L1": 3
+     },
+     "solved_by_task": {
+      "pick_up_the_black_bowl_between_the_plate_and_the_ramekin_and_place_it_on_the_plate": 20,
+      "pick_up_the_black_bowl_in_the_top_drawer_of_the_wooden_cabinet_and_place_it_on_the_plate": 6,
+      "pick_up_the_black_bowl_next_to_the_plate_and_place_it_on_the_plate": 3,
+      "pick_up_the_black_bowl_next_to_the_ramekin_and_place_it_on_the_plate": 4,
+      "pick_up_the_black_bowl_on_the_cookie_box_and_place_it_on_the_plate": 3,
+      "pick_up_the_black_bowl_on_the_ramekin_and_place_it_on_the_plate": 33,
+      "pick_up_the_black_bowl_on_the_stove_and_place_it_on_the_plate": 9,
+      "pick_up_the_black_bowl_on_the_wooden_cabinet_and_place_it_on_the_plate": 15
+     },
+     "selected": 208,
+     "selected_unique_states": 93,
+     "selected_frames": 19489,
+     "selected_bridge_frames": 8021,
+     "selected_continuation_frames": 11468,
+     "selected_by_level_all": {
+      "L2": 63,
+      "L3": 140,
+      "L1": 5
+     },
+     "selected_by_task": {
+      "pick_up_the_black_bowl_between_the_plate_and_the_ramekin_and_place_it_on_the_plate": 48,
+      "pick_up_the_black_bowl_in_the_top_drawer_of_the_wooden_cabinet_and_place_it_on_the_plate": 7,
+      "pick_up_the_black_bowl_next_to_the_ramekin_and_place_it_on_the_plate": 16,
+      "pick_up_the_black_bowl_on_the_cookie_box_and_place_it_on_the_plate": 4,
+      "pick_up_the_black_bowl_on_the_ramekin_and_place_it_on_the_plate": 77,
+      "pick_up_the_black_bowl_on_the_stove_and_place_it_on_the_plate": 25,
+      "pick_up_the_black_bowl_on_the_wooden_cabinet_and_place_it_on_the_plate": 21,
+      "pick_up_the_black_bowl_next_to_the_plate_and_place_it_on_the_plate": 10
+     }
+    },
+    "wm_diverse": {
+     "states": 256,
+     "candidates_scored_per_state": 696.0,
+     "candidates_scored_total": 178176,
+     "sim_verifications": 4096,
+     "verified_successes": 700,
+     "states_solved": 140,
+     "bank_trajectories": 423,
+     "sim_steps_verify": 0,
+     "hit_rate": 0.1708984375,
+     "solve_rate": 0.546875,
+     "solved_by_level_all": {
+      "L3": 94,
+      "L2": 45,
+      "L1": 1
+     },
+     "solved_by_task": {
+      "pick_up_the_black_bowl_between_the_plate_and_the_ramekin_and_place_it_on_the_plate": 25,
+      "pick_up_the_black_bowl_in_the_top_drawer_of_the_wooden_cabinet_and_place_it_on_the_plate": 36,
+      "pick_up_the_black_bowl_next_to_the_plate_and_place_it_on_the_plate": 3,
+      "pick_up_the_black_bowl_next_to_the_ramekin_and_place_it_on_the_plate": 4,
+      "pick_up_the_black_bowl_on_the_cookie_box_and_place_it_on_the_plate": 2,
+      "pick_up_the_black_bowl_on_the_ramekin_and_place_it_on_the_plate": 38,
+      "pick_up_the_black_bowl_on_the_stove_and_place_it_on_the_plate": 9,
+      "pick_up_the_black_bowl_on_the_wooden_cabinet_and_place_it_on_the_plate": 23
+     },
+     "selected": 208,
+     "selected_unique_states": 140,
+     "selected_frames": 24754,
+     "selected_bridge_frames": 9750,
+     "selected_continuation_frames": 15004,
+     "selected_by_level_all": {
+      "L2": 68,
+      "L3": 139,
+      "L1": 1
+     },
+     "selected_by_task": {
+      "pick_up_the_black_bowl_between_the_plate_and_the_ramekin_and_place_it_on_the_plate": 42,
+      "pick_up_the_black_bowl_in_the_top_drawer_of_the_wooden_cabinet_and_place_it_on_the_plate": 44,
+      "pick_up_the_black_bowl_next_to_the_ramekin_and_place_it_on_the_plate": 8,
+      "pick_up_the_black_bowl_on_the_cookie_box_and_place_it_on_the_plate": 3,
+      "pick_up_the_black_bowl_on_the_ramekin_and_place_it_on_the_plate": 59,
+      "pick_up_the_black_bowl_on_the_stove_and_place_it_on_the_plate": 14,
+      "pick_up_the_black_bowl_on_the_wooden_cabinet_and_place_it_on_the_plate": 35,
+      "pick_up_the_black_bowl_next_to_the_plate_and_place_it_on_the_plate": 3
+     }
+    },
+    "wm_noise": {
+     "states": 256,
+     "candidates_scored_per_state": 768.0,
+     "candidates_scored_total": 196608,
+     "sim_verifications": 4096,
+     "verified_successes": 310,
+     "states_solved": 74,
+     "bank_trajectories": 208,
+     "sim_steps_verify": 0,
+     "hit_rate": 0.07568359375,
+     "solve_rate": 0.2890625,
+     "solved_by_level_all": {
+      "L3": 45,
+      "L2": 28,
+      "L1": 1
+     },
+     "solved_by_task": {
+      "pick_up_the_black_bowl_between_the_plate_and_the_ramekin_and_place_it_on_the_plate": 20,
+      "pick_up_the_black_bowl_in_the_top_drawer_of_the_wooden_cabinet_and_place_it_on_the_plate": 2,
+      "pick_up_the_black_bowl_next_to_the_plate_and_place_it_on_the_plate": 3,
+      "pick_up_the_black_bowl_next_to_the_ramekin_and_place_it_on_the_plate": 5,
+      "pick_up_the_black_bowl_on_the_cookie_box_and_place_it_on_the_plate": 1,
+      "pick_up_the_black_bowl_on_the_ramekin_and_place_it_on_the_plate": 30,
+      "pick_up_the_black_bowl_on_the_stove_and_place_it_on_the_plate": 8,
+      "pick_up_the_black_bowl_on_the_wooden_cabinet_and_place_it_on_the_plate": 5
+     },
+     "selected": 208,
+     "selected_unique_states": 74,
+     "selected_frames": 18289,
+     "selected_bridge_frames": 8804,
+     "selected_continuation_frames": 9485,
+     "selected_by_level_all": {
+      "L2": 80,
+      "L3": 124,
+      "L1": 4
+     },
+     "selected_by_task": {
+      "pick_up_the_black_bowl_between_the_plate_and_the_ramekin_and_place_it_on_the_plate": 52,
+      "pick_up_the_black_bowl_next_to_the_ramekin_and_place_it_on_the_plate": 16,
+      "pick_up_the_black_bowl_on_the_ramekin_and_place_it_on_the_plate": 88,
+      "pick_up_the_black_bowl_on_the_stove_and_place_it_on_the_plate": 24,
+      "pick_up_the_black_bowl_on_the_wooden_cabinet_and_place_it_on_the_plate": 10,
+      "pick_up_the_black_bowl_next_to_the_plate_and_place_it_on_the_plate": 11,
+      "pick_up_the_black_bowl_in_the_top_drawer_of_the_wooden_cabinet_and_place_it_on_the_plate": 4,
+      "pick_up_the_black_bowl_on_the_cookie_box_and_place_it_on_the_plate": 3
+     }
+    },
+    "wm_qd": {
+     "states": 256,
+     "candidates_scored_per_state": 744.0,
+     "candidates_scored_total": 190464,
+     "sim_verifications": 4096,
+     "verified_successes": 464,
+     "states_solved": 116,
+     "bank_trajectories": 336,
+     "sim_steps_verify": 0,
+     "hit_rate": 0.11328125,
+     "solve_rate": 0.453125,
+     "solved_by_level_all": {
+      "L3": 77,
+      "L2": 38,
+      "L1": 1
+     },
+     "solved_by_task": {
+      "pick_up_the_black_bowl_between_the_plate_and_the_ramekin_and_place_it_on_the_plate": 26,
+      "pick_up_the_black_bowl_in_the_top_drawer_of_the_wooden_cabinet_and_place_it_on_the_plate": 13,
+      "pick_up_the_black_bowl_next_to_the_plate_and_place_it_on_the_plate": 2,
+      "pick_up_the_black_bowl_next_to_the_ramekin_and_place_it_on_the_plate": 4,
+      "pick_up_the_black_bowl_on_the_cookie_box_and_place_it_on_the_plate": 1,
+      "pick_up_the_black_bowl_on_the_ramekin_and_place_it_on_the_plate": 38,
+      "pick_up_the_black_bowl_on_the_stove_and_place_it_on_the_plate": 12,
+      "pick_up_the_black_bowl_on_the_wooden_cabinet_and_place_it_on_the_plate": 20
+     },
+     "selected": 208,
+     "selected_unique_states": 116,
+     "selected_frames": 22781,
+     "selected_bridge_frames": 9270,
+     "selected_continuation_frames": 13511,
+     "selected_by_level_all": {
+      "L2": 69,
+      "L3": 137,
+      "L1": 2
+     },
+     "selected_by_task": {
+      "pick_up_the_black_bowl_between_the_plate_and_the_ramekin_and_place_it_on_the_plate": 47,
+      "pick_up_the_black_bowl_in_the_top_drawer_of_the_wooden_cabinet_and_place_it_on_the_plate": 17,
+      "pick_up_the_black_bowl_next_to_the_ramekin_and_place_it_on_the_plate": 8,
+      "pick_up_the_black_bowl_on_the_ramekin_and_place_it_on_the_plate": 73,
+      "pick_up_the_black_bowl_on_the_stove_and_place_it_on_the_plate": 20,
+      "pick_up_the_black_bowl_on_the_wooden_cabinet_and_place_it_on_the_plate": 37,
+      "pick_up_the_black_bowl_next_to_the_plate_and_place_it_on_the_plate": 4,
+      "pick_up_the_black_bowl_on_the_cookie_box_and_place_it_on_the_plate": 2
+     }
+    }
+   },
+   "unique_scenes": 98,
+   "failures_by_level_all": {
+    "L3": 162,
+    "L2": 83,
+    "L1": 11
+   },
+   "failures_by_level_official": {
+    "unofficial": 127,
+    "L3": 82,
+    "L2": 42,
+    "L1": 5
+   },
+   "failures_by_task": {
+    "pick_up_the_black_bowl_between_the_plate_and_the_ramekin_and_place_it_on_the_plate": 34,
+    "pick_up_the_black_bowl_in_the_top_drawer_of_the_wooden_cabinet_and_place_it_on_the_plate": 83,
+    "pick_up_the_black_bowl_next_to_the_plate_and_place_it_on_the_plate": 3,
+    "pick_up_the_black_bowl_next_to_the_ramekin_and_place_it_on_the_plate": 5,
+    "pick_up_the_black_bowl_on_the_cookie_box_and_place_it_on_the_plate": 5,
+    "pick_up_the_black_bowl_on_the_ramekin_and_place_it_on_the_plate": 76,
+    "pick_up_the_black_bowl_on_the_stove_and_place_it_on_the_plate": 18,
+    "pick_up_the_black_bowl_on_the_wooden_cabinet_and_place_it_on_the_plate": 32
+   },
+   "failure_scenes_in_train_split": "98/98"
+  },
+  "sft_mix": {
+   "nominal_frames": 52970,
+   "recovery_frames": 24754,
+   "recovery_episodes": 208,
+   "recovery_sampling_ratio": 0.5,
+   "recovery_frame_share": 0.31848592455354846,
+   "steps": 6000,
+   "batch": 32,
+   "samples_seen": 192000
+  },
+  "rsr": {
+   "pi0": {
+    "seeds": 1,
+    "rsr": 0.11785714285714285,
+    "per_seed": [
+     0.118
+    ],
+    "sd": 0.0,
+    "by_level_all": {
+     "L1": {
+      "rate": 0.75,
+      "n": 20
+     },
+     "L2": {
+      "rate": 0.09545454545454546,
+      "n": 220
+     },
+     "L3": {
+      "rate": 0.09375,
+      "n": 320
+     }
+    },
+    "by_level_official": {
+     "L1": {
+      "rate": 0.8,
+      "n": 10
+     },
+     "L2": {
+      "rate": 0.10909090909090909,
+      "n": 110
+     },
+     "L3": {
+      "rate": 0.1,
+      "n": 160
+     }
+    }
+   },
+   "pi1-nominal": {
+    "seeds": 1,
+    "rsr": 0.1375,
+    "per_seed": [
+     0.138
+    ],
+    "sd": 0.0,
+    "by_level_all": {
+     "L1": {
+      "rate": 0.75,
+      "n": 20
+     },
+     "L2": {
+      "rate": 0.12272727272727273,
+      "n": 220
+     },
+     "L3": {
+      "rate": 0.109375,
+      "n": 320
+     }
+    },
+    "by_level_official": {
+     "L1": {
+      "rate": 0.7,
+      "n": 10
+     },
+     "L2": {
+      "rate": 0.09090909090909091,
+      "n": 110
+     },
+     "L3": {
+      "rate": 0.11875,
+      "n": 160
+     }
+    }
+   },
+   "1 demo-only": {
+    "seeds": 3,
+    "rsr": 0.1357142857142857,
+    "per_seed": [
+     0.127,
+     0.127,
+     0.154
+    ],
+    "sd": 0.015464739353293558,
+    "by_level_all": {
+     "L1": {
+      "rate": 0.8,
+      "n": 60
+     },
+     "L2": {
+      "rate": 0.11818181818181818,
+      "n": 660
+     },
+     "L3": {
+      "rate": 0.10625,
+      "n": 960
+     }
+    },
+    "by_level_official": {
+     "L1": {
+      "rate": 0.7333333333333333,
+      "n": 30
+     },
+     "L2": {
+      "rate": 0.10606060606060606,
+      "n": 330
+     },
+     "L3": {
+      "rate": 0.10625,
+      "n": 480
+     }
+    }
+   },
+   "2 action-grounded (pi1)": {
+    "seeds": 3,
+    "rsr": 0.41845238095238096,
+    "per_seed": [
+     0.439,
+     0.396,
+     0.42
+    ],
+    "sd": 0.021453358679690605,
+    "by_level_all": {
+     "L1": {
+      "rate": 0.8833333333333333,
+      "n": 60
+     },
+     "L2": {
+      "rate": 0.4121212121212121,
+      "n": 660
+     },
+     "L3": {
+      "rate": 0.39375,
+      "n": 960
+     }
+    },
+    "by_level_official": {
+     "L1": {
+      "rate": 0.8333333333333334,
+      "n": 30
+     },
+     "L2": {
+      "rate": 0.4484848484848485,
+      "n": 330
+     },
+     "L3": {
+      "rate": 0.38333333333333336,
+      "n": 480
+     }
+    }
+   },
+   "3 action-free, C_pi-filtered": {
+    "seeds": 3,
+    "rsr": 0.125,
+    "per_seed": [
+     0.123,
+     0.125,
+     0.127
+    ],
+    "sd": 0.0017857142857142794,
+    "by_level_all": {
+     "L1": {
+      "rate": 0.75,
+      "n": 60
+     },
+     "L2": {
+      "rate": 0.10303030303030303,
+      "n": 660
+     },
+     "L3": {
+      "rate": 0.10104166666666667,
+      "n": 960
+     }
+    },
+    "by_level_official": {
+     "L1": {
+      "rate": 0.6666666666666666,
+      "n": 30
+     },
+     "L2": {
+      "rate": 0.09393939393939393,
+      "n": 330
+     },
+     "L3": {
+      "rate": 0.11458333333333333,
+      "n": 480
+     }
+    }
+   },
+   "4 action-free, unfiltered": {
+    "seeds": 3,
+    "rsr": 0.11964285714285715,
+    "per_seed": [
+     0.114,
+     0.136,
+     0.109
+    ],
+    "sd": 0.014173667737846014,
+    "by_level_all": {
+     "L1": {
+      "rate": 0.6833333333333333,
+      "n": 60
+     },
+     "L2": {
+      "rate": 0.1,
+      "n": 660
+     },
+     "L3": {
+      "rate": 0.09791666666666667,
+      "n": 960
+     }
+    },
+    "by_level_official": {
+     "L1": {
+      "rate": 0.6666666666666666,
+      "n": 30
+     },
+     "L2": {
+      "rate": 0.09393939393939393,
+      "n": 330
+     },
+     "L3": {
+      "rate": 0.10833333333333334,
+      "n": 480
+     }
+    }
+   },
+   "5 hybrid (2 + 3)": {
+    "seeds": 3,
+    "rsr": 0.36964285714285716,
+    "per_seed": [
+     0.362,
+     0.371,
+     0.375
+    ],
+    "sd": 0.006438484420471418,
+    "by_level_all": {
+     "L1": {
+      "rate": 0.85,
+      "n": 60
+     },
+     "L2": {
+      "rate": 0.33484848484848484,
+      "n": 660
+     },
+     "L3": {
+      "rate": 0.36354166666666665,
+      "n": 960
+     }
+    },
+    "by_level_official": {
+     "L1": {
+      "rate": 0.7666666666666667,
+      "n": 30
+     },
+     "L2": {
+      "rate": 0.3515151515151515,
+      "n": 330
+     },
+     "L3": {
+      "rate": 0.34791666666666665,
+      "n": 480
+     }
+    }
+   },
+   "6 Backtrack-distill": {
+    "seeds": 3,
+    "rsr": 0.16607142857142856,
+    "per_seed": [
+     0.182,
+     0.164,
+     0.152
+    ],
+    "sd": 0.015257149545209878,
+    "by_level_all": {
+     "L1": {
+      "rate": 0.7166666666666667,
+      "n": 60
+     },
+     "L2": {
+      "rate": 0.14393939393939395,
+      "n": 660
+     },
+     "L3": {
+      "rate": 0.146875,
+      "n": 960
+     }
+    },
+    "by_level_official": {
+     "L1": {
+      "rate": 0.6666666666666666,
+      "n": 30
+     },
+     "L2": {
+      "rate": 0.13333333333333333,
+      "n": 330
+     },
+     "L3": {
+      "rate": 0.15833333333333333,
+      "n": 480
+     }
+    }
+   }
+  },
+  "nominal": {
+   "pi0": {
+    "seeds": 1,
+    "sr": 0.656,
+    "per_seed": [
+     0.656
+    ],
+    "per_task": {
+     "pick_up_the_black_bowl_between_the_plate_and_the_ramekin_and_place_it_on_the_plate": 0.76,
+     "pick_up_the_black_bowl_from_table_center_and_place_it_on_the_plate": 0.74,
+     "pick_up_the_black_bowl_in_the_top_drawer_of_the_wooden_cabinet_and_place_it_on_the_plate": 0.66,
+     "pick_up_the_black_bowl_next_to_the_cookie_box_and_place_it_on_the_plate": 0.68,
+     "pick_up_the_black_bowl_next_to_the_plate_and_place_it_on_the_plate": 0.58,
+     "pick_up_the_black_bowl_next_to_the_ramekin_and_place_it_on_the_plate": 0.78,
+     "pick_up_the_black_bowl_on_the_cookie_box_and_place_it_on_the_plate": 0.62,
+     "pick_up_the_black_bowl_on_the_ramekin_and_place_it_on_the_plate": 0.44,
+     "pick_up_the_black_bowl_on_the_stove_and_place_it_on_the_plate": 0.74,
+     "pick_up_the_black_bowl_on_the_wooden_cabinet_and_place_it_on_the_plate": 0.56
+    }
+   },
+   "pi1-nominal": {
+    "seeds": 1,
+    "sr": 0.796,
+    "per_seed": [
+     0.796
+    ],
+    "per_task": {
+     "pick_up_the_black_bowl_between_the_plate_and_the_ramekin_and_place_it_on_the_plate": 0.82,
+     "pick_up_the_black_bowl_from_table_center_and_place_it_on_the_plate": 0.98,
+     "pick_up_the_black_bowl_in_the_top_drawer_of_the_wooden_cabinet_and_place_it_on_the_plate": 0.84,
+     "pick_up_the_black_bowl_next_to_the_cookie_box_and_place_it_on_the_plate": 0.76,
+     "pick_up_the_black_bowl_next_to_the_plate_and_place_it_on_the_plate": 0.82,
+     "pick_up_the_black_bowl_next_to_the_ramekin_and_place_it_on_the_plate": 0.9,
+     "pick_up_the_black_bowl_on_the_cookie_box_and_place_it_on_the_plate": 0.7,
+     "pick_up_the_black_bowl_on_the_ramekin_and_place_it_on_the_plate": 0.64,
+     "pick_up_the_black_bowl_on_the_stove_and_place_it_on_the_plate": 0.84,
+     "pick_up_the_black_bowl_on_the_wooden_cabinet_and_place_it_on_the_plate": 0.66
+    }
+   },
+   "1 demo-only": {
+    "seeds": 3,
+    "sr": 0.8153333333333332,
+    "per_seed": [
+     0.82,
+     0.802,
+     0.824
+    ],
+    "per_task": {
+     "pick_up_the_black_bowl_between_the_plate_and_the_ramekin_and_place_it_on_the_plate": 0.9533333333333333,
+     "pick_up_the_black_bowl_from_table_center_and_place_it_on_the_plate": 0.9066666666666666,
+     "pick_up_the_black_bowl_in_the_top_drawer_of_the_wooden_cabinet_and_place_it_on_the_plate": 0.7466666666666667,
+     "pick_up_the_black_bowl_next_to_the_cookie_box_and_place_it_on_the_plate": 0.8466666666666667,
+     "pick_up_the_black_bowl_next_to_the_plate_and_place_it_on_the_plate": 0.8933333333333334,
+     "pick_up_the_black_bowl_next_to_the_ramekin_and_place_it_on_the_plate": 0.86,
+     "pick_up_the_black_bowl_on_the_cookie_box_and_place_it_on_the_plate": 0.8000000000000002,
+     "pick_up_the_black_bowl_on_the_ramekin_and_place_it_on_the_plate": 0.6733333333333333,
+     "pick_up_the_black_bowl_on_the_stove_and_place_it_on_the_plate": 0.8333333333333334,
+     "pick_up_the_black_bowl_on_the_wooden_cabinet_and_place_it_on_the_plate": 0.64
+    }
+   },
+   "2 action-grounded (pi1)": {
+    "seeds": 3,
+    "sr": 0.7846666666666667,
+    "per_seed": [
+     0.808,
+     0.766,
+     0.78
+    ],
+    "per_task": {
+     "pick_up_the_black_bowl_between_the_plate_and_the_ramekin_and_place_it_on_the_plate": 0.8466666666666667,
+     "pick_up_the_black_bowl_from_table_center_and_place_it_on_the_plate": 0.9066666666666666,
+     "pick_up_the_black_bowl_in_the_top_drawer_of_the_wooden_cabinet_and_place_it_on_the_plate": 0.7733333333333334,
+     "pick_up_the_black_bowl_next_to_the_cookie_box_and_place_it_on_the_plate": 0.82,
+     "pick_up_the_black_bowl_next_to_the_plate_and_place_it_on_the_plate": 0.84,
+     "pick_up_the_black_bowl_next_to_the_ramekin_and_place_it_on_the_plate": 0.8933333333333332,
+     "pick_up_the_black_bowl_on_the_cookie_box_and_place_it_on_the_plate": 0.7133333333333333,
+     "pick_up_the_black_bowl_on_the_ramekin_and_place_it_on_the_plate": 0.5866666666666668,
+     "pick_up_the_black_bowl_on_the_stove_and_place_it_on_the_plate": 0.84,
+     "pick_up_the_black_bowl_on_the_wooden_cabinet_and_place_it_on_the_plate": 0.6266666666666668
+    }
+   },
+   "3 action-free, C_pi-filtered": {
+    "seeds": 3,
+    "sr": 0.8006666666666667,
+    "per_seed": [
+     0.804,
+     0.776,
+     0.822
+    ],
+    "per_task": {
+     "pick_up_the_black_bowl_between_the_plate_and_the_ramekin_and_place_it_on_the_plate": 0.9466666666666667,
+     "pick_up_the_black_bowl_from_table_center_and_place_it_on_the_plate": 0.9333333333333332,
+     "pick_up_the_black_bowl_in_the_top_drawer_of_the_wooden_cabinet_and_place_it_on_the_plate": 0.8066666666666666,
+     "pick_up_the_black_bowl_next_to_the_cookie_box_and_place_it_on_the_plate": 0.8266666666666667,
+     "pick_up_the_black_bowl_next_to_the_plate_and_place_it_on_the_plate": 0.8133333333333334,
+     "pick_up_the_black_bowl_next_to_the_ramekin_and_place_it_on_the_plate": 0.8666666666666667,
+     "pick_up_the_black_bowl_on_the_cookie_box_and_place_it_on_the_plate": 0.7533333333333333,
+     "pick_up_the_black_bowl_on_the_ramekin_and_place_it_on_the_plate": 0.5533333333333333,
+     "pick_up_the_black_bowl_on_the_stove_and_place_it_on_the_plate": 0.88,
+     "pick_up_the_black_bowl_on_the_wooden_cabinet_and_place_it_on_the_plate": 0.6266666666666666
+    }
+   },
+   "4 action-free, unfiltered": {
+    "seeds": 3,
+    "sr": 0.8039999999999999,
+    "per_seed": [
+     0.812,
+     0.798,
+     0.802
+    ],
+    "per_task": {
+     "pick_up_the_black_bowl_between_the_plate_and_the_ramekin_and_place_it_on_the_plate": 0.9533333333333333,
+     "pick_up_the_black_bowl_from_table_center_and_place_it_on_the_plate": 0.9533333333333333,
+     "pick_up_the_black_bowl_in_the_top_drawer_of_the_wooden_cabinet_and_place_it_on_the_plate": 0.7799999999999999,
+     "pick_up_the_black_bowl_next_to_the_cookie_box_and_place_it_on_the_plate": 0.8333333333333334,
+     "pick_up_the_black_bowl_next_to_the_plate_and_place_it_on_the_plate": 0.7933333333333333,
+     "pick_up_the_black_bowl_next_to_the_ramekin_and_place_it_on_the_plate": 0.9333333333333332,
+     "pick_up_the_black_bowl_on_the_cookie_box_and_place_it_on_the_plate": 0.7066666666666667,
+     "pick_up_the_black_bowl_on_the_ramekin_and_place_it_on_the_plate": 0.5866666666666666,
+     "pick_up_the_black_bowl_on_the_stove_and_place_it_on_the_plate": 0.86,
+     "pick_up_the_black_bowl_on_the_wooden_cabinet_and_place_it_on_the_plate": 0.64
+    }
+   },
+   "5 hybrid (2 + 3)": {
+    "seeds": 3,
+    "sr": 0.7799999999999999,
+    "per_seed": [
+     0.804,
+     0.762,
+     0.774
+    ],
+    "per_task": {
+     "pick_up_the_black_bowl_between_the_plate_and_the_ramekin_and_place_it_on_the_plate": 0.9066666666666667,
+     "pick_up_the_black_bowl_from_table_center_and_place_it_on_the_plate": 0.8866666666666666,
+     "pick_up_the_black_bowl_in_the_top_drawer_of_the_wooden_cabinet_and_place_it_on_the_plate": 0.7399999999999999,
+     "pick_up_the_black_bowl_next_to_the_cookie_box_and_place_it_on_the_plate": 0.8733333333333334,
+     "pick_up_the_black_bowl_next_to_the_plate_and_place_it_on_the_plate": 0.82,
+     "pick_up_the_black_bowl_next_to_the_ramekin_and_place_it_on_the_plate": 0.8866666666666666,
+     "pick_up_the_black_bowl_on_the_cookie_box_and_place_it_on_the_plate": 0.7133333333333333,
+     "pick_up_the_black_bowl_on_the_ramekin_and_place_it_on_the_plate": 0.5266666666666667,
+     "pick_up_the_black_bowl_on_the_stove_and_place_it_on_the_plate": 0.82,
+     "pick_up_the_black_bowl_on_the_wooden_cabinet_and_place_it_on_the_plate": 0.6266666666666666
+    }
+   },
+   "6 Backtrack-distill": {
+    "seeds": 3,
+    "sr": 0.798,
+    "per_seed": [
+     0.806,
+     0.806,
+     0.782
+    ],
+    "per_task": {
+     "pick_up_the_black_bowl_between_the_plate_and_the_ramekin_and_place_it_on_the_plate": 0.9,
+     "pick_up_the_black_bowl_from_table_center_and_place_it_on_the_plate": 0.8799999999999999,
+     "pick_up_the_black_bowl_in_the_top_drawer_of_the_wooden_cabinet_and_place_it_on_the_plate": 0.8133333333333334,
+     "pick_up_the_black_bowl_next_to_the_cookie_box_and_place_it_on_the_plate": 0.8333333333333334,
+     "pick_up_the_black_bowl_next_to_the_plate_and_place_it_on_the_plate": 0.7866666666666667,
+     "pick_up_the_black_bowl_next_to_the_ramekin_and_place_it_on_the_plate": 0.8666666666666667,
+     "pick_up_the_black_bowl_on_the_cookie_box_and_place_it_on_the_plate": 0.6999999999999998,
+     "pick_up_the_black_bowl_on_the_ramekin_and_place_it_on_the_plate": 0.6266666666666666,
+     "pick_up_the_black_bowl_on_the_stove_and_place_it_on_the_plate": 0.8266666666666667,
+     "pick_up_the_black_bowl_on_the_wooden_cabinet_and_place_it_on_the_plate": 0.7466666666666667
+    }
+   }
+  },
+  "recovery_traj_per_nominal_task": {
+   "pick_up_the_black_bowl_between_the_plate_and_the_ramekin_and_place_it_on_the_plate": 42,
+   "pick_up_the_black_bowl_from_table_center_and_place_it_on_the_plate": 0,
+   "pick_up_the_black_bowl_in_the_top_drawer_of_the_wooden_cabinet_and_place_it_on_the_plate": 44,
+   "pick_up_the_black_bowl_next_to_the_cookie_box_and_place_it_on_the_plate": 0,
+   "pick_up_the_black_bowl_next_to_the_plate_and_place_it_on_the_plate": 3,
+   "pick_up_the_black_bowl_next_to_the_ramekin_and_place_it_on_the_plate": 8,
+   "pick_up_the_black_bowl_on_the_cookie_box_and_place_it_on_the_plate": 3,
+   "pick_up_the_black_bowl_on_the_ramekin_and_place_it_on_the_plate": 59,
+   "pick_up_the_black_bowl_on_the_stove_and_place_it_on_the_plate": 14,
+   "pick_up_the_black_bowl_on_the_wooden_cabinet_and_place_it_on_the_plate": 35
+  },
+  "forgetting": {
+   "pi0 vs pi1-nominal": {
+    "dNSR": -0.14,
+    "delta": {
+     "pick_up_the_black_bowl_between_the_plate_and_the_ramekin_and_place_it_on_the_plate": -0.05999999999999994,
+     "pick_up_the_black_bowl_from_table_center_and_place_it_on_the_plate": -0.24,
+     "pick_up_the_black_bowl_in_the_top_drawer_of_the_wooden_cabinet_and_place_it_on_the_plate": -0.17999999999999994,
+     "pick_up_the_black_bowl_next_to_the_cookie_box_and_place_it_on_the_plate": -0.07999999999999996,
+     "pick_up_the_black_bowl_next_to_the_plate_and_place_it_on_the_plate": -0.24,
+     "pick_up_the_black_bowl_next_to_the_ramekin_and_place_it_on_the_plate": -0.12,
+     "pick_up_the_black_bowl_on_the_cookie_box_and_place_it_on_the_plate": -0.07999999999999996,
+     "pick_up_the_black_bowl_on_the_ramekin_and_place_it_on_the_plate": -0.2,
+     "pick_up_the_black_bowl_on_the_stove_and_place_it_on_the_plate": -0.09999999999999998,
+     "pick_up_the_black_bowl_on_the_wooden_cabinet_and_place_it_on_the_plate": -0.09999999999999998
+    },
+    "n_tasks": 10,
+    "n_drop": 10,
+    "n_gain": 0,
+    "n_drop_ge5pt": 10,
+    "drops_on_tasks_without_recovery_data": [
+     "pick_up_the_black_bowl_from_table_center_and_place_it_on_the_plate",
+     "pick_up_the_black_bowl_next_to_the_cookie_box_and_place_it_on_the_plate"
+    ],
+    "mean_delta_with_data": -0.13499999999999998,
+    "mean_delta_without_data": -0.15999999999999998,
+    "mcnemar": {
+     "A_only": 32,
+     "B_only": 102,
+     "p": 1.0414040895832823e-09
+    }
+   },
+   "1 demo-only vs pi1-nominal": {
+    "dNSR": 0.019333333333333202,
+    "delta": {
+     "pick_up_the_black_bowl_between_the_plate_and_the_ramekin_and_place_it_on_the_plate": 0.1333333333333333,
+     "pick_up_the_black_bowl_from_table_center_and_place_it_on_the_plate": -0.07333333333333336,
+     "pick_up_the_black_bowl_in_the_top_drawer_of_the_wooden_cabinet_and_place_it_on_the_plate": -0.09333333333333327,
+     "pick_up_the_black_bowl_next_to_the_cookie_box_and_place_it_on_the_plate": 0.08666666666666667,
+     "pick_up_the_black_bowl_next_to_the_plate_and_place_it_on_the_plate": 0.07333333333333347,
+     "pick_up_the_black_bowl_next_to_the_ramekin_and_place_it_on_the_plate": -0.040000000000000036,
+     "pick_up_the_black_bowl_on_the_cookie_box_and_place_it_on_the_plate": 0.1000000000000002,
+     "pick_up_the_black_bowl_on_the_ramekin_and_place_it_on_the_plate": 0.033333333333333326,
+     "pick_up_the_black_bowl_on_the_stove_and_place_it_on_the_plate": -0.006666666666666599,
+     "pick_up_the_black_bowl_on_the_wooden_cabinet_and_place_it_on_the_plate": -0.020000000000000018
+    },
+    "n_tasks": 10,
+    "n_drop": 5,
+    "n_gain": 5,
+    "n_drop_ge5pt": 2,
+    "drops_on_tasks_without_recovery_data": [
+     "pick_up_the_black_bowl_from_table_center_and_place_it_on_the_plate"
+    ],
+    "mean_delta_with_data": 0.022500000000000048,
+    "mean_delta_without_data": 0.006666666666666654,
+    "mcnemar": {
+     "A_only": 132,
+     "B_only": 103,
+     "p": 0.06754404747166952
+    }
+   },
+   "1 demo-only vs pi0": {
+    "dNSR": 0.15933333333333322,
+    "delta": {
+     "pick_up_the_black_bowl_between_the_plate_and_the_ramekin_and_place_it_on_the_plate": 0.19333333333333325,
+     "pick_up_the_black_bowl_from_table_center_and_place_it_on_the_plate": 0.16666666666666663,
+     "pick_up_the_black_bowl_in_the_top_drawer_of_the_wooden_cabinet_and_place_it_on_the_plate": 0.08666666666666667,
+     "pick_up_the_black_bowl_next_to_the_cookie_box_and_place_it_on_the_plate": 0.16666666666666663,
+     "pick_up_the_black_bowl_next_to_the_plate_and_place_it_on_the_plate": 0.31333333333333346,
+     "pick_up_the_black_bowl_next_to_the_ramekin_and_place_it_on_the_plate": 0.07999999999999996,
+     "pick_up_the_black_bowl_on_the_cookie_box_and_place_it_on_the_plate": 0.18000000000000016,
+     "pick_up_the_black_bowl_on_the_ramekin_and_place_it_on_the_plate": 0.23333333333333334,
+     "pick_up_the_black_bowl_on_the_stove_and_place_it_on_the_plate": 0.09333333333333338,
+     "pick_up_the_black_bowl_on_the_wooden_cabinet_and_place_it_on_the_plate": 0.07999999999999996
+    },
+    "n_tasks": 10,
+    "n_drop": 0,
+    "n_gain": 10,
+    "n_drop_ge5pt": 0,
+    "drops_on_tasks_without_recovery_data": [],
+    "mean_delta_with_data": 0.15750000000000003,
+    "mean_delta_without_data": 0.16666666666666663,
+    "mcnemar": {
+     "A_only": 339,
+     "B_only": 100,
+     "p": 1.819940979835878e-31
+    }
+   },
+   "2 action-grounded (pi1) vs pi1-nominal": {
+    "dNSR": -0.011333333333333306,
+    "delta": {
+     "pick_up_the_black_bowl_between_the_plate_and_the_ramekin_and_place_it_on_the_plate": 0.026666666666666727,
+     "pick_up_the_black_bowl_from_table_center_and_place_it_on_the_plate": -0.07333333333333336,
+     "pick_up_the_black_bowl_in_the_top_drawer_of_the_wooden_cabinet_and_place_it_on_the_plate": -0.06666666666666654,
+     "pick_up_the_black_bowl_next_to_the_cookie_box_and_place_it_on_the_plate": 0.05999999999999994,
+     "pick_up_the_black_bowl_next_to_the_plate_and_place_it_on_the_plate": 0.020000000000000018,
+     "pick_up_the_black_bowl_next_to_the_ramekin_and_place_it_on_the_plate": -0.006666666666666821,
+     "pick_up_the_black_bowl_on_the_cookie_box_and_place_it_on_the_plate": 0.013333333333333308,
+     "pick_up_the_black_bowl_on_the_ramekin_and_place_it_on_the_plate": -0.05333333333333323,
+     "pick_up_the_black_bowl_on_the_stove_and_place_it_on_the_plate": 0.0,
+     "pick_up_the_black_bowl_on_the_wooden_cabinet_and_place_it_on_the_plate": -0.033333333333333215
+    },
+    "n_tasks": 10,
+    "n_drop": 5,
+    "n_gain": 4,
+    "n_drop_ge5pt": 3,
+    "drops_on_tasks_without_recovery_data": [
+     "pick_up_the_black_bowl_from_table_center_and_place_it_on_the_plate"
+    ],
+    "mean_delta_with_data": -0.01249999999999997,
+    "mean_delta_without_data": -0.00666666666666671,
+    "mcnemar": {
+     "A_only": 106,
+     "B_only": 123,
+     "p": 0.29035049599010826
+    }
+   },
+   "2 action-grounded (pi1) vs pi0": {
+    "dNSR": 0.1286666666666667,
+    "delta": {
+     "pick_up_the_black_bowl_between_the_plate_and_the_ramekin_and_place_it_on_the_plate": 0.08666666666666667,
+     "pick_up_the_black_bowl_from_table_center_and_place_it_on_the_plate": 0.16666666666666663,
+     "pick_up_the_black_bowl_in_the_top_drawer_of_the_wooden_cabinet_and_place_it_on_the_plate": 0.1133333333333334,
+     "pick_up_the_black_bowl_next_to_the_cookie_box_and_place_it_on_the_plate": 0.1399999999999999,
+     "pick_up_the_black_bowl_next_to_the_plate_and_place_it_on_the_plate": 0.26,
+     "pick_up_the_black_bowl_next_to_the_ramekin_and_place_it_on_the_plate": 0.11333333333333317,
+     "pick_up_the_black_bowl_on_the_cookie_box_and_place_it_on_the_plate": 0.09333333333333327,
+     "pick_up_the_black_bowl_on_the_ramekin_and_place_it_on_the_plate": 0.14666666666666678,
+     "pick_up_the_black_bowl_on_the_stove_and_place_it_on_the_plate": 0.09999999999999998,
+     "pick_up_the_black_bowl_on_the_wooden_cabinet_and_place_it_on_the_plate": 0.06666666666666676
+    },
+    "n_tasks": 10,
+    "n_drop": 0,
+    "n_gain": 10,
+    "n_drop_ge5pt": 0,
+    "drops_on_tasks_without_recovery_data": [],
+    "mean_delta_with_data": 0.1225,
+    "mean_delta_without_data": 0.15333333333333327,
+    "mcnemar": {
+     "A_only": 304,
+     "B_only": 111,
+     "p": 7.575348799452501e-22
+    }
+   },
+   "3 action-free, C_pi-filtered vs pi1-nominal": {
+    "dNSR": 0.004666666666666708,
+    "delta": {
+     "pick_up_the_black_bowl_between_the_plate_and_the_ramekin_and_place_it_on_the_plate": 0.1266666666666667,
+     "pick_up_the_black_bowl_from_table_center_and_place_it_on_the_plate": -0.046666666666666745,
+     "pick_up_the_black_bowl_in_the_top_drawer_of_the_wooden_cabinet_and_place_it_on_the_plate": -0.033333333333333326,
+     "pick_up_the_black_bowl_next_to_the_cookie_box_and_place_it_on_the_plate": 0.06666666666666665,
+     "pick_up_the_black_bowl_next_to_the_plate_and_place_it_on_the_plate": -0.006666666666666599,
+     "pick_up_the_black_bowl_next_to_the_ramekin_and_place_it_on_the_plate": -0.033333333333333326,
+     "pick_up_the_black_bowl_on_the_cookie_box_and_place_it_on_the_plate": 0.053333333333333344,
+     "pick_up_the_black_bowl_on_the_ramekin_and_place_it_on_the_plate": -0.08666666666666667,
+     "pick_up_the_black_bowl_on_the_stove_and_place_it_on_the_plate": 0.040000000000000036,
+     "pick_up_the_black_bowl_on_the_wooden_cabinet_and_place_it_on_the_plate": -0.03333333333333344
+    },
+    "n_tasks": 10,
+    "n_drop": 6,
+    "n_gain": 4,
+    "n_drop_ge5pt": 1,
+    "drops_on_tasks_without_recovery_data": [
+     "pick_up_the_black_bowl_from_table_center_and_place_it_on_the_plate"
+    ],
+    "mean_delta_with_data": 0.003333333333333341,
+    "mean_delta_without_data": 0.009999999999999953,
+    "mcnemar": {
+     "A_only": 118,
+     "B_only": 111,
+     "p": 0.6918330937895893
+    }
+   },
+   "3 action-free, C_pi-filtered vs pi0": {
+    "dNSR": 0.14466666666666672,
+    "delta": {
+     "pick_up_the_black_bowl_between_the_plate_and_the_ramekin_and_place_it_on_the_plate": 0.18666666666666665,
+     "pick_up_the_black_bowl_from_table_center_and_place_it_on_the_plate": 0.19333333333333325,
+     "pick_up_the_black_bowl_in_the_top_drawer_of_the_wooden_cabinet_and_place_it_on_the_plate": 0.1466666666666666,
+     "pick_up_the_black_bowl_next_to_the_cookie_box_and_place_it_on_the_plate": 0.1466666666666666,
+     "pick_up_the_black_bowl_next_to_the_plate_and_place_it_on_the_plate": 0.2333333333333334,
+     "pick_up_the_black_bowl_next_to_the_ramekin_and_place_it_on_the_plate": 0.08666666666666667,
+     "pick_up_the_black_bowl_on_the_cookie_box_and_place_it_on_the_plate": 0.1333333333333333,
+     "pick_up_the_black_bowl_on_the_ramekin_and_place_it_on_the_plate": 0.11333333333333334,
+     "pick_up_the_black_bowl_on_the_stove_and_place_it_on_the_plate": 0.14,
+     "pick_up_the_black_bowl_on_the_wooden_cabinet_and_place_it_on_the_plate": 0.06666666666666654
+    },
+    "n_tasks": 10,
+    "n_drop": 0,
+    "n_gain": 10,
+    "n_drop_ge5pt": 0,
+    "drops_on_tasks_without_recovery_data": [],
+    "mean_delta_with_data": 0.1383333333333333,
+    "mean_delta_without_data": 0.16999999999999993,
+    "mcnemar": {
+     "A_only": 310,
+     "B_only": 93,
+     "p": 2.2871034940752185e-28
+    }
+   },
+   "4 action-free, unfiltered vs pi1-nominal": {
+    "dNSR": 0.007999999999999896,
+    "delta": {
+     "pick_up_the_black_bowl_between_the_plate_and_the_ramekin_and_place_it_on_the_plate": 0.1333333333333333,
+     "pick_up_the_black_bowl_from_table_center_and_place_it_on_the_plate": -0.026666666666666727,
+     "pick_up_the_black_bowl_in_the_top_drawer_of_the_wooden_cabinet_and_place_it_on_the_plate": -0.06000000000000005,
+     "pick_up_the_black_bowl_next_to_the_cookie_box_and_place_it_on_the_plate": 0.07333333333333336,
+     "pick_up_the_black_bowl_next_to_the_plate_and_place_it_on_the_plate": -0.026666666666666616,
+     "pick_up_the_black_bowl_next_to_the_ramekin_and_place_it_on_the_plate": 0.033333333333333215,
+     "pick_up_the_black_bowl_on_the_cookie_box_and_place_it_on_the_plate": 0.00666666666666671,
+     "pick_up_the_black_bowl_on_the_ramekin_and_place_it_on_the_plate": -0.053333333333333455,
+     "pick_up_the_black_bowl_on_the_stove_and_place_it_on_the_plate": 0.020000000000000018,
+     "pick_up_the_black_bowl_on_the_wooden_cabinet_and_place_it_on_the_plate": -0.020000000000000018
+    },
+    "n_tasks": 10,
+    "n_drop": 5,
+    "n_gain": 5,
+    "n_drop_ge5pt": 2,
+    "drops_on_tasks_without_recovery_data": [
+     "pick_up_the_black_bowl_from_table_center_and_place_it_on_the_plate"
+    ],
+    "mean_delta_with_data": 0.004166666666666638,
+    "mean_delta_without_data": 0.023333333333333317,
+    "mcnemar": {
+     "A_only": 119,
+     "B_only": 107,
+     "p": 0.4644237162970147
+    }
+   },
+   "4 action-free, unfiltered vs pi0": {
+    "dNSR": 0.1479999999999999,
+    "delta": {
+     "pick_up_the_black_bowl_between_the_plate_and_the_ramekin_and_place_it_on_the_plate": 0.19333333333333325,
+     "pick_up_the_black_bowl_from_table_center_and_place_it_on_the_plate": 0.21333333333333326,
+     "pick_up_the_black_bowl_in_the_top_drawer_of_the_wooden_cabinet_and_place_it_on_the_plate": 0.11999999999999988,
+     "pick_up_the_black_bowl_next_to_the_cookie_box_and_place_it_on_the_plate": 0.15333333333333332,
+     "pick_up_the_black_bowl_next_to_the_plate_and_place_it_on_the_plate": 0.21333333333333337,
+     "pick_up_the_black_bowl_next_to_the_ramekin_and_place_it_on_the_plate": 0.1533333333333332,
+     "pick_up_the_black_bowl_on_the_cookie_box_and_place_it_on_the_plate": 0.08666666666666667,
+     "pick_up_the_black_bowl_on_the_ramekin_and_place_it_on_the_plate": 0.14666666666666656,
+     "pick_up_the_black_bowl_on_the_stove_and_place_it_on_the_plate": 0.12,
+     "pick_up_the_black_bowl_on_the_wooden_cabinet_and_place_it_on_the_plate": 0.07999999999999996
+    },
+    "n_tasks": 10,
+    "n_drop": 0,
+    "n_gain": 10,
+    "n_drop_ge5pt": 0,
+    "drops_on_tasks_without_recovery_data": [],
+    "mean_delta_with_data": 0.1391666666666666,
+    "mean_delta_without_data": 0.1833333333333333,
+    "mcnemar": {
+     "A_only": 314,
+     "B_only": 92,
+     "p": 1.8340769451436818e-29
+    }
+   },
+   "5 hybrid (2 + 3) vs pi1-nominal": {
+    "dNSR": -0.016000000000000125,
+    "delta": {
+     "pick_up_the_black_bowl_between_the_plate_and_the_ramekin_and_place_it_on_the_plate": 0.08666666666666678,
+     "pick_up_the_black_bowl_from_table_center_and_place_it_on_the_plate": -0.09333333333333338,
+     "pick_up_the_black_bowl_in_the_top_drawer_of_the_wooden_cabinet_and_place_it_on_the_plate": -0.10000000000000009,
+     "pick_up_the_black_bowl_next_to_the_cookie_box_and_place_it_on_the_plate": 0.1133333333333334,
+     "pick_up_the_black_bowl_next_to_the_plate_and_place_it_on_the_plate": 0.0,
+     "pick_up_the_black_bowl_next_to_the_ramekin_and_place_it_on_the_plate": -0.01333333333333342,
+     "pick_up_the_black_bowl_on_the_cookie_box_and_place_it_on_the_plate": 0.013333333333333308,
+     "pick_up_the_black_bowl_on_the_ramekin_and_place_it_on_the_plate": -0.11333333333333329,
+     "pick_up_the_black_bowl_on_the_stove_and_place_it_on_the_plate": -0.020000000000000018,
+     "pick_up_the_black_bowl_on_the_wooden_cabinet_and_place_it_on_the_plate": -0.03333333333333344
+    },
+    "n_tasks": 10,
+    "n_drop": 6,
+    "n_gain": 3,
+    "n_drop_ge5pt": 3,
+    "drops_on_tasks_without_recovery_data": [
+     "pick_up_the_black_bowl_from_table_center_and_place_it_on_the_plate"
+    ],
+    "mean_delta_with_data": -0.02250000000000002,
+    "mean_delta_without_data": 0.010000000000000009,
+    "mcnemar": {
+     "A_only": 125,
+     "B_only": 149,
+     "p": 0.1645673664303829
+    }
+   },
+   "5 hybrid (2 + 3) vs pi0": {
+    "dNSR": 0.12399999999999989,
+    "delta": {
+     "pick_up_the_black_bowl_between_the_plate_and_the_ramekin_and_place_it_on_the_plate": 0.14666666666666672,
+     "pick_up_the_black_bowl_from_table_center_and_place_it_on_the_plate": 0.1466666666666666,
+     "pick_up_the_black_bowl_in_the_top_drawer_of_the_wooden_cabinet_and_place_it_on_the_plate": 0.07999999999999985,
+     "pick_up_the_black_bowl_next_to_the_cookie_box_and_place_it_on_the_plate": 0.19333333333333336,
+     "pick_up_the_black_bowl_next_to_the_plate_and_place_it_on_the_plate": 0.24,
+     "pick_up_the_black_bowl_next_to_the_ramekin_and_place_it_on_the_plate": 0.10666666666666658,
+     "pick_up_the_black_bowl_on_the_cookie_box_and_place_it_on_the_plate": 0.09333333333333327,
+     "pick_up_the_black_bowl_on_the_ramekin_and_place_it_on_the_plate": 0.08666666666666673,
+     "pick_up_the_black_bowl_on_the_stove_and_place_it_on_the_plate": 0.07999999999999996,
+     "pick_up_the_black_bowl_on_the_wooden_cabinet_and_place_it_on_the_plate": 0.06666666666666654
+    },
+    "n_tasks": 10,
+    "n_drop": 0,
+    "n_gain": 10,
+    "n_drop_ge5pt": 0,
+    "drops_on_tasks_without_recovery_data": [],
+    "mean_delta_with_data": 0.11249999999999996,
+    "mean_delta_without_data": 0.16999999999999998,
+    "mcnemar": {
+     "A_only": 294,
+     "B_only": 108,
+     "p": 5.369553977163847e-21
+    }
+   },
+   "6 Backtrack-distill vs pi1-nominal": {
+    "dNSR": 0.0020000000000000018,
+    "delta": {
+     "pick_up_the_black_bowl_between_the_plate_and_the_ramekin_and_place_it_on_the_plate": 0.08000000000000007,
+     "pick_up_the_black_bowl_from_table_center_and_place_it_on_the_plate": -0.10000000000000009,
+     "pick_up_the_black_bowl_in_the_top_drawer_of_the_wooden_cabinet_and_place_it_on_the_plate": -0.026666666666666616,
+     "pick_up_the_black_bowl_next_to_the_cookie_box_and_place_it_on_the_plate": 0.07333333333333336,
+     "pick_up_the_black_bowl_next_to_the_plate_and_place_it_on_the_plate": -0.033333333333333215,
+     "pick_up_the_black_bowl_next_to_the_ramekin_and_place_it_on_the_plate": -0.033333333333333326,
+     "pick_up_the_black_bowl_on_the_cookie_box_and_place_it_on_the_plate": -1.1102230246251565e-16,
+     "pick_up_the_black_bowl_on_the_ramekin_and_place_it_on_the_plate": -0.01333333333333342,
+     "pick_up_the_black_bowl_on_the_stove_and_place_it_on_the_plate": -0.013333333333333308,
+     "pick_up_the_black_bowl_on_the_wooden_cabinet_and_place_it_on_the_plate": 0.08666666666666667
+    },
+    "n_tasks": 10,
+    "n_drop": 6,
+    "n_gain": 3,
+    "n_drop_ge5pt": 1,
+    "drops_on_tasks_without_recovery_data": [
+     "pick_up_the_black_bowl_from_table_center_and_place_it_on_the_plate"
+    ],
+    "mean_delta_with_data": 0.005833333333333343,
+    "mean_delta_without_data": -0.013333333333333364,
+    "mcnemar": {
+     "A_only": 117,
+     "B_only": 114,
+     "p": 0.8953454592110378
+    }
+   },
+   "6 Backtrack-distill vs pi0": {
+    "dNSR": 0.14200000000000002,
+    "delta": {
+     "pick_up_the_black_bowl_between_the_plate_and_the_ramekin_and_place_it_on_the_plate": 0.14,
+     "pick_up_the_black_bowl_from_table_center_and_place_it_on_the_plate": 0.1399999999999999,
+     "pick_up_the_black_bowl_in_the_top_drawer_of_the_wooden_cabinet_and_place_it_on_the_plate": 0.15333333333333332,
+     "pick_up_the_black_bowl_next_to_the_cookie_box_and_place_it_on_the_plate": 0.15333333333333332,
+     "pick_up_the_black_bowl_next_to_the_plate_and_place_it_on_the_plate": 0.20666666666666678,
+     "pick_up_the_black_bowl_next_to_the_ramekin_and_place_it_on_the_plate": 0.08666666666666667,
+     "pick_up_the_black_bowl_on_the_cookie_box_and_place_it_on_the_plate": 0.07999999999999985,
+     "pick_up_the_black_bowl_on_the_ramekin_and_place_it_on_the_plate": 0.1866666666666666,
+     "pick_up_the_black_bowl_on_the_stove_and_place_it_on_the_plate": 0.08666666666666667,
+     "pick_up_the_black_bowl_on_the_wooden_cabinet_and_place_it_on_the_plate": 0.18666666666666665
+    },
+    "n_tasks": 10,
+    "n_drop": 0,
+    "n_gain": 10,
+    "n_drop_ge5pt": 0,
+    "drops_on_tasks_without_recovery_data": [],
+    "mean_delta_with_data": 0.1408333333333333,
+    "mean_delta_without_data": 0.1466666666666666,
+    "mcnemar": {
+     "A_only": 310,
+     "B_only": 97,
+     "p": 4.733384871377234e-27
+    }
+   },
+   "pi1 vs demo-only (same init/steps)": {
+    "dNSR": -0.03066666666666651,
+    "delta": {
+     "pick_up_the_black_bowl_between_the_plate_and_the_ramekin_and_place_it_on_the_plate": -0.10666666666666658,
+     "pick_up_the_black_bowl_from_table_center_and_place_it_on_the_plate": 0.0,
+     "pick_up_the_black_bowl_in_the_top_drawer_of_the_wooden_cabinet_and_place_it_on_the_plate": 0.026666666666666727,
+     "pick_up_the_black_bowl_next_to_the_cookie_box_and_place_it_on_the_plate": -0.026666666666666727,
+     "pick_up_the_black_bowl_next_to_the_plate_and_place_it_on_the_plate": -0.053333333333333455,
+     "pick_up_the_black_bowl_next_to_the_ramekin_and_place_it_on_the_plate": 0.033333333333333215,
+     "pick_up_the_black_bowl_on_the_cookie_box_and_place_it_on_the_plate": -0.08666666666666689,
+     "pick_up_the_black_bowl_on_the_ramekin_and_place_it_on_the_plate": -0.08666666666666656,
+     "pick_up_the_black_bowl_on_the_stove_and_place_it_on_the_plate": 0.006666666666666599,
+     "pick_up_the_black_bowl_on_the_wooden_cabinet_and_place_it_on_the_plate": -0.013333333333333197
+    },
+    "n_tasks": 10,
+    "n_drop": 6,
+    "n_gain": 3,
+    "n_drop_ge5pt": 4,
+    "drops_on_tasks_without_recovery_data": [
+     "pick_up_the_black_bowl_next_to_the_cookie_box_and_place_it_on_the_plate"
+    ],
+    "mean_delta_with_data": -0.03500000000000002,
+    "mean_delta_without_data": -0.013333333333333364,
+    "mcnemar": {
+     "A_only": 113,
+     "B_only": 159,
+     "p": 0.006257663455187055
+    }
+   }
+  }
+ },
+ "object": {
+  "split": {
+   "train": 51,
+   "pilot": 16,
+   "test": 26,
+   "train_by_level_all": {
+    "L2": 35,
+    "L1": 11,
+    "L3": 5
+   }
+  },
+  "search": {
+   "precheck_drawn": 306,
+   "precheck_pi0_success": 59,
+   "failure_states": 247,
+   "arms": {
+    "random": {
+     "states": 247,
+     "candidates_scored_per_state": 232.0,
+     "candidates_scored_total": 57304,
+     "sim_verifications": 3952,
+     "verified_successes": 239,
+     "states_solved": 100,
+     "bank_trajectories": 215,
+     "sim_steps_verify": 1345606,
+     "hit_rate": 0.06047570850202429,
+     "solve_rate": 0.4048582995951417,
+     "solved_by_level_all": {
+      "L2": 71,
+      "L1": 21,
+      "L3": 8
+     },
+     "solved_by_task": {
+      "pick_up_the_alphabet_soup_and_place_it_in_the_basket": 24,
+      "pick_up_the_bbq_sauce_and_place_it_in_the_basket": 5,
+      "pick_up_the_butter_and_place_it_in_the_basket": 23,
+      "pick_up_the_chocolate_pudding_and_place_it_in_the_basket": 14,
+      "pick_up_the_cream_cheese_and_place_it_in_the_basket": 2,
+      "pick_up_the_ketchup_and_place_it_in_the_basket": 8,
+      "pick_up_the_milk_and_place_it_in_the_basket": 4,
+      "pick_up_the_orange_juice_and_place_it_in_the_basket": 2,
+      "pick_up_the_salad_dressing_and_place_it_in_the_basket": 1,
+      "pick_up_the_tomato_sauce_and_place_it_in_the_basket": 17
+     },
+     "selected": 123,
+     "selected_unique_states": 100,
+     "selected_frames": 24705,
+     "selected_bridge_frames": 6006,
+     "selected_continuation_frames": 18699,
+     "selected_by_level_all": {
+      "L2": 90,
+      "L1": 24,
+      "L3": 9
+     },
+     "selected_by_task": {
+      "pick_up_the_alphabet_soup_and_place_it_in_the_basket": 32,
+      "pick_up_the_bbq_sauce_and_place_it_in_the_basket": 6,
+      "pick_up_the_butter_and_place_it_in_the_basket": 27,
+      "pick_up_the_chocolate_pudding_and_place_it_in_the_basket": 17,
+      "pick_up_the_ketchup_and_place_it_in_the_basket": 10,
+      "pick_up_the_tomato_sauce_and_place_it_in_the_basket": 22,
+      "pick_up_the_cream_cheese_and_place_it_in_the_basket": 2,
+      "pick_up_the_milk_and_place_it_in_the_basket": 4,
+      "pick_up_the_orange_juice_and_place_it_in_the_basket": 2,
+      "pick_up_the_salad_dressing_and_place_it_in_the_basket": 1
+     }
+    },
+    "wm_diverse": {
+     "states": 247,
+     "candidates_scored_per_state": 696.0,
+     "candidates_scored_total": 171912,
+     "sim_verifications": 3952,
+     "verified_successes": 529,
+     "states_solved": 114,
+     "bank_trajectories": 340,
+     "sim_steps_verify": 1301194,
+     "hit_rate": 0.13385627530364372,
+     "solve_rate": 0.46153846153846156,
+     "solved_by_level_all": {
+      "L2": 81,
+      "L1": 26,
+      "L3": 7
+     },
+     "solved_by_task": {
+      "pick_up_the_alphabet_soup_and_place_it_in_the_basket": 25,
+      "pick_up_the_bbq_sauce_and_place_it_in_the_basket": 15,
+      "pick_up_the_butter_and_place_it_in_the_basket": 24,
+      "pick_up_the_chocolate_pudding_and_place_it_in_the_basket": 17,
+      "pick_up_the_ketchup_and_place_it_in_the_basket": 6,
+      "pick_up_the_milk_and_place_it_in_the_basket": 5,
+      "pick_up_the_orange_juice_and_place_it_in_the_basket": 2,
+      "pick_up_the_salad_dressing_and_place_it_in_the_basket": 1,
+      "pick_up_the_tomato_sauce_and_place_it_in_the_basket": 19
+     },
+     "selected": 123,
+     "selected_unique_states": 114,
+     "selected_frames": 25359,
+     "selected_bridge_frames": 6067,
+     "selected_continuation_frames": 19292,
+     "selected_by_level_all": {
+      "L2": 88,
+      "L1": 27,
+      "L3": 8
+     },
+     "selected_by_task": {
+      "pick_up_the_alphabet_soup_and_place_it_in_the_basket": 29,
+      "pick_up_the_bbq_sauce_and_place_it_in_the_basket": 15,
+      "pick_up_the_butter_and_place_it_in_the_basket": 25,
+      "pick_up_the_chocolate_pudding_and_place_it_in_the_basket": 17,
+      "pick_up_the_ketchup_and_place_it_in_the_basket": 8,
+      "pick_up_the_tomato_sauce_and_place_it_in_the_basket": 20,
+      "pick_up_the_milk_and_place_it_in_the_basket": 6,
+      "pick_up_the_orange_juice_and_place_it_in_the_basket": 2,
+      "pick_up_the_salad_dressing_and_place_it_in_the_basket": 1
+     }
+    },
+    "wm_goal": {
+     "states": 247,
+     "candidates_scored_per_state": 696.0,
+     "candidates_scored_total": 171912,
+     "sim_verifications": 3952,
+     "verified_successes": 151,
+     "states_solved": 56,
+     "bank_trajectories": 123,
+     "sim_steps_verify": 1352606,
+     "hit_rate": 0.0382085020242915,
+     "solve_rate": 0.22672064777327935,
+     "solved_by_level_all": {
+      "L2": 36,
+      "L3": 5,
+      "L1": 15
+     },
+     "solved_by_task": {
+      "pick_up_the_alphabet_soup_and_place_it_in_the_basket": 8,
+      "pick_up_the_bbq_sauce_and_place_it_in_the_basket": 2,
+      "pick_up_the_butter_and_place_it_in_the_basket": 18,
+      "pick_up_the_chocolate_pudding_and_place_it_in_the_basket": 14,
+      "pick_up_the_ketchup_and_place_it_in_the_basket": 3,
+      "pick_up_the_milk_and_place_it_in_the_basket": 3,
+      "pick_up_the_salad_dressing_and_place_it_in_the_basket": 1,
+      "pick_up_the_tomato_sauce_and_place_it_in_the_basket": 7
+     },
+     "selected": 123,
+     "selected_unique_states": 56,
+     "selected_frames": 20438,
+     "selected_bridge_frames": 5620,
+     "selected_continuation_frames": 14818,
+     "selected_by_level_all": {
+      "L2": 72,
+      "L1": 40,
+      "L3": 11
+     },
+     "selected_by_task": {
+      "pick_up_the_alphabet_soup_and_place_it_in_the_basket": 14,
+      "pick_up_the_butter_and_place_it_in_the_basket": 41,
+      "pick_up_the_chocolate_pudding_and_place_it_in_the_basket": 32,
+      "pick_up_the_ketchup_and_place_it_in_the_basket": 4,
+      "pick_up_the_milk_and_place_it_in_the_basket": 9,
+      "pick_up_the_tomato_sauce_and_place_it_in_the_basket": 15,
+      "pick_up_the_bbq_sauce_and_place_it_in_the_basket": 4,
+      "pick_up_the_salad_dressing_and_place_it_in_the_basket": 4
+     }
+    }
+   },
+   "unique_scenes": 49,
+   "failures_by_level_all": {
+    "L2": 178,
+    "L1": 41,
+    "L3": 28
+   },
+   "failures_by_level_official": {
+    "L2": 113,
+    "unofficial": 97,
+    "L1": 21,
+    "L3": 16
+   },
+   "failures_by_task": {
+    "pick_up_the_alphabet_soup_and_place_it_in_the_basket": 39,
+    "pick_up_the_bbq_sauce_and_place_it_in_the_basket": 36,
+    "pick_up_the_butter_and_place_it_in_the_basket": 27,
+    "pick_up_the_chocolate_pudding_and_place_it_in_the_basket": 22,
+    "pick_up_the_cream_cheese_and_place_it_in_the_basket": 18,
+    "pick_up_the_ketchup_and_place_it_in_the_basket": 21,
+    "pick_up_the_milk_and_place_it_in_the_basket": 12,
+    "pick_up_the_orange_juice_and_place_it_in_the_basket": 18,
+    "pick_up_the_salad_dressing_and_place_it_in_the_basket": 19,
+    "pick_up_the_tomato_sauce_and_place_it_in_the_basket": 35
+   }
+  },
+  "sft_mix": {
+   "nominal_frames": 66984,
+   "recovery_frames": 25359,
+   "recovery_episodes": 123,
+   "recovery_frame_share": 0.27461745882200056
+  },
+  "rsr": {
+   "pi0": {
+    "seeds": 1,
+    "rsr": 0.21923076923076923,
+    "per_seed": [
+     0.219
+    ],
+    "sd": 0.0,
+    "by_level_all": {
+     "L1": {
+      "rate": 0.34,
+      "n": 50
+     },
+     "L2": {
+      "rate": 0.19047619047619047,
+      "n": 210
+     }
+    },
+    "by_level_official": {
+     "L1": {
+      "rate": 0.225,
+      "n": 40
+     },
+     "L2": {
+      "rate": 0.18666666666666668,
+      "n": 150
+     }
+    }
+   },
+   "pi1nom": {
+    "seeds": 1,
+    "rsr": 0.2,
+    "per_seed": [
+     0.2
+    ],
+    "sd": 0.0,
+    "by_level_all": {
+     "L1": {
+      "rate": 0.36,
+      "n": 50
+     },
+     "L2": {
+      "rate": 0.1619047619047619,
+      "n": 210
+     }
+    },
+    "by_level_official": {
+     "L1": {
+      "rate": 0.25,
+      "n": 40
+     },
+     "L2": {
+      "rate": 0.14,
+      "n": 150
+     }
+    }
+   },
+   "demo_only": {
+    "seeds": 1,
+    "rsr": 0.17307692307692307,
+    "per_seed": [
+     0.173
+    ],
+    "sd": 0.0,
+    "by_level_all": {
+     "L1": {
+      "rate": 0.34,
+      "n": 50
+     },
+     "L2": {
+      "rate": 0.13333333333333333,
+      "n": 210
+     }
+    },
+    "by_level_official": {
+     "L1": {
+      "rate": 0.225,
+      "n": 40
+     },
+     "L2": {
+      "rate": 0.11333333333333333,
+      "n": 150
+     }
+    }
+   },
+   "random": {
+    "seeds": 1,
+    "rsr": 0.36153846153846153,
+    "per_seed": [
+     0.362
+    ],
+    "sd": 0.0,
+    "by_level_all": {
+     "L1": {
+      "rate": 0.42,
+      "n": 50
+     },
+     "L2": {
+      "rate": 0.3476190476190476,
+      "n": 210
+     }
+    },
+    "by_level_official": {
+     "L1": {
+      "rate": 0.325,
+      "n": 40
+     },
+     "L2": {
+      "rate": 0.32,
+      "n": 150
+     }
+    }
+   },
+   "comp": {
+    "seeds": 1,
+    "rsr": 0.35384615384615387,
+    "per_seed": [
+     0.354
+    ],
+    "sd": 0.0,
+    "by_level_all": {
+     "L1": {
+      "rate": 0.48,
+      "n": 50
+     },
+     "L2": {
+      "rate": 0.3238095238095238,
+      "n": 210
+     }
+    },
+    "by_level_official": {
+     "L1": {
+      "rate": 0.4,
+      "n": 40
+     },
+     "L2": {
+      "rate": 0.28,
+      "n": 150
+     }
+    }
+   },
+   "goal": {
+    "seeds": 1,
+    "rsr": 0.2423076923076923,
+    "per_seed": [
+     0.242
+    ],
+    "sd": 0.0,
+    "by_level_all": {
+     "L1": {
+      "rate": 0.34,
+      "n": 50
+     },
+     "L2": {
+      "rate": 0.21904761904761905,
+      "n": 210
+     }
+    },
+    "by_level_official": {
+     "L1": {
+      "rate": 0.225,
+      "n": 40
+     },
+     "L2": {
+      "rate": 0.18666666666666668,
+      "n": 150
+     }
+    }
+   }
+  },
+  "nominal": {
+   "pi0": {
+    "seeds": 1,
+    "sr": 0.886,
+    "per_seed": [
+     0.886
+    ],
+    "per_task": {
+     "pick_up_the_alphabet_soup_and_place_it_in_the_basket": 0.92,
+     "pick_up_the_bbq_sauce_and_place_it_in_the_basket": 0.84,
+     "pick_up_the_butter_and_place_it_in_the_basket": 0.92,
+     "pick_up_the_chocolate_pudding_and_place_it_in_the_basket": 0.98,
+     "pick_up_the_cream_cheese_and_place_it_in_the_basket": 0.94,
+     "pick_up_the_ketchup_and_place_it_in_the_basket": 0.84,
+     "pick_up_the_milk_and_place_it_in_the_basket": 0.88,
+     "pick_up_the_orange_juice_and_place_it_in_the_basket": 0.86,
+     "pick_up_the_salad_dressing_and_place_it_in_the_basket": 0.92,
+     "pick_up_the_tomato_sauce_and_place_it_in_the_basket": 0.76
+    }
+   },
+   "pi1nom": {
+    "seeds": 1,
+    "sr": 0.944,
+    "per_seed": [
+     0.944
+    ],
+    "per_task": {
+     "pick_up_the_alphabet_soup_and_place_it_in_the_basket": 0.96,
+     "pick_up_the_bbq_sauce_and_place_it_in_the_basket": 0.92,
+     "pick_up_the_butter_and_place_it_in_the_basket": 0.96,
+     "pick_up_the_chocolate_pudding_and_place_it_in_the_basket": 0.98,
+     "pick_up_the_cream_cheese_and_place_it_in_the_basket": 1.0,
+     "pick_up_the_ketchup_and_place_it_in_the_basket": 0.98,
+     "pick_up_the_milk_and_place_it_in_the_basket": 0.94,
+     "pick_up_the_orange_juice_and_place_it_in_the_basket": 0.88,
+     "pick_up_the_salad_dressing_and_place_it_in_the_basket": 0.98,
+     "pick_up_the_tomato_sauce_and_place_it_in_the_basket": 0.84
+    }
+   },
+   "demo_only": {
+    "seeds": 1,
+    "sr": 0.932,
+    "per_seed": [
+     0.932
+    ],
+    "per_task": {
+     "pick_up_the_alphabet_soup_and_place_it_in_the_basket": 1.0,
+     "pick_up_the_bbq_sauce_and_place_it_in_the_basket": 0.94,
+     "pick_up_the_butter_and_place_it_in_the_basket": 0.9,
+     "pick_up_the_chocolate_pudding_and_place_it_in_the_basket": 1.0,
+     "pick_up_the_cream_cheese_and_place_it_in_the_basket": 0.98,
+     "pick_up_the_ketchup_and_place_it_in_the_basket": 0.96,
+     "pick_up_the_milk_and_place_it_in_the_basket": 0.94,
+     "pick_up_the_orange_juice_and_place_it_in_the_basket": 0.9,
+     "pick_up_the_salad_dressing_and_place_it_in_the_basket": 1.0,
+     "pick_up_the_tomato_sauce_and_place_it_in_the_basket": 0.7
+    }
+   },
+   "random": {
+    "seeds": 1,
+    "sr": 0.946,
+    "per_seed": [
+     0.946
+    ],
+    "per_task": {
+     "pick_up_the_alphabet_soup_and_place_it_in_the_basket": 1.0,
+     "pick_up_the_bbq_sauce_and_place_it_in_the_basket": 0.88,
+     "pick_up_the_butter_and_place_it_in_the_basket": 1.0,
+     "pick_up_the_chocolate_pudding_and_place_it_in_the_basket": 0.98,
+     "pick_up_the_cream_cheese_and_place_it_in_the_basket": 0.98,
+     "pick_up_the_ketchup_and_place_it_in_the_basket": 0.98,
+     "pick_up_the_milk_and_place_it_in_the_basket": 0.92,
+     "pick_up_the_orange_juice_and_place_it_in_the_basket": 0.9,
+     "pick_up_the_salad_dressing_and_place_it_in_the_basket": 1.0,
+     "pick_up_the_tomato_sauce_and_place_it_in_the_basket": 0.82
+    }
+   },
+   "comp": {
+    "seeds": 1,
+    "sr": 0.942,
+    "per_seed": [
+     0.942
+    ],
+    "per_task": {
+     "pick_up_the_alphabet_soup_and_place_it_in_the_basket": 0.96,
+     "pick_up_the_bbq_sauce_and_place_it_in_the_basket": 0.92,
+     "pick_up_the_butter_and_place_it_in_the_basket": 0.96,
+     "pick_up_the_chocolate_pudding_and_place_it_in_the_basket": 1.0,
+     "pick_up_the_cream_cheese_and_place_it_in_the_basket": 1.0,
+     "pick_up_the_ketchup_and_place_it_in_the_basket": 0.98,
+     "pick_up_the_milk_and_place_it_in_the_basket": 0.88,
+     "pick_up_the_orange_juice_and_place_it_in_the_basket": 0.86,
+     "pick_up_the_salad_dressing_and_place_it_in_the_basket": 1.0,
+     "pick_up_the_tomato_sauce_and_place_it_in_the_basket": 0.86
+    }
+   },
+   "goal": {
+    "seeds": 1,
+    "sr": 0.906,
+    "per_seed": [
+     0.906
+    ],
+    "per_task": {
+     "pick_up_the_alphabet_soup_and_place_it_in_the_basket": 0.98,
+     "pick_up_the_bbq_sauce_and_place_it_in_the_basket": 0.84,
+     "pick_up_the_butter_and_place_it_in_the_basket": 1.0,
+     "pick_up_the_chocolate_pudding_and_place_it_in_the_basket": 1.0,
+     "pick_up_the_cream_cheese_and_place_it_in_the_basket": 1.0,
+     "pick_up_the_ketchup_and_place_it_in_the_basket": 0.88,
+     "pick_up_the_milk_and_place_it_in_the_basket": 0.9,
+     "pick_up_the_orange_juice_and_place_it_in_the_basket": 0.76,
+     "pick_up_the_salad_dressing_and_place_it_in_the_basket": 0.98,
+     "pick_up_the_tomato_sauce_and_place_it_in_the_basket": 0.72
+    }
+   }
+  },
+  "recovery_traj_per_nominal_task": {
+   "pick_up_the_alphabet_soup_and_place_it_in_the_basket": 29,
+   "pick_up_the_bbq_sauce_and_place_it_in_the_basket": 15,
+   "pick_up_the_butter_and_place_it_in_the_basket": 25,
+   "pick_up_the_chocolate_pudding_and_place_it_in_the_basket": 17,
+   "pick_up_the_cream_cheese_and_place_it_in_the_basket": 0,
+   "pick_up_the_ketchup_and_place_it_in_the_basket": 8,
+   "pick_up_the_milk_and_place_it_in_the_basket": 6,
+   "pick_up_the_orange_juice_and_place_it_in_the_basket": 2,
+   "pick_up_the_salad_dressing_and_place_it_in_the_basket": 1,
+   "pick_up_the_tomato_sauce_and_place_it_in_the_basket": 20
+  },
+  "forgetting": {
+   "comp vs pi1nom": {
+    "dNSR": -0.0020000000000000018,
+    "delta": {
+     "pick_up_the_alphabet_soup_and_place_it_in_the_basket": 0.0,
+     "pick_up_the_bbq_sauce_and_place_it_in_the_basket": 0.0,
+     "pick_up_the_butter_and_place_it_in_the_basket": 0.0,
+     "pick_up_the_chocolate_pudding_and_place_it_in_the_basket": 0.020000000000000018,
+     "pick_up_the_cream_cheese_and_place_it_in_the_basket": 0.0,
+     "pick_up_the_ketchup_and_place_it_in_the_basket": 0.0,
+     "pick_up_the_milk_and_place_it_in_the_basket": -0.05999999999999994,
+     "pick_up_the_orange_juice_and_place_it_in_the_basket": -0.020000000000000018,
+     "pick_up_the_salad_dressing_and_place_it_in_the_basket": 0.020000000000000018,
+     "pick_up_the_tomato_sauce_and_place_it_in_the_basket": 0.020000000000000018
+    },
+    "n_tasks": 10,
+    "n_drop": 2,
+    "n_gain": 3,
+    "n_drop_ge5pt": 1,
+    "drops_on_tasks_without_recovery_data": [],
+    "mean_delta_with_data": -0.002222222222222212,
+    "mean_delta_without_data": 0.0,
+    "mcnemar": {
+     "A_only": 19,
+     "B_only": 20,
+     "p": 1.0
+    }
+   },
+   "comp vs pi0": {
+    "dNSR": 0.05599999999999994,
+    "delta": {
+     "pick_up_the_alphabet_soup_and_place_it_in_the_basket": 0.039999999999999925,
+     "pick_up_the_bbq_sauce_and_place_it_in_the_basket": 0.08000000000000007,
+     "pick_up_the_butter_and_place_it_in_the_basket": 0.039999999999999925,
+     "pick_up_the_chocolate_pudding_and_place_it_in_the_basket": 0.020000000000000018,
+     "pick_up_the_cream_cheese_and_place_it_in_the_basket": 0.06000000000000005,
+     "pick_up_the_ketchup_and_place_it_in_the_basket": 0.14,
+     "pick_up_the_milk_and_place_it_in_the_basket": 0.0,
+     "pick_up_the_orange_juice_and_place_it_in_the_basket": 0.0,
+     "pick_up_the_salad_dressing_and_place_it_in_the_basket": 0.07999999999999996,
+     "pick_up_the_tomato_sauce_and_place_it_in_the_basket": 0.09999999999999998
+    },
+    "n_tasks": 10,
+    "n_drop": 0,
+    "n_gain": 8,
+    "n_drop_ge5pt": 0,
+    "drops_on_tasks_without_recovery_data": [],
+    "mean_delta_with_data": 0.055555555555555546,
+    "mean_delta_without_data": 0.06000000000000005,
+    "mcnemar": {
+     "A_only": 43,
+     "B_only": 15,
+     "p": 0.0003069470155465659
+    }
+   },
+   "random vs pi1nom": {
+    "dNSR": 0.0020000000000000018,
+    "delta": {
+     "pick_up_the_alphabet_soup_and_place_it_in_the_basket": 0.040000000000000036,
+     "pick_up_the_bbq_sauce_and_place_it_in_the_basket": -0.040000000000000036,
+     "pick_up_the_butter_and_place_it_in_the_basket": 0.040000000000000036,
+     "pick_up_the_chocolate_pudding_and_place_it_in_the_basket": 0.0,
+     "pick_up_the_cream_cheese_and_place_it_in_the_basket": -0.020000000000000018,
+     "pick_up_the_ketchup_and_place_it_in_the_basket": 0.0,
+     "pick_up_the_milk_and_place_it_in_the_basket": -0.019999999999999907,
+     "pick_up_the_orange_juice_and_place_it_in_the_basket": 0.020000000000000018,
+     "pick_up_the_salad_dressing_and_place_it_in_the_basket": 0.020000000000000018,
+     "pick_up_the_tomato_sauce_and_place_it_in_the_basket": -0.020000000000000018
+    },
+    "n_tasks": 10,
+    "n_drop": 4,
+    "n_gain": 4,
+    "n_drop_ge5pt": 0,
+    "drops_on_tasks_without_recovery_data": [
+     "pick_up_the_cream_cheese_and_place_it_in_the_basket"
+    ],
+    "mean_delta_with_data": 0.004444444444444461,
+    "mean_delta_without_data": -0.020000000000000018,
+    "mcnemar": {
+     "A_only": 20,
+     "B_only": 19,
+     "p": 1.0
+    }
+   },
+   "random vs pi0": {
+    "dNSR": 0.05999999999999994,
+    "delta": {
+     "pick_up_the_alphabet_soup_and_place_it_in_the_basket": 0.07999999999999996,
+     "pick_up_the_bbq_sauce_and_place_it_in_the_basket": 0.040000000000000036,
+     "pick_up_the_butter_and_place_it_in_the_basket": 0.07999999999999996,
+     "pick_up_the_chocolate_pudding_and_place_it_in_the_basket": 0.0,
+     "pick_up_the_cream_cheese_and_place_it_in_the_basket": 0.040000000000000036,
+     "pick_up_the_ketchup_and_place_it_in_the_basket": 0.14,
+     "pick_up_the_milk_and_place_it_in_the_basket": 0.040000000000000036,
+     "pick_up_the_orange_juice_and_place_it_in_the_basket": 0.040000000000000036,
+     "pick_up_the_salad_dressing_and_place_it_in_the_basket": 0.07999999999999996,
+     "pick_up_the_tomato_sauce_and_place_it_in_the_basket": 0.05999999999999994
+    },
+    "n_tasks": 10,
+    "n_drop": 0,
+    "n_gain": 9,
+    "n_drop_ge5pt": 0,
+    "drops_on_tasks_without_recovery_data": [],
+    "mean_delta_with_data": 0.062222222222222213,
+    "mean_delta_without_data": 0.040000000000000036,
+    "mcnemar": {
+     "A_only": 44,
+     "B_only": 14,
+     "p": 0.00010049669926914806
+    }
+   },
+   "goal vs pi1nom": {
+    "dNSR": -0.03799999999999992,
+    "delta": {
+     "pick_up_the_alphabet_soup_and_place_it_in_the_basket": 0.020000000000000018,
+     "pick_up_the_bbq_sauce_and_place_it_in_the_basket": -0.08000000000000007,
+     "pick_up_the_butter_and_place_it_in_the_basket": 0.040000000000000036,
+     "pick_up_the_chocolate_pudding_and_place_it_in_the_basket": 0.020000000000000018,
+     "pick_up_the_cream_cheese_and_place_it_in_the_basket": 0.0,
+     "pick_up_the_ketchup_and_place_it_in_the_basket": -0.09999999999999998,
+     "pick_up_the_milk_and_place_it_in_the_basket": -0.039999999999999925,
+     "pick_up_the_orange_juice_and_place_it_in_the_basket": -0.12,
+     "pick_up_the_salad_dressing_and_place_it_in_the_basket": 0.0,
+     "pick_up_the_tomato_sauce_and_place_it_in_the_basket": -0.12
+    },
+    "n_tasks": 10,
+    "n_drop": 5,
+    "n_gain": 3,
+    "n_drop_ge5pt": 4,
+    "drops_on_tasks_without_recovery_data": [],
+    "mean_delta_with_data": -0.04222222222222221,
+    "mean_delta_without_data": 0.0,
+    "mcnemar": {
+     "A_only": 14,
+     "B_only": 33,
+     "p": 0.007942726509483578
+    }
+   },
+   "goal vs pi0": {
+    "dNSR": 0.020000000000000018,
+    "delta": {
+     "pick_up_the_alphabet_soup_and_place_it_in_the_basket": 0.05999999999999994,
+     "pick_up_the_bbq_sauce_and_place_it_in_the_basket": 0.0,
+     "pick_up_the_butter_and_place_it_in_the_basket": 0.07999999999999996,
+     "pick_up_the_chocolate_pudding_and_place_it_in_the_basket": 0.020000000000000018,
+     "pick_up_the_cream_cheese_and_place_it_in_the_basket": 0.06000000000000005,
+     "pick_up_the_ketchup_and_place_it_in_the_basket": 0.040000000000000036,
+     "pick_up_the_milk_and_place_it_in_the_basket": 0.020000000000000018,
+     "pick_up_the_orange_juice_and_place_it_in_the_basket": -0.09999999999999998,
+     "pick_up_the_salad_dressing_and_place_it_in_the_basket": 0.05999999999999994,
+     "pick_up_the_tomato_sauce_and_place_it_in_the_basket": -0.040000000000000036
+    },
+    "n_tasks": 10,
+    "n_drop": 2,
+    "n_gain": 7,
+    "n_drop_ge5pt": 1,
+    "drops_on_tasks_without_recovery_data": [],
+    "mean_delta_with_data": 0.015555555555555545,
+    "mean_delta_without_data": 0.06000000000000005,
+    "mcnemar": {
+     "A_only": 40,
+     "B_only": 30,
+     "p": 0.2819789217936561
+    }
+   },
+   "demo_only vs pi1nom": {
+    "dNSR": -0.0119999999999999,
+    "delta": {
+     "pick_up_the_alphabet_soup_and_place_it_in_the_basket": 0.040000000000000036,
+     "pick_up_the_bbq_sauce_and_place_it_in_the_basket": 0.019999999999999907,
+     "pick_up_the_butter_and_place_it_in_the_basket": -0.05999999999999994,
+     "pick_up_the_chocolate_pudding_and_place_it_in_the_basket": 0.020000000000000018,
+     "pick_up_the_cream_cheese_and_place_it_in_the_basket": -0.020000000000000018,
+     "pick_up_the_ketchup_and_place_it_in_the_basket": -0.020000000000000018,
+     "pick_up_the_milk_and_place_it_in_the_basket": 0.0,
+     "pick_up_the_orange_juice_and_place_it_in_the_basket": 0.020000000000000018,
+     "pick_up_the_salad_dressing_and_place_it_in_the_basket": 0.020000000000000018,
+     "pick_up_the_tomato_sauce_and_place_it_in_the_basket": -0.14
+    },
+    "n_tasks": 10,
+    "n_drop": 4,
+    "n_gain": 5,
+    "n_drop_ge5pt": 2,
+    "drops_on_tasks_without_recovery_data": [
+     "pick_up_the_cream_cheese_and_place_it_in_the_basket"
+    ],
+    "mean_delta_with_data": -0.011111111111111108,
+    "mean_delta_without_data": -0.020000000000000018,
+    "mcnemar": {
+     "A_only": 15,
+     "B_only": 21,
+     "p": 0.40503224614076316
+    }
+   },
+   "demo_only vs pi0": {
+    "dNSR": 0.04600000000000004,
+    "delta": {
+     "pick_up_the_alphabet_soup_and_place_it_in_the_basket": 0.07999999999999996,
+     "pick_up_the_bbq_sauce_and_place_it_in_the_basket": 0.09999999999999998,
+     "pick_up_the_butter_and_place_it_in_the_basket": -0.020000000000000018,
+     "pick_up_the_chocolate_pudding_and_place_it_in_the_basket": 0.020000000000000018,
+     "pick_up_the_cream_cheese_and_place_it_in_the_basket": 0.040000000000000036,
+     "pick_up_the_ketchup_and_place_it_in_the_basket": 0.12,
+     "pick_up_the_milk_and_place_it_in_the_basket": 0.05999999999999994,
+     "pick_up_the_orange_juice_and_place_it_in_the_basket": 0.040000000000000036,
+     "pick_up_the_salad_dressing_and_place_it_in_the_basket": 0.07999999999999996,
+     "pick_up_the_tomato_sauce_and_place_it_in_the_basket": -0.06000000000000005
+    },
+    "n_tasks": 10,
+    "n_drop": 2,
+    "n_gain": 8,
+    "n_drop_ge5pt": 1,
+    "drops_on_tasks_without_recovery_data": [],
+    "mean_delta_with_data": 0.04666666666666665,
+    "mean_delta_without_data": 0.040000000000000036,
+    "mcnemar": {
+     "A_only": 45,
+     "B_only": 22,
+     "p": 0.006741447363103126
+    }
+   }
+  }
+ },
+ "goal": {
+  "audit": {
+   "7": {
+    "n": 300,
+    "successes": 244,
+    "failures": 56,
+    "entries": 168,
+    "by_task_fail": {
+     "open_the_middle_drawer_of_the_cabinet": 5,
+     "open_the_top_drawer_and_put_the_bowl_inside": 2,
+     "push_the_plate_to_the_front_of_the_stove": 5,
+     "put_the_bowl_on_the_plate": 5,
+     "put_the_bowl_on_the_stove": 0,
+     "put_the_bowl_on_top_of_the_cabinet": 1,
+     "put_the_cream_cheese_in_the_bowl": 18,
+     "put_the_wine_bottle_on_the_rack": 14,
+     "put_the_wine_bottle_on_top_of_the_cabinet": 5,
+     "turn_on_the_stove": 1
+    }
+   },
+   "8": {
+    "n": 300,
+    "successes": 244,
+    "failures": 56,
+    "entries": 168,
+    "by_task_fail": {
+     "open_the_middle_drawer_of_the_cabinet": 0,
+     "open_the_top_drawer_and_put_the_bowl_inside": 15,
+     "push_the_plate_to_the_front_of_the_stove": 3,
+     "put_the_bowl_on_the_plate": 4,
+     "put_the_bowl_on_the_stove": 0,
+     "put_the_bowl_on_top_of_the_cabinet": 0,
+     "put_the_cream_cheese_in_the_bowl": 18,
+     "put_the_wine_bottle_on_the_rack": 8,
+     "put_the_wine_bottle_on_top_of_the_cabinet": 7,
+     "turn_on_the_stove": 1
+    }
+   }
+  },
+  "d0": {
+   "episodes": 300,
+   "frames": 38240
+  },
+  "search": {
+   "precheck_drawn": 0,
+   "precheck_pi0_success": 0,
+   "failure_states": 168,
+   "arms": {
+    "random": {
+     "states": 168,
+     "candidates_scored_per_state": 232.0,
+     "candidates_scored_total": 38976,
+     "sim_verifications": 2688,
+     "verified_successes": 439,
+     "states_solved": 96,
+     "bank_trajectories": 282,
+     "sim_steps_verify": 836705,
+     "hit_rate": 0.16331845238095238,
+     "solve_rate": 0.5714285714285714,
+     "solved_by_level_all": {
+      "unk": 96
+     },
+     "solved_by_task": {
+      "open_the_middle_drawer_of_the_cabinet": 12,
+      "open_the_top_drawer_and_put_the_bowl_inside": 3,
+      "push_the_plate_to_the_front_of_the_stove": 14,
+      "put_the_bowl_on_the_plate": 9,
+      "put_the_bowl_on_top_of_the_cabinet": 2,
+      "put_the_cream_cheese_in_the_bowl": 31,
+      "put_the_wine_bottle_on_the_rack": 22,
+      "turn_on_the_stove": 3
+     },
+     "by_cut": {
+      "t075": {
+       "entries": 56,
+       "solved": 44,
+       "hits": 217
+      },
+      "t150": {
+       "entries": 56,
+       "solved": 34,
+       "hits": 145
+      },
+      "t225": {
+       "entries": 56,
+       "solved": 18,
+       "hits": 77
+      }
+     }
+    },
+    "wm_diverse": {
+     "states": 168,
+     "candidates_scored_per_state": 696.0,
+     "candidates_scored_total": 116928,
+     "sim_verifications": 2688,
+     "verified_successes": 653,
+     "states_solved": 99,
+     "bank_trajectories": 308,
+     "sim_steps_verify": 778217,
+     "hit_rate": 0.24293154761904762,
+     "solve_rate": 0.5892857142857143,
+     "solved_by_level_all": {
+      "unk": 99
+     },
+     "solved_by_task": {
+      "open_the_middle_drawer_of_the_cabinet": 10,
+      "open_the_top_drawer_and_put_the_bowl_inside": 4,
+      "push_the_plate_to_the_front_of_the_stove": 13,
+      "put_the_bowl_on_the_plate": 9,
+      "put_the_bowl_on_top_of_the_cabinet": 3,
+      "put_the_cream_cheese_in_the_bowl": 35,
+      "put_the_wine_bottle_on_the_rack": 22,
+      "turn_on_the_stove": 3
+     },
+     "by_cut": {
+      "t075": {
+       "entries": 56,
+       "solved": 43,
+       "hits": 346
+      },
+      "t150": {
+       "entries": 56,
+       "solved": 37,
+       "hits": 217
+      },
+      "t225": {
+       "entries": 56,
+       "solved": 19,
+       "hits": 90
+      }
+     }
+    }
+   },
+   "unique_scenes": 56,
+   "failures_by_level_all": {
+    "unk": 168
+   },
+   "failures_by_level_official": {
+    "unofficial": 168
+   },
+   "failures_by_task": {
+    "open_the_middle_drawer_of_the_cabinet": 15,
+    "open_the_top_drawer_and_put_the_bowl_inside": 6,
+    "push_the_plate_to_the_front_of_the_stove": 15,
+    "put_the_bowl_on_the_plate": 15,
+    "put_the_bowl_on_top_of_the_cabinet": 3,
+    "put_the_cream_cheese_in_the_bowl": 54,
+    "put_the_wine_bottle_on_the_rack": 42,
+    "put_the_wine_bottle_on_top_of_the_cabinet": 15,
+    "turn_on_the_stove": 3
+   }
+  },
+  "wm_critic_training": {
+   "entries_seed8": 168,
+   "candidates_per_entry": 32,
+   "sim_rollouts": 5376
+  },
+  "mixes": {
+   "rec_wm_s7": {
+    "max_traj": 282,
+    "segments": null,
+    "d0_anchors": 38240,
+    "recovery_anchors": 34078,
+    "recovery_share": 0.47122431483171545,
+    "selected_unique_entries": 99,
+    "selected_by_task": {
+     "put_the_wine_bottle_on_the_rack": 72,
+     "put_the_cream_cheese_in_the_bowl": 78,
+     "push_the_plate_to_the_front_of_the_stove": 41,
+     "open_the_middle_drawer_of_the_cabinet": 36,
+     "put_the_bowl_on_the_plate": 24,
+     "open_the_top_drawer_and_put_the_bowl_inside": 14,
+     "put_the_bowl_on_top_of_the_cabinet": 6,
+     "turn_on_the_stove": 11
+    },
+    "selected_by_cut": {
+     "t075": 139,
+     "t150": 104,
+     "t225": 39
+    }
+   },
+   "rec_wm_s8": {
+    "max_traj": 282,
+    "segments": null,
+    "d0_anchors": 38240,
+    "recovery_anchors": 33361,
+    "recovery_share": 0.46592924679822906,
+    "selected_unique_entries": 99,
+    "selected_by_task": {
+     "push_the_plate_to_the_front_of_the_stove": 36,
+     "put_the_cream_cheese_in_the_bowl": 78,
+     "put_the_wine_bottle_on_the_rack": 75,
+     "open_the_middle_drawer_of_the_cabinet": 36,
+     "turn_on_the_stove": 11,
+     "put_the_bowl_on_top_of_the_cabinet": 6,
+     "open_the_top_drawer_and_put_the_bowl_inside": 13,
+     "put_the_bowl_on_the_plate": 27
+    },
+    "selected_by_cut": {
+     "t150": 101,
+     "t225": 43,
+     "t075": 138
+    }
+   },
+   "rec_wm_s9": {
+    "max_traj": 282,
+    "segments": null,
+    "d0_anchors": 38240,
+    "recovery_anchors": 34234,
+    "recovery_share": 0.47236250241465905,
+    "selected_unique_entries": 99,
+    "selected_by_task": {
+     "put_the_wine_bottle_on_the_rack": 72,
+     "put_the_bowl_on_the_plate": 27,
+     "push_the_plate_to_the_front_of_the_stove": 38,
+     "put_the_cream_cheese_in_the_bowl": 80,
+     "turn_on_the_stove": 11,
+     "open_the_middle_drawer_of_the_cabinet": 35,
+     "open_the_top_drawer_and_put_the_bowl_inside": 14,
+     "put_the_bowl_on_top_of_the_cabinet": 5
+    },
+    "selected_by_cut": {
+     "t225": 40,
+     "t075": 138,
+     "t150": 104
+    }
+   },
+   "rec_rand_s7": {
+    "max_traj": 282,
+    "segments": null,
+    "d0_anchors": 38240,
+    "recovery_anchors": 34554,
+    "recovery_share": 0.4746819792840069,
+    "selected_unique_entries": 96,
+    "selected_by_task": {
+     "put_the_wine_bottle_on_the_rack": 71,
+     "put_the_cream_cheese_in_the_bowl": 72,
+     "push_the_plate_to_the_front_of_the_stove": 37,
+     "open_the_middle_drawer_of_the_cabinet": 44,
+     "put_the_bowl_on_the_plate": 30,
+     "open_the_top_drawer_and_put_the_bowl_inside": 10,
+     "turn_on_the_stove": 12,
+     "put_the_bowl_on_top_of_the_cabinet": 6
+    },
+    "selected_by_cut": {
+     "t075": 140,
+     "t150": 96,
+     "t225": 46
+    }
+   },
+   "rec_rand_s8": {
+    "max_traj": 282,
+    "segments": null,
+    "d0_anchors": 38240,
+    "recovery_anchors": 34554,
+    "recovery_share": 0.4746819792840069,
+    "selected_unique_entries": 96,
+    "selected_by_task": {
+     "push_the_plate_to_the_front_of_the_stove": 37,
+     "put_the_wine_bottle_on_the_rack": 71,
+     "put_the_cream_cheese_in_the_bowl": 72,
+     "put_the_bowl_on_the_plate": 30,
+     "open_the_middle_drawer_of_the_cabinet": 44,
+     "open_the_top_drawer_and_put_the_bowl_inside": 10,
+     "turn_on_the_stove": 12,
+     "put_the_bowl_on_top_of_the_cabinet": 6
+    },
+    "selected_by_cut": {
+     "t075": 140,
+     "t150": 96,
+     "t225": 46
+    }
+   },
+   "rec_rand_s9": {
+    "max_traj": 282,
+    "segments": null,
+    "d0_anchors": 38240,
+    "recovery_anchors": 34554,
+    "recovery_share": 0.4746819792840069,
+    "selected_unique_entries": 96,
+    "selected_by_task": {
+     "turn_on_the_stove": 12,
+     "push_the_plate_to_the_front_of_the_stove": 37,
+     "put_the_bowl_on_the_plate": 30,
+     "open_the_middle_drawer_of_the_cabinet": 44,
+     "put_the_wine_bottle_on_the_rack": 71,
+     "put_the_cream_cheese_in_the_bowl": 72,
+     "open_the_top_drawer_and_put_the_bowl_inside": 10,
+     "put_the_bowl_on_top_of_the_cabinet": 6
+    },
+    "selected_by_cut": {
+     "t075": 140,
+     "t225": 46,
+     "t150": 96
+    }
+   },
+   "f1_wm_s7": {
+    "max_traj": 36,
+    "segments": [
+     0
+    ],
+    "d0_anchors": 38240,
+    "recovery_anchors": 1718,
+    "recovery_share": 0.04299514490214725,
+    "selected_unique_entries": 36,
+    "selected_by_task": {
+     "put_the_wine_bottle_on_the_rack": 6,
+     "put_the_cream_cheese_in_the_bowl": 13,
+     "push_the_plate_to_the_front_of_the_stove": 6,
+     "open_the_middle_drawer_of_the_cabinet": 5,
+     "put_the_bowl_on_the_plate": 3,
+     "open_the_top_drawer_and_put_the_bowl_inside": 2,
+     "put_the_bowl_on_top_of_the_cabinet": 1
+    },
+    "selected_by_cut": {
+     "t075": 15,
+     "t150": 15,
+     "t225": 6
+    }
+   },
+   "f1_wm_s8": {
+    "max_traj": 36,
+    "segments": [
+     0
+    ],
+    "d0_anchors": 38240,
+    "recovery_anchors": 1672,
+    "recovery_share": 0.04189216275806775,
+    "selected_unique_entries": 36,
+    "selected_by_task": {
+     "push_the_plate_to_the_front_of_the_stove": 4,
+     "put_the_cream_cheese_in_the_bowl": 13,
+     "put_the_wine_bottle_on_the_rack": 10,
+     "open_the_middle_drawer_of_the_cabinet": 3,
+     "turn_on_the_stove": 1,
+     "put_the_bowl_on_top_of_the_cabinet": 1,
+     "open_the_top_drawer_and_put_the_bowl_inside": 1,
+     "put_the_bowl_on_the_plate": 3
+    },
+    "selected_by_cut": {
+     "t150": 12,
+     "t225": 7,
+     "t075": 17
+    }
+   },
+   "f1_rand_s7": {
+    "max_traj": 36,
+    "segments": [
+     0
+    ],
+    "d0_anchors": 38240,
+    "recovery_anchors": 1650,
+    "recovery_share": 0.041363750313361744,
+    "selected_unique_entries": 36,
+    "selected_by_task": {
+     "put_the_wine_bottle_on_the_rack": 8,
+     "put_the_cream_cheese_in_the_bowl": 11,
+     "push_the_plate_to_the_front_of_the_stove": 7,
+     "open_the_middle_drawer_of_the_cabinet": 6,
+     "put_the_bowl_on_the_plate": 3,
+     "open_the_top_drawer_and_put_the_bowl_inside": 1
+    },
+    "selected_by_cut": {
+     "t075": 18,
+     "t150": 10,
+     "t225": 8
+    }
+   }
+  },
+  "results": {
+   "M0": {
+    "successes": 85,
+    "per_task": {
+     "open_the_middle_drawer_of_the_cabinet": 10,
+     "open_the_top_drawer_and_put_the_bowl_inside": 9,
+     "push_the_plate_to_the_front_of_the_stove": 5,
+     "put_the_bowl_on_the_plate": 10,
+     "put_the_bowl_on_the_stove": 9,
+     "put_the_bowl_on_top_of_the_cabinet": 9,
+     "put_the_cream_cheese_in_the_bowl": 9,
+     "put_the_wine_bottle_on_the_rack": 5,
+     "put_the_wine_bottle_on_top_of_the_cabinet": 9,
+     "turn_on_the_stove": 10
+    }
+   },
+   "Original": {
+    "per_seed": {
+     "7": 82,
+     "8": 77,
+     "9": 79
+    },
+    "mean": 79.33333333333333,
+    "per_task": {
+     "open_the_middle_drawer_of_the_cabinet": 9.666666666666666,
+     "open_the_top_drawer_and_put_the_bowl_inside": 8.0,
+     "push_the_plate_to_the_front_of_the_stove": 4.0,
+     "put_the_bowl_on_the_plate": 8.666666666666666,
+     "put_the_bowl_on_the_stove": 9.666666666666666,
+     "put_the_bowl_on_top_of_the_cabinet": 9.0,
+     "put_the_cream_cheese_in_the_bowl": 7.0,
+     "put_the_wine_bottle_on_the_rack": 4.0,
+     "put_the_wine_bottle_on_top_of_the_cabinet": 9.333333333333334,
+     "turn_on_the_stove": 10.0
+    }
+   },
+   "F0_wm": {
+    "per_seed": {
+     "7": 65,
+     "8": 76,
+     "9": 63
+    },
+    "mean": 68.0,
+    "per_task": {
+     "open_the_middle_drawer_of_the_cabinet": 5.0,
+     "open_the_top_drawer_and_put_the_bowl_inside": 7.0,
+     "push_the_plate_to_the_front_of_the_stove": 7.0,
+     "put_the_bowl_on_the_plate": 7.0,
+     "put_the_bowl_on_the_stove": 6.666666666666667,
+     "put_the_bowl_on_top_of_the_cabinet": 7.666666666666667,
+     "put_the_cream_cheese_in_the_bowl": 8.0,
+     "put_the_wine_bottle_on_the_rack": 3.0,
+     "put_the_wine_bottle_on_top_of_the_cabinet": 7.666666666666667,
+     "turn_on_the_stove": 9.0
+    }
+   },
+   "F0_random": {
+    "per_seed": {
+     "7": 67,
+     "8": 67,
+     "9": 69
+    },
+    "mean": 67.66666666666667,
+    "per_task": {
+     "open_the_middle_drawer_of_the_cabinet": 6.333333333333333,
+     "open_the_top_drawer_and_put_the_bowl_inside": 9.0,
+     "push_the_plate_to_the_front_of_the_stove": 6.0,
+     "put_the_bowl_on_the_plate": 5.333333333333333,
+     "put_the_bowl_on_the_stove": 8.333333333333334,
+     "put_the_bowl_on_top_of_the_cabinet": 7.0,
+     "put_the_cream_cheese_in_the_bowl": 9.0,
+     "put_the_wine_bottle_on_the_rack": 0.6666666666666666,
+     "put_the_wine_bottle_on_top_of_the_cabinet": 6.333333333333333,
+     "turn_on_the_stove": 9.666666666666666
+    }
+   },
+   "F1_wm": {
+    "per_seed": {
+     "7": 58,
+     "8": 69
+    },
+    "mean": 63.5,
+    "per_task": {
+     "open_the_middle_drawer_of_the_cabinet": 7.0,
+     "open_the_top_drawer_and_put_the_bowl_inside": 7.0,
+     "push_the_plate_to_the_front_of_the_stove": 7.5,
+     "put_the_bowl_on_the_plate": 4.0,
+     "put_the_bowl_on_the_stove": 8.5,
+     "put_the_bowl_on_top_of_the_cabinet": 7.0,
+     "put_the_cream_cheese_in_the_bowl": 2.5,
+     "put_the_wine_bottle_on_the_rack": 1.5,
+     "put_the_wine_bottle_on_top_of_the_cabinet": 8.5,
+     "turn_on_the_stove": 10.0
+    }
+   },
+   "F1_random": {
+    "per_seed": {
+     "7": 49
+    },
+    "mean": 49.0,
+    "per_task": {
+     "open_the_middle_drawer_of_the_cabinet": 4.0,
+     "open_the_top_drawer_and_put_the_bowl_inside": 7.0,
+     "push_the_plate_to_the_front_of_the_stove": 1.0,
+     "put_the_bowl_on_the_plate": 4.0,
+     "put_the_bowl_on_the_stove": 8.0,
+     "put_the_bowl_on_top_of_the_cabinet": 7.0,
+     "put_the_cream_cheese_in_the_bowl": 1.0,
+     "put_the_wine_bottle_on_the_rack": 0.0,
+     "put_the_wine_bottle_on_top_of_the_cabinet": 7.0,
+     "turn_on_the_stove": 10.0
+    }
+   }
+  },
+  "tasks_with_recovery_data_F0_wm": {
+   "open_the_middle_drawer_of_the_cabinet": true,
+   "open_the_top_drawer_and_put_the_bowl_inside": true,
+   "push_the_plate_to_the_front_of_the_stove": true,
+   "put_the_bowl_on_the_plate": true,
+   "put_the_bowl_on_the_stove": false,
+   "put_the_bowl_on_top_of_the_cabinet": true,
+   "put_the_cream_cheese_in_the_bowl": true,
+   "put_the_wine_bottle_on_the_rack": true,
+   "put_the_wine_bottle_on_top_of_the_cabinet": false,
+   "turn_on_the_stove": true
+  },
+  "tasks_solved_by_M0": [
+   "open_the_middle_drawer_of_the_cabinet",
+   "open_the_top_drawer_and_put_the_bowl_inside",
+   "put_the_bowl_on_the_plate",
+   "put_the_bowl_on_the_stove",
+   "put_the_bowl_on_top_of_the_cabinet",
+   "put_the_cream_cheese_in_the_bowl",
+   "put_the_wine_bottle_on_top_of_the_cabinet",
+   "turn_on_the_stove"
+  ],
+  "forgetting": {
+   "F0_wm vs Original": {
+    "seeds": [
+     7,
+     8,
+     9
+    ],
+    "delta_successes": -11.333333333333329,
+    "fixed": 34,
+    "broken": 68,
+    "mcnemar_p": 0.000986536808184603,
+    "per_task_delta": {
+     "open_the_middle_drawer_of_the_cabinet": -4.666666666666666,
+     "open_the_top_drawer_and_put_the_bowl_inside": -1.0,
+     "push_the_plate_to_the_front_of_the_stove": 3.0,
+     "put_the_bowl_on_the_plate": -1.666666666666666,
+     "put_the_bowl_on_the_stove": -2.999999999999999,
+     "put_the_bowl_on_top_of_the_cabinet": -1.333333333333333,
+     "put_the_cream_cheese_in_the_bowl": 1.0,
+     "put_the_wine_bottle_on_the_rack": -1.0,
+     "put_the_wine_bottle_on_top_of_the_cabinet": -1.666666666666667,
+     "turn_on_the_stove": -1.0
+    },
+    "n_drop": 8,
+    "n_gain": 2,
+    "delta_on_M0_solved_tasks": -13.333333333333332,
+    "n_drop_on_M0_solved_tasks": 7,
+    "drops_on_tasks_without_data": [
+     "put_the_bowl_on_the_stove",
+     "put_the_wine_bottle_on_top_of_the_cabinet"
+    ],
+    "delta_tasks_without_data": -4.666666666666666,
+    "delta_tasks_with_data": -6.666666666666665
+   },
+   "F0_wm vs M0": {
+    "seeds": [
+     7,
+     8,
+     9
+    ],
+    "delta_successes": -17.0,
+    "fixed": 22,
+    "broken": 73,
+    "mcnemar_p": 1.4629823583851448e-07,
+    "per_task_delta": {
+     "open_the_middle_drawer_of_the_cabinet": -5.0,
+     "open_the_top_drawer_and_put_the_bowl_inside": -2.0,
+     "push_the_plate_to_the_front_of_the_stove": 2.0,
+     "put_the_bowl_on_the_plate": -3.0,
+     "put_the_bowl_on_the_stove": -2.333333333333333,
+     "put_the_bowl_on_top_of_the_cabinet": -1.333333333333333,
+     "put_the_cream_cheese_in_the_bowl": -1.0,
+     "put_the_wine_bottle_on_the_rack": -2.0,
+     "put_the_wine_bottle_on_top_of_the_cabinet": -1.333333333333333,
+     "turn_on_the_stove": -1.0
+    },
+    "n_drop": 9,
+    "n_gain": 1,
+    "delta_on_M0_solved_tasks": -17.0,
+    "n_drop_on_M0_solved_tasks": 8,
+    "drops_on_tasks_without_data": [
+     "put_the_bowl_on_the_stove",
+     "put_the_wine_bottle_on_top_of_the_cabinet"
+    ],
+    "delta_tasks_without_data": -3.666666666666666,
+    "delta_tasks_with_data": -13.333333333333332
+   },
+   "F0_random vs Original": {
+    "seeds": [
+     7,
+     8,
+     9
+    ],
+    "delta_successes": -11.666666666666657,
+    "fixed": 31,
+    "broken": 66,
+    "mcnemar_p": 0.000490157948963301,
+    "per_task_delta": {
+     "open_the_middle_drawer_of_the_cabinet": -3.333333333333333,
+     "open_the_top_drawer_and_put_the_bowl_inside": 1.0,
+     "push_the_plate_to_the_front_of_the_stove": 2.0,
+     "put_the_bowl_on_the_plate": -3.333333333333333,
+     "put_the_bowl_on_the_stove": -1.3333333333333321,
+     "put_the_bowl_on_top_of_the_cabinet": -2.0,
+     "put_the_cream_cheese_in_the_bowl": 2.0,
+     "put_the_wine_bottle_on_the_rack": -3.3333333333333335,
+     "put_the_wine_bottle_on_top_of_the_cabinet": -3.000000000000001,
+     "turn_on_the_stove": -0.3333333333333339
+    },
+    "n_drop": 7,
+    "n_gain": 3,
+    "delta_on_M0_solved_tasks": -10.333333333333332,
+    "n_drop_on_M0_solved_tasks": 6,
+    "drops_on_tasks_without_data": [
+     "put_the_bowl_on_the_stove",
+     "put_the_wine_bottle_on_top_of_the_cabinet"
+    ],
+    "delta_tasks_without_data": -4.333333333333333,
+    "delta_tasks_with_data": -7.333333333333334
+   },
+   "F0_random vs M0": {
+    "seeds": [
+     7,
+     8,
+     9
+    ],
+    "delta_successes": -17.33333333333333,
+    "fixed": 20,
+    "broken": 72,
+    "mcnemar_p": 4.606251020832626e-08,
+    "per_task_delta": {
+     "open_the_middle_drawer_of_the_cabinet": -3.666666666666667,
+     "open_the_top_drawer_and_put_the_bowl_inside": 0.0,
+     "push_the_plate_to_the_front_of_the_stove": 1.0,
+     "put_the_bowl_on_the_plate": -4.666666666666667,
+     "put_the_bowl_on_the_stove": -0.6666666666666661,
+     "put_the_bowl_on_top_of_the_cabinet": -2.0,
+     "put_the_cream_cheese_in_the_bowl": 0.0,
+     "put_the_wine_bottle_on_the_rack": -4.333333333333333,
+     "put_the_wine_bottle_on_top_of_the_cabinet": -2.666666666666667,
+     "turn_on_the_stove": -0.3333333333333339
+    },
+    "n_drop": 7,
+    "n_gain": 1,
+    "delta_on_M0_solved_tasks": -14.0,
+    "n_drop_on_M0_solved_tasks": 6,
+    "drops_on_tasks_without_data": [
+     "put_the_bowl_on_the_stove",
+     "put_the_wine_bottle_on_top_of_the_cabinet"
+    ],
+    "delta_tasks_without_data": -3.333333333333333,
+    "delta_tasks_with_data": -14.0
+   },
+   "F1_wm vs Original": {
+    "seeds": [
+     7,
+     8
+    ],
+    "delta_successes": -16.0,
+    "fixed": 17,
+    "broken": 49,
+    "mcnemar_p": 0.0001014771231679886,
+    "per_task_delta": {
+     "open_the_middle_drawer_of_the_cabinet": -3.0,
+     "open_the_top_drawer_and_put_the_bowl_inside": -1.0,
+     "push_the_plate_to_the_front_of_the_stove": 3.5,
+     "put_the_bowl_on_the_plate": -4.0,
+     "put_the_bowl_on_the_stove": -1.5,
+     "put_the_bowl_on_top_of_the_cabinet": -2.0,
+     "put_the_cream_cheese_in_the_bowl": -4.0,
+     "put_the_wine_bottle_on_the_rack": -3.0,
+     "put_the_wine_bottle_on_top_of_the_cabinet": -1.0,
+     "turn_on_the_stove": 0.0
+    },
+    "n_drop": 8,
+    "n_gain": 1,
+    "delta_on_M0_solved_tasks": -16.5,
+    "n_drop_on_M0_solved_tasks": 7,
+    "drops_on_tasks_without_data": [
+     "put_the_bowl_on_the_stove",
+     "put_the_wine_bottle_on_top_of_the_cabinet"
+    ],
+    "delta_tasks_without_data": -2.5,
+    "delta_tasks_with_data": -13.5
+   },
+   "F1_wm vs M0": {
+    "seeds": [
+     7,
+     8
+    ],
+    "delta_successes": -21.5,
+    "fixed": 16,
+    "broken": 59,
+    "mcnemar_p": 6.114156572521501e-07,
+    "per_task_delta": {
+     "open_the_middle_drawer_of_the_cabinet": -3.0,
+     "open_the_top_drawer_and_put_the_bowl_inside": -2.0,
+     "push_the_plate_to_the_front_of_the_stove": 2.5,
+     "put_the_bowl_on_the_plate": -6.0,
+     "put_the_bowl_on_the_stove": -0.5,
+     "put_the_bowl_on_top_of_the_cabinet": -2.0,
+     "put_the_cream_cheese_in_the_bowl": -6.5,
+     "put_the_wine_bottle_on_the_rack": -3.5,
+     "put_the_wine_bottle_on_top_of_the_cabinet": -0.5,
+     "turn_on_the_stove": 0.0
+    },
+    "n_drop": 8,
+    "n_gain": 1,
+    "delta_on_M0_solved_tasks": -20.5,
+    "n_drop_on_M0_solved_tasks": 7,
+    "drops_on_tasks_without_data": [
+     "put_the_bowl_on_the_stove",
+     "put_the_wine_bottle_on_top_of_the_cabinet"
+    ],
+    "delta_tasks_without_data": -1.0,
+    "delta_tasks_with_data": -20.5
+   },
+   "F1_random vs Original": {
+    "seeds": [
+     7
+    ],
+    "delta_successes": -33.0,
+    "fixed": 3,
+    "broken": 36,
+    "mcnemar_p": 3.608874976634979e-08,
+    "per_task_delta": {
+     "open_the_middle_drawer_of_the_cabinet": -6.0,
+     "open_the_top_drawer_and_put_the_bowl_inside": -1.0,
+     "push_the_plate_to_the_front_of_the_stove": -4.0,
+     "put_the_bowl_on_the_plate": -5.0,
+     "put_the_bowl_on_the_stove": -2.0,
+     "put_the_bowl_on_top_of_the_cabinet": -2.0,
+     "put_the_cream_cheese_in_the_bowl": -4.0,
+     "put_the_wine_bottle_on_the_rack": -6.0,
+     "put_the_wine_bottle_on_top_of_the_cabinet": -3.0,
+     "turn_on_the_stove": 0.0
+    },
+    "n_drop": 9,
+    "n_gain": 0,
+    "delta_on_M0_solved_tasks": -23.0,
+    "n_drop_on_M0_solved_tasks": 7,
+    "drops_on_tasks_without_data": [
+     "put_the_bowl_on_the_stove",
+     "put_the_wine_bottle_on_top_of_the_cabinet"
+    ],
+    "delta_tasks_without_data": -5.0,
+    "delta_tasks_with_data": -28.0
+   },
+   "F1_random vs M0": {
+    "seeds": [
+     7
+    ],
+    "delta_successes": -36.0,
+    "fixed": 2,
+    "broken": 38,
+    "mcnemar_p": 1.4933903003111482e-09,
+    "per_task_delta": {
+     "open_the_middle_drawer_of_the_cabinet": -6.0,
+     "open_the_top_drawer_and_put_the_bowl_inside": -2.0,
+     "push_the_plate_to_the_front_of_the_stove": -4.0,
+     "put_the_bowl_on_the_plate": -6.0,
+     "put_the_bowl_on_the_stove": -1.0,
+     "put_the_bowl_on_top_of_the_cabinet": -2.0,
+     "put_the_cream_cheese_in_the_bowl": -8.0,
+     "put_the_wine_bottle_on_the_rack": -5.0,
+     "put_the_wine_bottle_on_top_of_the_cabinet": -2.0,
+     "turn_on_the_stove": 0.0
+    },
+    "n_drop": 9,
+    "n_gain": 0,
+    "delta_on_M0_solved_tasks": -27.0,
+    "n_drop_on_M0_solved_tasks": 7,
+    "drops_on_tasks_without_data": [
+     "put_the_bowl_on_the_stove",
+     "put_the_wine_bottle_on_top_of_the_cabinet"
+    ],
+    "delta_tasks_without_data": -3.0,
+    "delta_tasks_with_data": -33.0
+   }
+  },
+  "paper": {
+   "M0": 77,
+   "Original": 78,
+   "Recovery": 88,
+   "recovery_anchor_share": 0.041
+  },
+  "f1_status": {
+   "f1_wm_s7": true,
+   "f1_wm_s8": true,
+   "f1_wm_s9": false,
+   "f1_rand_s7": true,
+   "f1_rand_s8": false,
+   "f1_rand_s9": false
+  }
+ }
+}

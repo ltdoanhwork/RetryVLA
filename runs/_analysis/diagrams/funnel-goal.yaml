@@ -1,0 +1,37 @@
+slug: funnel-goal
+eyebrow: RetryVLA · LIBERO-Goal · 2610.05151 protocol · pi0 3B + LoRA
+title: "Data funnel: 300 audit rollouts -> 282 / 36 distilled trajectories -> val 79.3 -> 68.0 / 63.5"
+subtitle: "wm_diverse arm; the val metric is nominal-start success, so every drop here is forgetting"
+columns:
+  - name: AUDIT
+    nodes:
+      - {id: audit, icon: robot, title: "M0 audit 300 rollouts", subtitle: ["seed 7: 244 ok / 56 fail", "seed 8: same 56 -> WM / C^pi data"], kind: external}
+      - {id: ent, icon: alert, title: "168 entries (56 x 3 cuts)", subtitle: ["T/4 · T/2 · 3T/4 (t 75/150/225)", "no M0 pre-check"]}
+  - name: IMAGINE + VERIFY
+    nodes:
+      - {id: wm, icon: cube, title: "WM + C^pi: 696 scored / entry", subtitle: "117k imagined · pool 232"}
+      - {id: ver, icon: search, title: "16 sims / entry / arm", subtitle: ["2,688 verifications", "778k sim steps"]}
+      - {id: hits, icon: server, title: "653 verified successes", subtitle: ["hit 0.243 (random 0.163)", "99 / 168 entries solved (0.589)"], kind: storage}
+  - name: BANK + MIX
+    nodes:
+      - {id: bank, icon: database, title: "Bank 308 traj", subtitle: ["random 282 · cuts 50/36/14 %", "2 tasks: 0 traj"], kind: storage}
+      - {id: f0, icon: git-merge, title: "F0: 282 traj, all segments", subtitle: ["34.1k anchors = 47 % of mix", "covers 99 entries"], kind: bottleneck, note: "10x their 4.1 % share"}
+      - {id: f1, icon: git-merge, title: "F1: 36 traj, bridge only", subtitle: ["1.7k anchors = 4.3 % of mix", "share-matched to paper"]}
+  - name: DISTILL + RESULT
+    nodes:
+      - {id: d0, icon: file, title: "D0 300 demos · 38.2k anchors", subtitle: "uniform pooling", kind: external}
+      - {id: orig, icon: chart-line, title: "M0 85 · Original 79.3", subtitle: "M0 + 2k on D0 (3 seeds)"}
+      - {id: r0, icon: rocket, title: "F0 wm 68.0 · random 67.7", subtitle: ["-11.3 vs Original", "34 fixed / 68 broken (p 0.001)"], kind: bottleneck}
+      - {id: r1, icon: rocket, title: "F1 wm 63.5 (2 seeds)", subtitle: ["random 49 (1 seed)", "17 fixed / 49 broken"], kind: bottleneck}
+edges:
+  - {from: audit, to: ent, label: CUT}
+  - {from: ent, to: wm, label: SNAPSHOT}
+  - {from: wm, to: ver, label: TOP-16}
+  - {from: ver, to: hits, label: PASS, kind: neutral}
+  - {from: hits, to: bank, label: "<=4/ENTRY"}
+  - {from: bank, to: f0, label: "282"}
+  - {from: f0, to: f1, label: "36", dashed: true}
+  - {from: d0, to: orig, label: "+2K", dashed: true}
+  - {from: f0, to: r0, label: SFT, kind: pain}
+  - {from: f1, to: r1, label: SFT, kind: pain}
+legend: {neutral: "sim verification", pain: "nominal damage"}
