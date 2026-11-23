@@ -64,6 +64,16 @@
    "tmux": "rv_critv_r1",
    "args": "scripts.crit_rich_replay --src data/wm/verif_r1 --kind collect --no_exclude --cfg configs/exp/m2_collect.yaml --out data/critic3d/verif_r1 --workers 3",
    "since": "2026-11-23T08:30:54"
+  },
+  "92927808:0:rv_bot_goal": {
+   "tmux": "rv_bot_goal",
+   "args": "scripts/bot_goal_chain.sh (BoT / ForkCast Goal arms)",
+   "since": "2026-11-23T08:36:48"
+  },
+  "a3da0634:0:rv_critv_richsmoke": {
+   "tmux": "rv_critv_richsmoke",
+   "args": "retryvla.search.compare_arms configs/exp/goal_search.yaml goal.max_entries=1 m5b.arms=[random] m5b.budget=2 m5b.pool_size=16 m5b.num_shards=1 m5b.out_root=data/recovery/_critv_smoke m5b.verif_out=data/wm/_critv_smoke_verif m5b.rich_record=true m5b.rich_out=data/critic3d/_smoke_rich eval.n_workers=2 tracking.backend=none",
+   "since": "2026-11-23T08:40:28"
   }
  },
  "allow_only": {

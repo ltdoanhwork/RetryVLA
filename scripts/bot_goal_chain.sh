@@ -11,7 +11,7 @@ MODE=${1:-full}
 M0=runs/goal_rsi/m0_s7/ckpt_04000
 CPI=$(cat data/wm/goal_latest_critic.txt)
 if [ "$MODE" = smoke ]; then
-  D=data/bot/smoke_goal; R=runs/bot_goal_smoke; CX="--max_jobs 6 --max_steps 80"; EX="--max_jobs 6 --max_steps 120"
+  D=data/bot/smoke_goal; R=runs/bot_goal_smoke; CX="--max_jobs 8"; EX="--max_jobs 6 --max_steps 120"
   TX="--steps1 200 --steps2 300 --members 2"
 else
   D=data/bot/goal_m0; R=runs/bot_goal; CX=""; EX=""; TX=""
@@ -23,10 +23,10 @@ if [ ! -f $D/COLLECT_DONE ]; then
   python -m retryvla.baselines.bot.collect --suite goal --policy $M0 --out $D --policy_seeds 8 9 10 --workers 10 \
     --full_tokens $CX && touch $D/COLLECT_DONE || { echo "[bot] collect FAILED"; exit 1; }
 fi
-# 2) liveness ensemble + progress head + PCA basis (H 10, D 6; play data = our Goal WM's own training actions)
+# 2) liveness ensemble + progress head + PCA basis (H 10, D 6; play data = LIBERO-Goal train-split demos, as theirs)
 if [ ! -f $D/bot.pt ]; then
   python -m retryvla.baselines.bot.train --data $D --wm_link data/wm/goal_latest_wm.txt --out $D/bot.pt --horizon 10 \
-    --max_steps_ep 300 --play_roots data/wm/goal_collect $TX || { echo "[bot] train FAILED"; exit 1; }
+    --max_steps_ep 300 --play_goal_demos $TX || { echo "[bot] train FAILED"; exit 1; }
 fi
 BOT=$D/bot.pt
 run() {  # name ckpt json

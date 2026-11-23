@@ -1233,3 +1233,24 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
     started via tmux_start.sh, claims registered.
   - `scripts/shells/keep_953bb534` created, so goal_f1_chain2 keeps 953bb534 after F1.
   - Diagnostic D1: orig_s7 cast to bf16 = 83 / 100 (fp32 82), so bf16 final ckpts are not the cause of the F1 drop.
+
+## Back on Track + ForkCast-style test-time arms, ops log 2026-11-23 (design: PLAN "Back on Track + ForkCast-style"; doc: docs/related_work/BACK_ON_TRACK_REPRO.md)
+- 04:55 UTC: `scripts/shells/keep_953bb534` created (user request), so goal_f1_chain2's finish() keeps 953bb534 alive
+  after F1. 953bb534 belongs to the Goal-improvement campaign (coordinator 08:05 UTC): BoT never uses its GPUs.
+- 08:05 UTC coordinator: Goal protocol first, ForkCast-style arm added, LIBERO-Recover secondary, one 1-GPU shell OK.
+- 08:08 UTC: requested `92927808` `vla_RetryVLA_DoanhLT_bot1g` (user account, -w IAS_SAMMerge,
+  scripts/shells/retryvla_shell_bot1g.yaml = 1-GPU template, new description). RUNNING, envcheck OK (video decode, sim
+  50 steps 0.94 s). Registered in shells.json allow_only / share_ok. KILL when the BoT queue is done.
+- CPU unit test (fake policy, Goal WM + C^pi): all 4 wrappers run; batch-1 CPU bench 0.41 s / 1,280 plans.
+- Smoke on 92927808 (8 collection episodes, 6 val episodes / arm, `runs/bot_goal_smoke`): collect -> train -> BoT (C^pi),
+  ForkCast (C^pi / progress), BoT (liveness, forced trigger t_c -100) all end-to-end. A100 batch-1 latency: monitor
+  16-40 ms, BoT planning cycle (256 x 5 = 1,280 ten-step plans) 100-137 ms, ForkCast cycle (5 candidates x 50 steps)
+  34 ms, pi0 3B chunk 0.33-0.38 s. First smoke bug: train_progress with 0 successes (fallback added).
+- Deviation logged before the full run: PCA play data = LIBERO-Goal TRAIN-split teleop demos (their play data is the
+  LIBERO-Goal demos) instead of our WM's goal_collect actions (k = 8 of 60 dims on demos alone).
+- 08:36 UTC: full chain `rv_bot_goal` (scripts/bot_goal_chain.sh) launched on 92927808 GPU0; local watchdog
+  `rv_bot_watch` (scripts/bot_watch.py, 10-min probes, <= 3 relaunches, re-asserts claim `92927808:0:rv_bot_goal`,
+  runs scripts/analyze_bot_goal.py at CHAIN_DONE). Queue: collect 900 M0 rollouts (train inits x seeds 8-10) ->
+  liveness + progress + PCA -> 8 val evals (m0_bot_cpi, m0_bot_liv, m0_fc_cpi, m0_fc_prog, orig7_bot_{cpi,liv},
+  recwm7_bot_{cpi,liv}). ETA ~11:30-12:30 UTC. Secondary (LIBERO-Recover Spatial / Object) is queued after it on the
+  same shell.

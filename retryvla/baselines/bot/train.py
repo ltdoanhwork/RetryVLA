@@ -29,7 +29,23 @@ from retryvla.utils import setup_logging
 log = logging.getLogger("bot.train")
 
 
-def action_windows(roots, H: int, play_roots=(), max_play: int = 20000, seed: int = 0) -> np.ndarray:
+def goal_demo_windows(H: int, split_name: str = "goal_rsi_v1", part: str = "train") -> list:
+    """LIBERO-Goal teleop demos of the TRAIN split (their play data: LIBERO-Goal demonstrations), H-step windows."""
+    import h5py
+
+    sp = json.loads((REPO_ROOT / f"data/splits/{split_name}.json").read_text())
+    W = []
+    for v in sp["tasks"].values():
+        with h5py.File(v["hdf5"]) as h:
+            for d in v[part]:
+                a = np.asarray(h[f"data/demo_{d}"]["actions"])[:, :6]
+                for s in range(0, len(a) - H + 1, 5):
+                    W.append(a[s:s + H].reshape(-1))
+    return W
+
+
+def action_windows(roots, H: int, play_roots=(), max_play: int = 20000, seed: int = 0,
+                   goal_demos: bool = False) -> np.ndarray:
     W = []
     for r in roots:
         for f in sorted(glob.glob(f"{REPO_ROOT / r}/part_*.pt")):
@@ -38,6 +54,8 @@ def action_windows(roots, H: int, play_roots=(), max_play: int = 20000, seed: in
                 for s in range(0, len(a) - H + 1, 5):
                     W.append(a[s:s + H].reshape(-1))
     n_roll = len(W)
+    if goal_demos:
+        W += goal_demo_windows(H)
     rng = np.random.default_rng(seed)
     P = []
     for r in play_roots:
@@ -72,6 +90,7 @@ def main():
     ap.add_argument("--out", required=True)
     ap.add_argument("--horizon", type=int, required=True, help="planner horizon H (env steps)")
     ap.add_argument("--play_roots", nargs="*", default=[])
+    ap.add_argument("--play_goal_demos", action="store_true", help="play data = LIBERO-Goal train-split demos")
     ap.add_argument("--gamma", type=float, default=0.993)
     ap.add_argument("--stride", type=int, default=5)
     ap.add_argument("--steps1", type=int, default=8000)
@@ -98,7 +117,7 @@ def main():
     prog, pm = train_progress(fs, norm, dev, val_eps=val_eps, seed=a.seed)
     m.update(pm)
     log.info("progress head: %s", json.dumps(pm))
-    W = action_windows(a.data, a.horizon, a.play_roots)
+    W = action_windows(a.data, a.horizon, a.play_roots, goal_demos=a.play_goal_demos)
     V, lam, k = pca_basis(W)
     log.info("PCA basis: k=%d of %d dims explain 98%% (H=%d, D=6)", k, W.shape[1], a.horizon)
     out = REPO_ROOT / a.out
@@ -106,7 +125,7 @@ def main():
     torch.save({"ensemble": ens.cpu().state_dict(), "progress": prog.state_dict(), "n_members": a.members, "n_tok": fs.x_zp.shape[1],
                 "dim": fs.x_zp.shape[2], "vocab": fs.vocab, "gamma": a.gamma, "stride": a.stride,
                 "wm_ckpt": wm_ck, "pca_V": V, "pca_lam": lam, "pca_k": k, "horizon": a.horizon,
-                "metrics": m, "data": a.data, "play_roots": a.play_roots,
+                "metrics": m, "data": a.data, "play_roots": a.play_roots, "play_goal_demos": a.play_goal_demos,
                 "n_episodes": len(fs.ep_scene), "sr": float(fs.ep_success.mean())}, out)
     (out.with_suffix(".json")).write_text(json.dumps({"metrics": m, "pca_k": k, "n_episodes": len(fs.ep_scene),
                                                      "sr": float(fs.ep_success.mean()), "data": a.data}, indent=1))

@@ -174,6 +174,8 @@ def train_progress(fs: "FrameSet", norm, dev, steps: int = 6000, lr: float = 3e-
     opt = torch.optim.AdamW(head.parameters(), lr=lr, weight_decay=1e-4)
     Z, Q, T, Y = zp.to(dev), q.to(dev), fs.tid.to(dev), torch.as_tensor(lab, device=dev)
     idx = np.nonzero(use)[0]
+    if len(idx) == 0:  # no successful episode (smoke runs only): fall back to every frame
+        idx = np.arange(len(ep))
     for s in range(steps):
         b = torch.as_tensor(rng.choice(idx, bs), device=dev)
         loss = Fn.mse_loss(head(Z[b], Q[b], T[b]), Y[b])
