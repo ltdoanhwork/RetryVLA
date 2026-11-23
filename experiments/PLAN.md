@@ -805,3 +805,78 @@ fairness note). ForkCast note: `docs/related_work/notes/2610.18650.md` section 9
 - Compute: one RetryVLA 1-GPU shell 92927808 (`vla_RetryVLA_DoanhLT_bot1g`, user account, coordinator OK); 953bb534
   stays with the Goal-improvement campaign. Goal chain ≈ 1 h collection + 0.3 h training + 8 evals x ~0.2-0.4 h.
   Spatial secondary ≈ 15-20 GPU-h. Shell is killed when the queue is done.
+
+## Goal campaign: how far can RetryVLA data improve pi0 on the 2610.05151 protocol (user priority 2026-11-23 08:05 UTC; written BEFORE any stage-1b / 2 / 3 / 4 / 5 result)
+Reference numbers (val, 100 scenes): M0 85; Original 82 / 77 / 79 (79.3); F0 (47 % recovery anchors) wm 68.0,
+random 67.7; paper Original 78 -> Recovery 88.
+Interim F1 (4 % bridge-only anchors, before this note): wm 58 / 69 / -, random 49 / - / -, i.e. worse than F0.
+Artifact check D1 (done before this note): orig_s7 cast to bf16 = 83 vs 82 fp32, so the bf16 final ckpt is not the
+cause. f1_wm_s8 (no resume, 69) and f1_wm_s7 (2 resumes, 58) are both low, so the resume path is not the main cause
+either (it stays a logged deviation). F1 is analysed when complete (rules in RESULTS "main comparison").
+Compute: 953bb534 (2 GPUs) + second shell 8f473147 (vla_RetryVLA_DoanhLT_2g_b, requested 2026-11-23 08:25; queue > 12 h).
+Common: their distillation recipe (M0 + 2k, warmup 200, cosine, D0 + bank pooled uniformly) unless a stage varies it.
+3 SFT seeds (7, 8, 9). Bootstrap = scene (or entry) x seed. Test split untouched until stage 5.
+
+**Stage 1b, own-failure RSR (diagnostic, idea-loop step 3).** Does recovery data teach recovery at all, while it costs
+nominal?
+- Eval set E8 = the 168 seed-8 fixed entries (M0 failures of the seed-8 audit; used for WM / C^pi training, never in
+  any SFT bank), 1 trial each. Restore by replaying M0's actions, then the policy acts alone for <= 300 steps.
+  `retryvla.eval.eval_goal_entries`.
+- Policies: M0, Original s7-9, rec_wm s7-9, rec_rand s7-9, F1 wm / random s7-9 (when done).
+- Reading:
+  - "data teaches recovery" iff mean RSR_E8(rec_wm) − RSR_E8(Original) >= +5 (CI > 0).
+  - Else: "the bank does not transfer to held-out own failures"; go to the generator / cut / label levers
+    (stages 2-4) with RSR_E8 as the co-primary metric.
+
+**Stage 2, CUT-1 lite (onset cut; docs/research/CUT_POINT_STUDY.md 4.4, reduced to the `onset` / `pre_onset` rules).**
+- Onset scan (`retryvla.search.goal_onset`) on the 56 failed M0 rollouts of audit seed 7, and on seed 8 for
+  evaluation:
+  - backward 20-step grid, K = 8 M0 continuations, need 2;
+  - t_last = last point with >= 2 / 8, t_on = t_last + 20; never-recoverable rollouts excluded.
+- Bank: seed-7 onset entries, wm_diverse search (existing Goal WM / C^pi, 256 pool + 2 CEM, 16 verifications), then
+  36 bridges round-robin, bridge-only (= F1 share, ~4 %). Arm `onset` vs F1 `wm` (fixed T/4-T/2-3T/4) at equal data,
+  3 seeds.
+- Eval: nominal val (their protocol) + RSR on E8 ∪ E8on (seed-8 onset states, 1 trial).
+- Rules:
+  - "onset helps": RSR(onset) − RSR(F1 wm) >= +5 (CI > 0) AND nominal(onset) >= nominal(F1 wm) − 2.
+  - "nominal restored": nominal(onset) >= Original − 2.
+  - "cut is not the bottleneck": |Δ RSR| < 3 and |Δ nominal| < 3.
+  - pre_onset is a secondary 1-seed arm only if onset helps.
+
+**Stage 3, SMOOTH-V on Goal (docs/reviews/AGENTIC_SMOOTHNESS_REVIEW.md 5).** On the stage-2 winner bank:
+- `smooth_select` (lowest-jerk verified bridge per entry first);
+- `smooth_reverify` (Savitzky-Golay (11, 3) on the bridge + 5-step handoff blend, replay from the snapshot, keep
+  only re-verified successes, refill from the same entry).
+- Gate G0: re-verify yield >= 70 %.
+- Rule: "smoothness helps" iff nominal >= +2 or RSR >= +3 vs the unsmoothed bank (CI > 0, the other within −2).
+
+**Stage 4, training levers (Phase 2) on the best bank so far, each vs that bank's default:**
+- (a) share sweep 1 / 2 / 4 / 8 % (9 / 18 / 36 / 72 bridges), 1 seed first, the 2 best x 3 seeds;
+- (b) loss masking = their validity mask: chunk targets beyond the bridge end are masked (no M0-continuation
+  actions as targets), noisy action tokens too;
+- (c) segment choice: bridge + continuation vs bridge only at equal anchors;
+- (d) nominal replay / preservation: action-matching L2 to M0's own chunk on D0 states (weight 0.5) vs none.
+- Selection rule: maximise nominal val subject to RSR_E8 >= best-so-far − 2; ties -> fewer recovery anchors.
+- Pre-registered success: nominal >= Original + 5 (CI > 0) = "matches theirs"; nominal >= Original and
+  RSR_E8 >= +10 = "recovery without nominal cost".
+
+**Stage 5, final:**
+- Frozen best recipe x 3 seeds plus Original x 3 seeds on the 100 TEST scenes (once), vs the paper's Recovery 88
+  (cross-paper reference only).
+- RSR on a fresh seed-9 audit's failure entries (held out from everything), both cut rules.
+
+**Cost / ETA (2 shells, 4 GPUs):**
+
+| stage | cost | done by (UTC) |
+|---|---|---|
+| F1 | - | 11-23 ~11:30 |
+| 1b | ~15 GPU-min per policy | 11-23 ~14:00 |
+| 2 onset scans | ~2-4 h per audit seed on 1 GPU | 11-23 ~13:00 |
+| 2 search | ~1.5 h | - |
+| 2 SFT 3 seeds | ~3 h on 3 GPUs | 2 total 11-23 ~20:00 |
+| 3 | ~8 h | 11-24 ~06:00 |
+| 4 | ~20 runs x 2.8 h / 4 GPUs ≈ 14 h | 11-24 ~22:00 |
+| 5 | ~6 h | 11-25 ~06:00 |
+
+Every stage gets its RESULTS entry + reading + decision against these rules before the next stage's code / config
+is changed (deviations logged in NOTES).
