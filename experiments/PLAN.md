@@ -756,3 +756,52 @@ nothing launched. Queue: on 953bb534 after F1 and after the Back on Track evals;
      if the SFT arms are null.
   3. Only if rho(p^E, Delta) < 0.6: main arms. Otherwise run only C0 / K-U / K-T for the main-table row.
 - Review: idea-loop step 4 (`retryvla-idea-review`) after the measurement stage and again after the arms.
+
+## Back on Track + ForkCast-style test-time arms (user request 2026-11-23; coordinator re-prioritisation 08:05 UTC: LIBERO-Goal protocol FIRST; written BEFORE any result)
+Repro doc: `docs/related_work/BACK_ON_TRACK_REPRO.md` (method extraction of 2610.19579 + 2605.11479, every deviation,
+fairness note). ForkCast note: `docs/related_work/notes/2610.18650.md` section 9. Code: `retryvla/baselines/bot/`
+(collect, liveness, train), `retryvla/policy/bot.py` (`BackOnTrackPolicy`, `ForkCastPolicy`), opt-in hooks in
+`eval/{rollout,eval_goal,eval_recover,eval_nominal}.py` (default paths unchanged). Chain `scripts/bot_goal_chain.sh`.
+- Research question: on the 2610.05151 LIBERO-Goal protocol (pi0 3B M0 4k, 100 val scenes, seed 7, <= 300 steps,
+  replan 5), how much does test-time WM planning (Back on Track) or test-time WM selection (ForkCast-style) add to M0,
+  and how does that compare with distillation (Original / RetryVLA banks / F1) at its inference cost?
+- Hypothesis: small gain at best on this protocol (M0 already 85 / 100; nominal starts, not their perturbed starts;
+  our Goal WM is trained on failure-state bridges, not on M0 rollouts + play data): BoT(C^pi) Δ vs M0 in [-5, +5].
+  Back on Track reports +8.9 pt on perturbed LIBERO-Goal with pi0.5.
+- Arms (Goal, all paired on the same 100 val scenes and pi0 seeds; base trajectories are identical until a trigger):
+  1. M0 (existing, 85 / 100), Original s7-s9 (79.3), F0 RetryVLA `rec_wm` s7-s9 (68.0), F1 (other agent, when done).
+  2. **M0 + BoT (C^pi)**: monitor + planner value = 1 - 2 C^pi (our Goal critic, `goal_latest_critic`), labelled variant.
+  3. **M0 + BoT (liveness)**: their value, trained per their recipe on 900 on-policy M0 rollouts of the 300 TRAIN
+     inits (policy seeds 8 / 9 / 10).
+  4. **M0 + ForkCast-style (progress)**: Commit + 4 library primitives (retreat20, regrasp, reposition_0 / 180),
+     WM v1 (Goal) imagination to a common 50-step horizon, ForkCast progress head (pooled tokens, LN, 2-layer MLP;
+     label t / T on the same successful M0 rollouts), argmax with Commit winning ties, first decision at step 60.
+  5. **M0 + ForkCast-style (C^pi)**: scorer swap only.
+  6. Complementarity: Original s7 + BoT and RetryVLA `rec_wm` s7 + BoT (C^pi and liveness; the value stays
+     conditioned on M0, as their "filter on top of Filtered-BC"); F1-best + BoT when F1 lands.
+  Fixed hyper-parameters (theirs, NO tuning on val): ensemble 5, W = 3, eta_t = sigmoid(t_c 60, sigma 10) -> 0,
+  H = 10, h = 5, CEM 256 x 5 (= their 1,280 plans), 32 elites (unstated in the paper; ours), PCA 98 %, s = 0.6,
+  gripper = nominal, gamma 0.993. V-JEPA 2-AC: not on Goal (no Goal-trained adapter); WM v1 (Goal) only.
+- Secondary (after Goal, same shell): LIBERO-Recover Spatial test (dev, 560 eps) pi0 + BoT(liveness / C^pi),
+  pi1 s0-s2 + BoT(liveness on each pi1's own train rollouts), Object test pi0 + BoT (Object pi1 checkpoint was deleted
+  in a disk cleanup -> no Object pi1 + BoT), nominal Spatial for pi0 / pi1 + BoT. Same decision rules.
+- Metrics: Goal SR (/100) with Wilson CI; rescued / broken vs the base policy (their Table I metric); trigger rate on
+  base-failed vs base-succeeded scenes; inference cost per episode (VLA / monitor / planner GPU wall time, #WM rows,
+  #triggers) and batch-1 latency (`bot_bench`); RSR overall + L1-L3 on Spatial.
+- Stats: McNemar exact (paired per scene) vs the base policy; for multi-seed policies scene x seed bootstrap (10k) of
+  Δ; Wilson CIs for rates. n = 100 val scenes; with M0 at 85 only 15 failures can be rescued.
+- MDE: one-arm-vs-M0 McNemar at n = 100 with ~10-15 discordant pairs (alpha 0.10, power 0.8): ~8 pt. Everything
+  below that is "inconclusive at n = 100", not "no effect".
+- Decision rules:
+  - "BoT helps on this protocol": Δ(M0 + BoT − M0) >= +3 with McNemar p < 0.10 (rescued > broken).
+    "BoT hurts": Δ <= −3, p < 0.10. Otherwise inconclusive.
+  - "Distillation matches test-time planning at lower inference cost": |SR(best distilled) − SR(M0 + best BoT)| <= 3 pt
+    (bootstrap CI within ±8) AND inference-cost ratio (BoT per-episode GPU time / plain policy) >= 10x. If the ratio is
+    < 10x we only state the measured ratio.
+  - "Test-time beats distillation": M0 + BoT − best distilled >= +3 with CI > 0. "Distillation beats": the reverse.
+  - "Complementary": policy + BoT beats both the policy and M0 + BoT by >= 3 pt (CI > 0).
+  - ForkCast scorer: "C^pi better than progress as a test-time selector" iff Δ(fc_cpi − fc_prog) >= +3 with McNemar
+    p < 0.10.
+- Compute: one RetryVLA 1-GPU shell 92927808 (`vla_RetryVLA_DoanhLT_bot1g`, user account, coordinator OK); 953bb534
+  stays with the Goal-improvement campaign. Goal chain ≈ 1 h collection + 0.3 h training + 8 evals x ~0.2-0.4 h.
+  Spatial secondary ≈ 15-20 GPU-h. Shell is killed when the queue is done.

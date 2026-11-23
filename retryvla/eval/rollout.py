@@ -93,6 +93,8 @@ def run_jobs(pool: SimPool, policy, jobs: list[Job], noise_scale: float = 1.0,
             obs = [ws[i].obs for i in need]
             tasks = [ws[i].job.task for i in need]
             seeds = [ws[i].job.policy_seed * 100_003 + ws[i].n_calls for i in need]
+            if hasattr(policy, "begin_batch"):  # opt-in (Back on Track wrapper): stable per-episode keys
+                policy.begin_batch([id(ws[i].job) for i in need], [ws[i].n_calls for i in need])
             chunks = policy.predict_chunk(obs, tasks, seeds=seeds, noise_scale=noise_scale)
             for i, ch in zip(need, chunks):
                 w = ws[i]

@@ -51,6 +51,7 @@ def main():
     ap.add_argument("--out", default=None)
     ap.add_argument("--max_steps", type=int, default=300)
     ap.add_argument("--max_jobs", type=int, default=0)
+    ap.add_argument("--bot", default=None, help="Back on Track cfg as JSON (retryvla.policy.bot.BoTCfg); test-time arm")
     a = ap.parse_args()
     from retryvla.policy.pi0_wrapper import Pi0Wrapper
 
@@ -60,10 +61,29 @@ def main():
     if a.max_jobs:
         jobs = jobs[: a.max_jobs]
     policy = Pi0Wrapper(a.ckpt, n_action_steps=5)
+    bench = None
     t0 = time.time()
     with SimPool(a.workers, 128) as pool:
-        res = run_jobs(pool, policy, jobs, desc=f"goal_{a.split}")
-    rows = [{**r.meta, "success": bool(r.success), "steps": int(r.steps)} for r in res]
+        if a.bot:
+            import copy
+
+            from retryvla.policy.bot import make_wrapper
+
+            policy = make_wrapper(policy, json.loads(a.bot))
+            j0 = copy.copy(jobs[0]); j0.max_steps = 0
+            o0 = run_jobs(pool, None, [j0])[0].load_out["obs0"]
+            bench = policy.bench(o0, jobs[0].task)
+            print("BoT bench (batch 1):", json.dumps(bench), flush=True)
+            policy.eps.clear()
+            t0 = time.time()
+        stats = {}
+
+        def _cb(r):
+            if hasattr(policy, "pop_episode_stats"):
+                stats[r.job_id] = policy.pop_episode_stats(id(jobs[r.job_id]))
+
+        res = run_jobs(pool, policy, jobs, desc=f"goal_{a.split}", on_result=_cb)
+    rows = [{**r.meta, "success": bool(r.success), "steps": int(r.steps), **stats.get(r.job_id, {})} for r in res]
     for k in range(12):   # /pfss quota (EDQUOT): wait it out instead of losing the 100 rollouts
         try:
             with open(out / "episodes.jsonl", "w") as f:
@@ -79,6 +99,11 @@ def main():
     summ = {"ckpt": a.ckpt, "split": a.split, "n": len(rows), "successes": int(sum(r["success"] for r in rows)),
             "sr": float(np.mean([r["success"] for r in rows])), "by_task": {k: int(sum(v)) for k, v in by.items()},
             "wall_s": time.time() - t0}
+    if a.bot:
+        summ["bot"] = json.loads(a.bot)
+        summ["bot_bench"] = bench
+        if hasattr(policy, "stats"):
+            summ["bot_stats"] = policy.stats()
     for k in range(12):
         try:
             (out / "summary.json").write_text(json.dumps(summ, indent=1))

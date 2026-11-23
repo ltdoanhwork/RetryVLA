@@ -115,10 +115,17 @@ def main() -> None:
             from retryvla.baselines.recovery_rl.bridge import maybe_wrap
 
             policy = maybe_wrap(cfg, policy, run)
+        if (cfg.get("bot") or {}).get("value"):  # Back on Track test-time baseline (2610.19579); no-op if unset
+            from retryvla.policy.bot import make_wrapper
+
+            policy = make_wrapper(policy, to_dict(cfg.bot), cfg.policy.device)
+            run.summary["bot"] = to_dict(cfg.bot) | {"pca_k": policy.kpca}
         rows = []
 
         def on_result(r):
             rows.append({**r.meta, "success": r.success, "steps": r.steps, "progress": r.progress})
+            if hasattr(policy, "pop_episode_stats"):
+                rows[-1].update(policy.pop_episode_stats(id(jobs[r.job_id])))
             if hasattr(policy, "events") and hasattr(policy, "eps"):  # Backtrack: per-episode backtrack count
                 ev = policy.events(jobs[r.job_id].policy_seed)
                 rows[-1].update({"n_bt": ev.get("n_bt", 0), "bt_triggers": ev.get("triggers", [])})
@@ -130,11 +137,22 @@ def main() -> None:
             r.record = None
 
         with SimPool(int(cfg.eval.n_workers), int(cfg.env.resolution)) as pool:
+            if hasattr(policy, "bench"):  # BoT: batch-1 latency of monitor / planner / VLA on a real start obs
+                from retryvla.eval.rollout import run_jobs as _rj
+                import copy
+
+                j0 = copy.copy(jobs[0]); j0.max_steps = 0; j0.record = "none"
+                o0 = _rj(pool, None, [j0])[0].load_out["obs0"]
+                run.summary["bot_bench"] = policy.bench(o0, jobs[0].task)
+                log.info("BoT bench (batch 1): %s", run.summary["bot_bench"])
+                policy.eps.clear()
             # eval.worker_retries (default 0 = old behaviour): respawn on a sim-worker segfault, re-run unfinished jobs
             run_jobs_resilient(pool, policy, jobs, retries=int(cfg.eval.get("worker_retries", 0) or 0),
                                noise_scale=float(cfg.policy.noise_scale), on_result=on_result, desc="recover")
         if callable(getattr(type(policy), "stats", None)):  # B3.3 residual / Backtrack diagnostics
             run.summary["residual_stats"] = policy.stats()
+            if hasattr(policy, "bench"):
+                run.summary["bot_stats"] = run.summary["residual_stats"]
         write_jsonl(run.path("episodes.jsonl"), rows)
         summ = summarize(rows, root)
         run.log({"recover/rsr": summ["rsr"], **{f"recover/rsr_{g}": summ.get(f"rsr_{g}", float("nan"))

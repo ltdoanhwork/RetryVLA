@@ -50,10 +50,17 @@ def main() -> None:
             from retryvla.baselines.recovery_rl.bridge import maybe_wrap
 
             policy = maybe_wrap(cfg, policy, run)
+        if (cfg.get("bot") or {}).get("value"):  # Back on Track test-time baseline (2610.19579); no-op if unset
+            from retryvla.policy.bot import make_wrapper
+
+            policy = make_wrapper(policy, to_dict(cfg.bot), cfg.policy.device)
+            run.summary["bot"] = to_dict(cfg.bot)
         rows = []
 
         def on_result(r):
             row = {**r.meta, "success": r.success, "steps": r.steps}
+            if hasattr(policy, "pop_episode_stats"):
+                row.update(policy.pop_episode_stats(id(jobs[r.job_id])))
             rows.append(row)
             if r.record is not None and (cfg.eval.save_videos == "all" or not r.success):
                 save_video(r.record["image"], run.path("videos", f"t{r.meta['task_id']}_ep{r.meta['episode']}_"
