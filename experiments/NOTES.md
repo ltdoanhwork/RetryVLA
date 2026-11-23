@@ -1202,3 +1202,20 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
 - (4) `~/.cache/openpi` (12 G, pi0_base JAX + paligemma tokenizer): NOT deleted. RetryVLA does not use it (HF
   `lerobot/pi0_base`), but other projects in the workspace use openpi (`samdata/pi0_*` robomimic / aloha runs with
   base `gs://openpi-assets/checkpoints/pi0_base/params`, `cross_emb_2/RA-VLA`, `minhduc/*` pi05) -> ask the user.
+- 2026-11-23 03:25 UTC (user decision): F1 moved to a NEW RetryVLA-owned 2-GPU shell.
+  - Shell: `953bb534` `vla_RetryVLA_DoanhLT_2g` (scripts/shells/retryvla_shell_2gpu.yaml = the 1-GPU template with
+    slots 2), started 03:26 UTC, RUNNING at 03:27 UTC, node cn62.
+  - envcheck GPU0 / GPU1: OK video decode, OK sim 50 steps 0.98 / 0.96 s. Registered in shells.json allow_only /
+    share_ok (full use, kill when done).
+  - rv_f1_watch (63e0f914) stopped. Its last polls showed the owner on both GPUs (60 / 20 GB, 99 %) and no lanes of
+    ours. Stale F1 locks were removed, and 63e0f914 is marked light-share / unused (no claims).
+  - Local watchdog `rv_f1_chain2` (scripts/goal_f1_chain2.py, 10-min polls via probe_tmux.sh) launched remote tmux
+    lanes `rv_f1_g0` (GPU0) and `rv_f1_g1` (GPU1) at 03:36 UTC.
+    - Same shared locked queue and quota-safe checkpointing (compact bf16 single-copy resume, bf16 final ckpt,
+      EDQUOT-tolerant writes).
+    - Resumed f1_wm_s7 at step 1750 and f1_rand_s7 at step 250 (the last complete 250-step resume points; training
+      had reached ~1850 / ~450). 4.3 s/it.
+  - The first chain2 start (03:28) timed out on a `bash -c` probe (det argv re-join trap) and was replaced by a script
+    probe before any launch.
+  - ETA: all 6 runs + val evals ~11:30 UTC 11-23, then automatic analysis -> RESULTS / NOTES, commit + push,
+    `det shell kill 953bb534` (unless scripts/shells/keep_953bb534 exists).

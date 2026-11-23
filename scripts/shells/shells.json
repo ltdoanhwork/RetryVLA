@@ -20,17 +20,24 @@
   "tmux_prefix": "rv_"
  },
  "claims": {
-  "63e0f914:1:rv_f1_g1": {
+  "953bb534:0:rv_f1_g0": {
+   "tmux": "rv_f1_g0",
+   "args": "goal_f1_lane.sh 0 rv_f1_g0 (F1 shared queue)",
+   "since": "2026-11-23T03:36:54"
+  },
+  "953bb534:1:rv_f1_g1": {
    "tmux": "rv_f1_g1",
    "args": "goal_f1_lane.sh 1 rv_f1_g1 (F1 shared queue)",
-   "since": "2026-11-22T17:45:48"
+   "since": "2026-11-23T03:36:56"
   }
  },
  "allow_only": {
-  "63e0f914": "vla_roboworm_1 (owner's 2x A100, node shared with tmux egoprm / nativemem / robotood). User 2026-11-20: F1 only when idle. LIGHT SHARE: launched by scripts/goal_f1_watch.py after 2 idle polls; back-off kills only rv_f1_* on owner ramp-up; never touch non-rv sessions / owner processes | 2026-11-22: watcher fixed (per-GPU memory attribution; host-pid bug caused 6 self-back-offs 11-20/21)"
+  "63e0f914": "vla_roboworm_1 (owner-busy; LIGHT-SHARE only, currently UNUSED). 2026-11-23: F1 moved to the RetryVLA-owned 2-GPU shell; watcher rv_f1_watch stopped, no claims.",
+  "953bb534": "vla_RetryVLA_DoanhLT_2g (953bb534-56fa-4fdf-9e98-36e94fea2423), RetryVLA-OWNED, user account, started 2026-11-23 03:26 UTC for 2610.05151 F1 (user decision). Node cn62, 2x A100 80GB, 32 CPU. envcheck GPU0/1: OK video decode, OK sim 50 steps 0.98 / 0.96 s. Full use; KILL when F1 is done unless scripts/shells/keep_953bb534 exists."
  },
  "share_ok": {
-  "63e0f914": true
+  "63e0f914": true,
+  "953bb534": true
  },
  "gone": {
   "0097c39c": "vla_RetryVLA_DoanhLT_1 (cn69), RetryVLA's GPU 2026-10-27..10-31; not RUNNING since 2026-11-01 (user 2026-11-02: no longer running). Removed from allow_only",
