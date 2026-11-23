@@ -636,3 +636,123 @@ pre-registration, open questions). Analysis: `scripts/analyze_cut_point.py` -> `
   matrix) + nominal val. "Onset helps" iff ΔRSR vs fixed >= +5 (CI > 0) with nominal >= Original − 2; MDE ~5 pt.
   Gated on F1. Cheapest next step: 20-step branching scan of the 56 seed-7 rollouts (p_pi(t) curves, t_on).
 - Status 2026-11-22: intake + offline analysis only; not launched; adversarial review (idea-loop step 4) after CUT-1.
+
+## KIN-1: expert vs student recoverability vs learning utility for recovery-data selection (Kintsugi-VLA 2609.31048), design note (user request 2026-11-23; written BEFORE any KIN-1 result)
+
+Background and verified facts: `docs/research/NOVELTY_VS_KINTSUGI.md`. Status 2026-11-23: pre-registered only;
+nothing launched. Queue: on 953bb534 after F1 and after the Back on Track evals; coordinate with both agents first.
+
+- **Research question**: when we pick recovery data from the base policy's own failures, which signal predicts and
+  maximises the VLA's realised gain: expert recoverability p^E (Kintsugi), frozen-student recoverability / handoff
+  (2610.05151, RE-0), or an estimate of the learning benefit Delta p^pi?
+- **Hypotheses**:
+  - H1 (gap): across states, Spearman(p^E, realised Delta p) is weak (<= 0.3).
+  - H2: a proxy Û, calibrated on micro-fine-tunes, predicts Delta p better, by Delta rho >= 0.2.
+  - H3: at equal data size and recipe, RLU-selected data gives >= +5 pt held-out RSR over the Kintsugi-style
+    selection, and >= +3 pt over uniform-among-verified handoff selection.
+- **Falsified if**: rho(p^E, Delta p) >= 0.6 (expert recoverability already aligned, so the gap claim is dropped), OR
+  RLU-E is within ±3 pt of HAND-E (then selection beyond verification adds nothing, which replicates RE-0's
+  "admission, not weighting" result).
+- **Closest prior work**: Kintsugi-VLA 2609.31048, 2610.05151, RE-0 2609.32416, TimelyDAgger 2609.33157, CUPID
+  2506.19121, DataMIL 2505.09603 (added to RELATED_WORK via the novelty doc).
+- **Policy / recipe (Phase 2, frozen before results)**: pi_b = pi1-nominal (RESULTS row 1, the init of every M5+ SFT).
+  SmolVLA SFT 6k steps, bs 32, lr 5e-5, **bridge-only labels** (segment 0), recovery share 0.2, nominal replay 0.8,
+  equal B = 200 bridges per arm (round-robin over source instances), SFT seeds 0 / 1 / 2. Deviation trigger: if F1
+  shows that bridge-only at a small share is harmful on Goal, keep the recipe anyway and report it with that
+  caveat. Any other change goes to NOTES as a deviation.
+- **Instances / split** (train only; test untouched for selection): Spatial train has 56 groups. Group-stratified,
+  seed 0: **fold A** = 36 groups, used for sources; **fold B** = 20 groups, used for held-out eval.
+  - N = 100 pi_b-failure instances in fold A (scene x gripper mode, precheck 2 rollouts).
+  - Candidate start states per instance: the failure snapshot plus pi_b's failed continuation, logged every
+    40 steps.
+  - **Kintsugi window**: t_dev = 0 (the snapshot is already off-nominal, their default); t_f = p^E frontier
+    (tau 0.2, Wilson, ladder 5 -> 15 -> 30). Start states at depths 0.15 / 0.50 / 0.85, plus 3 uniform draws.
+    That makes 7 start states per instance.
+  - Optional replication on LIBERO-Goal (pi0 LoRA, 2610.05151 protocol) only if Spatial is positive.
+- **Expert pi_E (deviation D-K1 from PPO)**:
+  - Primary: a scripted privileged pick-place controller for the Spatial family. It reads object / plate poses from
+    the sim and outputs OSC delta-EEF + gripper actions (7-D, the SmolVLA action space). It can build on the eef
+    command executor in `retryvla/baselines/lrs_teacher.py`. Stochasticity nu = action noise (sigma 0.05) plus
+    jittered approach height / grasp offset.
+  - Gate E0: nominal success >= 90 % on 50 train inits, and recovery from the failure snapshots reported.
+  - Fallback if E0 fails: an oracle sim-CEM closed loop with a privileged progress objective (expensive; log the
+    deviation).
+  - A small PPO teacher is not cheap in CPU-bound LIBERO (~10^7 steps / task), so it is skipped.
+- **Measurements on all 700 start states**:
+  - p^E: MC ladder, state-only, no rendering, CPU.
+  - p^{pi_b}: 8 continuations, stop early at 2 successes.
+  - Candidate pool per state:
+    - expert prefix (first 50 steps of pi_E);
+    - top-8 of 256 WM v1 + C^pi ranked pool bridges;
+    - every candidate verified: bridge, then pi_b continues; 2 seeds, plus 2 more on accepted candidates.
+  - Proxies P1-P7 (doc section 3.2).
+- **Realised Delta p (proxy validation, oracle arm first)**:
+  - Calibration: 30 groups (group = verified items of one start state). M = 16 micro-FTs from pi_b, each on a
+    random half of the groups (600 steps, same recipe). Every micro-model is evaluated on the 30 start states,
+    10 trials each.
+  - Deltâ_g = success(included) - success(excluded).
+  - Validation: 20 fresh groups, 8 more micro-FTs.
+  - Û = ridge / monotone fit of P1-P6, leave-group-out CV on the calibration groups. Primary Û frozen by CV
+    Spearman before any main SFT.
+  - Also: rho of p^E, p^{pi_b}, G = Ĉ(s_H) - p^{pi_b}(s) and Û with Delta p (Spearman matrix + bootstrap CI over
+    groups).
+- **Arms** (equal B, same recipe, 3 seeds each):
+  - Primary:
+    - C0: nominal replay only, same steps.
+    - K-U: uniform window, expert bridges (Kintsugi V2).
+    - **K-T: Kintsugi-style targeted depths, expert bridges** (main contrast).
+    - HAND-E: expert bridges accepted by verified handoff, uniform among accepted (2610.05151-style, with
+      ground-truth handoff).
+    - RLU-E: top-Û among verified expert bridges + P7 diversity.
+    - **RLU-full: top-Û among all verified candidates (expert + WM pool)** = RetryVLA.
+  - Secondary, if budget allows:
+    - K-T-full: Kintsugi-faithful labels = full expert continuation (the main-table row).
+    - K-pi: depths on the *student* frontier p^{pi_b} (links to CUT-1 `onset`).
+    - GAIN-E: rank by handoff gain G (RE-0-style).
+- **Primary metric**: held-out own-failure RSR on fold B.
+  - Eval states: 20 groups' instances plus their pi_b-continuation states at 0 / 120 / 240 steps (~240 states),
+    3 trials each, LIBERO-Recover protocol (±2 cm, open / closed, 520 steps).
+  - Paired over states; group x seed bootstrap (95 %) and sign-flip test.
+  - Report per level L1-L4 where labelled.
+  - Secondary: in-situ RSR on the fold-A source states (realised Delta p at full scale for the selected items, a
+    second proxy check); Spatial test RSR (dev split) for C0 / K-T / best arm only; nominal Spatial 10 x 50.
+  - Budget-normalised: RSR gain per sim-hour, **including** the p^E / p^pi measurement and verification (Kintsugi
+    excluded this).
+- **Decision rules**:
+  - Gap supported: rho(p^E, Delta) <= 0.3 AND rho(Û, Delta) - rho(p^E, Delta) >= 0.2 (CI > 0), on the
+    50 calibration + validation groups. Gap falsified: rho(p^E, Delta) >= 0.6. In between: "partly aligned"; report
+    the matrix, no gap claim.
+  - Kintsugi replicated in our stack: K-T - K-U >= +3 (CI > 0). If not, report "depth targeting does not transfer
+    to LIBERO-Recover with this expert" (it is not a failure of RLU).
+  - RLU beats Kintsugi: RLU-full - K-T >= +5 with CI > 0, AND nominal(RLU-full) >= nominal(C0) - 2.
+  - Beyond handoff: RLU-E - HAND-E >= +3 with CI > 0. If within ±3: no selection claim; the mechanism reduces to
+    verified admission (RE-0), and we report that.
+  - WM generator matters: RLU-full - RLU-E >= +3 with CI > 0 at equal or lower sim cost.
+  - Inconclusive: power < 80 % at the observed variance. Then write "inconclusive at n = ...", never "negative".
+- **Power**:
+  - ~240 paired eval states, per-state difference SD ~0.3 (CUT-1 assumption), alpha 0.10 two-sided, power 0.8:
+    nominal MDE ≈ 2.49 x 0.3 / sqrt(240) ≈ 4.8 pt. With a design effect for 20 correlated groups (~1.5-2x variance),
+    MDE ≈ 6-7 pt. Kintsugi's own +5.8 pt is therefore only ~60-70 % powered. If K-T vs K-U is null, call it
+    inconclusive, not a refutation.
+  - Proxy rho on 50 groups: detectable rho ≈ 0.35 (Fisher z, alpha 0.10, power 0.8).
+- **Compute** (unit costs from NOTES / VERIFICATION_COST: ~6 s / verification amortised, SFT 6k ≈ 1.3 GPU-h, RSR
+  eval ≈ 1 GPU-h / 560 episodes, nominal 0.4 GPU-h):
+
+  | item | GPU-h |
+  |---|---|
+  | expert engineering + gate E0 | ~1.5 days of engineering, <1 GPU-h |
+  | p^E (~700 states x ~12 rollouts, state-only, CPU) | ~0, plus ~3 CPU-h |
+  | p^{pi_b} (700 x ~8) | ~9 |
+  | candidate verification (700 x 9 x 2, plus re-seeds) | ~25 |
+  | proxies (FM loss, gradients) | ~2 |
+  | calibration + validation micro-FTs (24 x (8 min + 300 eval episodes)) | ~16 |
+  | 6 primary arms x 3 seeds: SFT 1.3 + held-out eval 1.3 + in-situ 0.5 + nominal 0.4 | ~63 |
+  | secondary arms (3 x 3) + Spatial test for 3 arms | ~35 |
+
+  Primary total ≈ **115 GPU-h ≈ 2.5 days on 953bb534's 2 A100s** (primary only), ~3.3 days with the secondary arms.
+- **Gating order**:
+  1. E0.
+  2. Measurement + calibration (≈ 52 GPU-h, about 1 day). The gap verdict comes out here and can be written up even
+     if the SFT arms are null.
+  3. Only if rho(p^E, Delta) < 0.6: main arms. Otherwise run only C0 / K-U / K-T for the main-table row.
+- Review: idea-loop step 4 (`retryvla-idea-review`) after the measurement stage and again after the arms.

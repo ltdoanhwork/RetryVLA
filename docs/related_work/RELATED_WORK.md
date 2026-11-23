@@ -411,3 +411,18 @@ Dùng cho lập luận p_rec^E (recoverability của expert) ≠ p_rec^{π0} / �
 - **N2. Lý thuyết / thuật toán privileged-teacher (để trích, chưa có note riêng)**: *Impossibly Good Experts* (Walsman et al., ICLR 2023, [OpenReview](https://openreview.net/forum?id=AYPMk-ezt8); điều kiện Coverage + Correctness, Theorem 1), ADVISOR [2007.12173](https://arxiv.org/abs/2007.12173) (NeurIPS 2021, "imitation gap"), A2D [2012.15566](https://arxiv.org/abs/2012.15566) (ICML 2021, expert phải thích nghi theo student), TGRL [2307.03186](https://arxiv.org/abs/2307.03186) (ICML 2023), Nguyen et al. [2211.01991](https://arxiv.org/abs/2211.01991) (CoRL 2022, manipulation state-expert → image-student), Learning by Cheating [1912.12294](https://arxiv.org/abs/1912.12294) / RMA [2107.04034](https://arxiv.org/abs/2107.04034) (công thức chuẩn distill teacher đặc quyền), Privileged Sensing Scaffolds RL [2405.14853](https://arxiv.org/abs/2405.14853) (ICLR 2024; thông tin đặc quyền nằm ở critic / WM, không ở target imitation). DART [1703.09327](https://arxiv.org/abs/1703.09327), HG-DAgger [1810.02890](https://arxiv.org/abs/1810.02890), ThriftyDAgger [2109.08273](https://arxiv.org/abs/2109.08273): dữ liệu ở state của student.
 
 **Kết luận N**: có bằng chứng độc lập (real robot, π0.5) rằng expert thành công gần tuyệt đối vẫn cho dữ liệu kém cho learner, và cái thiếu là độ phủ trạng thái recovery. Lý thuyết (Walsman: Coverage + Correctness; ADVISOR / A2D: imitation gap) giải thích vì sao recoverability theo expert đặc quyền (Kintsugi) không bảo đảm học được. Phần RetryVLA còn phải tự chứng minh: chọn theo competence / Δp của student tốt hơn độ phủ đồng đều cùng ngân sách.
+
+**N (addendum 2026-11-23, KIN-1 novelty check; details `docs/research/NOVELTY_VS_KINTSUGI.md` section 1.4).**
+These papers already occupy "student-aware" recovery data. IDs were opened on arxiv.org/abs.
+- **RE-0** [2609.32416](https://arxiv.org/abs/2609.32416). Paired counterfactual admission: a teacher correction
+  vs the student from the same restored snapshot, accepted iff LCB > 0, with benefit-weighted distillation. Code-as-
+  Policy, not VLA.
+- **TimelyDAgger** [2609.33157](https://arxiv.org/abs/2609.33157). Defines learning utility U = J(Update(pi, D)) for
+  takeover timing, and a TASR proxy (Spearman 0.72 with success).
+- **TILDE** [2610.25376](https://arxiv.org/abs/2610.25376); **RAIL** [2611.12251](https://arxiv.org/abs/2611.12251)
+  (student-compatible privileged teacher).
+- **Curation by downstream effect**: CUPID [2506.19121](https://arxiv.org/abs/2506.19121), DataMIL
+  [2505.09603](https://arxiv.org/abs/2505.09603), DemInf [2502.08623](https://arxiv.org/abs/2502.08623).
+  Also [2606.10229](https://arxiv.org/abs/2606.10229): the best defect detector gives the worst policy.
+- How we differ: a per-candidate estimate of post-training Delta p for recovery bridges from restored failure states,
+  calibrated with micro-fine-tunes on the target VLA, with WM pre-ranking (KIN-1).

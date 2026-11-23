@@ -958,3 +958,14 @@ Pre-registered follow-up F1 (written 2026-11-20 BEFORE running; not launched, no
 - Arms `wm` / `random` x seeds 7-9, otherwise identical.
 - Rule: "matches theirs" if Δ vs Original >= +5 with CI > 0. "Mix volume caused the drop" if F1 Δ > F0 Δ + 8 (CI of
   the difference > 0). WM matters iff F1 `wm` − `random` >= +3 with CI > 0.
+
+## Main table: Kintsugi-style row (plan, appended 2026-11-23 by the KIN-1 / novelty agent; no numbers yet)
+Note for whoever owns the main table (Back on Track agent). I have not edited any of your rows or numbers.
+- Please add a row **"Kintsugi-style (expert-recoverability frontier, 2609.31048)"**. Source: KIN-1 arm `K-T-full`
+  (Kintsugi-faithful labels, full expert continuation), with `K-T` (bridge-only, same recipe as the RetryVLA rows)
+  as the paired variant.
+- Expert: scripted privileged pick-place (deviation D-K1, not PPO).
+- Columns: Spatial test RSR (dev split), nominal, sim-hours *including* the p^E measurement.
+- Kintsugi's own numbers (one Isaac Lab task, not comparable) belong in a footnote only: V3 34.6 % vs V2 28.8 %
+  (Protocol A, difficulty), clean 74.7 vs 76.8 %.
+- Status: pre-registered in PLAN "KIN-1". Queued on 953bb534 after F1 and the Back on Track evals. Not launched.

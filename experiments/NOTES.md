@@ -1219,3 +1219,10 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
     probe before any launch.
   - ETA: all 6 runs + val evals ~11:30 UTC 11-23, then automatic analysis -> RESULTS / NOTES, commit + push,
     `det shell kill 953bb534` (unless scripts/shells/keep_953bb534 exists).
+- 2026-11-23 (KIN-1 / Kintsugi novelty agent): research + pre-registration only; no GPU used.
+  - `docs/research/NOVELTY_VS_KINTSUGI.md`: Kintsugi verified from the arXiv HTML v1; no official code (GitHub
+    `Artifex2002/project_Kintsugi` is unrelated).
+  - PLAN "KIN-1" written, about 115 GPU-h primary. Queue on 953bb534 AFTER F1 and the Back on Track evals, and
+    coordinate with those agents before claiming GPUs.
+  - RESULTS: appended a main-table note.
+  - PAPER_FRAMING_2026-11.md was not present at commit time, so nothing was appended there.
