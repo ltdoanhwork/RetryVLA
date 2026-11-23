@@ -1175,3 +1175,30 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
     The M0 init `m0_s7/ckpt_04000` is required by F1.
   - Owner at 11:28 UTC: in-container GPU jobs on both GPUs (4.8 / 6.1 GB, 29-59 % util) -> the watcher waits per its
     rules (lanes relaunch after 2 idle polls; fails 1 / 3 each).
+
+## Disk cleanup round 5, 2026-11-23 (~02:50-03:10 UTC; 136.5 GB freed, RetryVLA ~241 G -> 104 G)
+- User-approved groups (1)-(4). Dry-run table first; `lsof` showed no open file under any target; no symlink from a
+  kept path points into a target; no target is git-tracked. `rv_f1_watch` (`scripts/goal_f1_watch.py`, only touches
+  `runs/goal_rsi/`) and all other tmux sessions left running. Not touched: `runs/goal_rsi`, `data/wm/goal_*`,
+  `data/recovery/goal_search`, HF hub, paligemma, xet, conda pkgs, other projects.
+- (1) SFT checkpoints, 32.9 GB: `checkpoints/*` emptied (config.yaml, git.txt, metrics.jsonl, summary.json, tb, eval
+  dirs kept) in 29 runs: M4_sft_A_base_nom_random; M5_m5b_sft_random; M7_sft_{base,weak}; M8_seed_{base,weak}_s{1,2};
+  M9_sft_{goal,comp} (+ seed1 / seed2); M10_sft_comp_obj; P4_af_arm{3_free_filtered,4_free_unfiltered,5_hybrid}_s{0,1,2};
+  BT_sft_bt_distill (+ _s1 / _s2); M9_sft_demo_only_s{1,2} (all 2026-10-14 .. 2026-11-02, results in RESULTS).
+  Kept (init / pending SMOOTH-V): M1_sft_nominal_only (pi1-nominal init), M5_m5c_sft_wm_diverse_rr (pi1 seed 0, SMOOTH-V
+  `control` + smoothness proxy), M8_seed_pi1_s{1,2} (pi1 seeds 1 / 2 = SMOOTH-V `control` seeds), M6_sft_pi1_more,
+  M10_sft_nominal_obj. WM / critic runs referenced by `data/wm/latest_*.txt` hold no checkpoints/ dirs and were untouched.
+- (2) Closed ideas, 38.8 GB: `data/recovery/{rgr_sweep, xwm_sweep, rq3_sweep, vj_rq3_sweep, acrn_single_fresh}`,
+  `data/wm/{verif_rq3_sweep, verif_xwm_sweep, verif_vj_rq3_sweep}`, `data/foundation/{vj_latents, frames, vjepa2}`
+  (V-JEPA 2 weights re-downloadable). `runs/_analysis/*` outputs kept (none read these dirs; `wm_vs_true` / t2mem use
+  `verif_m5b`, kept). `data/wm/true_end_rq3` kept (wm_vs_true source). `data/foundation/latest_vj_*.txt` kept.
+- (3) Old banks / verif logs, 64.9 GB: `data/recovery/{m7_weak, m9_mech, m6_r2, m8_aug, m11_a, m9_b32, b2x_value,
+  b2_value, m1_oracle_cem_spatial_{s0,s0b,s1}, m1_random_spatial_{s0,s0b,s1}, m1b_hard_{cem_local,random}_{s0,s1},
+  m3_wm_search_hard_{s0,s1}, m5_r2_{v1,v2}, m5_wm_r1_s{0..3}}`, `data/wm/{verif_m8_aug, verif_m7_weak}`.
+  Kept: `data/recovery/m5b` (pi1 bank `m5b/s*/p*/wm_diverse`, SMOOTH-V + smoothness scripts), `data/recovery/obj`,
+  `data/wm/verif_m5b` (9.4 G; read by analyze_verifier / wm_vs_true / t2mem / vj scripts, i.e. the SMOOTH-V candidate pool
+  for `smooth_reverify` fill-ins), `data/wm/verif_r1`, collect_*, m11_b, b32_rise, bt_distill.
+  Note: configs for M8-M11 / B2 searches and SFTs that read the deleted banks can no longer be re-run without regenerating.
+- (4) `~/.cache/openpi` (12 G, pi0_base JAX + paligemma tokenizer): NOT deleted. RetryVLA does not use it (HF
+  `lerobot/pi0_base`), but other projects in the workspace use openpi (`samdata/pi0_*` robomimic / aloha runs with
+  base `gs://openpi-assets/checkpoints/pi0_base/params`, `cross_emb_2/RA-VLA`, `minhduc/*` pi05) -> ask the user.
