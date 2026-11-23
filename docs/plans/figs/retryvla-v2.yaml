@@ -1,0 +1,41 @@
+# RetryVLA v2: Algorithm 1 (verified failure-to-recovery discovery) -> data products -> Algorithm 2 (recovery-and-prevention policy optimisation)
+slug: retryvla-v2
+eyebrow: RetryVLA v2 · offline failure-driven learning
+title: From autonomous failures to recovery- and prevention-aware policies
+subtitle: "Every positive is verified by real continuation from the same restored state; failures become negatives, never BC targets."
+columns:
+  - name: SOURCES
+    nodes:
+      - {id: pi0, icon: robot, title: "Base policy π0 rollouts", subtitle: ["natural failures, no injection", "LIBERO-Goal audit · seeds 7/8"]}
+  - name: "ALGORITHM 1 · DISCOVERY"
+    nodes:
+      - {id: loc, icon: search, title: "Failure localisation", subtitle: ["CUT-1 onset scan", "pre-failure s- · post-failure s_f"]}
+      - {id: wm, icon: cube, title: "WM candidate search", note: "over-optimistic under search", subtitle: "bridges from s_f · alternatives at s-", kind: bottleneck}
+      - {id: rank, icon: chart-line, title: "Competence ranking C^π", subtitle: "top-K by P(π finishes)"}
+      - {id: verify, icon: test, title: "Sim verification", subtitle: ["bit-exact restore · paired seeds", "a+ vs a- from same state"], kind: storage}
+  - name: DATA PRODUCTS
+    nodes:
+      - {id: dn, icon: database, title: "D_N nominal", subtitle: "demos D0 + nominal states", kind: storage, row: 0}
+      - {id: dr, icon: database, title: "D_R recovery bridges", subtitle: "verified from s_f", kind: storage}
+      - {id: dp, icon: git-branch, title: "D_P preventive pairs", subtitle: "(s-, a+ > a-) verified", kind: storage}
+      - {id: df, icon: alert-triangle, title: "D_F failures", note: "negatives only, never BC", subtitle: "failed a- · candidates · outcomes"}
+  - name: "ALGORITHM 2 · OPTIMISATION"
+    nodes:
+      - {id: frozen, icon: lock, title: "Frozen base π0", subtitle: "velocity anchor target", kind: external, row: 0}
+      - {id: obj, icon: braces, title: "λN·L_N + λR·L_R + λP·L_P + λA·L_A", subtitle: ["FM · weighted FM · bounded hinge", "velocity anchoring on nominal"], row: 1}
+      - {id: pol, icon: rocket, title: "Policy π′ (+ optional gate g(h))", subtitle: "recovers and avoids · no test-time search", row: 2}
+edges:
+  - {from: pi0, to: loc, label: FAILS}
+  - {from: loc, to: wm, label: "s- / s_f"}
+  - {from: wm, to: rank, label: IMAGINE, kind: pain}
+  - {from: rank, to: verify, label: TOP-K, kind: pain}
+  - {from: verify, to: dr, label: PASS}
+  - {from: verify, to: dp, label: PAIRS}
+  - {from: verify, to: df, label: FAIL, kind: pain}
+  - {from: dn, to: obj, label: "L_N"}
+  - {from: dr, to: obj, label: "L_R"}
+  - {from: dp, to: obj, label: "L_P"}
+  - {from: frozen, to: obj, label: "L_A", kind: neutral, dashed: true}
+  - {from: obj, to: pol, label: CKPT}
+  - {from: df, to: rank, label: REFINE, kind: neutral, dashed: true}
+legend: {neutral: "anchor / refinement loop", dashed: "optional / offline loop"}

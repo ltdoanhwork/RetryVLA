@@ -1,0 +1,153 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1338 594" width="1338" height="594">
+<defs>
+<marker id="arrow-flow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0, 8 3, 0 6" fill="#2e5aa8"/></marker>
+<marker id="arrow-pain" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0, 8 3, 0 6" fill="#bf4520"/></marker>
+<marker id="arrow-neutral" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/></marker>
+</defs>
+<rect width="1338" height="594" fill="#f5f5f5"/>
+<text x="16" y="22" font-family="Geist Mono" font-size="8" font-weight="500" fill="#4f5d75" text-anchor="start" letter-spacing="1.4">RETRYVLA V2 · OFFLINE FAILURE-DRIVEN LEARNING</text>
+<text x="16" y="44" font-family="Geist" font-size="18" font-weight="500" fill="#2d3142">From autonomous failures to recovery- and prevention-aware policies</text>
+<text x="16" y="62" font-family="Geist" font-size="10.5" fill="#4f5d75">Every positive is verified by real continuation from the same restored state; failures become negatives, never BC targets.</text>
+<rect x="16" y="100" width="280" height="430" rx="8" fill="#2d3142" fill-opacity="0.02" stroke="#2d3142" stroke-opacity="0.10" stroke-width="0.8"/>
+<rect x="36" y="92" width="48.3" height="16" fill="#f5f5f5"/>
+<text x="40" y="103" font-family="Geist Mono" font-size="8" font-weight="400" fill="#2d3142" fill-opacity="0.45" text-anchor="start" letter-spacing="1.12">SOURCES</text>
+<rect x="316" y="100" width="322" height="430" rx="8" fill="#2d3142" fill-opacity="0.02" stroke="#2d3142" stroke-opacity="0.10" stroke-width="0.8"/>
+<rect x="336" y="92" width="143" height="16" fill="#f5f5f5"/>
+<text x="340" y="103" font-family="Geist Mono" font-size="8" font-weight="400" fill="#2d3142" fill-opacity="0.45" text-anchor="start" letter-spacing="1.12">ALGORITHM 1 · DISCOVERY</text>
+<rect x="658" y="100" width="298" height="430" rx="8" fill="#2d3142" fill-opacity="0.02" stroke="#2d3142" stroke-opacity="0.10" stroke-width="0.8"/>
+<rect x="678" y="92" width="83.8" height="16" fill="#f5f5f5"/>
+<text x="682" y="103" font-family="Geist Mono" font-size="8" font-weight="400" fill="#2d3142" fill-opacity="0.45" text-anchor="start" letter-spacing="1.12">DATA PRODUCTS</text>
+<rect x="976" y="100" width="346" height="430" rx="8" fill="#2d3142" fill-opacity="0.02" stroke="#2d3142" stroke-opacity="0.10" stroke-width="0.8"/>
+<rect x="996" y="92" width="160.7" height="16" fill="#f5f5f5"/>
+<text x="1000" y="103" font-family="Geist Mono" font-size="8" font-weight="400" fill="#2d3142" fill-opacity="0.45" text-anchor="start" letter-spacing="1.12">ALGORITHM 2 · OPTIMISATION</text>
+<path d="M 276,164 L 336,164" fill="none" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#arrow-flow)"/>
+<path d="M 477,200 L 477,234" fill="none" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#arrow-flow)"/>
+<path d="M 477,306 L 477,340" fill="none" stroke="#bf4520" stroke-width="1.4" marker-end="url(#arrow-pain)"/>
+<path d="M 477,396 L 477,430" fill="none" stroke="#bf4520" stroke-width="1.4" marker-end="url(#arrow-pain)"/>
+<path d="M 618,450 L 654,450 Q 662,450 662,442 L 662,270 Q 662,262 670,262 L 678,262" fill="none" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#arrow-flow)"/>
+<path d="M 618,466 L 662,466 Q 670,466 670,458 L 670,372 Q 670,368 674,368 L 678,368" fill="none" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#arrow-flow)"/>
+<path d="M 618,466 L 678,466" fill="none" stroke="#bf4520" stroke-width="1.4" marker-end="url(#arrow-pain)"/>
+<path d="M 936,156 L 972,156 Q 980,156 980,164 L 980,246 Q 980,254 988,254 L 996,254" fill="none" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#arrow-flow)"/>
+<path d="M 936,270 L 996,270" fill="none" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#arrow-flow)"/>
+<path d="M 936,368 L 980,368 Q 988,368 988,360 L 988,290 Q 988,286 992,286 L 996,286" fill="none" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#arrow-flow)"/>
+<path d="M 1149,184 L 1149,234" fill="none" stroke="#4f5d75" stroke-width="1.0" stroke-dasharray="4 3" marker-end="url(#arrow-neutral)"/>
+<path d="M 1149,306 L 1149,340" fill="none" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#arrow-flow)"/>
+<path d="M 936,466 L 958,466 Q 966,466 966,474 L 966,508 Q 966,516 958,516 L 336,516 Q 328,516 328,508 L 328,372 Q 328,368 332,368 L 336,368" fill="none" stroke="#4f5d75" stroke-width="1.0" stroke-dasharray="4 3" marker-end="url(#arrow-neutral)"/>
+<rect x="36" y="128" width="240" height="72" rx="6" fill="#f5f5f5"/>
+<rect x="36" y="128" width="240" height="72" rx="6" fill="#ffffff" fill-opacity="1.0" stroke="#2d3142" stroke-opacity="1.0" stroke-width="1.0"/>
+<g transform="translate(48,152)" fill="none" stroke="#2d3142" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6a2 2 0 0 1 2 -2h8a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2h-8a2 2 0 0 1 -2 -2l0 -4" /> <path d="M12 2v2" /> <path d="M9 12v9" /> <path d="M15 12v9" /> <path d="M5 16l4 -2" /> <path d="M15 14l4 2" /> <path d="M9 18h6" /> <path d="M10 8v.01" /> <path d="M14 8v.01" /></g>
+<text x="80" y="154" font-family="Geist" font-size="12" font-weight="600" fill="#2d3142">Base policy π0 rollouts</text>
+<text x="80" y="170" font-family="Geist Mono" font-size="10" font-weight="400" fill="#4f5d75" text-anchor="start">natural failures, no injection</text>
+<text x="80" y="186" font-family="Geist Mono" font-size="10" font-weight="400" fill="#4f5d75" text-anchor="start">LIBERO-Goal audit · seeds 7/8</text>
+<rect x="336" y="128" width="282" height="72" rx="6" fill="#f5f5f5"/>
+<rect x="336" y="128" width="282" height="72" rx="6" fill="#ffffff" fill-opacity="1.0" stroke="#2d3142" stroke-opacity="1.0" stroke-width="1.0"/>
+<g transform="translate(348,152)" fill="none" stroke="#2d3142" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" /> <path d="M21 21l-6 -6" /></g>
+<text x="380" y="154" font-family="Geist" font-size="12" font-weight="600" fill="#2d3142">Failure localisation</text>
+<text x="380" y="170" font-family="Geist Mono" font-size="10" font-weight="400" fill="#4f5d75" text-anchor="start">CUT-1 onset scan</text>
+<text x="380" y="186" font-family="Geist Mono" font-size="10" font-weight="400" fill="#4f5d75" text-anchor="start">pre-failure s- · post-failure s_f</text>
+<rect x="336" y="234" width="282" height="72" rx="6" fill="#f5f5f5"/>
+<rect x="336" y="234" width="282" height="72" rx="6" fill="#bf4520" fill-opacity="0.07" stroke="#bf4520" stroke-opacity="1.0" stroke-width="1.4"/>
+<g transform="translate(348,258)" fill="none" stroke="#bf4520" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16.008v-8.018a1.98 1.98 0 0 0 -1 -1.717l-7 -4.008a2.016 2.016 0 0 0 -2 0l-7 4.008c-.619 .355 -1 1.01 -1 1.718v8.018c0 .709 .381 1.363 1 1.717l7 4.008a2.016 2.016 0 0 0 2 0l7 -4.008c.619 -.355 1 -1.01 1 -1.718" />
+  <path d="M12 22v-10" />
+  <path d="M12 12l8.73 -5.04" />
+  <path d="M3.27 6.96l8.73 5.04" /></g>
+<text x="380" y="260" font-family="Geist" font-size="12" font-weight="600" fill="#2d3142">WM candidate search</text>
+<text x="380" y="276" font-family="Geist Mono" font-size="10" font-weight="400" fill="#bf4520" text-anchor="start">over-optimistic under search</text>
+<text x="380" y="292" font-family="Geist Mono" font-size="10" font-weight="400" fill="#4f5d75" text-anchor="start">bridges from s_f · alternatives at s-</text>
+<rect x="336" y="340" width="282" height="56" rx="6" fill="#f5f5f5"/>
+<rect x="336" y="340" width="282" height="56" rx="6" fill="#ffffff" fill-opacity="1.0" stroke="#2d3142" stroke-opacity="1.0" stroke-width="1.0"/>
+<g transform="translate(348,356)" fill="none" stroke="#2d3142" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19l16 0" />
+  <path d="M4 15l4 -6l4 2l4 -5l4 4" /></g>
+<text x="380" y="366" font-family="Geist" font-size="12" font-weight="600" fill="#2d3142">Competence ranking C^π</text>
+<text x="380" y="382" font-family="Geist Mono" font-size="10" font-weight="400" fill="#4f5d75" text-anchor="start">top-K by P(π finishes)</text>
+<rect x="336" y="430" width="282" height="72" rx="6" fill="#f5f5f5"/>
+<rect x="336" y="430" width="282" height="72" rx="6" fill="#7c8f6f" fill-opacity="0.06" stroke="#7c8f6f" stroke-opacity="0.45" stroke-width="1.0"/>
+<g transform="translate(348,454)" fill="none" stroke="#7c8f6f" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 8.04l-12.122 12.124a2.857 2.857 0 1 1 -4.041 -4.04l12.122 -12.124" /> <path d="M7 13h8" /> <path d="M19 15l1.5 1.6a2 2 0 1 1 -3 0l1.5 -1.6" /> <path d="M15 3l6 6" /></g>
+<text x="380" y="456" font-family="Geist" font-size="12" font-weight="600" fill="#7c8f6f">Sim verification</text>
+<text x="380" y="472" font-family="Geist Mono" font-size="10" font-weight="400" fill="#4f5d75" text-anchor="start">bit-exact restore · paired seeds</text>
+<text x="380" y="488" font-family="Geist Mono" font-size="10" font-weight="400" fill="#4f5d75" text-anchor="start">a+ vs a- from same state</text>
+<rect x="678" y="128" width="258" height="56" rx="6" fill="#f5f5f5"/>
+<rect x="678" y="128" width="258" height="56" rx="6" fill="#7c8f6f" fill-opacity="0.06" stroke="#7c8f6f" stroke-opacity="0.45" stroke-width="1.0"/>
+<g transform="translate(690,144)" fill="none" stroke="#7c8f6f" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6a8 3 0 1 0 16 0a8 3 0 1 0 -16 0" /> <path d="M4 6v6a8 3 0 0 0 16 0v-6" /> <path d="M4 12v6a8 3 0 0 0 16 0v-6" /></g>
+<text x="722" y="154" font-family="Geist" font-size="12" font-weight="600" fill="#7c8f6f">D_N nominal</text>
+<text x="722" y="170" font-family="Geist Mono" font-size="10" font-weight="400" fill="#4f5d75" text-anchor="start">demos D0 + nominal states</text>
+<rect x="678" y="234" width="258" height="56" rx="6" fill="#f5f5f5"/>
+<rect x="678" y="234" width="258" height="56" rx="6" fill="#7c8f6f" fill-opacity="0.06" stroke="#7c8f6f" stroke-opacity="0.45" stroke-width="1.0"/>
+<g transform="translate(690,250)" fill="none" stroke="#7c8f6f" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6a8 3 0 1 0 16 0a8 3 0 1 0 -16 0" /> <path d="M4 6v6a8 3 0 0 0 16 0v-6" /> <path d="M4 12v6a8 3 0 0 0 16 0v-6" /></g>
+<text x="722" y="260" font-family="Geist" font-size="12" font-weight="600" fill="#7c8f6f">D_R recovery bridges</text>
+<text x="722" y="276" font-family="Geist Mono" font-size="10" font-weight="400" fill="#4f5d75" text-anchor="start">verified from s_f</text>
+<rect x="678" y="340" width="258" height="56" rx="6" fill="#f5f5f5"/>
+<rect x="678" y="340" width="258" height="56" rx="6" fill="#7c8f6f" fill-opacity="0.06" stroke="#7c8f6f" stroke-opacity="0.45" stroke-width="1.0"/>
+<g transform="translate(690,356)" fill="none" stroke="#7c8f6f" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 18a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /> <path d="M5 6a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /> <path d="M15 6a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /> <path d="M7 8l0 8" /> <path d="M9 18h6a2 2 0 0 0 2 -2v-5" /> <path d="M14 14l3 -3l3 3" /></g>
+<text x="722" y="366" font-family="Geist" font-size="12" font-weight="600" fill="#7c8f6f">D_P preventive pairs</text>
+<text x="722" y="382" font-family="Geist Mono" font-size="10" font-weight="400" fill="#4f5d75" text-anchor="start">(s-, a+ &gt; a-) verified</text>
+<rect x="678" y="430" width="258" height="72" rx="6" fill="#f5f5f5"/>
+<rect x="678" y="430" width="258" height="72" rx="6" fill="#ffffff" fill-opacity="1.0" stroke="#2d3142" stroke-opacity="1.0" stroke-width="1.0"/>
+<g transform="translate(690,454)" fill="none" stroke="#2d3142" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4" />
+  <path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0" />
+  <path d="M12 16h.01" /></g>
+<text x="722" y="456" font-family="Geist" font-size="12" font-weight="600" fill="#2d3142">D_F failures</text>
+<text x="722" y="472" font-family="Geist Mono" font-size="10" font-weight="400" fill="#bf4520" text-anchor="start">negatives only, never BC</text>
+<text x="722" y="488" font-family="Geist Mono" font-size="10" font-weight="400" fill="#4f5d75" text-anchor="start">failed a- · candidates · outcomes</text>
+<rect x="996" y="128" width="306" height="56" rx="6" fill="#f5f5f5"/>
+<rect x="996" y="128" width="306" height="56" rx="6" fill="#ffffff" fill-opacity="1.0" stroke="#4f5d75" stroke-opacity="1.0" stroke-width="1.0" stroke-dasharray="4 3"/>
+<g transform="translate(1008,144)" fill="none" stroke="#4f5d75" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-6" /> <path d="M11 16a1 1 0 1 0 2 0a1 1 0 0 0 -2 0" /> <path d="M8 11v-4a4 4 0 1 1 8 0v4" /></g>
+<text x="1040" y="154" font-family="Geist" font-size="12" font-weight="600" fill="#2d3142">Frozen base π0</text>
+<text x="1040" y="170" font-family="Geist Mono" font-size="10" font-weight="400" fill="#4f5d75" text-anchor="start">velocity anchor target</text>
+<rect x="996" y="234" width="306" height="72" rx="6" fill="#f5f5f5"/>
+<rect x="996" y="234" width="306" height="72" rx="6" fill="#ffffff" fill-opacity="1.0" stroke="#2d3142" stroke-opacity="1.0" stroke-width="1.0"/>
+<g transform="translate(1008,258)" fill="none" stroke="#2d3142" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4a2 2 0 0 0 -2 2v3a2 3 0 0 1 -2 3a2 3 0 0 1 2 3v3a2 2 0 0 0 2 2" />
+  <path d="M17 4a2 2 0 0 1 2 2v3a2 3 0 0 0 2 3a2 3 0 0 0 -2 3v3a2 2 0 0 1 -2 2" /></g>
+<text x="1040" y="260" font-family="Geist" font-size="12" font-weight="600" fill="#2d3142">λN·L_N + λR·L_R + λP·L_P + λA·L_A</text>
+<text x="1040" y="276" font-family="Geist Mono" font-size="10" font-weight="400" fill="#4f5d75" text-anchor="start">FM · weighted FM · bounded hinge</text>
+<text x="1040" y="292" font-family="Geist Mono" font-size="10" font-weight="400" fill="#4f5d75" text-anchor="start">velocity anchoring on nominal</text>
+<rect x="996" y="340" width="306" height="56" rx="6" fill="#f5f5f5"/>
+<rect x="996" y="340" width="306" height="56" rx="6" fill="#ffffff" fill-opacity="1.0" stroke="#2d3142" stroke-opacity="1.0" stroke-width="1.0"/>
+<g transform="translate(1008,356)" fill="none" stroke="#2d3142" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13a8 8 0 0 1 7 7a6 6 0 0 0 3 -5a9 9 0 0 0 6 -8a3 3 0 0 0 -3 -3a9 9 0 0 0 -8 6a6 6 0 0 0 -5 3" />
+  <path d="M7 14a6 6 0 0 0 -3 6a6 6 0 0 0 6 -3" />
+  <path d="M14 9a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /></g>
+<text x="1040" y="366" font-family="Geist" font-size="12" font-weight="600" fill="#2d3142">Policy π′ (+ optional gate g(h))</text>
+<text x="1040" y="382" font-family="Geist Mono" font-size="10" font-weight="400" fill="#4f5d75" text-anchor="start">recovers and avoids · no test-time search</text>
+<rect x="286.7" y="142" width="38.5" height="16" rx="2" fill="#f5f5f5"/>
+<text x="306" y="153" font-family="Geist Mono" font-size="8" font-weight="600" fill="#2e5aa8" text-anchor="middle" letter-spacing="0.64">FAILS</text>
+<rect x="483" y="208" width="54.9" height="16" rx="2" fill="#f5f5f5"/>
+<text x="510.4" y="219" font-family="Geist Mono" font-size="8" font-weight="600" fill="#2e5aa8" text-anchor="middle" letter-spacing="0.64">S- / S_F</text>
+<rect x="483" y="314" width="49.4" height="16" rx="2" fill="#f5f5f5"/>
+<text x="507.7" y="325" font-family="Geist Mono" font-size="8" font-weight="600" fill="#bf4520" text-anchor="middle" letter-spacing="0.64">IMAGINE</text>
+<rect x="483" y="404" width="38.5" height="16" rx="2" fill="#f5f5f5"/>
+<text x="502.3" y="415" font-family="Geist Mono" font-size="8" font-weight="600" fill="#bf4520" text-anchor="middle" letter-spacing="0.64">TOP-K</text>
+<rect x="623.4" y="428" width="33.1" height="16" rx="2" fill="#f5f5f5"/>
+<text x="640" y="439" font-family="Geist Mono" font-size="8" font-weight="600" fill="#2e5aa8" text-anchor="middle" letter-spacing="0.64">PASS</text>
+<rect x="624.7" y="444" width="38.5" height="16" rx="2" fill="#f5f5f5"/>
+<text x="644" y="455" font-family="Geist Mono" font-size="8" font-weight="600" fill="#2e5aa8" text-anchor="middle" letter-spacing="0.64">PAIRS</text>
+<rect x="631.4" y="444" width="33.1" height="16" rx="2" fill="#f5f5f5"/>
+<text x="648" y="455" font-family="Geist Mono" font-size="8" font-weight="600" fill="#bf4520" text-anchor="middle" letter-spacing="0.64">FAIL</text>
+<rect x="944.2" y="134" width="27.7" height="16" rx="2" fill="#f5f5f5"/>
+<text x="958" y="145" font-family="Geist Mono" font-size="8" font-weight="600" fill="#2e5aa8" text-anchor="middle" letter-spacing="0.64">L_N</text>
+<rect x="952.2" y="248" width="27.7" height="16" rx="2" fill="#f5f5f5"/>
+<text x="966" y="259" font-family="Geist Mono" font-size="8" font-weight="600" fill="#2e5aa8" text-anchor="middle" letter-spacing="0.64">L_R</text>
+<rect x="948.2" y="346" width="27.7" height="16" rx="2" fill="#f5f5f5"/>
+<text x="962" y="357" font-family="Geist Mono" font-size="8" font-weight="600" fill="#2e5aa8" text-anchor="middle" letter-spacing="0.64">L_P</text>
+<rect x="1155" y="192" width="27.7" height="16" rx="2" fill="#f5f5f5"/>
+<text x="1168.8" y="203" font-family="Geist Mono" font-size="8" font-weight="600" fill="#4f5d75" text-anchor="middle" letter-spacing="0.64">L_A</text>
+<rect x="1155" y="314" width="33.1" height="16" rx="2" fill="#f5f5f5"/>
+<text x="1171.6" y="325" font-family="Geist Mono" font-size="8" font-weight="600" fill="#2e5aa8" text-anchor="middle" letter-spacing="0.64">CKPT</text>
+<rect x="625" y="508" width="44" height="16" rx="2" fill="#f5f5f5"/>
+<text x="647" y="519" font-family="Geist Mono" font-size="8" font-weight="600" fill="#4f5d75" text-anchor="middle" letter-spacing="0.64">REFINE</text>
+<line x1="16" y1="558" x2="1322" y2="558" stroke="#2d3142" stroke-opacity="0.12" stroke-width="0.8"/>
+<text x="16" y="578" font-family="Geist Mono" font-size="8" font-weight="400" fill="#4f5d75" text-anchor="start" letter-spacing="1.12">LEGEND</text>
+<line x1="80" y1="574" x2="104" y2="574" stroke="#2e5aa8" stroke-width="1.2"/>
+<text x="112" y="578" font-family="Geist Mono" font-size="8" font-weight="400" fill="#4f5d75" text-anchor="start">data flow</text>
+<line x1="191.171875" y1="574" x2="215.171875" y2="574" stroke="#bf4520" stroke-width="1.4"/>
+<text x="223.2" y="578" font-family="Geist Mono" font-size="8" font-weight="400" fill="#4f5d75" text-anchor="start">pain-point</text>
+<line x1="307.140625" y1="574" x2="331.140625" y2="574" stroke="#4f5d75" stroke-width="1.0"/>
+<text x="339.1" y="578" font-family="Geist Mono" font-size="8" font-weight="400" fill="#4f5d75" text-anchor="start">anchor / refinement loop</text>
+<line x1="490.265625" y1="574" x2="514.265625" y2="574" stroke="#4f5d75" stroke-width="1.2" stroke-dasharray="4 3"/>
+<text x="522.3" y="578" font-family="Geist Mono" font-size="8" font-weight="400" fill="#4f5d75" text-anchor="start">optional / offline loop</text>
+<rect x="672.59375" y="568" width="16" height="12" rx="2" fill="#ffffff" fill-opacity="1.0" stroke="#4f5d75" stroke-opacity="1.0" stroke-width="0.8" stroke-dasharray="4 3"/>
+<text x="700.6" y="578" font-family="Geist Mono" font-size="8" font-weight="400" fill="#4f5d75" text-anchor="start">external</text>
+<rect x="778.96875" y="568" width="16" height="12" rx="2" fill="#bf4520" fill-opacity="0.07" stroke="#bf4520" stroke-opacity="1.0" stroke-width="0.8"/>
+<text x="807" y="578" font-family="Geist Mono" font-size="8" font-weight="400" fill="#4f5d75" text-anchor="start">bottleneck</text>
+<rect x="894.9375" y="568" width="16" height="12" rx="2" fill="#7c8f6f" fill-opacity="0.06" stroke="#7c8f6f" stroke-opacity="0.45" stroke-width="0.8"/>
+<text x="922.9" y="578" font-family="Geist Mono" font-size="8" font-weight="400" fill="#4f5d75" text-anchor="start">storage</text>
+</svg>

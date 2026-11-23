@@ -933,3 +933,15 @@ Compute: own 1-GPU shell `a3da0634` (user account); never 953bb534 (Goal campaig
 - MDE: with 168 Goal instances, instance-bootstrap SE of a paired AUC difference is ~0.01 -> MDE ~0.025-0.03 (alpha
   0.05 two-sided, power 0.8); smaller effects are "inconclusive at n = 168".
 - Storage budget <= 15 GB new data (fp16 points, 512 pts / frame, 6 frames / bridge -> ~0.7 GB for ~33k bridges).
+
+## RetryVLA v2 re-orientation: pointer (2026-11-23; plan doc only, no rules added here)
+User re-oriented the project to "From Offline Recovery Data Generation to Recovery-Aware Policy Learning". Full plan
+(Vietnamese prose): `docs/plans/RETRYVLA_V2_PLAN.md`; related work verified on 2 sources: `docs/related_work/RELATED_WORK.md`
+section P (CARF 2609.21982, RePO-VLA 2605.09410 = NeurIPS 2026, RECAP 2511.14759, FAR 2607.01111 = CoRL 2026, CrossVLA
+2605.21854, Failure-to-Success Bridging WIP). Summary: Algorithm 1 (natural failures -> CUT-1 localisation -> WM search
+-> C^pi ranking -> sim verification) outputs D_N / D_R (verified bridges from s_f) / D_P (verified matched-state
+preventive pairs a+ > a- at the pre-failure checkpoint s-) / D_F (negatives, never BC); Algorithm 2 trains
+lambda_N L_N + lambda_R L_R + lambda_P L_P (bounded hinge on matched pairs, not DPO) + lambda_A L_A (velocity anchoring
+to the frozen base on nominal states), optional gate g(h). Stages P2-0 .. P2-5 on LIBERO-Goal (2610.05151 protocol),
+P2-3 (+ verified pre-failure positives) decisive. **No P2 stage is pre-registered yet**: each needs its own intake here
+(owned by the Goal-campaign agent) before it runs; the doc's thresholds are proposals, not decision rules.
