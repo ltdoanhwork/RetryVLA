@@ -29,19 +29,56 @@
    "tmux": "rv_f1_g1",
    "args": "goal_f1_lane.sh 1 rv_f1_g1 (F1 shared queue)",
    "since": "2026-11-23T03:36:56"
+  },
+  "8f473147:0:rv_onset": {
+   "tmux": "rv_onset",
+   "args": "goal_onset_lane.sh 0 7 8 (CUT-1 lite onset scans)",
+   "since": "2026-11-23T08:24:08"
+  },
+  "8f473147:1:rv_rsr": {
+   "tmux": "rv_rsr",
+   "args": "goal_rsr_lane.sh 1 (stage 1b own-failure RSR on E8, 13 ckpts)",
+   "since": "2026-11-23T08:24:08"
+  },
+  "a3da0634:0": {
+   "tmux": "rv_critv_gv",
+   "args": "scripts.crit_rich_replay --src data/wm/goal_verif --kind goal --audit_dir data/goal_rsi/audit_m0_s7 --audit_seed 7 --cfg configs/exp/goal_search.yaml --out data/critic3d/goal_verif --workers 6",
+   "since": "2026-11-23T08:30:13"
+  },
+  "a3da0634:0:rv_critv_gc": {
+   "tmux": "rv_critv_gc",
+   "args": "scripts.crit_rich_replay --src data/wm/goal_collect --kind goal --audit_dir data/goal_rsi/audit_m0_s8 --audit_seed 8 --cfg configs/exp/goal_collect.yaml --out data/critic3d/goal_collect --workers 6",
+   "since": "2026-11-23T08:30:23"
+  },
+  "a3da0634:0:rv_critv_m5b": {
+   "tmux": "rv_critv_m5b",
+   "args": "scripts.crit_rich_replay --src data/wm/verif_m5b --kind m5b --cfg configs/exp/m5b_compare_arms.yaml --out data/critic3d/verif_m5b --workers 11",
+   "since": "2026-11-23T08:30:34"
+  },
+  "a3da0634:0:rv_critv_c1": {
+   "tmux": "rv_critv_c1",
+   "args": "scripts.crit_rich_replay --src data/wm/collect_v1 --kind collect --cfg configs/exp/m2_collect.yaml --out data/critic3d/collect_v1 --workers 5",
+   "since": "2026-11-23T08:30:44"
+  },
+  "a3da0634:0:rv_critv_r1": {
+   "tmux": "rv_critv_r1",
+   "args": "scripts.crit_rich_replay --src data/wm/verif_r1 --kind collect --no_exclude --cfg configs/exp/m2_collect.yaml --out data/critic3d/verif_r1 --workers 3",
+   "since": "2026-11-23T08:30:54"
   }
  },
  "allow_only": {
   "63e0f914": "vla_roboworm_1 (owner-busy; LIGHT-SHARE only, currently UNUSED). 2026-11-23: F1 moved to the RetryVLA-owned 2-GPU shell; watcher rv_f1_watch stopped, no claims.",
   "953bb534": "vla_RetryVLA_DoanhLT_2g (953bb534-56fa-4fdf-9e98-36e94fea2423), RetryVLA-OWNED, user account, started 2026-11-23 03:26 UTC for 2610.05151 F1 (user decision). Node cn62, 2x A100 80GB, 32 CPU. envcheck GPU0/1: OK video decode, OK sim 50 steps 0.98 / 0.96 s. Full use; KILL when F1 is done unless scripts/shells/keep_953bb534 exists.",
   "92927808": "vla_RetryVLA_DoanhLT_bot1g (92927808-d6f2-45a1-ba15-6eb7315d7531), RetryVLA-OWNED, user account, started 2026-11-23 08:08 UTC for the Back on Track / ForkCast-style test-time arms on the LIBERO-Goal protocol (coordinator OK: one 1-GPU shell). Full use; KILL when the BoT queue is done.",
-  "a3da0634": "vla_RetryVLA_DoanhLT_critic (a3da0634-2d33-44d2-9ba0-4b131d3f59d6), RetryVLA-OWNED, user account, started 2026-11-23 08:20 UTC by the critic-variants agent (CRIT-V: 3D / CoT / implicit critics, rich-record replay + offline eval). Full use; KILL when CRIT-V is done. Never used for the Goal campaign (953bb534 has GPU priority)."
+  "a3da0634": "vla_RetryVLA_DoanhLT_critic (a3da0634-2d33-44d2-9ba0-4b131d3f59d6), RetryVLA-OWNED, user account, started 2026-11-23 08:20 UTC by the critic-variants agent (CRIT-V: 3D / CoT / implicit critics, rich-record replay + offline eval). Full use; KILL when CRIT-V is done. Never used for the Goal campaign (953bb534 has GPU priority).",
+  "8f473147": "vla_RetryVLA_DoanhLT_2g_b (8f473147-f766-4ea5-8fe5-32d28567fd52), RetryVLA-OWNED second 2-GPU shell, user account, started 2026-11-23 08:25 UTC for the Goal campaign (queue > 12 h). Node cn36, 2x A100 80GB; envcheck GPU0/1 OK (sim 50 steps 0.96 s). Full use; kill when idle."
  },
  "share_ok": {
   "63e0f914": true,
   "953bb534": true,
   "92927808": true,
-  "a3da0634": true
+  "a3da0634": true,
+  "8f473147": true
  },
  "gone": {
   "0097c39c": "vla_RetryVLA_DoanhLT_1 (cn69), RetryVLA's GPU 2026-10-27..10-31; not RUNNING since 2026-11-01 (user 2026-11-02: no longer running). Removed from allow_only",

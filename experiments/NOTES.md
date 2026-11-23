@@ -1226,3 +1226,10 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
     coordinate with those agents before claiming GPUs.
   - RESULTS: appended a main-table note.
   - PAPER_FRAMING_2026-11.md was not present at commit time, so nothing was appended there.
+- 2026-11-23 08:25-08:35 UTC (Goal campaign):
+  - Second RetryVLA-owned shell `8f473147` (vla_RetryVLA_DoanhLT_2g_b, cn36, 2x A100) RUNNING; envcheck OK on
+    GPU0 / 1.
+  - Lanes: `rv_onset` (GPU0, onset scans of audit seeds 7, 8) and `rv_rsr` (GPU1, stage-1b E8 RSR of 13 ckpts),
+    started via tmux_start.sh, claims registered.
+  - `scripts/shells/keep_953bb534` created, so goal_f1_chain2 keeps 953bb534 after F1.
+  - Diagnostic D1: orig_s7 cast to bf16 = 83 / 100 (fp32 82), so bf16 final ckpts are not the cause of the F1 drop.
