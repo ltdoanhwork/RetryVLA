@@ -1254,3 +1254,5 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
   liveness + progress + PCA -> 8 val evals (m0_bot_cpi, m0_bot_liv, m0_fc_cpi, m0_fc_prog, orig7_bot_{cpi,liv},
   recwm7_bot_{cpi,liv}). ETA ~11:30-12:30 UTC. Secondary (LIBERO-Recover Spatial / Object) is queued after it on the
   same shell.
+- 2026-11-23 11:07 UTC: BoT / ForkCast Goal chain DONE on 92927808 (bot_watch); table runs/bot_goal/main.md (reading + RESULTS by the agent).
+- 2026-11-23 11:59 UTC: F1 finished on 953bb534 (goal_f1_chain2); table appended to RESULTS. Claims released. Shell KEPT (keep file present).

@@ -969,3 +969,19 @@ Note for whoever owns the main table (Back on Track agent). I have not edited an
 - Kintsugi's own numbers (one Isaac Lab task, not comparable) belong in a footnote only: V3 34.6 % vs V2 28.8 %
   (Protocol A, difficulty), clean 74.7 vs 76.8 %.
 - Status: pre-registered in PLAN "KIN-1". Queued on 953bb534 after F1 and the Back on Track evals. Not launched.
+
+## 2610.05151 follow-up F1: share-matched distillation (table auto-registered 2026-11-23 11:59 UTC; reading below when written)
+Pre-registration: RESULTS "main comparison" (2026-11-20). Shell 953bb534 (vla_RetryVLA_DoanhLT_2g), lanes rv_f1_g0 / g1. Bridges only (`--recovery_segments 0`), 36 bridges round-robin (~4 % of anchors), otherwise = main comparison. Deviations: compact bf16 resume (optimizer moments rounded at resume points), bf16 final trainable.pt. `scripts/analyze_goal_f1.py` -> runs/goal_rsi/f1.{json,md}.
+
+| arm | val successes s7 / s8 / s9 | mean | Δ vs Original (95 % CI) |
+|---|---|---|---|
+| Original | 82 / 77 / 79 | 79.3 | - |
+| F0_wm | 65 / 76 / 63 | 68.0 | -11.3 [-23.7, +2.0] |
+| F0_random | 67 / 67 / 69 | 67.7 | -11.7 [-21.0, -3.0] |
+| F1_wm | 58 / 69 / 50 | 59.0 | -20.3 [-33.7, -6.3] |
+| F1_random | 49 / 77 / 48 | 58.0 | -21.3 [-38.0, -2.0] |
+
+F1 wm - F0 wm -9.0 [-19.0, +0.7]; F1 random - F0 random -9.7 [-26.7, +10.0]; F1 wm - F1 random +1.0 [-10.7, +11.7]
+pooled fixed / broken vs Original: {'F1_wm': {'fixed': 23, 'broken': 84}, 'F1_random': {'fixed': 17, 'broken': 81}}; recovery anchor share [0.043, 0.0419, 0.0416, 0.0414, 0.0401, 0.0406]
+rules: {'matches_theirs': False, 'beats_theirs': False, 'mix_volume_caused_drop': False, 'wm_matters': False}
+

@@ -20,16 +20,6 @@
   "tmux_prefix": "rv_"
  },
  "claims": {
-  "953bb534:0:rv_f1_g0": {
-   "tmux": "rv_f1_g0",
-   "args": "goal_f1_lane.sh 0 rv_f1_g0 (F1 shared queue)",
-   "since": "2026-11-23T03:36:54"
-  },
-  "953bb534:1:rv_f1_g1": {
-   "tmux": "rv_f1_g1",
-   "args": "goal_f1_lane.sh 1 rv_f1_g1 (F1 shared queue)",
-   "since": "2026-11-23T03:36:56"
-  },
   "8f473147:0:rv_onset": {
    "tmux": "rv_onset",
    "args": "goal_onset_lane.sh 0 7 8 (CUT-1 lite onset scans)",
