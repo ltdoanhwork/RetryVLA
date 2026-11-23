@@ -34,12 +34,14 @@
  "allow_only": {
   "63e0f914": "vla_roboworm_1 (owner-busy; LIGHT-SHARE only, currently UNUSED). 2026-11-23: F1 moved to the RetryVLA-owned 2-GPU shell; watcher rv_f1_watch stopped, no claims.",
   "953bb534": "vla_RetryVLA_DoanhLT_2g (953bb534-56fa-4fdf-9e98-36e94fea2423), RetryVLA-OWNED, user account, started 2026-11-23 03:26 UTC for 2610.05151 F1 (user decision). Node cn62, 2x A100 80GB, 32 CPU. envcheck GPU0/1: OK video decode, OK sim 50 steps 0.98 / 0.96 s. Full use; KILL when F1 is done unless scripts/shells/keep_953bb534 exists.",
-  "92927808": "vla_RetryVLA_DoanhLT_bot1g (92927808-d6f2-45a1-ba15-6eb7315d7531), RetryVLA-OWNED, user account, started 2026-11-23 08:08 UTC for the Back on Track / ForkCast-style test-time arms on the LIBERO-Goal protocol (coordinator OK: one 1-GPU shell). Full use; KILL when the BoT queue is done."
+  "92927808": "vla_RetryVLA_DoanhLT_bot1g (92927808-d6f2-45a1-ba15-6eb7315d7531), RetryVLA-OWNED, user account, started 2026-11-23 08:08 UTC for the Back on Track / ForkCast-style test-time arms on the LIBERO-Goal protocol (coordinator OK: one 1-GPU shell). Full use; KILL when the BoT queue is done.",
+  "a3da0634": "vla_RetryVLA_DoanhLT_critic (a3da0634-2d33-44d2-9ba0-4b131d3f59d6), RetryVLA-OWNED, user account, started 2026-11-23 08:20 UTC by the critic-variants agent (CRIT-V: 3D / CoT / implicit critics, rich-record replay + offline eval). Full use; KILL when CRIT-V is done. Never used for the Goal campaign (953bb534 has GPU priority)."
  },
  "share_ok": {
   "63e0f914": true,
   "953bb534": true,
-  "92927808": true
+  "92927808": true,
+  "a3da0634": true
  },
  "gone": {
   "0097c39c": "vla_RetryVLA_DoanhLT_1 (cn69), RetryVLA's GPU 2026-10-27..10-31; not RUNNING since 2026-11-01 (user 2026-11-02: no longer running). Removed from allow_only",

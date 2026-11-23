@@ -880,3 +880,56 @@ nominal?
 
 Every stage gets its RESULTS entry + reading + decision against these rules before the next stage's code / config
 is changed (deviations logged in NOTES).
+
+## CRIT-V: critic variants (explicit 3D / chain-of-dynamics / implicit) + rich verification records, design note (user request 2026-11-23; written BEFORE any CRIT-V result)
+Doc: `docs/research/CRITIC_VARIANTS.md`. Code: `retryvla/critic/{rich.py, variants.py, train_variants.py, eval_variants.py}`,
+`scripts/crit_rich_replay.py`, opt-in `m5b.rich_record` in `retryvla/search/compare_arms.py` (default path unchanged).
+Compute: own 1-GPU shell `a3da0634` (user account); never 953bb534 (Goal campaign priority) / 92927808 (BoT).
+- Research question: does adding explicit 3D (point clouds), an explicit chain of sub-goal dynamics, or implicit
+  dynamics objectives to C^pi reduce the CRITIC share of search over-optimism (~15-20 %; RESULTS "RQ3 follow-up") and
+  improve within-instance ranking of verified candidates, on imagined and on true end states?
+- Hypotheses (expected direction / size):
+  - H1 3D-true (point-cloud tokens from sim depth + segmentation, TRUE end state): AUC(true) +0.01..0.03 over the
+    retrained C^pi control; mostly on contact / placement failures. 3D-pred (3D tokens predicted from the WM latent,
+    head trained on sim labels like the RGR geometry head): smaller or no gain on imagined states (the WM latent is the
+    bottleneck, RGR head AUC 0.86 real -> 0.61 imagined).
+  - H2 CoT (end state -> chain of sub-goal tokens: contact / grasp -> object displacement & lift -> BDDL predicate
+    progress -> success conditioned on the chain): better calibration (ECE) and FP@top-4 on search-selected picks,
+    because the success head must route through physically checkable intermediate quantities. Control: same
+    architecture with chain loss weight 0 (separates supervision from capacity).
+  - H3 IMPL (imagination-consistency: critic embedding of the WM-imagined end state regressed onto the stop-grad
+    embedding of the TRUE end state of the same candidate + start->end latent-dynamics prediction in the critic's own
+    space + distributional time-to-success head): smaller imagined-vs-true gap (C(a) - C(b)) on search picks.
+- Falsified if: no variant beats the retrained C^pi control by the decision rule below on goal_verif imagined end
+  states, AND the 3D-true oracle does not beat it on true end states (then 3D information is not what the critic lacks).
+- Deviation from the request, decided before results: the existing banks store only bridge latents, no continuation.
+  Re-running every verification with the policy (Goal search took ~9 GPU-h) is out of budget, so the rich replay is
+  BRIDGE-ONLY (open-loop prefix from the exact snapshot, bit-exact, no policy); the chain is therefore the end-state
+  sub-goal chain + start->end deltas, not pi's future timeline. pi-continuation timelines (predicates every 5 steps,
+  point clouds every 50) are recorded by the new opt-in `m5b.rich_record` for future verification runs (Phase 2).
+- Closest prior work to check: PointWorld (CVPR 2026, point-world.github.io), ThinkWorld (chain-of-dynamics, arXiv
+  id to verify), DreamerV3 / TD-MPC2 / SPR (self-predictive latents), distributional RL (C51), 3D value / affordance
+  critics (e.g. 3D Diffuser Actor features); goes to RELATED_WORK.
+- Arms (all critics: same end-state input z_H (72 DINOv2 tokens, 2 cams) + q_H + task, same training data, same steps,
+  50 % imagined end states, 3 seeds): (0) C^pi-ret = RecoveryValue recipe retrained by the same script (CONTROL);
+  (0') shipped C^pi (Goal `goal_latest_critic`, Spatial C^pi v2) and generic success critic (Spatial B2 `wm_success`;
+  none exists for Goal) as references; (1a) 3D-true; (1b) 3D-pred; (2) CoT; (2') CoT-nochain (lambda 0);
+  (3) IMPL; (3') IMPL-noalign (only the distributional + dynamics heads).
+- Data / split (train split scenes only, no test data): Goal: train goal_collect (seed-8 entries, 5,376), eval
+  goal_verif (seed-7 entries, 168 x 32 = random 16 + wm_diverse 16). Spatial: train collect_v1 + verif_r1 (C^pi v2
+  data), eval verif_m5b (256 x 64, random / wm_diverse / wm_noise / wm_qd). Model selection: none (fixed steps).
+- Metrics (eval banks, imagined end states = each suite's WM open-loop rollout of the logged bridge; true = logged
+  latents): AUC, ECE (10 bins), p@1 / p@4 (per instance, rank all verified candidates by the critic, success rate of
+  the top-k, mean over instances), FP@top-4 = P(fail | in the per-instance top-4 and pred >= 0.5), mean pred - SR on
+  search picks (wm_diverse). Stats: instance-cluster bootstrap (2,000) of the paired difference vs C^pi-ret, seed-mean.
+- PRIMARY: goal_verif, imagined end states, variant vs C^pi-ret.
+- Decision rule "clearly wins" (-> small Goal search pilot + hand-off to the campaign): dAUC >= +0.03 with 95 % CI > 0
+  AND dFP@top-4 <= -0.05 AND dp@4 >= 0, all seed-mean on the PRIMARY set, AND Spatial verif_m5b imagined dAUC >= -0.01.
+  "Promising": dAUC >= +0.015 with CI > 0 or dFP@top-4 <= -0.05 with CI < 0 -> document, no pilot, follow-up listed.
+  Otherwise "no gain at this design / data size" (idea-loop diagnosis + review before any close).
+- Pilot (only if "clearly wins"): goal_search config, seed-7 TRAIN entries, first 48 entries, arms wm_diverse (C^pi)
+  vs wm_diverse (variant), 16 verifications each, paired continuation seeds; report solved, hits / verification;
+  McNemar. On a3da0634 only.
+- MDE: with 168 Goal instances, instance-bootstrap SE of a paired AUC difference is ~0.01 -> MDE ~0.025-0.03 (alpha
+  0.05 two-sided, power 0.8); smaller effects are "inconclusive at n = 168".
+- Storage budget <= 15 GB new data (fp16 points, 512 pts / frame, 6 frames / bridge -> ~0.7 GB for ~33k bridges).
