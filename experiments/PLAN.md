@@ -1138,3 +1138,99 @@ State at writing:
 7. critic-swap ablation.
 
 Each run ≈ 3.3 h incl. evals. ETAs: G2 ~11-24 19:30; P2-3 ~11-25 03:00; G2phys ~11-25 06:30; AUX ~11-25 14:00 UTC.
+
+## V2R: RetryVLA v2 training + eval track on LIBERO-Recover Spatial, arms R0-R4 (user request 2026-11-24 15:03 UTC; written BEFORE any V2R result)
+Mirror of the Goal campaign (G2 / P2-3 / critic swap / G2-phys / FC / AUX, sections above) on LIBERO-Recover Spatial
+with SmolVLA. Owner: the V2R agent. Never uses 953bb534 / 8f473147 / 1123d1ea (Goal agents). Code shared through
+common modules (CriticV loader in `WMCriticRanker`, `vec.events_scan`, the detector `retryvla.eval.goal_events.detect`,
+the goal_phys metrics); all new code is opt-in, default paths unchanged.
+- Research question: on LIBERO-Recover, do the v2 data-side levers (better critic for ranking, physical-plausibility
+  curation, verified prevention pairs D_P, auxiliary structured heads) improve recovery (RSR) and prevention (failure
+  incidence / first-attempt success on nominal episodes) of the distilled SmolVLA over pi1, without nominal cost?
+- Common recipe (= pi1): init pi1-nominal (`runs/20261013-080655_M1_sft_nominal_only/checkpoints/006000`), 6k steps,
+  bs 32, lr 5e-5, warmup 300, 50 % nominal replay, recovery segments bridge + continuation, 208 recovery trajectories
+  round-robin over instances, train.seed 0 / 1 / 2. Only the final checkpoint is saved (save_every 6000; quota).
+- Eval (each SFT): Spatial test = dev split, 56 scenes x 10 (5 close + 5 open, eval.seed 7, 520 steps), RSR overall +
+  official L1 (1 scene) / L2 (11) / L3 (16) (no L4 scenes); nominal LIBERO-Spatial 10 x 50 (280 steps). New opt-in
+  `eval.save_actions` stores every episode's actions (outcomes unchanged: recording only reads state) -> closed-loop
+  action jerk (mean ||Δ³a||, dims 0-5), completion steps, and the failure-event detector.
+- Failure-event detector **E-v1s** = Goal E-v1 (`goal_events.detect`, same thresholds: grasp_lost, displaced,
+  tipped, off_table, stall), run offline by bit-exact replay of the saved nominal-episode actions from the same
+  `load_nominal` init (new `vec.events_scan_load`, reuses events_scan's sampler). Replay check: success must match
+  the logged outcome, mismatching episodes excluded and counted. Frozen at the commit of this section's code; not
+  validated against hand labels (secondary metrics, like Goal).
+- Arms (all 3 seeds unless stated):
+  - **R0** = pi1 (existing 3 seeds: M5c s0, M8 seed_pi1 s1 / s2; RSR 0.418 ± 0.021, nominal 0.785). Its nominal evals
+    are re-run with save_actions (same eval seed) for the event metrics only; RSR / nominal SR of R0 stay the
+    registered ones (the re-run's SR is reported as a reproducibility check).
+  - **R1 critic swap**: re-search the M5b TRAIN failure instances (same selection: select_seed 2026, n_select 288,
+    trials 2-9, 8 shards; pi0 precheck read from the M5b precheck.csv; pool 256 = SmolVLA samples + perturbations +
+    primitives, 2 latent-CEM rounds, diverse top-16 verifications, pi0 continuation, <= 4 trajectories / instance,
+    same per-slot continuation seeds as M5b) with wm_diverse ranked by the CRIT-V retrained `base` critic
+    (`runs/20261124_CRITV_spatial/ckpt/base_s0.pt`, trained on collect_v1 + verif_r1 only, so M5b instances are
+    held out for it) instead of the shipped C^pi v2 -> bank -> 208 round-robin -> SFT. Search-level control = the M5b
+    wm_diverse run on the same instances / slot seeds (historical; bf16 non-determinism caveat, ~72-78 % pick
+    agreement on reruns): solved, hits / verification, McNemar on solved instances.
+  - **R2 = R1 + physical-plausibility curation** at equal count (208): every verified R1 trajectory is replayed
+    bit-exactly from its snapshot with privileged geometry (Spatial port of `goal_phys`, `retryvla.search.rec_phys`);
+    reject if replay mismatch, penetration > 1 cm, any object off table, object jump > 3 cm / step without finger
+    contact (impulse), bridge d3 > 2 x median D0 d3 (D0 = lerobot/libero Spatial demos, 50-step windows), seam
+    ||a_H − a_{H−1}|| > 3 x median D0 ||Δa||, gripper flips > 1 in the bridge. Survivors are selected SMOOTH-V
+    smooth-first: round-robin over instances, inside an instance lowest bridge d3 first. If < 208 survive: all
+    survivors and R1 is re-matched to the same count in a 1-seed check.
+  - **R3 = R2 + D_P prevention pairs** at equal total count: pre-failure states s^- come from the source episodes of
+    the TRAIN failure groups (`data/assets/scenes_full/assets_times/bddl_scenes_spatial/<task>/<episode>/step_XXXX`,
+    20-step grid 0..200; the benchmark scenes are step_0180 / 0200), loaded exactly as recorded (noise 0, gripper as
+    recorded). Onset scan with pi0 (= the D_R continuation policy): backward from step 160 in 20-step steps, K = 8
+    pi0 rollouts (<= 520 steps) per grid point, t_last = first (latest) point with >= 2 / 8 successes; never
+    recoverable episodes dropped. s^- = t_last if it has >= 1 failing rollout. a- = the first 50 actions of the first
+    failing pi0 rollout from s^- (pi0's own mistake). Candidates = 24 SmolVLA samples (noise 1.0) + 8 fixed
+    primitives, <= 1 gripper flip; screen 1 trial, hits get 2 more; a- gets K = 3 trials (same continuation seeds);
+    pair iff p(a+) >= 2/3 and p(a+) − p(a-) >= 1/3, <= 2 positives per s^- (`retryvla.search.rec_prevent`). D_P
+    trajectory = a+ (segment 0) + pi0 continuation (segment 1); the a- and losing candidates are kept in
+    pairs.jsonl (D_F, never BC). R3 = (208 − n_P) R2-selected trajectories + n_P D_P trajectories, n_P =
+    min(#D_P, 70). If n_P < 20: R3 at 1 seed only, "inconclusive (underpowered)".
+  - **R4 = best of R1-R3 + auxiliary structured heads** (aux OFF at inference): an MLP on the action-expert hidden
+    states (input of action_out_proj, mean over the 50-token chunk, same hook as L_future), targets from the
+    privileged replays at k = 0 / 10 / 20 / 30 / 40 steps ahead of the frame: chain-of-dynamics = grasped (finger
+    contact and lift >= 2 cm), finger-object contact (BCE), object lift (cm), object-goal xy distance (cm)
+    (smooth-L1); object point-flow summary = 3-D displacement of the manipulated object and of the goal object
+    between the frame and k = 10..40 (rigid bodies: their point flow is summarised by the body translation; smooth-L1).
+    Loss = FM + 0.1 x aux (standardised targets). Deviation from Goal (decided now): aux targets exist only for
+    recovery / D_P frames (replayed); nominal demo frames are masked (lerobot/libero has no sim states). The head is
+    saved separately (`aux_head.pt`); the evaluated policy checkpoint is the plain SmolVLA. Best of R1-R3 = highest
+    mean RSR among arms that pass the nominal guard; within 2 pt -> the simpler arm (R1 < R2 < R3).
+  - Optional **R5** = R3 + D_F hinge on matched-state pairs: only if R3 "prevention helps" (below); otherwise not run.
+- Metrics: RSR mean ± sd over seeds + official per level; ΔRSR vs R0 (scene x seed bootstrap 10k CI, paired
+  sign-flip p over scenes, McNemar n01 / n10 pooled over seed pairs); nominal SR (guard: mean >= pi1-nominal
+  0.796 − 2 pt); per-task nominal regression vs pi0 (0.656) and pi1-nominal (tasks dropping > 6 pt = 3 / 50
+  episodes, per seed mean); E-v1s failure incidence and first-attempt success on the 500 nominal episodes; completion
+  steps (successful episodes); closed-loop action jerk (nominal + RSR episodes); data funnel per bank (instances ->
+  solved -> verified -> survivors -> selected); recovery anchor share.
+- Decision rules (each arm vs its direct control; R1 vs R0, R2 vs R1, R3 vs R2, R4 vs best(R1-R3)):
+  - R1 "critic swap helps": ΔRSR >= +4 pt with CI > 0 and nominal guard; "hurts": ΔRSR <= −4 with CI < 0;
+    otherwise "no detectable effect (MDE ≈ 5 pt)". Search-level: "better ranking" iff solved +5 pt with McNemar
+    p < 0.10 vs M5b wm_diverse.
+  - R2 "curation helps": ΔRSR >= +3 (CI > 0), or nominal +3 (CI > 0), or closed-loop jerk −15 % with RSR within
+    −3 and nominal within −2.
+  - R3 "prevention helps": nominal +3 (CI > 0) or E-v1s incidence −5 pt (CI < 0) or first-attempt success +3
+    (CI > 0), with RSR non-inferior (>= R2 − 3); "prevention data = more recovery data": all |Δ| below these.
+  - R4 "aux helps": ΔRSR +3 (CI > 0) or nominal +3 (CI > 0) or incidence −5 pt (CI < 0), others within −3 / −2.
+  - Any arm with nominal below the guard is reported as failing M-B regardless of RSR.
+- Power: per-seed RSR sd ≈ 0.02 (pi1), scene-cluster bootstrap CI half-width for 3 vs 3 seeds ≈ 0.035-0.04 ->
+  MDE ≈ 5 pt RSR (alpha 0.05, power 0.8); nominal MDE ≈ 4-5 pt. Below that: "inconclusive at n = 560 x 3".
+- Visual check (user rule, `.cursor/skills/retryvla-visual-check`): every new bank (R1 bank, R2 survivors, D_P)
+  gets 6-8 stratified renders (2 worst-jerk, worst handoff jump, most flips, per task, random) -> contact sheets +
+  MP4 + action strip in `runs/_analysis/visual/recover_<bank>/`, LOOKED AT before its distillation; 2-3 sentences
+  per bank in NOTES. A bank that visibly fails (e.g. objects through the gripper) is filtered before SFT (logged).
+- Held-out at the end: the frozen winning recipe on LIBERO-Object (26 test scenes x 10, nominal Object 10 x 50),
+  vs Object pi1 (M10 competence SFT); 3 seeds if compute allows, else 1 seed labelled preliminary. If the winner
+  uses the critic swap, an Object `base` critic is retrained with the CRIT-V recipe on Object train data (deviation
+  logged before the run).
+- Compute: own 2-GPU user-account shells `ea7f9ee3` (vla_RetryVLA_DoanhLT_v2rec) + `f72a5ddd` (_v2rec_b, requested
+  15:57 UTC because one shell leaves R3 / R4 undone by 11-25 morning). Remote tmux chain `rv_v2r_chain` per shell
+  (resumable: every task skip-if-marker), local watchdog `rv_v2r_watch` (45-min stall / session-gone relaunch <= 3,
+  final analyze -> RESULTS / NOTES / REGISTRY -> commit -> det shell kill). Quota budget <= 20 GB new (banks ~4 GB,
+  12 checkpoints x 1.2 GB, verification logs slim).
+- Review: docs/research/REVIEW_2026-11-25_RECOVER.md by 2026-11-25 05:00 UTC; adversarial review (idea-loop step 4)
+  before any close / scale.
