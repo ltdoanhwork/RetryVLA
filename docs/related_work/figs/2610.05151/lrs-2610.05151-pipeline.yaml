@@ -1,0 +1,42 @@
+# arXiv 2610.05151 (LRS, Recursive Self-Improvement via Local Recovery Supervision) pipeline.
+# Grounded in docs/related_work/COMPARE_2610.05151.md section 1.
+slug: lrs-2610.05151-pipeline
+eyebrow: arXiv 2610.05151 · LRS · LIBERO-Goal
+title: Local Recovery Supervision (LRS) pipeline
+subtitle: "An LLM teacher writes corrections and an LLM judges the handoff: acceptance is never checked against sim ground truth."
+columns:
+  - name: COLLECTION
+    nodes:
+      - {id: bench, icon: test, title: LIBERO-Goal, subtitle: ["10 tasks · 300 train scenes", "custom 30 / 10 / 10 split"], kind: external}
+      - {id: pi0, icon: robot, title: "Frozen π0 rollouts", subtitle: ["M0 · 3k LoRA updates", "233 succ / 67 fail"]}
+      - {id: fail, icon: alert, title: Failure collection, subtitle: ["sim state restore", "LLM auditor: 0–3 entries"]}
+  - name: CORRECTION
+    nodes:
+      - {id: llm, icon: cloud, title: LLM teacher, subtitle: ["gpt-6.1-sol · tool calls", "no search, 1 path / attempt"], kind: external}
+      - {id: prop, icon: terminal, title: Corrective windows, subtitle: ["1–40 actions / request", "≤ 300 actions / attempt"]}
+      - {id: exec, icon: server, title: Execute in sim, subtitle: ["MuJoCo · replay prefix", "restore endpoint"], kind: storage}
+  - name: VERIFICATION
+    nodes:
+      - {id: handoff, icon: refresh, title: Handoff test, subtitle: ["frozen π0: 60 + 10 actions", "check every 10 actions"]}
+      - {id: judge, icon: search, title: LLM judge, note: "no ground-truth success", subtitle: ["1–2 'early progress' checks", "short-horizon proxy"], kind: bottleneck}
+      - {id: filter, icon: test-pipe, title: Quality filter, subtitle: ["LLM grades each action", "keep q ≥ 0.75 · L ≥ 5"]}
+  - name: TRAINING
+    nodes:
+      - {id: bank, icon: database, title: "~1,639 teacher windows", subtitle: ["27 accepted paths", "≈ 4 % of anchors"], kind: storage}
+      - {id: demos, icon: file, title: Original demos, subtitle: ["37,907 windows · 96 %"], kind: external}
+      - {id: sft, icon: stack-2, title: "Fine-tune π0", subtitle: ["2k updates from M0", "uniform mix · q-weighted"]}
+      - {id: res, icon: chart-line, title: "Original 78 → Recovery 88", subtitle: ["/ 100 nominal val scenes", "1 seed · McNemar p 0.076"]}
+edges:
+  - {from: bench, to: pi0, label: SCENES, dashed: true}
+  - {from: pi0, to: fail, label: FAIL}
+  - {from: fail, to: llm, label: ENTRY}
+  - {from: llm, to: prop, label: PROPOSE, dashed: true}
+  - {from: prop, to: exec, label: ACTIONS}
+  - {from: exec, to: handoff, label: ENDPOINT}
+  - {from: handoff, to: judge, label: FRAMES}
+  - {from: judge, to: filter, label: ACCEPT, kind: pain}
+  - {from: filter, to: bank, label: WINDOWS, kind: pain}
+  - {from: demos, to: sft, label: 96 %, dashed: true}
+  - {from: bank, to: sft, label: 4 %}
+  - {from: sft, to: res, label: CKPT}
+legend: {pain: "LLM-judged (unverified)", dashed: "external / mix"}

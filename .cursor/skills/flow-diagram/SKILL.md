@@ -4,10 +4,12 @@ description: >-
   Answers questions about a flow, pipeline, data flow, workflow, process or architecture
   with a rendered diagram (PNG/SVG/HTML) in the diagram-design "it-state" style: grey canvas,
   labelled column panels, white icon cards, blue data-flow arrows, red pain-points, dashed
-  external, red bottleneck, green storage, legend. Use whenever the user asks what a flow or
-  pipeline looks like or how parts connect, e.g. "flow đang làm là gì", "luồng xử lý",
-  "pipeline thế nào", "quy trình", "kiến trúc", "vẽ flow", "explain the pipeline",
-  "how does data flow", "architecture of X", "what is the current workflow".
+  external, red bottleneck, green storage, legend. Fast default (pure Python, no browser)
+  whenever the user asks what a flow, pipeline or architecture looks like or how parts
+  connect, e.g. "flow đang làm là gì", "luồng xử lý", "pipeline thế nào", "quy trình",
+  "kiến trúc", "vẽ sơ đồ flow", "vẽ flow", "pipeline diagram", "explain the pipeline",
+  "how does data flow", "architecture of X", "compare two pipelines". For other diagram
+  types (sequence, state, ER, timeline, funnel, charts) use the diagram-design skill.
 ---
 
 # Flow diagram (diagram-design it-state style)
@@ -114,4 +116,13 @@ sql world internet gateway`. Unknown id → warns and falls back to `file`.
 Visual language, color tokens and icons are from
 [cathrynlavery/diagram-design](https://github.com/cathrynlavery/diagram-design)
 (MIT, © 2025 Cathryn Lavery; icons: Tabler Icons, MIT). See `LICENSE-diagram-design.txt`
-and `NOTICE.md`. For other diagram types (sequence, ER, swimlane, …) use that upstream skill.
+and `NOTICE.md`.
+
+## Other diagram types → diagram-design skill
+
+The full upstream skill is vendored at [`../diagram-design/SKILL.md`](../diagram-design/SKILL.md)
+(52 types as HTML + SVG; Playwright PNG export set up for this cluster, cairosvg fallback).
+Use it for sequence, state machine, ER, swimlane, timeline, funnel / pyramid, quadrant,
+Sankey, charts, Mermaid / draw.io redraws, or when a flow needs decisions, nested zones or
+editorial annotations. Keep this skill as the default for plain flow / pipeline /
+architecture questions.

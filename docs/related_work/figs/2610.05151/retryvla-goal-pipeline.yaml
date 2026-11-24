@@ -1,0 +1,41 @@
+# RetryVLA on the 2610.05151 LIBERO-Goal protocol (main comparison + F1), same columns as the LRS diagram.
+# Grounded in docs/related_work/COMPARE_2610.05151.md sections 2-3 and experiments/RESULTS.md
+# ("2610.05151 reverse direction: main comparison", "follow-up F1").
+slug: retryvla-goal-pipeline
+eyebrow: RetryVLA · same LIBERO-Goal protocol
+title: RetryVLA recovery pipeline (WM + C^π search)
+subtitle: "Sampled pool ranked by WM + critic, accepted only on sim ground truth; distillation still costs nominal success on Goal."
+columns:
+  - name: COLLECTION
+    nodes:
+      - {id: bench, icon: test, title: LIBERO-Goal, subtitle: ["10 tasks · 300 train scenes", "our seed-7 30 / 10 / 10 split"], kind: external}
+      - {id: pi0, icon: robot, title: "Frozen π0 rollouts", subtitle: ["M0 · pi0 + LoRA 4k", "audit 300 train scenes"]}
+      - {id: fail, icon: alert, title: Failure snapshots, subtitle: ["bit-exact sim state", "168 entries (56 fails x 3)"]}
+  - name: CORRECTION
+    nodes:
+      - {id: pool, icon: stack-2, title: Candidate pool, subtitle: ["π0 chunk samples + noise", "+ primitives · 2 CEM rounds"]}
+      - {id: wm, icon: cube, title: "WM + critic C^π", note: "over-optimistic under search", subtitle: ["DINOv2 latent imagination", "diverse top-16 / entry"], kind: bottleneck}
+  - name: VERIFICATION
+    nodes:
+      - {id: verify, icon: refresh, title: Bridge + π0 continuation, subtitle: ["50-step bridge, then M0", "≤ 300 steps to BDDL goal"]}
+      - {id: sim, icon: server, title: Ground-truth success, subtitle: ["MuJoCo · native success check", "no LLM judge"], kind: storage}
+      - {id: eff, icon: search, title: "Sim efficiency", subtitle: ["hits / verify 0.24 vs 0.16", "solved 0.59 vs 0.57 random"]}
+  - name: TRAINING
+    nodes:
+      - {id: bank, icon: database, title: Verified recovery bank, subtitle: ["bridge + continuation", "282 trajs · 47 % of anchors"], kind: storage}
+      - {id: demos, icon: file, title: Original demos D0, subtitle: ["38,240 windows"], kind: external}
+      - {id: sft, icon: stack-2, title: "Fine-tune π0", subtitle: ["their recipe: 2k from M0", "uniform mix · 3 seeds"]}
+      - {id: res, icon: chart-line, title: "Original 79.3 → 68.0", note: "share-matched 4 % (F1): 59.0", subtitle: ["/ 100 val · mean of 3 seeds"], kind: bottleneck}
+edges:
+  - {from: bench, to: pi0, label: SCENES, dashed: true}
+  - {from: pi0, to: fail, label: FAIL}
+  - {from: fail, to: pool, label: ENTRY}
+  - {from: pool, to: wm, label: IMAGINE}
+  - {from: wm, to: verify, label: TOP-K, kind: pain}
+  - {from: verify, to: sim, label: ROLLOUT, kind: neutral}
+  - {from: sim, to: eff, label: STATS, kind: neutral}
+  - {from: sim, to: bank, label: PASS}
+  - {from: demos, to: sft, label: 53 %, dashed: true}
+  - {from: bank, to: sft, label: 47 %}
+  - {from: sft, to: res, label: CKPT, kind: pain}
+legend: {pain: "risk / loss", neutral: "sim check / stats", dashed: "external / mix"}

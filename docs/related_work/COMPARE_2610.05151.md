@@ -32,6 +32,10 @@ so itself: "short-term handoff usability, rather than a guarantee of eventual fu
 
 ## 2. Side by side
 
+Pipeline diagrams (flow-diagram skill; specs next to the PNGs):
+[LRS](figs/2610.05151/lrs-2610.05151-pipeline.png) ·
+[RetryVLA on the same Goal protocol](figs/2610.05151/retryvla-goal-pipeline.png) (numbers: RESULTS "main comparison", "F1").
+
 | axis | 2610.05151 | RetryVLA (current pi1 pipeline) |
 |---|---|---|
 | policy | pi0 3.3 B (LoRA-style, 468 M trainable) | SmolVLA 450 M (`HuggingFaceVLA/smolvla_libero`) |
