@@ -35,7 +35,7 @@ class _RecordingSim:
 
     # recording
     def record(self, on: bool = True, segment: int = 0, stride: int = 1, img_segments=None,
-               img_until: int | None = None) -> None:
+               img_until: int | None = None, rich: dict | None = None) -> None:
         """stride: keep images every `stride` env steps; img_segments: segments whose images are kept
         (None = all); img_until: no images after this many recorded steps. Actions/states/segments are
         always kept for every step."""
@@ -45,6 +45,24 @@ class _RecordingSim:
         self._t_rec = 0
         if on:
             self._buf = []
+        # CRIT-V (opt-in, retryvla.critic.rich): symbolic state every rich["every"] steps, point cloud at the steps in
+        # rich["pc_at"] and every rich["pc_every"] steps (0 = off), plus once after the last step (pop_record)
+        self._rich = dict(rich) if (on and rich) else None
+        if self._rich is not None:
+            self._rich_buf = {"t": [], "sym": [], "pc_t": [], "pc": [], "pcl": []}
+            self._rich_capture()
+
+    def _rich_capture(self, final: bool = False) -> None:
+        from retryvla.critic.rich import capture
+
+        r, t = self._rich, self._t_rec
+        pc_at, pc_every = set(r.get("pc_at") or []), int(r.get("pc_every") or 0)
+        with_pc = final or t in pc_at or (pc_every > 0 and t % pc_every == 0)
+        o = capture(self.sim, with_pc, int(r.get("res", 96)), seed=t)
+        b = self._rich_buf
+        b["t"].append(t); b["sym"].append(o["sym"])
+        if with_pc:
+            b["pc_t"].append(t); b["pc"].append(o["pc"]); b["pcl"].append(o["pcl"])
 
     def set_segment(self, segment: int) -> None:
         self.segment = segment
@@ -64,6 +82,16 @@ class _RecordingSim:
         if img_t:
             out["image"] = np.stack([buf[i][0]["image"] for i in img_t])
             out["image2"] = np.stack([buf[i][0]["image2"] for i in img_t])
+        if getattr(self, "_rich", None) is not None:
+            b = self._rich_buf
+            if not b["pc_t"] or b["pc_t"][-1] != self._t_rec:   # end state (after the last step), with point cloud
+                if b["t"] and b["t"][-1] == self._t_rec:
+                    b["t"].pop(); b["sym"].pop()
+                self._rich_capture(final=True)
+            out["rich"] = {"t": np.asarray(b["t"], np.int16), "sym": np.stack(b["sym"]).astype(np.float16),
+                           "pc_t": np.asarray(b["pc_t"], np.int16), "pc": np.stack(b["pc"]),
+                           "pcl": np.stack(b["pcl"])}
+            self._rich = None
         if self._last_obs is not None:  # observation AFTER the last action (needed for end-state latents)
             out["final_image"], out["final_image2"] = self._last_obs["image"], self._last_obs["image2"]
             out["final_state"] = self._last_obs["state"]
@@ -80,6 +108,9 @@ class _RecordingSim:
             self._t_rec += 1
         r = self.sim.step(a)
         self._last_obs = r.obs
+        rich = getattr(self, "_rich", None)
+        if self._rec_on and rich is not None and self._t_rec % int(rich.get("every", 5)) == 0:
+            self._rich_capture()
         return {"obs": r.obs, "success": r.success, "t": self.sim.t}
 
     def step_seq(self, actions, stop_on_success: bool = True, return_obs: bool = True, segment: int = 0) -> dict:

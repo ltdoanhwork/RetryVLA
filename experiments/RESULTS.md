@@ -1106,3 +1106,26 @@ Interpretation:
 - F0's cost (47 % share) is therefore mostly volume x bridge quality, not bridges per se.
 - Next stage: curated bridges (no perturbation family, no gripper chatter) WITH continuation, at a small share,
   from onset cuts. Then the P2-3 prevention test. Pre-registered in PLAN "Goal campaign stage G2 / P2-3".
+
+## CRIT-V: critic variants (explicit 3D / chain-of-dynamics / implicit), offline (2026-11-24; train split only; no variant passes)
+Design + rules: PLAN "CRIT-V" (2b3b110). Doc: docs/research/CRITIC_VARIANTS.md. Table: `python -m retryvla.critic.eval_variants
+runs/20261124_CRITV_goal runs/20261124_CRITV_spatial` -> runs/_analysis/critv/critv.md. 3 seeds, same recipe / batches,
+instance-cluster bootstrap vs the retrained control `base`.
+
+| Goal goal_verif, imagined end state | AUC | p@4 | FP@top4 | pred-SR picks | dAUC vs base [95% CI] | dFP@top4 [CI] |
+|---|---|---|---|---|---|---|
+| C^pi shipped | 0.639 | 0.213 | 0.783 | +0.373 | - | - |
+| base (retrained control) | 0.714 | 0.246 | 0.682 | +0.076 | - | - |
+| pc_true (3D oracle) | 0.702 | 0.235 | 0.679 | +0.067 | -0.012 [-0.027, +0.002] | -0.003 [-0.029, +0.027] |
+| pc_pred | 0.686 | 0.231 | 0.700 | +0.071 | -0.028 [-0.046, -0.012] | +0.018 [-0.006, +0.044] |
+| cot | 0.707 | 0.246 | 0.676 | +0.080 | -0.007 [-0.024, +0.009] | -0.006 [-0.030, +0.018] |
+| impl | 0.711 | 0.235 | 0.708 | +0.073 | -0.003 [-0.017, +0.013] | +0.026 [+0.002, +0.052] |
+
+Spatial verif_m5b imagined: base 0.815 / FP@top4 0.720; generic success critic 0.828 / 0.638 (best); C^pi v2 shipped
+0.764 / 0.791; best variant pc_pred dAUC +0.008 [+0.002, +0.014], dFP@top4 -0.028 [-0.048, -0.010] (below the rule).
+True end states: no variant improves AUC by more than +0.008 (cot, Spatial); impl loses -0.030 (Spatial).
+Decision (pre-registered): **no variant "clearly wins" or "promising" -> no search pilot, no hand-off.** Reading: even exact
+3D of the end state adds nothing to DINOv2 tokens; the CoT chain is read out at 0.86-0.96 AUC but does not change the
+outcome AUC; imagination alignment costs true-state AUC. The largest effect is retraining an independent critic
+(shipped C^pi pred-SR on its own picks +0.37 vs +0.08). Verdict "no gain at this design / data size", not closed;
+adversarial review (idea-loop step 4) pending. Rich records (33,296 bridges, 734 MB) in data/critic3d.

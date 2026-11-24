@@ -115,6 +115,51 @@ def _save_retry(obj, path, log, tries: int = 5) -> None:
     log.error("giving up on verif log %s", path.name)
 
 
+def rich_record_cfg(mb, H: int) -> dict | None:
+    """m5b.rich_record (CRIT-V, default off): record_cfg for verification jobs -> symbolic state + BDDL predicates +
+    contacts every `rich_every` env steps over the WHOLE episode (bridge + pi continuation), labelled point clouds at
+    t = 0, 10, ..., H and every `rich_pc_every` steps of the continuation (retryvla.critic.rich)."""
+    if not mb.get("rich_record", False):
+        return None
+    return {"rich": {"every": int(mb.get("rich_every", 5)), "pc_at": list(range(0, H + 1, 10)),
+                     "pc_every": int(mb.get("rich_pc_every", 50)), "res": int(mb.get("rich_res", 96))}}
+
+
+def save_rich(out: Path, inst, owner, cands, jobs, res, enc, lat_every: int, log) -> None:
+    """Compact per-instance rich verification record (fp16 / uint8; lists = variable episode length):
+    arm / slot / policy_seed, actions [H, 7], proprio [T, 8], pooled DINOv2 latents every `lat_every` steps
+    (mean over patches, [n, 2 cams, D]) + their step index, symbolic timeline (t, sym [n, S]), point clouds
+    (pc_t, pc [m, N, 3], pcl [m, N]), outcome. ~0.1 MB / candidate."""
+    out.mkdir(parents=True, exist_ok=True)
+    recs = []
+    for (a, j), c, jb, r in zip(owner, cands, jobs, res):
+        rec = r.record or {}
+        rich = rec.get("rich") or {}
+        lat, lat_t = None, []
+        if "image" in rec and len(rec["img_t"]):
+            it = list(rec["img_t"])
+            lat_t = [t for t in it if t % lat_every == 0]
+            ix = [it.index(t) for t in lat_t]
+            ims_a = np.stack([rec["image"][k] for k in ix] + ([rec["final_image"]] if "final_image" in rec else []))
+            ims_w = np.stack([rec["image2"][k] for k in ix] + ([rec["final_image2"]] if "final_image2" in rec else []))
+            if "final_image" in rec:
+                lat_t = lat_t + [len(rec["action"])]
+            dev = enc.mean.device
+            with torch.no_grad(), torch.autocast("cuda", dtype=torch.bfloat16, enabled=dev.type == "cuda"):
+                za = enc.encode_images(torch.as_tensor(ims_a, device=dev)).float().mean(1)
+                zw = enc.encode_images(torch.as_tensor(ims_w, device=dev)).float().mean(1)
+            lat = torch.stack([za, zw], 1).half().cpu()
+        recs.append({"arm": a, "slot": int(j), "policy_seed": int(jb.policy_seed),
+                     "actions": torch.as_tensor(np.asarray(c, np.float32)).half(),
+                     "proprio": torch.as_tensor(np.asarray(rec.get("state", np.zeros((0, 8))), np.float32)).half(),
+                     "lat": lat, "lat_t": torch.as_tensor(lat_t, dtype=torch.int16),
+                     **{k: torch.as_tensor(v) for k, v in rich.items()},
+                     "success": bool(r.success), "success_step": int(r.success_step) if r.success else -1,
+                     "prefix_success": bool(r.prefix_success), "steps": int(r.steps)})
+    _save_retry({"instance_id": inst.instance_id, "task": inst.task, "scene": inst.scene_tag, "format": "critv_rich_v1",
+                 "records": recs}, out / f"{inst.instance_id}.pt", log)
+
+
 def closed_done(root: Path) -> set[str]:
     done = set()
     for p in sorted(root.glob("p*")):
@@ -374,12 +419,17 @@ def main() -> None:
                             picked[a][1]["v1"], picked[a][1]["v2"] = xv["v1"], xv["v2"]
                     # one verification batch for all arms; slot j gets the same continuation seed in every arm
                     vj, owner = [], []
+                    rich_cfg = rich_record_cfg(mb, H)  # CRIT-V (opt-in): rich records of every verified candidate
                     for a in arms:
                         for j, c in enumerate(picked[a][0]):
                             vj.append(Job("restore_snapshot", dict(bddl=inst.bddl, snap=inst.snapshot), task=inst.task,
-                                          max_steps=len(c) + cont, prefix=c, record="all", policy_seed=(seed + j) % (2**31 - 1)))
+                                          max_steps=len(c) + cont, prefix=c, record="all", policy_seed=(seed + j) % (2**31 - 1),
+                                          record_cfg=rich_cfg))
                             owner.append((a, j))
                     res = srun(policy, vj, noise_scale=float(cfg.policy.noise_scale), desc="verify")
+                    if rich_cfg is not None:
+                        save_rich(REPO_ROOT / mb.rich_out, inst, owner, [picked[a][0][j] for a, j in owner], vj, res,
+                                  ranker.enc, int(mb.get("rich_latent_every", 10)), log)
                     by = {a: [] for a in arms}
                     for (a, j), r in zip(owner, res):
                         by[a].append(r)

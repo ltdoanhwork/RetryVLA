@@ -1294,3 +1294,21 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
     breaks most (cream_cheese 7.0 -> 2.0, wine_rack 4.0 -> 1.3).
 - 2026-11-24 11:21-11:24 UTC: F1 diagnosis runs finished: D2 84, D3 63, D4 80, D5 80. Verdict "data effect, no
   pipeline bug" (RESULTS "F1 diagnosis"). Registered 12:45 UTC. Lesson: register finished chains immediately.
+
+## CRIT-V critic variants (2026-11-23/24)
+- Shell a3da0634 (vla_RetryVLA_DoanhLT_critic, cn28, user account) requested 2026-11-23 08:20 UTC, registered; used for the
+  rich replay (11-23 08:30-09:37 UTC, 5 banks, 33,296 bridges, eef replay <= 2.7 mm, prefix agreement 100 %) and the
+  critic-variant training (11-24 08:55-10:09 UTC, 2 suites x 7 kinds x 3 seeds). Killed 2026-11-24 ~12:45 UTC after all
+  pre-registered jobs finished; claims released, moved to shells.json:gone. No GPU of 953bb534 / 92927808 used.
+- Deviations: (1) bridge-only replay (no pi continuation), decided before results (PLAN). (2) First training launch
+  (08:47) restarted at 08:55 after 3k steps: CPU-side batch gather (110 ms/step); fix = bank on GPU, same seeds /
+  batches / recipe, the killed partial run was deleted. (3) eval run on CPU locally, bootstrap 400 reps (Goal) / 200
+  (Spatial) instead of 2,000 (time).
+- Result: no variant passes the pre-registered rule (RESULTS "CRIT-V") -> **no hand-off to the LIBERO-Goal campaign**.
+  For information only: a plain C^pi retrained on all goal_collect (`runs/20261124_CRITV_goal/ckpt/base_s{0,1,2}.pt`,
+  `retryvla.critic.variants.CriticV(kind="base")`) has goal_verif imagined AUC 0.714 vs 0.639 for the shipped critic,
+  but that comparison is confounded by independence (shipped C^pi selected half of those candidates).
+- New opt-in instrumentation for future verification runs: `m5b.rich_record: true` (+ `m5b.rich_out`) in compare_arms
+  -> per candidate actions, proprio, pooled DINOv2 latents every 10 steps, symbolic / BDDL / contact timeline every 5
+  steps over bridge + continuation, point clouds every 10 bridge / 50 continuation steps (~0.1 MB / candidate).
+- Pending: adversarial review (idea-loop step 4) before any "close".

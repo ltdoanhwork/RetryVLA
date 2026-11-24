@@ -882,6 +882,7 @@ Every stage gets its RESULTS entry + reading + decision against these rules befo
 is changed (deviations logged in NOTES).
 
 ## CRIT-V: critic variants (explicit 3D / chain-of-dynamics / implicit) + rich verification records, design note (user request 2026-11-23; written BEFORE any CRIT-V result)
+Status 2026-11-24: offline done, no variant passes (RESULTS "CRIT-V"); no pilot / hand-off; review pending (not closed).
 Doc: `docs/research/CRITIC_VARIANTS.md`. Code: `retryvla/critic/{rich.py, variants.py, train_variants.py, eval_variants.py}`,
 `scripts/crit_rich_replay.py`, opt-in `m5b.rich_record` in `retryvla/search/compare_arms.py` (default path unchanged).
 Compute: own 1-GPU shell `a3da0634` (user account); never 953bb534 (Goal campaign priority) / 92927808 (BoT).
@@ -945,3 +946,71 @@ lambda_N L_N + lambda_R L_R + lambda_P L_P (bounded hinge on matched pairs, not 
 to the frozen base on nominal states), optional gate g(h). Stages P2-0 .. P2-5 on LIBERO-Goal (2610.05151 protocol),
 P2-3 (+ verified pre-failure positives) decisive. **No P2 stage is pre-registered yet**: each needs its own intake here
 (owned by the Goal-campaign agent) before it runs; the doc's thresholds are proposals, not decision rules.
+
+## Goal campaign G2 (curated onset bank + continuation) and P2-3 (prevention pairs D_P), pre-registration (coordinator 2026-11-24 12:40 UTC; written BEFORE any G2 / P2-3 result)
+Inputs:
+- F1 diagnosis (RESULTS 2026-11-24): data effect, no pipeline bug. Bridge-only open-loop targets hurt (D3 63);
+  the same 36 trajectories with continuation anchors are harmless (D5 80 vs Original 82).
+- Stage 1b: F0 data lifts own-failure RSR +13.5.
+- Onset scans: seed 7 gives 52 onset + pre-onset entries, seed 8 gives 53.
+Common recipe: their distillation (M0 + 2k, warmup 200, cosine, D0 + bank pooled uniformly, no oversampling),
+bf16 / resume path (D2 = 84, validated), 3 seeds (7, 8, 9), 100 val scenes.
+
+**G2 bank (curated):** seed-7 onset cut states (52), compare_arms `goal_search_onset_cur.yaml`:
+- pool = 128 pi0 samples at noise 1.0 + 8 fixed + random primitives; no perturbation family; candidates with
+  > 1 gripper sign change dropped;
+- WM v1 Goal + C^pi, `wm_diverse` + `random`, 16 verifications, <= 4 verified trajectories per entry;
+- trajectories = bridge + M0 continuation (segments 0 + 1).
+
+**Arms (anchors counted over the whole trajectory):**
+- `G2` = curated wm_diverse bank, 36 trajectories round-robin (≈ D5's share ≈ 4.4 k anchors ≈ 10 %);
+- `G2r` = curated random bank, same count;
+- `G2-72` = 72 trajectories (if the bank has them), 1 seed first;
+- controls: Original, D5 (old fixed-cut uncurated bank, same count, 1 seed; seeds 8 / 9 added).
+
+**P2-3 D_P (prevention pairs, `retryvla.search.goal_prevent`):**
+- At each pre-onset state s^- of seeds 7 (bank) and 8 (held-out eval, never trained): a- = M0's recorded next 50
+  actions.
+- Candidates = 24 pi0 samples at noise 1.0 + 8 fixed primitives (<= 1 gripper flip), 1 screening trial each, K = 3
+  for screen hits and for a-.
+- Pair iff p(a+) >= 2/3 and p(a+) − p(a-) >= 1/3; <= 2 positives per s^-.
+- D_P trajectory = a+ + M0 continuation.
+
+**P2-3 arms (equal trajectory count N = 36 + n_P):**
+- Policy A = D0 + curated D_R (G2 bank) with N trajectories;
+- Policy B = D0 + G2 bank (36) + D_P (n_P);
+- n_P = min(36, available). If n_P < 15: underpowered, run B at 1 seed only and report "inconclusive".
+- The hinge L_P (v2 plan Algorithm 2) is NOT used in this first test; D_P enters as flow-matching positives
+  (= v2 ablation "s"). Documented choice: the cheapest decisive test of "does prevention data help beyond
+  recovery data".
+
+**Failure-event detector E-v1** (`retryvla/eval/goal_events.py`, frozen at this commit): grasp_lost, displaced
+(collateral), tipped, off_table, stall. Evaluated offline by bit-exact replay of the saved val actions
+(`eval_goal --save_actions`). Not validated against hand labels yet (v2 plan κ check pending), so its metrics are
+secondary.
+
+**Metrics:**
+- (a) nominal SR (primary), Δ vs Original, scene x seed bootstrap;
+- (b) failure incidence (E-v1);
+- (c) first-attempt success;
+- (f) fixed / broken vs Original and vs M0, per task;
+- (g) RSR_E8 (168 held-out seed-8 fixed entries) and RSR on the 53 seed-8 onset entries (E8on).
+
+**Decision rules:**
+- **G2:**
+  - "curation fixes the nominal cost": nominal(G2) >= Original − 2 (CI lower bound > −5) AND RSR_E8(G2) −
+    RSR_E8(Original) >= +5 (CI > 0).
+  - "matches theirs": nominal(G2) − Original >= +5 with CI > 0.
+  - "beats F0": RSR_E8(G2) >= F0 wm (0.282) − 3 AND nominal(G2) >= F0 + 8.
+- **P2-3 (decisive), B vs A at equal trajectory count:**
+  - "prevention helps": nominal(B) − nominal(A) >= +3 (CI > 0) OR failure incidence(B) <= incidence(A) − 5 pt
+    (CI < 0), with RSR_E8 non-inferior (−3).
+  - "prevention data = more recovery data": |Δ nominal| < 3 and |Δ incidence| < 5.
+  - vs paper: Δ(B − Original) is compared with their +10 (78 -> 88), cross-paper only.
+- MDE ≈ 7 pt nominal at n = 100 x 3 seeds; smaller effects = "inconclusive at n = 100".
+
+**Compute (953bb534 + 8f473147, 4 GPUs):**
+- G2 search 3 shards, ~1 h; D_P 2 seeds x 2 shards ~2-3 h, in parallel.
+- Then SFT waves of 4 runs x ~2.9 h (incl. eval + events): G2 x3, G2r x3, D5 s8 / s9, A x3, B x3 ≈ 14 runs
+  ≈ 4 waves ≈ 12 h.
+- ETA: G2 table ~11-25 04:00 UTC, P2-3 table ~11-25 10:00 UTC.
