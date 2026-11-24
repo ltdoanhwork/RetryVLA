@@ -7,7 +7,13 @@ cd /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/RetryVLA; source env/activate.sh 
 export HF_HUB_OFFLINE=1 PYTHONUNBUFFERED=1 CUDA_VISIBLE_DEVICES=$1 MUJOCO_EGL_DEVICE_ID=$1
 G=$1; N=$2; S=$3; shift 3
 O=runs/goal_rsi/$N; M0=runs/goal_rsi/m0_s7/ckpt_04000; C=$O/ckpt_02000
-REC=""; [ "$1" != none ] && REC="--recovery $*"
+REC=""; KL=""; mode=rec
+for x in "$@"; do
+  [ "$x" = none ] && continue
+  [ "$x" = --keep_list ] && { mode=kl; continue; }
+  if [ $mode = rec ]; then REC="$REC $x"; else KL="$KL $x"; fi
+done
+[ -n "$REC" ] && REC="--recovery$REC"; [ -n "$KL" ] && REC="$REC --keep_list$KL"
 if [ ! -f $O/DONE ]; then
   torchrun --nproc_per_node 1 --master_port $((29700 + 10 * G + S + RANDOM % 50)) -m retryvla.train.pi0_sft --out $O --init $M0 \
     --steps 2000 --save_every 2000 --bs 48 --accum 3 --warmup 200 --decay_steps 2000 --seed $S \

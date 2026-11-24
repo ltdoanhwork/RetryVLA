@@ -82,18 +82,26 @@ def run_done(name):
     return (REPO / f"runs/goal_rsi/{name}/ckpt_02000/eval_entries_e8on/summary.json").exists()
 
 
+def phys_done():
+    return (REPO / "data/recovery/goal_search_onset_cur/phys_summary.json").exists()
+
+
 def jobs():
+    """Order (PLAN additions 2026-11-24 15:00 UTC): eval-only, G2 wm, P2-3 A / B, G2phys, G2 random, D5."""
     js = [(n, 0, ["EVAL_ONLY"], lambda: True) for n in EVAL_ONLY]
     for s in (7, 8, 9):
         js.append((f"g2_wm_s{s}", s, [f"{CUR}/wm_diverse@36"], search_done))
+    np_ = lambda: min(36, n_dp())
+    for s in (7, 8, 9):
+        js.append((f"p23_A_s{s}", s, lambda np_=np_: [f"{CUR}/wm_diverse@{36 + np_()}"], dp_done))
+        js.append((f"p23_B_s{s}", s, lambda np_=np_: [f"{CUR}/wm_diverse@36", f"{DP}@{np_()}"], dp_done))
+    for s in (7, 8, 9):   # G2-phys: only physically plausible survivors are eligible (goal_phys keep list)
+        js.append((f"g2phys_wm_s{s}", s, [f"{CUR}/wm_diverse@36", "--keep_list",
+                                         "data/recovery/goal_search_onset_cur/phys_wm_diverse.jsonl"], phys_done))
     for s in (7, 8, 9):
         js.append((f"g2_rand_s{s}", s, [f"{CUR}/random@36"], search_done))
     for s in (8, 9):   # D5 control (old fixed-cut uncurated bank + continuation) for 3 seeds (s7 = diag_f1wm_full_s7)
         js.append((f"d5_wm_s{s}", s, [f"{OLD}/wm_diverse@36"], lambda: True))
-    for s in (7, 8, 9):
-        np_ = lambda: min(36, n_dp())
-        js.append((f"p23_A_s{s}", s, lambda np_=np_: [f"{CUR}/wm_diverse@{36 + np_()}"], dp_done))
-        js.append((f"p23_B_s{s}", s, lambda np_=np_: [f"{CUR}/wm_diverse@36", f"{DP}@{np_()}"], dp_done))
     return js
 
 
@@ -117,8 +125,14 @@ def register(tag):
                                                             "scripts/shells/shells.json"])
 
 
+SLOTF = REPO / "runs/goal_rsi/g2_slots.json"
+
+
 def main():
-    fails, started, registered = {}, {}, set()
+    # job -> slot is persisted (a restarted chain must know which GPU every still-running lane occupies; 2026-11-24
+    # 15:08 a restart forgot it and double-booked all 4 GPUs)
+    started = {k: tuple(v) for k, v in json.loads(SLOTF.read_text()).items()} if SLOTF.exists() else {}
+    fails, registered = {}, set()
     idle_since = {s: None for s in SHELLS}
     log(event="start")
     while True:
@@ -139,6 +153,13 @@ def main():
         for name, sg in started.items():
             if name in running:
                 busy.add(sg)
+        unknown = [n for n in running if n not in started]
+        if unknown:   # never launch onto a shell whose lanes we cannot place
+            for n in unknown:
+                for sg in SLOTS:
+                    if sg[0] == running[n]:
+                        busy.add(sg)
+            log(event="unknown_running_lanes", lanes=unknown)
         todo = [j for j in jobs() if not run_done(j[0]) and j[0] not in running]
         free = [sg for sg in SLOTS if sg not in busy]
         for (name, seed, rec, ready), sg in zip([j for j in todo if j[3]() and fails.get(j[0], 0) <= 2], free):
@@ -155,12 +176,15 @@ def main():
             if name in started:
                 fails[name] = fails.get(name, 0) + 1
             started[name] = sg
+            SLOTF.write_text(json.dumps(started))
             busy.add(sg)
             log(event="launch", job=name, slot=sg, rec=rec, out=[l for l in out.splitlines() if "LAUNCHED" in l])
         log(event="poll", running=sorted(running), busy=sorted(busy), todo=[j[0] for j in todo],
             search_done=search_done(), dp_done=dp_done(), n_dp=n_dp() if dp_done() else None)
-        for tag, names in (("G2", [f"g2_{a}_s{s}" for a in ("wm", "rand") for s in (7, 8, 9)] + ["d5_wm_s8", "d5_wm_s9"]),
-                           ("P2-3", [f"p23_{a}_s{s}" for a in ("A", "B") for s in (7, 8, 9)])):
+        for tag, names in (("G2 wm", [f"g2_wm_s{s}" for s in (7, 8, 9)]),
+                           ("P2-3", [f"p23_{a}_s{s}" for a in ("A", "B") for s in (7, 8, 9)]),
+                           ("G2-phys", [f"g2phys_wm_s{s}" for s in (7, 8, 9)]),
+                           ("G2 random + D5", [f"g2_rand_s{s}" for s in (7, 8, 9)] + ["d5_wm_s8", "d5_wm_s9"])):
             if tag not in registered and all(run_done(n) for n in names):
                 register(tag)
                 registered.add(tag)

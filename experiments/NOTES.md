@@ -1348,3 +1348,16 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
   mostly fails (to be quantified at the end; pre-registered judge-precision rule).
 - Dataset + masked Pool checked on 25 accepted entries: 53 windows / 1,335 frames, L_min drops 4 / window, recovery
   anchors carry validity masks (5-50 valid targets) and q weights; D0 anchors unchanged (mask 1, w 1).
+- 2026-11-24 15:00-15:15 UTC (coordinator additions):
+  - CRIT-V `base` critic swap wired in (WMCriticRanker loads CriticV); link data/wm/goal_critic_base.txt (gitignored)
+    -> runs/20261124_CRITV_goal/ckpt/base_s0.pt.
+  - G2 / D_P were generated with the shipped C^pi (deviation; D_P uses no critic).
+  - Bank sizes: G2 wm 132 trajs / 43 entries, random 115 / 44; D_P 82 positives at 44 / 51 s^-, p(a-) mean 0.11.
+  - Lane `rv_physfc` (8f473147:1, co-located, CPU-bound sim) runs the G2-phys scan (132 + 115 replays), then the FC
+    labelling of seeds 7, 8.
+  - INCIDENT 15:08: restarting goal_g2_chain lost its job -> slot map and launched 4 P2-3 jobs onto the 4 GPUs that
+    were already training G2. Caught within 2 min: the P2-3 lanes were killed (rv_* only, by session) and their run
+    dirs deleted before any training step. The G2 runs were untouched (1 app / GPU, ~30 GB each, verified).
+  - Fix: the slot map is persisted (runs/goal_rsi/g2_slots.json), and running lanes not in the map make their shell
+    busy.
+  - Queue reordered to the pre-registered order (P2-3 before G2 random); G2-phys arm added (gated on phys_summary).
