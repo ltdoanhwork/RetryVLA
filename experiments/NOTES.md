@@ -1333,3 +1333,18 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
     - retryvla/search/goal_prevent.py, retryvla/eval/goal_events.py (detector E-v1, frozen) + vec.py `events_scan`;
     - eval_goal `--save_actions`;
     - pi0_sft per-group caps `--recovery glob@N`.
+
+## LRS-G (full 2610.05151 Recovery reproduction on Goal), ops log
+- 2026-11-24 13:20 UTC: 1-GPU shell bb15ca35 (demos) requested, killed unused 13:50 when the scope grew. 13:45 UTC:
+  2-GPU user-account shell `1123d1ea` (vla_RetryVLA_DoanhLT_lrs2g, node 1fc4d0846a68) requested, registered in
+  shells.json (allow_only + claims `1123d1ea:{0,1}:rv_lrsg`). envcheck OK (sim 50 steps 1.0 s).
+- Code: `retryvla/baselines/lrs_goal.py` (+ `lrs_goal_prompts.py`), `scripts/lrs/{collect_lanes.sh, build_lrs_dataset.py,
+  lrs_run.sh}`, trainer opt-in `pi0_sft --masked_recovery --l_min 5`, demos `scripts/demos/*`.
+- Smoke (1 entry): 8 LLM calls / 32 s; the 8-reply cap ended the stage before any `done` -> D-L4b + cap 12.
+- 14:00 UTC: 6 lanes (3 / GPU) OOM at load (~26 GB / lane while loading pi0 + Qwen3-VL-8B). 14:11 UTC: relaunched with
+  4 lanes (2 / GPU, `rv_lrsg_a0_l{0..3}`, 42 entries each); model load takes ~10 min with 4 concurrent loads from /pfss.
+  Throughput ~1.5-2.5 min / entry / lane (8-15 LLM calls), ETA collection ~15:45 UTC.
+- First rows: the LLM observer accepts the first hand-off in most entries while the sim ground truth (M0 <= 300 steps)
+  mostly fails (to be quantified at the end; pre-registered judge-precision rule).
+- Dataset + masked Pool checked on 25 accepted entries: 53 windows / 1,335 frames, L_min drops 4 / window, recovery
+  anchors carry validity masks (5-50 valid targets) and q weights; D0 anchors unchanged (mask 1, w 1).

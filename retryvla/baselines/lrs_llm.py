@@ -26,7 +26,7 @@ class VLMTeacher:
         self.n_calls, self.t_total, self.tok_in, self.tok_out = 0, 0.0, 0, 0
 
     @torch.no_grad()
-    def chat(self, messages: list[dict], seed: int) -> str:
+    def chat(self, messages: list[dict], seed: int, greedy: bool = False, max_new_tokens: int | None = None) -> str:
         """messages: [{"role", "content": [{"type": "text"|"image", ...}]}]; images as uint8 HxWx3 arrays."""
         msgs = []
         for m in messages:
@@ -41,8 +41,12 @@ class VLMTeacher:
                                                return_tensors="pt").to(self.model.device)
         torch.manual_seed(int(seed))
         t0 = time.time()
-        out = self.model.generate(**inputs, max_new_tokens=self.max_new_tokens, do_sample=True,
-                                  temperature=self.temperature, top_p=self.top_p)
+        mnt = int(max_new_tokens or self.max_new_tokens)
+        if greedy:   # LRS-G observer / evaluator (opt-in): deterministic decoding
+            out = self.model.generate(**inputs, max_new_tokens=mnt, do_sample=False)
+        else:
+            out = self.model.generate(**inputs, max_new_tokens=mnt, do_sample=True,
+                                      temperature=self.temperature, top_p=self.top_p)
         n_in = int(inputs["input_ids"].shape[1])
         text = self.proc.batch_decode(out[:, n_in:], skip_special_tokens=True)[0]
         self.n_calls += 1

@@ -103,10 +103,57 @@ class Pool(torch.utils.data.Dataset):
     def __getitem__(self, i):
         k, j = self.idx[i]
         it = self.ds[k][j]
-        return {"observation.images.image": it["observation.images.image"],
-                "observation.images.image2": it["observation.images.image2"],
-                "observation.state": it["observation.state"], "action": it["action"], "task": it["task"],
-                "src": k}
+        out = {"observation.images.image": it["observation.images.image"],
+               "observation.images.image2": it["observation.images.image2"],
+               "observation.state": it["observation.state"], "action": it["action"], "task": it["task"],
+               "src": k}
+        if getattr(self, "masked", False):   # LRS-G (opt-in): validity mask + quality weight per anchor
+            T = it["action"].shape[0]
+            if k > 0 and "q" in it:
+                out["valid"] = (~it["action_is_pad"].bool()).float()
+                out["w"] = torch.as_tensor(float(it["q"].reshape(-1)[0]), dtype=torch.float32)
+            else:   # D0: their baseline (repeated-tail padding, no mask), weight 1
+                out["valid"] = torch.ones(T)
+                out["w"] = torch.tensor(1.0)
+        return out
+
+    def lmin_filter(self, l_min: int) -> int:
+        """LRS-G: keep recovery anchors with >= l_min valid targets (their L_min = 5). Returns #dropped."""
+        keep, drop = [], 0
+        cache = {}
+        for k, j in self.idx:
+            if k == 0 or "run_end" not in self.ds[k].features:
+                keep.append((k, j))
+                continue
+            if k not in cache:
+                h = self.ds[k].hf_dataset.with_format(None).select_columns(["frame_index", "run_end"])
+                cache[k] = (np.asarray(h["frame_index"]).reshape(-1), np.asarray(h["run_end"]).reshape(-1))
+            fi, re_ = cache[k]
+            if re_[j] - fi[j] + 1 >= l_min:
+                keep.append((k, j))
+            else:
+                drop += 1
+        self.idx = keep
+        return drop
+
+
+class MaskedLoss(torch.nn.Module):
+    """LRS-G quality-weighted, validity-masked flow matching (D-L7: loss mask only, no attention / noisy-token mask).
+    loss = sum_b w_b sum_t m_bt l_bt / sum_b sum_t m_bt, l_bt = mean over the 7 action dims of the pi0 FM loss."""
+
+    def __init__(self, policy):
+        super().__init__()
+        self.policy = policy
+
+    def forward(self, batch, valid, w):
+        p = self.policy
+        images, img_masks = p._preprocess_images(batch)
+        lang_tokens, lang_masks = batch["observation.language.tokens"], batch["observation.language.attention_mask"]
+        losses = p.model.forward(images, img_masks, lang_tokens, lang_masks, p.prepare_state(batch),
+                                 p.prepare_action(batch))
+        losses = losses[:, :, : p.config.output_features["action"].shape[0]].mean(-1)   # [B, T]
+        m = valid[:, : losses.shape[1]].to(losses)
+        return (losses * m * w.to(losses)[:, None]).sum() / m.sum().clamp_min(1.0)
 
 
 def save_resume(rp: Path, step: int, opt, policy) -> None:
@@ -155,6 +202,10 @@ def main():
     ap.add_argument("--seed", type=int, default=7)
     ap.add_argument("--workers", type=int, default=6)
     ap.add_argument("--accum", type=int, default=1, help="gradient accumulation micro-steps (global bs unchanged)")
+    ap.add_argument("--masked_recovery", action="store_true",
+                    help="LRS-G (opt-in): recovery anchors get a validity mask (targets past the window end) and "
+                         "their per-frame quality weight q; D0 unchanged")
+    ap.add_argument("--l_min", type=int, default=5, help="LRS-G: min valid targets per recovery anchor")
     a = ap.parse_args()
 
     ddp = "RANK" in os.environ
@@ -196,6 +247,11 @@ def main():
             caps[gl] = int(cap)
     data = Pool([REPO_ROOT / D0] + rec_roots, cfg.chunk_size, a.recovery_segments,
                 a.max_traj or (sum(caps.values()) if caps else 0), a.seed, groups, caps or None)
+    if a.masked_recovery:
+        data.masked = True
+        nd = data.lmin_filter(a.l_min)
+        if rank == 0:
+            print(f"masked_recovery: dropped {nd} recovery anchors with < {a.l_min} valid targets", flush=True)
     n_src = np.bincount([k for k, _ in data.idx])
     if rank == 0:
         print("anchors per source", n_src.tolist(), flush=True)
@@ -206,10 +262,11 @@ def main():
                                      drop_last=True, persistent_workers=True, prefetch_factor=4)
     params = [p for p in policy.parameters() if p.requires_grad]
     opt = torch.optim.AdamW(params, lr=a.peak, betas=(0.9, 0.95), eps=1e-8, weight_decay=1e-10)
+    core = MaskedLoss(policy) if a.masked_recovery else policy
     if ddp:
-        model = torch.nn.parallel.DistributedDataParallel(policy, device_ids=[dev.index], find_unused_parameters=True)
+        model = torch.nn.parallel.DistributedDataParallel(core, device_ids=[dev.index], find_unused_parameters=True)
     else:
-        model = policy
+        model = core
     meta = {"base": P.BASE, "parent": a.init, "args": vars(a), "params": info, "anchors_per_source": n_src.tolist(),
             "recovery_roots": [str(r) for r in rec_roots], "n_recovery_traj": getattr(data, "n_traj", None),
             "n_traj_by_group": getattr(data, "n_traj_by_group", None)}
@@ -237,9 +294,13 @@ def main():
         for _ in range(a.accum):
             b = next(it)
             b.pop("src")
+            valid, w = b.pop("valid", None), b.pop("w", None)
             b = pre(b)
             with torch.autocast("cuda", dtype=torch.bfloat16):
-                loss, _ = model(b)
+                if a.masked_recovery:
+                    loss = model(b, valid.to(dev), w.to(dev))
+                else:
+                    loss, _ = model(b)
             (loss / a.accum).backward()
         gn = torch.nn.utils.clip_grad_norm_(params, 1.0)
         opt.step()

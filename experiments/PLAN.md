@@ -1065,3 +1065,9 @@ agent-requested 2-GPU user-account shell (killed when done); never 953bb534 / 8f
     wm_diverse solved 0.589, McNemar on the 168 paired entries.
 - MDE ≈ 7 pt nominal at n = 100 x 3 seeds; below that = "inconclusive at n = 100".
 - By-product: side-by-side demos (LRS vs WM bridge, same entries / seeds), docs/research/RECOVERY_DEMOS.md.
+- Addendum (2026-11-24 14:35 UTC, after the collection started, BEFORE any training / eval result; first 25 entries
+  already give ~1.1k anchors): **volume matching.** Primary arm `lrs` = their volume: whole accepted paths are
+  subsampled (seed 0, round-robin over tasks) until the window anchors reach ≈ 1,639 (their count, ≈ 4.1 % of
+  anchors); `lrs_all` (every window that passes the filter) is a secondary arm, 1 seed (seed 7) if GPU time allows.
+  Also logged: D-L4b (a stage that hits the 12-reply cap with >= 1 executed action is handed off like a claim; their
+  sessions allow <= 100 requests), D-L3b (empty `student_progress` -> the spec's completion checks are used).
