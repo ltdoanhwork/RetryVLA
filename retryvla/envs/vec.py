@@ -222,6 +222,51 @@ class _RecordingSim:
             out["snapshot"] = self.sim.snapshot()
         return out
 
+    def events_scan(self, bddl: str, init, actions, every: int = 5) -> list[dict]:
+        """Goal v2 failure-event detector (retryvla.eval.goal_events, opt-in): replay an episode from its demo init state
+        (their protocol: 10 settle steps) with the saved actions; privileged state every `every` steps."""
+        from retryvla.geom.features import IDX, sim_geom
+
+        self.sim.load_init_state(bddl, init, num_steps_wait=10, return_snapshot=False)
+        env = self.sim._env.env
+        m, d = env.sim.model, env.sim.data
+        bid = env.obj_body_id
+        tz = float(env.table_offset[2])
+        free = [n for n, b in bid.items() if int(m.body_jntadr[b]) >= 0 and int(m.jnt_type[int(m.body_jntadr[b])]) == 0]
+        g = env.robots[0].gripper
+        g = g if not isinstance(g, dict) else next(iter(g.values()))
+        fingers = {m.geom_name2id(n) for k in ("left_finger", "right_finger") for n in g.important_geoms[k]}
+        body_of = {}
+        for i in range(m.ngeom):
+            b = int(m.geom_bodyid[i])
+            while b > 0 and b not in set(bid.values()):
+                b = int(m.body_parentid[b])
+            if b > 0:
+                body_of[i] = b
+        inv = {b: n for n, b in bid.items()}
+        obj = self.sim._ooi[0] if self.sim._ooi else None
+
+        def sample(t):
+            gg = sim_geom(self.sim)
+            cont = {}
+            for i in range(d.ncon):
+                c = d.contact[i]
+                for a_, b_ in ((c.geom1, c.geom2), (c.geom2, c.geom1)):
+                    if a_ in fingers and b_ in body_of:
+                        cont[inv[body_of[b_]]] = True
+            return {"t": t, "obj_name": obj, "obj_z": float(gg[IDX["obj_z"]]), "obj_z_tab": float(gg[IDX["obj_z"]]),
+                    "obj_upz": float(gg[IDX["obj_upz"]]), "contact": bool(gg[IDX["finger_obj_contact"]] > 0.5),
+                    "contact_any": cont, "off_table": bool(gg[IDX["off_table"]] > 0.5),
+                    "eef": [float(gg[IDX["eef_x"]]), float(gg[IDX["eef_y"]]), float(gg[IDX["eef_z"]])],
+                    "free_xy": {n: [float(x) for x in d.body_xpos[bid[n]][:2]] for n in free}}
+
+        out = [sample(0)]
+        for t, a in enumerate(np.asarray(actions, np.float32)):
+            self.sim.step(a)
+            if (t + 1) % every == 0:
+                out.append(sample(t + 1))
+        return out
+
     def finish(self, keep_record: bool = False, snapshot: bool = False) -> dict:
         out = {"record": self.pop_record(keep_record), "progress": self.sim.progress()}
         if snapshot:

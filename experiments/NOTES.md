@@ -1312,3 +1312,24 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
   -> per candidate actions, proprio, pooled DINOv2 latents every 10 steps, symbolic / BDDL / contact timeline every 5
   steps over bridge + continuation, point clouds every 10 bridge / 50 continuation steps (~0.1 MB / candidate).
 - Pending: adversarial review (idea-loop step 4) before any "close".
+- 2026-11-24 12:45-13:10 UTC: G2 / P2-3 launched (PLAN pre-registration, written before any result).
+  - Smoke tests passed:
+    - curated search: 1 onset entry, random 0 / 2, wm 1 / 2; the verified bridge has 0 gripper flips, 50 + 263 steps;
+    - D_P: 1 pre-onset entry, p(a-) = 0, 6 / 12 screen hits, 2 positives, 7.5k sim steps, 222 s;
+    - detector E-v1: 4 val episodes of Original s7, 1 stall event, incidence 0.25.
+    One fix along the way: a- shorter than 50 steps when the audit rollout ends.
+  - Lanes:
+    - curated onset search `rv_g2s0` / `rv_g2s1` (953bb534:0 / 1) and `rv_g2s2` (8f473147:0), 17-18 entries each,
+      ~70-210 s per entry;
+    - D_P generation `rv_dp0..3`: 8f473147:1 x2 and 953bb534:0 / 1, 13 pre-onset entries each, ~4 min per entry.
+  - Orchestrator: local `rv_g2_chain` (scripts/goal_g2_chain.py). Its queue fills the 4 GPUs as the bank lanes
+    finish:
+    - eval-only for Original s7-9 / M0 (events + E8on);
+    - G2 wm / rand x 3, D5 s8 / s9;
+    - P2-3 A / B x 3.
+    It auto-registers the G2 and P2-3 tables (analyze_goal_g2.py) and kills an idle shell after 2 h.
+  - New code:
+    - compare_arms `m5b.curated` (opt-in family / gripper-flip filter);
+    - retryvla/search/goal_prevent.py, retryvla/eval/goal_events.py (detector E-v1, frozen) + vec.py `events_scan`;
+    - eval_goal `--save_actions`;
+    - pi0_sft per-group caps `--recovery glob@N`.

@@ -42,7 +42,7 @@ def lr_at(step, peak, warmup, decay_steps, decay_lr):
 class Pool(torch.utils.data.Dataset):
     """Concatenation of LeRobotDatasets; optional anchor filter on the `segment` column for recovery sets."""
 
-    def __init__(self, roots, chunk, seg_filter=None, max_traj: int = 0, seed: int = 0):
+    def __init__(self, roots, chunk, seg_filter=None, max_traj: int = 0, seed: int = 0, groups=None, caps=None):
         """max_traj > 0: keep at most that many recovery trajectories over ALL recovery roots, round-robin over
         instances (= train.subset_mode roundrobin / match_trajectory_count_of of the SmolVLA recipe)."""
         from lerobot.datasets.lerobot_dataset import LeRobotDataset
@@ -62,16 +62,27 @@ class Pool(torch.utils.data.Dataset):
                     n_ep = json.loads((Path(r) / "meta/info.json").read_text())["total_episodes"]
                     for e in range(n_ep):
                         per_inst.setdefault(f"{k}:{e}", []).append((k, e))
-            insts = sorted(per_inst)
-            rng.shuffle(insts)
-            sel, rnd = [], 0
-            while len(sel) < max_traj and any(len(v) > rnd for v in per_inst.values()):
-                for i in insts:
-                    if len(per_inst[i]) > rnd and len(sel) < max_traj:
-                        sel.append(per_inst[i][rnd])
-                rnd += 1
+            def rr(pi, cap):
+                insts = sorted(pi)
+                rng.shuffle(insts)
+                out, rnd = [], 0
+                while len(out) < cap and any(len(v) > rnd for v in pi.values()):
+                    for i in insts:
+                        if len(pi[i]) > rnd and len(out) < cap:
+                            out.append(pi[i][rnd])
+                    rnd += 1
+                return out
+            if caps:   # per-group caps ("glob@N" in --recovery): round-robin inside each group separately
+                sel = []
+                for gname, cap in caps.items():
+                    ks = {k for k in range(1, len(roots)) if groups[k - 1] == gname}
+                    sel += rr({i: [x for x in v if x[0] in ks] for i, v in per_inst.items()
+                               if any(x[0] in ks for x in v)}, cap)
+            else:
+                sel = rr(per_inst, max_traj)
             keep_eps = set(sel)
             self.n_traj = len(sel)
+            self.n_traj_by_group = {g: sum(1 for k, _ in sel if groups and groups[k - 1] == g) for g in (caps or {})}
         for k, r in enumerate(roots):
             meta_fps = json.loads((Path(r) / "meta/info.json").read_text())["fps"]
             d = LeRobotDataset(f"local/{Path(r).name}", root=r,
@@ -174,8 +185,17 @@ def main():
     pre, post = make_pre_post_processors(cfg, dataset_stats=stats,
                                          preprocessor_overrides={"device_processor": {"device": str(dev)}})
     import glob as _g
-    rec_roots = sorted({p for r in a.recovery for p in _g.glob(str(REPO_ROOT / r))})
-    data = Pool([REPO_ROOT / D0] + rec_roots, cfg.chunk_size, a.recovery_segments, a.max_traj, a.seed)
+    rec_roots, groups, caps = [], [], {}
+    for r in a.recovery:   # "glob" or "glob@N" (per-group trajectory cap, e.g. P2-3 B = curated D_R@36 + D_P@n)
+        gl, _, cap = r.partition("@")
+        for p_ in sorted(_g.glob(str(REPO_ROOT / gl))):
+            if p_ not in rec_roots:
+                rec_roots.append(p_)
+                groups.append(gl)
+        if cap:
+            caps[gl] = int(cap)
+    data = Pool([REPO_ROOT / D0] + rec_roots, cfg.chunk_size, a.recovery_segments,
+                a.max_traj or (sum(caps.values()) if caps else 0), a.seed, groups, caps or None)
     n_src = np.bincount([k for k, _ in data.idx])
     if rank == 0:
         print("anchors per source", n_src.tolist(), flush=True)
@@ -191,7 +211,8 @@ def main():
     else:
         model = policy
     meta = {"base": P.BASE, "parent": a.init, "args": vars(a), "params": info, "anchors_per_source": n_src.tolist(),
-            "recovery_roots": [str(r) for r in rec_roots], "n_recovery_traj": getattr(data, "n_traj", None)}
+            "recovery_roots": [str(r) for r in rec_roots], "n_recovery_traj": getattr(data, "n_traj", None),
+            "n_traj_by_group": getattr(data, "n_traj_by_group", None)}
     start = 0
     rp = out / "resume.pt"
     if a.resume_every and rp.exists():

@@ -55,6 +55,17 @@ def select_jobs(scenes, cfg, mb) -> list[Job]:
     return jobs[int(mb.shard):: int(mb.num_shards)]
 
 
+def curate_pool(pool_c: np.ndarray, src: list[str], cc) -> tuple[np.ndarray, list[str]]:
+    """Goal G2 (2026-11-24, F1 diagnosis): keep only the allowed proposal families (default: SmolVLA / pi0 samples at
+    noise 1.0 + primitives; drops `perturb` = 25 % gripper flips, and the noisier vla_s1.5), and drop candidates with
+    more than `max_grip_flips` gripper sign changes (a primitive regrasp has exactly 1)."""
+    fams = list(cc.get("families", ["vla_s1.0", "prim_"]))
+    mx = int(cc.get("max_grip_flips", 1))
+    keep = [i for i, s_ in enumerate(src) if any(s_.startswith(f) for f in fams)
+            and int(np.sum(np.diff(np.sign(pool_c[i, :, 6])) != 0)) <= mx]
+    return pool_c[keep], [src[i] for i in keep]
+
+
 def iid(meta: dict) -> str:
     return f"{meta['scene']}__{meta['gripper_init']}{meta['trial']}"
 
@@ -318,6 +329,8 @@ def main() -> None:
                     rng = np.random.default_rng(seed)
                     ti = time.time()
                     pool_c, src = proposals(inst, NP)
+                    if mb.get("curated"):   # Goal G2 (opt-in): smooth families only, no gripper chatter
+                        pool_c, src = curate_pool(pool_c, src, mb.curated)
                     if paired and (n % nsub != sub or inst.instance_id in done):
                         continue
                     ref = pool_c[[s.startswith("vla_") for s in src]]
@@ -487,6 +500,7 @@ def main() -> None:
                         for k in order:
                             w.add_trajectory(by[a][k].record, inst.task, inst.instance_id,
                                              {"score": float(cs["score"][k]), "pred_value": float(cs["value"][k]),
+                                              "grip_flips": int(np.sum(np.diff(np.sign(cands[k][:, 6])) != 0)),
                                               "arm": a, "scene": inst.scene_tag,
                                               "success_step": -1 if by[a][k].success_step is None else int(by[a][k].success_step)})
                         m_all, m_succ = A.set_metrics(cands, ref), A.set_metrics(cands[succ], ref)

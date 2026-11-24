@@ -20,15 +20,25 @@
   "tmux_prefix": "rv_"
  },
  "claims": {
-  "8f473147:0:rv_onset": {
-   "tmux": "rv_onset",
-   "args": "goal_onset_lane.sh 0 7 8 (CUT-1 lite onset scans)",
-   "since": "2026-11-23T08:24:08"
+  "953bb534:0:rv_g2_chain": {
+   "tmux": "rv_g2r_* / rv_g2s* / rv_dp*",
+   "args": "Goal G2 curated search + P2-3 D_P + goal_g2_chain distillation queue",
+   "since": "2026-11-24T13:06:14"
   },
-  "8f473147:1:rv_rsr": {
-   "tmux": "rv_rsr",
-   "args": "goal_rsr_lane.sh 1 (stage 1b own-failure RSR on E8, 13 ckpts)",
-   "since": "2026-11-23T08:24:08"
+  "953bb534:1:rv_g2_chain": {
+   "tmux": "rv_g2r_* / rv_g2s* / rv_dp*",
+   "args": "Goal G2 curated search + P2-3 D_P + goal_g2_chain distillation queue",
+   "since": "2026-11-24T13:06:14"
+  },
+  "8f473147:0:rv_g2_chain": {
+   "tmux": "rv_g2r_* / rv_g2s* / rv_dp*",
+   "args": "Goal G2 curated search + P2-3 D_P + goal_g2_chain distillation queue",
+   "since": "2026-11-24T13:06:14"
+  },
+  "8f473147:1:rv_g2_chain": {
+   "tmux": "rv_g2r_* / rv_g2s* / rv_dp*",
+   "args": "Goal G2 curated search + P2-3 D_P + goal_g2_chain distillation queue",
+   "since": "2026-11-24T13:06:14"
   }
  },
  "allow_only": {

@@ -51,6 +51,8 @@ def main():
     ap.add_argument("--out", default=None)
     ap.add_argument("--max_steps", type=int, default=300)
     ap.add_argument("--max_jobs", type=int, default=0)
+    ap.add_argument("--save_actions", action="store_true",
+                    help="store every executed action per episode (actions.npz) for the offline failure-event detector")
     ap.add_argument("--bot", default=None, help="Back on Track cfg as JSON (retryvla.policy.bot.BoTCfg); test-time arm")
     a = ap.parse_args()
     from retryvla.policy.pi0_wrapper import Pi0Wrapper
@@ -60,6 +62,9 @@ def main():
     jobs = scene_jobs(a.split_name, a.split, a.max_steps)
     if a.max_jobs:
         jobs = jobs[: a.max_jobs]
+    if a.save_actions:
+        for j in jobs:
+            j.record, j.record_cfg = "all", {"stride": 100000, "img_until": 0}
     policy = Pi0Wrapper(a.ckpt, n_action_steps=5)
     bench = None
     t0 = time.time()
@@ -84,6 +89,11 @@ def main():
 
         res = run_jobs(pool, policy, jobs, desc=f"goal_{a.split}", on_result=_cb)
     rows = [{**r.meta, "success": bool(r.success), "steps": int(r.steps), **stats.get(r.job_id, {})} for r in res]
+    if a.save_actions:
+        try:
+            np.savez_compressed(out / "actions.npz", **{r.meta["scene"]: r.record["action"] for r in res if r.record})
+        except OSError as e:
+            print(f"actions.npz write failed ({e})", flush=True)
     for k in range(12):   # /pfss quota (EDQUOT): wait it out instead of losing the 100 rollouts
         try:
             with open(out / "episodes.jsonl", "w") as f:

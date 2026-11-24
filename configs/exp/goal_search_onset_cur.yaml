@@ -1,0 +1,18 @@
+# Goal G2 (pre-registered PLAN "Goal campaign G2 / P2-3", 2026-11-24): curated search on the ONSET cut states of the
+# seed-7 audit (data/goal_rsi/onset_s7, 52 entries). Pool = pi0 samples at noise 1.0 + primitives (no perturbation
+# family, no vla_s1.5), candidates with > 1 gripper sign change dropped. Same WM / C^pi, 16 verifications / arm.
+defaults: [exp/goal_search]
+tag: goal_search_onset_cur
+search:
+  init:
+    vla_noise_scales: [1.0]
+    n_perturb: 0
+goal:
+  audit_dir: data/goal_rsi/onset_s7
+  audit_seed: 7
+m5b:
+  arms: [random, wm_diverse]
+  curated: {families: ["vla_s1.0", "prim_"], max_grip_flips: 1}
+  num_shards: 3
+  out_root: data/recovery/goal_search_onset_cur
+  verif_out: data/wm/goal_verif_onset_cur
