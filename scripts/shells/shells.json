@@ -39,12 +39,18 @@
    "tmux": "rv_g2r_* / rv_g2s* / rv_dp*",
    "args": "Goal G2 curated search + P2-3 D_P + goal_g2_chain distillation queue",
    "since": "2026-11-24T13:06:14"
+  },
+  "bb15ca35:0:rv_lrs_demo": {
+   "tmux": "rv_lrs_demo",
+   "args": "LRS teacher demos on 6 Goal entries (docs/research/RECOVERY_DEMOS.md)",
+   "since": "2026-11-24T13:18:44"
   }
  },
  "allow_only": {
   "63e0f914": "vla_roboworm_1 (owner-busy; LIGHT-SHARE only, currently UNUSED). 2026-11-23: F1 moved to the RetryVLA-owned 2-GPU shell; watcher rv_f1_watch stopped, no claims.",
   "953bb534": "vla_RetryVLA_DoanhLT_2g (953bb534-56fa-4fdf-9e98-36e94fea2423), RetryVLA-OWNED, user account, started 2026-11-23 03:26 UTC for 2610.05151 F1 (user decision). Node cn62, 2x A100 80GB, 32 CPU. envcheck GPU0/1: OK video decode, OK sim 50 steps 0.98 / 0.96 s. Full use; KILL when F1 is done unless scripts/shells/keep_953bb534 exists.",
-  "8f473147": "vla_RetryVLA_DoanhLT_2g_b (8f473147-f766-4ea5-8fe5-32d28567fd52), RetryVLA-OWNED second 2-GPU shell, user account, started 2026-11-23 08:25 UTC for the Goal campaign (queue > 12 h). Node cn36, 2x A100 80GB; envcheck GPU0/1 OK (sim 50 steps 0.96 s). Full use; kill when idle."
+  "8f473147": "vla_RetryVLA_DoanhLT_2g_b (8f473147-f766-4ea5-8fe5-32d28567fd52), RetryVLA-OWNED second 2-GPU shell, user account, started 2026-11-23 08:25 UTC for the Goal campaign (queue > 12 h). Node cn36, 2x A100 80GB; envcheck GPU0/1 OK (sim 50 steps 0.96 s). Full use; kill when idle.",
+  "bb15ca35": "vla_RetryVLA_DoanhLT_lrsdemo (bb15ca35-d8a2-4a50-8911-b1bca030739c), RetryVLA-OWNED 1-GPU shell, user account, started 2026-11-24 13:20 UTC for LRS (2610.05151) demo runs (Qwen3-VL-8B teacher + pi0 M0). KILL when the demos are done."
  },
  "share_ok": {
   "63e0f914": true,

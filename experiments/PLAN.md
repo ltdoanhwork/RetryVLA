@@ -1014,3 +1014,54 @@ secondary.
 - Then SFT waves of 4 runs x ~2.9 h (incl. eval + events): G2 x3, G2r x3, D5 s8 / s9, A x3, B x3 ≈ 14 runs
   ≈ 4 waves ≈ 12 h.
 - ETA: G2 table ~11-25 04:00 UTC, P2-3 table ~11-25 10:00 UTC.
+
+## LRS-G: full reproduction of the 2610.05151 Recovery arm on the Goal protocol, pre-registration (user request 2026-11-24 13:41 UTC; written BEFORE any LRS-G result)
+Goal: run THEIR pipeline end to end (audit -> LLM tool teacher -> 60 + 10 LLM-judged handoff -> action-quality
+windows -> M0 + 2k with their recipe, 3 seeds) on our G0-validated Goal stack (M0 85, Original 79.3) and compare with
+their Recovery 88 and our Original. Code `retryvla/baselines/lrs_goal.py` (collection), `scripts/lrs/` (grading,
+dataset, chain), trainer opt-in `pi0_sft --masked_recovery` (quality weights + validity mask). Compute: one
+agent-requested 2-GPU user-account shell (killed when done); never 953bb534 / 8f473147.
+- Research question: does their LLM-teacher recovery data, at their volume / share and recipe, lift nominal val SR of
+  our pi0 M0 the way it did theirs (+10 vs Original), and how precise is their LLM-judged handoff vs sim ground truth?
+- Hypothesis: with a local 8B VLM teacher the accepted volume is below theirs and the effect is small
+  (expected Δ vs Original in [-3, +4]); their short-horizon LLM judge over-accepts (precision of "accept" vs full-task
+  sim success < 0.6). The 4 % share + teacher-only windows should NOT reproduce our F0 nominal cost (-11).
+- Pipeline as implemented (deviations D-L1..D-L8 vs the paper, logged before results):
+  1. Failures: M0 audit seed 7 on the 300 train scenes (already run: 244 / 56; theirs 233 / 67). D-L1 auditor: no LLM
+     auditor; entries = the 168 fixed entries (3 per failed rollout at t = 75 / 150 / 225 = their max of 3 per event),
+     IDENTICAL to our goal_search entries (paired with the WM banks).
+  2. Teacher: Qwen3-VL-8B-Instruct (local, bf16; D-L2: theirs gpt-6.1-sol), same views (agentview + wrist 128 px) and
+     8-d state, tools move_to / move_by (<= 40 steps), gripper, done, abort; frozen spec (local goal, completion
+     checks, relations to preserve, 1-2 student progress conditions + completed-task alternative) written by the
+     teacher in its first reply of each stage (D-L3: theirs a separate spec LLM). <= 5 stages, <= 300 teacher actions,
+     <= 8 replies per stage (D-L4: theirs <= 100 requests / 1,200 s), extensions see the last 6 commands and the
+     student summary. 1 attempt per entry (their final protocol).
+  3. Acceptance = their Eq. 7: frozen M0 (execute 5 / replan) runs <= H_S = 60 actions from the teacher endpoint, an
+     LLM observer (same Qwen3-VL-8B, greedy; D-L5) checks the progress conditions every Delta = 10 actions, the first
+     supported advance must survive C = 10 more actions with relations preserved. Fail -> restore the teacher endpoint,
+     extend. EXTRA (not in the paper): every handoff test, accepted or rejected, is continued to <= 300 student steps
+     and scored by the BDDL success check (sim ground truth) -> judge precision / recall.
+  4. Quality: offline LLM evaluator (Qwen3-VL-8B, privileged sim summaries before / after) grades every teacher
+     COMMAND q in {0, .25, .5, .75, 1} (D-L6: theirs every action); windows = maximal runs with q >= 0.75, anchors with
+     >= L_min = 5 valid targets, targets masked after the run end, loss weighted by q (D-L7: no masking of noisy action
+     tokens / attention). Teacher actions only.
+  5. Training: their recipe = the Original recipe (M0 4k + 2,000 updates, bs 48, warmup 200, cosine 2.5e-5 -> 2.5e-6,
+     D0 + windows pooled uniformly, no oversampling), seeds 7 / 8 / 9 (paired with orig_s7..s9), 100 val scenes.
+  6. D-L8 volume: if the seed-7 entries give < 800 anchors (half of their 1,639), a second attempt is run on the
+     entries without an accepted path (their early protocol allowed 3); logged, no other change.
+- Arms: `lrs` (above) vs Original (existing 3 seeds, 79.3) vs paper (Original 78 / Recovery 88, cross-paper only);
+  context arms already measured: F0 `wm` 68.0, F1 / D-series.
+- Primary metric + test: nominal val SR mean over 3 seeds; Δ vs Original, paired scene x seed bootstrap (10k);
+  McNemar per seed. Secondary: per task; E-v1 failure incidence; first-attempt success; RSR_E8 / E8on (same scripts as
+  the campaign); judge precision P(sim success | accept) and recall P(accept | sim success) with Wilson CIs; accepted
+  paths / entry, anchors, share, LLM calls / s per entry.
+- Decision rules:
+  - "reproduces their gain": Δ >= +5 with CI lower bound > 0 (their +10 at 1 seed);
+  - "harmless, no gain": Δ in [-3, +5) or CI spans 0 -> "their data does not reproduce +10 on our stack at this
+    teacher strength" (not a verdict on a stronger teacher);
+  - "hurts": Δ <= -3 with CI upper bound < 0;
+  - judge: precision < 0.6 (Wilson upper < 0.75) -> "LLM-judged short-horizon handoff over-accepts";
+  - LRS vs our banks (cross-arm, same entries): solved entries (>= 1 accepted path with sim success) vs goal_search
+    wm_diverse solved 0.589, McNemar on the 168 paired entries.
+- MDE ≈ 7 pt nominal at n = 100 x 3 seeds; below that = "inconclusive at n = 100".
+- By-product: side-by-side demos (LRS vs WM bridge, same entries / seeds), docs/research/RECOVERY_DEMOS.md.

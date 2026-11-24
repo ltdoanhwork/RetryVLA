@@ -1,0 +1,25 @@
+# LRS (arXiv 2610.05151) re-implementation, pilot (PLAN "LRS", 2026-11-17). SAME M5b / RGR train instances, snapshots
+# and protocol seeds as rgr_sweep (`single`) -> paired. TRAIN split only. Sim budget per instance = RGR's 8 x (50 + 300).
+defaults: [exp/rgr_sweep]
+milestone: LRS
+tag: lrs_pilot
+eval:
+  n_workers: 1
+lrs:
+  model: Qwen/Qwen3-VL-8B-Instruct
+  max_new_tokens: 400
+  temperature: 0.7
+  geo: false            # true = teacher also sees the 3-D positions of the 2 task objects (their robomimic teacher)
+  cpi: true             # C^pi on real stage-1 endpoints (arm d)
+  n_attempts: 3         # a = attempt 0 only (their final protocol); a3 = up to 3 (their early protocol)
+  max_turns: 8          # LLM replies per stage (paper: <= 100 requests / 1,200 s; compute deviation)
+  max_stages: 5
+  max_actions: 300
+  H_S: 60
+  delta: 10
+  C: 10
+  budget_steps: 2800
+  lane: 0
+  num_lanes: 1
+  max_instances: 0
+  out_root: data/recovery/lrs_pilot
