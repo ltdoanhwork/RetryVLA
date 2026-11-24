@@ -486,3 +486,39 @@ ngày, comment) và (2) trang project / blog / GitHub / CV tác giả. Cơ chế
 - **Khác RetryVLA**: cùng ý "biến failure offline thành recovery data, nối failure về trạng thái làm tiếp được". Khác: đích của họ là suffix demo (giống expert), của mình là trạng thái mà **chính π làm tiếp được** (C^π + verify); họ cố ý **không dùng simulator** nên bridge chỉ là "candidate supervision", của mình được verify ground truth; họ không có prevention tại pre-failure checkpoint và không có negatives. Đây là đối trọng tự nhiên cho nhánh real-world (WM-verified) của RetryVLA.
 
 **Kết luận P**: mỗi mảnh của v2 đã có người làm riêng: tách segment failure / progress (CARF, RePO-VLA), conditioning tốt / xấu (RECAP, RePO-VLA), cặp preference cùng state trên failure (FAR, test-time, a+ theo critic), surrogate FM-loss cho cặp (CrossVLA, FAR với denoising loss), failure → bridge offline (2610.05151 với LLM teacher, Failure-to-Success Bridging với IDM + WM). Chưa thấy bài nào có **cặp preventive cùng state mà cả hai vế được chứng minh bằng continuation thật từ snapshot của failure tự nhiên, đi cùng recovery bridge đã verify từ chính các failure đó, train chung với anchoring nominal**. Đó là phần novelty v2 được phép claim, và nó phải được chứng minh bằng P2-3 (xem plan).
+
+---
+
+## Q. 3D / point cloud / foundation-model features TRONG world model (rà soát 2026-11-24)
+
+Bối cảnh: hỏi liệu đưa point cloud / 3D / foundation features vào WM (không phải vào critic) có giảm lỗi tưởng tượng trên
+trạng thái do search chọn hay không. Phân tích đầy đủ, bảng options, và 2 thí nghiệm đăng ký trước: **[`../research/WM_3D_FOUNDATION.md`](../research/WM_3D_FOUNDATION.md)**.
+Tất cả ID dưới đây đã kiểm tra trên arXiv API + một nguồn thứ hai (chi tiết nguồn trong file trên, mục 6). PointWorld (I1),
+ORD-WM (K2), GeoMoLa (K3), DepthWorld (K4) đã có ở trên, không lặp lại; điểm mới về chúng: theo Table 1 của ORD-WM, PointWorld
+trên LIBERO sai 321 mm (zero-shot) / 226 mm (fine-tune) trên moving points full-trajectory, ORD-WM 37.6 mm.
+
+**Q1. WM bị planner khai thác: sửa bằng data / training (gần bottleneck nhất)**
+- **Closing the Train-Test Gap in World Models for Gradient-Based Planning** · [arXiv 2512.09929](https://arxiv.org/abs/2512.09929) · **ICLR 2026** (OpenReview By4u7V6tAx, qua bib + trang tác giả). DINO-WM + (a) Online World Modeling = DAgger cho WM (planner -> sim thật -> fine-tune), (b) Adversarial World Modeling (FGSM trên z, a). OWM **không** giúp gradient planning (PushT / Wall = baseline), AWM +16..+34 điểm, ngang CEM với 10 % thời gian. *Khác RetryVLA*: gradient planner, goal-image cost, không critic theo policy; kết quả âm của OWM là phản chứng cần kiểm tra cho WM-DAgger (E1).
+- **Reinforced Planning with Latent World Models (RP1)** · [arXiv 2608.18669](https://arxiv.org/abs/2608.18669) · arXiv preprint. Planner học được qua WM (LeWM / PLDM); phát hiện WM hallucinate 'grasp trượt vẫn dính cube'; 1 vòng Dyna (rollout fail của planner -> fine-tune WM) nâng LeWM hard 83.4 -> 88.6, PLDM hard 66.6 -> 84.8. *Khác RetryVLA*: OGBench, không verify / distill; là bằng chứng dương duy nhất cho DAgger-cho-WM trên lỗi contact.
+- **SCALE** ([2608.16287](https://arxiv.org/abs/2608.16287)) / **AnisoWM** ([2609.37441](https://arxiv.org/abs/2609.37441)), arXiv: sửa *hình học latent* (khoảng cách latent tương quan với state đặc quyền / anisotropic) để cost planning khớp task. Liên quan nếu mình dùng latent distance; C^pi thì không.
+- **Agnostic System Identification** (Ross & Bagnell) · [arXiv 1203.1007](https://arxiv.org/abs/1203.1007) · ICML 2012: gốc lý thuyết của DAgger cho model.
+
+**Q2. 3D làm target phụ / cấu trúc cho dynamics**
+- **Spatial Forcing** · [2510.12276](https://arxiv.org/abs/2510.12276) · arXiv, code OpenHelix-Team: align token VLA với VGGT lúc train; LIBERO 98.5 %; ablation no-align 92.7 / SigLIP 94.0 / DINOv2 94.1 / VGGT 96.9. Policy, không WM.
+- **Geometry Forcing** · [2507.07982](https://arxiv.org/abs/2507.07982) · ICLR 2026 (proceedings): align video diffusion với VGGT; tốt hơn về 3D consistency, kể cả action-conditioned.
+- **DreamVLA** · [2507.04447](https://arxiv.org/abs/2507.04447) · NeurIPS 2025 (theo search): dự đoán dynamic region + depth + DINOv2 / SAM tương lai; **ablation: depth / DINO / SAM làm target một mình không giúp hoặc làm hại**, dynamic region giúp nhất (CALVIN 3.64 -> 4.32). Bài học: head phụ phải low-dim, gắn với thứ sắp thay đổi.
+- **GaussianDream++** ([2608.25659](https://arxiv.org/abs/2608.25659)), **GWM** ([2508.17600](https://arxiv.org/abs/2508.17600), ICCV 2025), **ManiGaussian** ([2403.08321](https://arxiv.org/abs/2403.08321), ECCV 2024) / ++ ([2506.19842](https://arxiv.org/abs/2506.19842)): Gaussian world model làm loss phụ / neural simulator cho policy.
+- **TesserAct** ([2504.20995](https://arxiv.org/abs/2504.20995), ICCV 2025), **Aether** ([2503.18945](https://arxiv.org/abs/2503.18945), ICCV 2025): video WM sinh RGB + depth (+ normal) / 4D.
+- **ParticleFormer** ([2506.23126](https://arxiv.org/abs/2506.23126), CoRL 2025, PMLR v305), **PCWM** ([2404.18926](https://arxiv.org/abs/2404.18926), ICRA 2024), **JEPA4R** ([2611.19771](https://arxiv.org/abs/2611.19771)), **point-cloud JEPA WMs** ([2608.29434](https://arxiv.org/abs/2608.29434), ngang image-based, không vượt), **3DFlowAction** ([2506.06199](https://arxiv.org/abs/2506.06199)), **GBND** ([2410.18912](https://arxiv.org/abs/2410.18912), CoRL 2024), **AdaptiGraph** ([2407.07889](https://arxiv.org/abs/2407.07889)), **D3Fields** ([2309.16118](https://arxiv.org/abs/2309.16118), CoRL 2024), **3D-VLA** ([2403.09631](https://arxiv.org/abs/2403.09631), ICML 2024), flow-as-interface **Track2Act** ([2405.01527](https://arxiv.org/abs/2405.01527), ECCV 2024) / **Im2Flow2Act** ([2407.15208](https://arxiv.org/abs/2407.15208), CoRL 2024) / **General Flow** ([2401.11439](https://arxiv.org/abs/2401.11439), CoRL 2024).
+
+**Q3. Foundation encoders / object-centric**
+- **DINO-WM** (B, ICML 2025): PushT DINOv2 patch 0.90 vs CLS 0.44 vs R3M 0.42 -> spatial patches là thứ quan trọng (mình đã dùng). **V-JEPA 2-AC** ([2506.09985](https://arxiv.org/abs/2506.09985)): pick-and-place zero-shot 80 / 65 % vs Octo 15 / 10, Cosmos 0 / 0 (mình đã test làm WM thứ hai, RESULTS). **DINO-world** ([2507.19468](https://arxiv.org/abs/2507.19468)), **DINO-Foresight** ([2412.11673](https://arxiv.org/abs/2412.11673), NeurIPS 2025).
+- **Theia** ([2407.20179](https://arxiv.org/abs/2407.20179), CoRL 2024), **AM-RADIO** ([2312.06709](https://arxiv.org/abs/2312.06709), CVPR 2024) / **RADIOv2.5** ([2412.07679](https://arxiv.org/abs/2412.07679)), **GWM-VLA** ([2608.07619](https://arxiv.org/abs/2608.07619)), **FOCAL-VLA** ([2609.21228](https://arxiv.org/abs/2609.21228)): encoder agglomerative / VGGT cho policy; chưa thấy gain báo cáo cho action-conditioned WM dưới planning.
+- **Dyn-O** ([2507.03298](https://arxiv.org/abs/2507.03298), NeurIPS 2025): slots trên Cosmos features, SAM 2 mask dẫn slot rồi anneal bỏ. **WorldDP** ([2606.08775](https://arxiv.org/abs/2606.08775)): slots trên DINOv2 + SAM 2 supervision; vật nhỏ bị gộp nếu không có mask. **SOLD** ([2410.08822](https://arxiv.org/abs/2410.08822), ICML 2025).
+- Latent-action / tokenizer: **LAPA** ([2410.11758](https://arxiv.org/abs/2410.11758), ICLR 2025), **Genie** ([2402.15391](https://arxiv.org/abs/2402.15391)), **Cosmos** ([2501.03575](https://arxiv.org/abs/2501.03575)): chỉ có ích khi thiếu action.
+
+**Kết luận Q**: literature cho thấy 3D làm *target phụ* và *cấu trúc object-centric* giúp chất lượng dự đoán / policy, còn
+*đổi encoder* thì chưa có bằng chứng cho WM dưới planning. Không bài nào đo lỗi tưởng tượng trên trạng thái do planner chọn
+như RQ3 của mình; hai bài gần nhất (2512.09929, 2608.18669) xử lý exploitation bằng **data / training của WM** và cho kết
+quả trái chiều. Do đó khuyến nghị E1 (WM-DAgger x 3D-aux heads, đo self-exploitation) và E2 (ORD-WM-lite làm partner ít
+tương quan) trong `WM_3D_FOUNDATION.md`, không đổi encoder.
