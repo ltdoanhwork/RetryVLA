@@ -42,7 +42,8 @@ def lr_at(step, peak, warmup, decay_steps, decay_lr):
 class Pool(torch.utils.data.Dataset):
     """Concatenation of LeRobotDatasets; optional anchor filter on the `segment` column for recovery sets."""
 
-    def __init__(self, roots, chunk, seg_filter=None, max_traj: int = 0, seed: int = 0, groups=None, caps=None):
+    def __init__(self, roots, chunk, seg_filter=None, max_traj: int = 0, seed: int = 0, groups=None, caps=None,
+                 keep_list=None):
         """max_traj > 0: keep at most that many recovery trajectories over ALL recovery roots, round-robin over
         instances (= train.subset_mode roundrobin / match_trajectory_count_of of the SmolVLA recipe)."""
         from lerobot.datasets.lerobot_dataset import LeRobotDataset
@@ -57,6 +58,9 @@ class Pool(torch.utils.data.Dataset):
                 if tj.exists():
                     for l in open(tj):
                         t = json.loads(l)
+                        if keep_list is not None and str(r) in keep_list["roots"] and \
+                                (str(r), int(t["episode_index"])) not in keep_list["keep"]:
+                            continue   # G2-phys: physically implausible trajectory (retryvla.search.goal_phys)
                         per_inst.setdefault(t["instance_id"], []).append((k, int(t["episode_index"])))
                 else:   # plain LeRobotDataset (diagnostic D4: D0 itself as the "recovery" root): one instance per episode
                     n_ep = json.loads((Path(r) / "meta/info.json").read_text())["total_episodes"]
@@ -185,6 +189,8 @@ def main():
     ap.add_argument("--recovery", nargs="*", default=[])
     ap.add_argument("--recovery_segments", nargs="*", type=int, default=None)
     ap.add_argument("--max_traj", type=int, default=0)
+    ap.add_argument("--keep_list", nargs="*", default=None,
+                    help="goal_phys phys_<arm>.jsonl files: only rows with keep=true are eligible (G2-phys)")
     ap.add_argument("--stop_at", type=int, default=0,
                     help="diagnostic: exit right after the resume save at this step (forces a later resume)")
     ap.add_argument("--save_dtype", default="fp32", choices=["fp32", "bf16"],
@@ -245,8 +251,12 @@ def main():
                 groups.append(gl)
         if cap:
             caps[gl] = int(cap)
+    kl = None
+    if a.keep_list:
+        rows_ = [json.loads(l) for f in a.keep_list for l in open(REPO_ROOT / f)]
+        kl = {"roots": {r_["root"] for r_ in rows_}, "keep": {(r_["root"], int(r_["episode_index"])) for r_ in rows_ if r_["keep"]}}
     data = Pool([REPO_ROOT / D0] + rec_roots, cfg.chunk_size, a.recovery_segments,
-                a.max_traj or (sum(caps.values()) if caps else 0), a.seed, groups, caps or None)
+                a.max_traj or (sum(caps.values()) if caps else 0), a.seed, groups, caps or None, kl)
     if a.masked_recovery:
         data.masked = True
         nd = data.lmin_filter(a.l_min)

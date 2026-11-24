@@ -46,11 +46,20 @@ class WMCriticRanker:
         self.dev = dev
         self.wm, self.norm, _ = load_wm(wm_ckpt, dev)
         ck = torch.load(critic_ckpt, map_location="cpu", weights_only=False)
-        c = ck["cfg"]
         self.vocab = ck["vocab"]
-        self.critic = RecoveryValue(dim=ck["dim"], n_patch=ck["n_patch"], n_tasks=max(16, len(self.vocab)),
-                                    width=int(c["width"]), depth=int(c["depth"]), dropout=0.0).to(dev).eval()
-        self.critic.load_state_dict(ck["model"])
+        if "kind" in ck:   # CRIT-V checkpoint (retryvla.critic.variants.CriticV; e.g. the retrained `base`, 2026-11-24)
+            from retryvla.critic.variants import CriticV
+
+            sd = ck["model"]
+            n_tasks = sd["task.weight"].shape[0]
+            self.critic = CriticV(ck["kind"], dim=ck["dim"], n_patch=ck["n_patch"], n_tasks=n_tasks,
+                                  dropout=0.0).to(dev).eval()
+            self.critic.load_state_dict(sd)
+        else:
+            c = ck["cfg"]
+            self.critic = RecoveryValue(dim=ck["dim"], n_patch=ck["n_patch"], n_tasks=max(16, len(self.vocab)),
+                                        width=int(c["width"]), depth=int(c["depth"]), dropout=0.0).to(dev).eval()
+            self.critic.load_state_dict(ck["model"])
         self.enc = DinoEncoder(encoder, pool_grid=pool_grid, device=str(dev))
         self.lam, self.beta = lam_unc, beta_rough
 

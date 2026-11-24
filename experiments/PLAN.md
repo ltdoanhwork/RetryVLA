@@ -1071,3 +1071,70 @@ agent-requested 2-GPU user-account shell (killed when done); never 953bb534 / 8f
   anchors); `lrs_all` (every window that passes the filter) is a secondary arm, 1 seed (seed 7) if GPU time allows.
   Also logged: D-L4b (a stage that hits the 12-reply cap with >= 1 executed action is handed off like a claim; their
   sessions allow <= 100 requests), D-L3b (empty `student_progress` -> the spec's completion checks are used).
+
+## Goal campaign additions: CRITIC SWAP, G2-phys, FC labelling, AUX heads (user / coordinator 2026-11-24 15:00 UTC; written BEFORE any of these results)
+State at writing:
+- G2 curated onset search CLOSED: wm_diverse 132 trajectories / 43 entries, random 115 / 44. It ran with the SHIPPED
+  C^pi (`goal_latest_critic`).
+- D_P CLOSED: 82 positive trajectories at 44 / 51 s^-, mean p(a-) 0.11.
+- G2 wm s7-9 SFT running. The goal_prevent broadcast bug ((50,7) vs (20,7), a- shorter than H) was fixed before the
+  D_P run (commit 44868bd).
+
+**0. Critic swap.**
+- All NEW WM search / ranking uses the CRIT-V retrained `base` critic (`runs/20261124_CRITV_goal/ckpt/base_s0.pt`,
+  link `data/wm/goal_critic_base.txt`; WMCriticRanker now loads CriticV checkpoints).
+- Deviation: the G2 bank, D_P and all runs launched before this note used the shipped C^pi. D_P uses no critic
+  (pure sim verification), so only G2's wm_diverse picks are affected.
+- Optional ablation (only if GPUs idle): re-run the G2 wm_diverse search on 18 entries (shard 0) with `base`.
+  Metric: hits / verification, McNemar on solved entries.
+
+**(b) G2-phys (physical-plausibility filter, `retryvla.search.goal_phys`).**
+- Every verified G2 trajectory is replayed bit-exactly with privileged geometry. Reject if any of:
+  - penetration > 1 cm;
+  - off_table;
+  - object jump > 3 cm / step without finger contact;
+  - bridge d3 > 2 x median D0 d3 (50-step windows);
+  - seam || a_H − a_{H−1} || > 3 x median D0 || Δa ||;
+  - gripper flips > 1;
+  - replay mismatch.
+- Reported: survivors, reasons, per-task balance.
+- Arm `G2phys_wm` = survivors of the wm_diverse bank, 36 trajectories round-robin (= G2's count), 3 seeds.
+- Rule "phys filter helps": nominal(G2phys) − nominal(G2) >= +3 (CI > 0) OR failure incidence −5 pt (CI < 0),
+  with RSR_E8 within −3. If < 36 survive: use all survivors and match G2 to the same count in a 1-seed check.
+
+**(a) FC labelling (`retryvla.search.goal_fc`).**
+- Failed audit rollouts (seeds 7, 8) are replayed with detector E-v1 and read with the onset scan.
+- FC = [t_last, t_end): t_end = first physical event after t_last + 5 if it falls within t_on + 40, else t_on.
+- s^- = t_last; s^f = t_end.
+- D_F = M0's actions inside FC only (negatives; never whole episodes); used in the hinge L_P and as critic hard
+  negatives later.
+- Reported: event-confirms-onset rate, event types, FC length, false-alarm events before t_last.
+- Use: if the FC end differs from t_on by >= 20 steps for >= 30 % of the rollouts, D_R entries at s^f are rebuilt
+  for a later bank (new search with the `base` critic). Otherwise s^f = t_on stays (no rebuild).
+
+**(c) AUX heads (pi0 distillation).**
+- A small MLP head on the action-expert output tokens (mean over the 50 action tokens; aux OFF at inference, no extra
+  inputs).
+- Targets over the next chunk at k = 0, 10, 20, 30, 40, from privileged sim state:
+  - grasped (finger contact and lift >= 2 cm), BCE;
+  - finger-object contact, BCE;
+  - object lift (cm), smooth-L1;
+  - object-goal xy distance, smooth-L1;
+  i.e. 4 x 5 values (a chain-of-dynamics summary).
+- D0 targets from the hdf5 flat states (set_state + sim_geom, no stepping); bank / D_P targets from the goal_phys
+  replays.
+- Loss = FM + 0.1 x aux (aux normalised per target).
+- Arms on the best bank so far (G2 or G2phys, chosen by the G2 rules): `X` vs `X+aux`, 3 seeds.
+- Rule "aux helps": nominal +3 (CI > 0) or failure incidence −5 pt (CI < 0), with RSR_E8 within −3.
+- 3D point-flow targets are deferred (needs object point sampling; only if the aux rule is met).
+
+**Queue order (4 GPUs; no extra shell, the one extra already requested is 8f473147):**
+1. G2 wm s7-9 (running);
+2. P2-3 A / B s7-9 (decisive);
+3. G2phys s7-9;
+4. G2 random s7-9;
+5. D5 s8 / s9;
+6. AUX x 3 (after its code + targets);
+7. critic-swap ablation.
+
+Each run ≈ 3.3 h incl. evals. ETAs: G2 ~11-24 19:30; P2-3 ~11-25 03:00; G2phys ~11-25 06:30; AUX ~11-25 14:00 UTC.

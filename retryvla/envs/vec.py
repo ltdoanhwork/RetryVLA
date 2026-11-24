@@ -267,6 +267,19 @@ class _RecordingSim:
                 out.append(sample(t + 1))
         return out
 
+    def phys_scan(self, bddl: str, snap: dict, actions) -> dict:
+        """Goal G2-phys / aux targets (opt-in): restore an exact snapshot, replay `actions` open-loop and return the
+        privileged geometry (retryvla.geom.features.sim_geom, [T + 1, G]) after every step + success flags."""
+        from retryvla.geom.features import sim_geom
+
+        self.sim.restore_snapshot(bddl, snap)
+        g, succ = [sim_geom(self.sim)], []
+        for a in np.asarray(actions, np.float32):
+            r = self.sim.step(a)
+            g.append(sim_geom(self.sim))
+            succ.append(bool(r.success))
+        return {"geom": np.stack(g).astype(np.float32), "success": np.asarray(succ, bool)}
+
     def finish(self, keep_record: bool = False, snapshot: bool = False) -> dict:
         out = {"record": self.pop_record(keep_record), "progress": self.sim.progress()}
         if snapshot:
