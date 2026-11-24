@@ -1070,3 +1070,39 @@ the policy alone for <= 300 steps, 1 trial / entry). Bootstrap = entry x seed (4
   - cleaning bridges with spurious gripper flips (45 % of bridges);
   - task balance (bridges concentrated on cream_cheese / wine_rack).
   The F1 diagnosis (NOTES 2026-11-24) is pending.
+
+## F1 diagnosis: data effect, no pipeline bug (2026-11-24; seed 7, 100 val scenes; rules in NOTES 2026-11-24 08:58 UTC)
+
+| task | Original | D2 new path (Original recipe) | D4 D0 + 36 D0 eps | F1 wm | D3 F1 wm, old path | D5 36 wm trajs + continuation | F0 wm (47 %) |
+|---|---|---|---|---|---|---|---|
+| open_middle_drawer | 10 | 9 | 10 | 7 | 8 | 8 | 3 |
+| open_top_drawer_bowl | 8 | 8 | 9 | 7 | 10 | 10 | 7 |
+| push_plate_to_stove | 5 | 6 | 2 | 7 | 4 | 7 | 7 |
+| bowl_on_plate | 9 | 10 | 10 | 2 | 6 | 9 | 9 |
+| bowl_on_stove | 10 | 9 | 8 | 8 | 8 | 9 | 4 |
+| bowl_on_cabinet | 9 | 9 | 9 | 8 | 6 | 8 | 8 |
+| cream_cheese_in_bowl | 5 | 6 | 8 | **0** | **0** | 6 | 8 |
+| wine_bottle_on_rack | 6 | 7 | 4 | **0** | 4 | 3 | 1 |
+| wine_bottle_on_cabinet | 10 | 10 | 10 | 9 | 8 | 10 | 8 |
+| turn_on_stove | 10 | 10 | 10 | 10 | 9 | 10 | 10 |
+| **total** | **82** | **84** | **80** | **58** | **63** | **80** | **65** |
+| fixed / broken vs Original | - | 6 / 4 | 5 / 7 | 5 / 29 | 6 / 25 | 11 / 13 | 10 / 27 |
+
+Rules applied:
+- D2 = 84 >= 72: no code-path regression (bf16 resume with a forced restart, bf16 final ckpt).
+- D3 = 63 < 72: the resume / bf16 path does not explain F1 (63 vs F1 58, same data).
+- D4 = 80 >= 72: pooling a second root is fine.
+- **Verdict: "data effect, no pipeline bug".**
+- Directional (1 seed): D5 (the same 36 wm trajectories WITH their continuation anchors) = 80 vs D3 (bridge-only) =
+  63, i.e. +17 pt from adding continuation anchors. D5 is at Original level with 11 fixed / 13 broken.
+
+Interpretation:
+- Bridge-only targets are open-loop 50-step segments from the proposal pool. 137 / 308 wm bridges contain a gripper
+  flip from the perturbation family (25 % gripper-intent flips). Most bridge frames come from cream_cheese and
+  wine_rack, and those are the tasks bridge-only training destroys (5 -> 0, 6 -> 0 / 4). Imitated without what
+  follows, these segments teach mid-task gripper releases and detours on states that look like nominal states.
+- Continuation anchors (M0's own successful completion from the recovered state) restore the closed-loop context,
+  and with them 36 trajectories cost nothing in nominal (80 vs 82).
+- F0's cost (47 % share) is therefore mostly volume x bridge quality, not bridges per se.
+- Next stage: curated bridges (no perturbation family, no gripper chatter) WITH continuation, at a small share,
+  from onset cuts. Then the P2-3 prevention test. Pre-registered in PLAN "Goal campaign stage G2 / P2-3".

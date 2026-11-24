@@ -1292,3 +1292,5 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
     11 % are primitives.
   - Bridge frames are concentrated on cream_cheese (4.0k) and wine_rack (3.4k). These are exactly the tasks F1
     breaks most (cream_cheese 7.0 -> 2.0, wine_rack 4.0 -> 1.3).
+- 2026-11-24 11:21-11:24 UTC: F1 diagnosis runs finished: D2 84, D3 63, D4 80, D5 80. Verdict "data effect, no
+  pipeline bug" (RESULTS "F1 diagnosis"). Registered 12:45 UTC. Lesson: register finished chains immediately.
