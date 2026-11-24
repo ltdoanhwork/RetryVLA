@@ -75,6 +75,9 @@ def main() -> None:
     ap.add_argument("--src", default="data/recovery/lrs_goal")
     ap.add_argument("--out", default="data/recovery/lrs_goal_ds")
     ap.add_argument("--workers", type=int, default=8)
+    ap.add_argument("--target_anchors", type=int, default=0,
+                    help="> 0: subsample whole accepted paths (seed 0, round-robin over tasks) until the anchors "
+                         "(window frames with >= L_min valid targets) reach this count (their 1,639)")
     a = ap.parse_args()
     src = REPO_ROOT / a.src
     rows, paths = {}, {}
@@ -89,6 +92,23 @@ def main() -> None:
         w = windows(q)
         if w:
             plan[iid] = (q, w)
+    if a.target_anchors:
+        rng = np.random.default_rng(0)
+        by_task = {}
+        for iid in sorted(plan):
+            by_task.setdefault(rows[iid]["task_folder"], []).append(iid)
+        for v in by_task.values():
+            rng.shuffle(v)
+        sel, n_anc, rnd = [], 0, 0
+        while n_anc < a.target_anchors and any(len(v) > rnd for v in by_task.values()):
+            for tk in sorted(by_task):
+                v = by_task[tk]
+                if len(v) > rnd and n_anc < a.target_anchors:
+                    sel.append(v[rnd])
+                    n_anc += sum(j - i - (L_MIN - 1) for i, j in plan[v[rnd]][1])
+            rnd += 1
+        plan = {i: plan[i] for i in sel}
+        print(f"subsampled {len(plan)} paths -> {n_anc} anchors (target {a.target_anchors})", flush=True)
     print(f"accepted paths {len(rows)} ({sum(len(p) for p in paths.values())} actions); with windows {len(plan)}; "
           f"windows {sum(len(w) for _, w in plan.values())}; window actions "
           f"{sum(j - i for _, w in plan.values() for i, j in w)}", flush=True)
