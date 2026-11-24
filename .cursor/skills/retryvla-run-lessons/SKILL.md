@@ -92,6 +92,7 @@ Every stage is skip-if-done, keyed on a marker that is written LAST:
   pi1 chunks are 2.4x jerkier than pi1-nominal: jerk is distilled. Report jerk of banks and student; smoothing moves
   the path ~4 mm, so re-verify smoothed bridges. `scripts/analyze_smoothness.py`.
 - Nominal check for every SFT (drop <= 2 pt, 3 seeds); per-task forgetting (`scripts/analyze_data_funnel.py`).
+- Run `retryvla-visual-check` before distillation: look at a stratified sample of every bank, not just the numbers.
 
 ## 5. Reproducing another paper / ruling out our own regressions
 

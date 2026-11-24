@@ -63,6 +63,8 @@ Commit it (step 5 conventions) before the first result exists. Any later change 
    deltas; Wilson CI for rates. State n and power; below ~80 % power write "inconclusive at n = ...", not "negative".
 9. Pilot first (`search.max_instances`, 1 shard), then the pre-registered n. Pre-register every follow-up run in NOTES
    (one-line hypothesis + decision rule) before launching.
+10. **Visual check**: run `retryvla-visual-check` before distillation (bank sample) and side-by-side on the same
+    entry before any comparison verdict.
 
 ## 3. Negative or null result: required diagnosis
 

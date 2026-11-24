@@ -35,6 +35,7 @@ Gate: do not start M2 until M1 shows that pi1 (oracle data) beats pi0 and the ra
    Commit code before launching runs you will report (git.txt records sha + dirty diff).
 4. After it finishes: `python scripts/register_run.py runs/<id> --note "..."` and commit `experiments/REGISTRY.md`.
 5. Update the milestone doc `experiments/M<k>_*.md` (Hypothesis / Setup / Results / Decision).
+6. Run `retryvla-visual-check` before distillation (every generated bank) and embed its sheets when reporting.
 
 ## Split rules (non-negotiable)
 
