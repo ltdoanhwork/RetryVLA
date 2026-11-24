@@ -1264,3 +1264,31 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
   further Goal arms queued (F1 below Original -> best-RetryVLA + BoT skipped per coordinator). Spatial / Object BoT
   arms NOT run (secondary). Shell 92927808 killed (`det shell kill`), claim released, moved to shells.json gone.
   Data kept: data/bot/goal_m0 (900 rollouts, full tokens, 1.6 GB; delete if disk is needed).
+- 2026-11-24 08:45 UTC: **F1 diagnosis** (coordinator priority 1). Control runs are on 4 GPUs, all M0 + 2k, seed 7,
+  val eval after.
+  - D2 `diag_orig_newpath_s7` (953bb534:0): Original recipe through the NEW code path (single GPU accum 3,
+    compact bf16 resume every 250 with a FORCED restart at step 500 via `--stop_at`, bf16 final ckpt).
+  - D3 `diag_f1wm_oldpath_s7` (953bb534:1): F1 wm recipe on the OLD path (no resume, fp32 final).
+  - D4 `diag_d0dup_s7` (8f473147:0): pooling control, D0 + 36 episodes of D0 itself as the "recovery" root.
+  - D5 `diag_f1wm_full_s7` (8f473147:1): 36 wm trajectories with bridge + continuation anchors.
+  - Launched 08:46-08:48; this rule block was written 08:58, before any of these results (D1 = bf16 cast of orig_s7
+    = 83, done 11-23).
+  - Rules (Original s7 = 82, seed range 77-82; F1 wm s7 = 58):
+    - code-path regression iff D2 < 72 (then fix + rerun F1 x 3);
+    - resume / bf16 path explains F1 iff D3 >= 72;
+    - Pool / second-root bug iff D4 < 72;
+    - otherwise "data effect, no pipeline bug".
+    - D5 vs D3 = continuation vs bridge-only at equal trajectories (36), 1 seed (directional only).
+  - Determinism check: D3's step-0 / step-50 loss (0.1294 / 0.1922) equals f1_wm_s7's, so training is bit-repeatable
+    up to the first resume.
+  - Static checks done (runs/goal_rsi bank vs D0):
+    - same feature keys, 128 px images, 8-d state, 7-d action, same task strings;
+    - image channel means 0.487 / 0.454 / 0.419 vs 0.495 / 0.461 / 0.425;
+    - action-to-state alignment: corr(a_t, s_{t+1} − s_t) is 0.70-0.91 per axis for bridges vs 0.89-0.91 for D0, and
+      lag 0 is the best lag in both, so no off-by-one;
+    - fps differs (bank 10, D0 20), but the chunk delta_timestamps are per dataset, so both index consecutive frames;
+    - gripper in [-1.1, 1.1] (unclipped M0 continuation outputs; the env clips).
+  - Bridge content: 137 / 308 wm bridges contain a gripper flip (proposal perturbations flip gripper intent 25 %);
+    11 % are primitives.
+  - Bridge frames are concentrated on cream_cheese (4.0k) and wine_rack (3.4k). These are exactly the tasks F1
+    breaks most (cream_cheese 7.0 -> 2.0, wine_rack 4.0 -> 1.3).

@@ -1045,3 +1045,28 @@ one ForkCast decision (5 candidates x 50 steps) 34 ms. Per episode the planner a
 Not run (pre-registered as later / skipped): best-RetryVLA-policy + BoT beyond F0 rec_wm s7 (F1 policies are below
 Original, coordinator 2026-11-24); LIBERO-Recover Spatial / Object BoT arms (secondary; not started). Seeds: 1 eval
 seed per arm (val, n = 100); no idea-loop review run yet for these baseline arms.
+
+## Goal campaign stage 1b: own-failure RSR on E8 (168 held-out M0 failure states, seed-8 audit; 2026-11-23)
+Pre-registration: PLAN "Goal campaign". `retryvla.eval.eval_goal_entries` (restore by replaying M0's actions, then
+the policy alone for <= 300 steps, 1 trial / entry). Bootstrap = entry x seed (4000).
+
+| policy | RSR_E8 s7 / s8 / s9 | mean | Δ vs Original (95 % CI) | val nominal (mean) |
+|---|---|---|---|---|
+| M0 | 0.179 | - | - | 85 |
+| Original | 0.137 / 0.167 / 0.137 | 0.147 | - | 79.3 |
+| F0 wm (47 % anchors) | 0.345 / 0.274 / 0.226 | 0.282 | **+13.5 [+6.0, +21.6]** | 68.0 |
+| F0 random | 0.292 / 0.256 / 0.286 | 0.278 | +13.1 [+6.7, +19.6] | 67.7 |
+| F1 wm (4 % bridge-only) | 0.190 / 0.220 / - | 0.205 | +5.4 [+0.6, +10.1] (2 seeds) | 59.0 |
+| F1 random | 0.167 / - / - | - | - | 58.0 |
+
+**Rule "data teaches recovery" (F0 wm − Original >= +5, CI > 0): MET** (+13.5 [+6.0, +21.6]).
+- The verified bank nearly doubles recovery from held-out own failures, but costs ~11 pt nominal: a clear
+  recovery / nominal trade-off, not "the data is useless".
+- WM vs random is again a null after SFT (+0.4 [−7.5, +7.7]).
+- F1 (bridge-only, 4 %) keeps a third of the recovery gain and loses more nominal.
+- Reading for the next stages: the lever is to keep the recovery gain while removing the nominal cost. Candidates:
+  - nominal anchoring;
+  - masking the M0-continuation targets;
+  - cleaning bridges with spurious gripper flips (45 % of bridges);
+  - task balance (bridges concentrated on cream_cheese / wine_rack).
+  The F1 diagnosis (NOTES 2026-11-24) is pending.

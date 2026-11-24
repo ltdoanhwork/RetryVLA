@@ -53,9 +53,15 @@ class Pool(torch.utils.data.Dataset):
             per_inst = {}
             rng = np.random.default_rng(seed)
             for k, r in enumerate(roots[1:], 1):
-                for l in open(Path(r) / "retryvla/trajectories.jsonl"):
-                    t = json.loads(l)
-                    per_inst.setdefault(t["instance_id"], []).append((k, int(t["episode_index"])))
+                tj = Path(r) / "retryvla/trajectories.jsonl"
+                if tj.exists():
+                    for l in open(tj):
+                        t = json.loads(l)
+                        per_inst.setdefault(t["instance_id"], []).append((k, int(t["episode_index"])))
+                else:   # plain LeRobotDataset (diagnostic D4: D0 itself as the "recovery" root): one instance per episode
+                    n_ep = json.loads((Path(r) / "meta/info.json").read_text())["total_episodes"]
+                    for e in range(n_ep):
+                        per_inst.setdefault(f"{k}:{e}", []).append((k, e))
             insts = sorted(per_inst)
             rng.shuffle(insts)
             sel, rnd = [], 0
@@ -121,6 +127,8 @@ def main():
     ap.add_argument("--recovery", nargs="*", default=[])
     ap.add_argument("--recovery_segments", nargs="*", type=int, default=None)
     ap.add_argument("--max_traj", type=int, default=0)
+    ap.add_argument("--stop_at", type=int, default=0,
+                    help="diagnostic: exit right after the resume save at this step (forces a later resume)")
     ap.add_argument("--save_dtype", default="fp32", choices=["fp32", "bf16"],
                     help="dtype of the final trainable.pt (bf16 halves it: 0.9 GB; /pfss quota, F1 2026-11-22)")
     ap.add_argument("--resume_every", type=int, default=0,
@@ -225,6 +233,9 @@ def main():
                 print(f"WARNING metrics write failed ({e})", flush=True)
         if a.resume_every and rank == 0 and (step + 1) % a.resume_every == 0 and step + 1 < a.steps:
             save_resume(rp, step + 1, opt, policy)
+            if a.stop_at and step + 1 == a.stop_at:
+                print(f"STOP_AT {a.stop_at} (diagnostic forced restart)", flush=True)
+                return
         if rank == 0 and ((step + 1) % a.save_every == 0 or step + 1 == a.steps):
             for k in range(12):   # /pfss quota is shared workspace-wide: wait it out instead of losing the run
                 try:
