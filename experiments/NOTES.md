@@ -1256,3 +1256,11 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
   same shell.
 - 2026-11-23 11:07 UTC: BoT / ForkCast Goal chain DONE on 92927808 (bot_watch); table runs/bot_goal/main.md (reading + RESULTS by the agent).
 - 2026-11-23 11:59 UTC: F1 finished on 953bb534 (goal_f1_chain2); table appended to RESULTS. Claims released. Shell KEPT (keep file present).
+- 2026-11-24 ~08:50 UTC (coordinator): BoT / ForkCast-style Goal chain (`rv_bot_goal` on 92927808, CHAIN_DONE
+  2026-11-23 11:00 UTC; local watchdog `rv_bot_watch` exited "done" 11:07) analysed: RESULTS "Main table: test-time
+  arms on the 2610.05151 LIBERO-Goal protocol". M0 85 -> BoT(liveness) 79 (6 / 12, p 0.24, inconclusive),
+  BoT(C^pi) 51, ForkCast-style C^pi 62 / progress 32; Original s7 + BoT(liveness) 82 = 82; cost 1.2-1.7x of plain
+  pi0 per episode, 90-100 ms per planning cycle. Deviations as pre-registered (BACK_ON_TRACK_REPRO D1-D15); no
+  further Goal arms queued (F1 below Original -> best-RetryVLA + BoT skipped per coordinator). Spatial / Object BoT
+  arms NOT run (secondary). Shell 92927808 killed (`det shell kill`), claim released, moved to shells.json gone.
+  Data kept: data/bot/goal_m0 (900 rollouts, full tokens, 1.6 GB; delete if disk is needed).

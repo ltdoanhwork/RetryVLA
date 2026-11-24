@@ -985,3 +985,63 @@ F1 wm - F0 wm -9.0 [-19.0, +0.7]; F1 random - F0 random -9.7 [-26.7, +10.0]; F1 
 pooled fixed / broken vs Original: {'F1_wm': {'fixed': 23, 'broken': 84}, 'F1_random': {'fixed': 17, 'broken': 81}}; recovery anchor share [0.043, 0.0419, 0.0416, 0.0414, 0.0401, 0.0406]
 rules: {'matches_theirs': False, 'beats_theirs': False, 'mix_volume_caused_drop': False, 'wm_matters': False}
 
+
+## Main table: test-time arms on the 2610.05151 LIBERO-Goal protocol (Back on Track 2610.19579, ForkCast-style 2610.18650; FINAL 2026-11-24)
+Pre-registration: PLAN "Back on Track + ForkCast-style test-time arms" (2026-11-23, commit 831ae24, before any
+result). Repro + deviations D1-D15: `docs/related_work/BACK_ON_TRACK_REPRO.md`. Chain `scripts/bot_goal_chain.sh` on
+shell 92927808 (1x A100), 08:36-11:00 UTC 11-23. Table: `python scripts/analyze_bot_goal.py` -> `runs/bot_goal/main.{json,md}`.
+Protocol: 100 val scenes, pi0 seed 7, <= 300 steps, replan 5. Value data: 900 on-policy M0 rollouts of the 300
+TRAIN inits (seeds 8-10, SR 0.83). Liveness ensemble (5 x MLP, two-stage): held-out-scene frame AUC 0.86, failure
+metric 0.54, success metric 0.36. PCA basis k = 9 (98 %, H 10, D 6; play data = LIBERO-Goal train demos; theirs k = 13).
+WM = our Goal latent WM; C^pi = our Goal critic (val AUC 0.66; undefined on 3 tasks with no audit failures -> never
+triggers there). Base trajectories are paired by pi0 seed; untriggered episodes keep the base outcome in 94-100 %
+(not bit-identical: batched bf16), i.e. a ~3-6 % placebo flip floor.
+
+| arm | val SR / 100 [Wilson 95 %] | vs base: rescued / broken, McNemar p | monitor fires on base-fail / base-succ | GPU s / episode: VLA / monitor / planner | cost vs plain | triggers / ep | WM rows / ep | batch-1 plan cycle |
+|---|---|---|---|---|---|---|---|---|
+| M0 (pi0 + LoRA 4k, selected on val) | 85 [77, 91] | - | - | - | 1x | 0 | 0 | - |
+| Original (M0 + 2k on D0), 3 seeds | 79.3 (82 / 77 / 79) | - | - | - | 1x | 0 | 0 | - |
+| F0 RetryVLA `rec_wm` (47 % anchors), 3 seeds | 68.0 (65 / 76 / 63) | - | - | - | 1x | 0 | 0 | - |
+| F1 RetryVLA `wm` (share-matched 4 %), 3 seeds | 59.0 (58 / 69 / 50) | - | - | - | 1x | 0 | 0 | - |
+| paper 2610.05151: Original / Recovery (LLM teacher) | 78 / 88 | (their split, 1 seed) | - | - | 1x | - | - | - |
+| **M0 + BoT (liveness, their recipe)** | **79** [70, 86] | 6 / 12, p 0.24 | 0.87 / 0.25 (theirs 0.94 / 0.16) | 2.90 / 0.16 / 0.46 | **1.2x** | 5.1 | 13k | 90 ms (theirs 108) |
+| M0 + BoT (C^pi, labelled variant) | 51 [41, 61] | 5 / 39, p 1e-7 | 0.87 / 0.67 | 3.99 / 0.21 / 2.60 | 1.7x | 28.9 | 74k | 100 ms |
+| M0 + ForkCast-style (C^pi) | 62 [52, 71] | 1 / 24, p 2e-6 | 0.80 / 0.32 (primitive chosen) | 3.36 / 0.13 / 0.29 | 1.1x | 1.7 | 0.7k | 34 ms |
+| M0 + ForkCast-style (progress head) | 32 [24, 42] | 0 / 53, p 2e-16 | 1.00 / 0.87 | 4.13 / 0.14 / 0.30 | 1.1x | 3.2 | 0.7k | 34 ms |
+| Original s7 + BoT (liveness) | 82 [73, 88] | 10 / 10, p 1.0 (vs Original s7 82) | 0.78 / 0.21 | 2.78 / 0.15 / 0.48 | 1.2x | 5.6 | 14k | 90 ms |
+| Original s7 + BoT (C^pi) | 53 | 4 / 33, p 1e-6 | 0.94 / 0.65 | 3.90 / 0.20 / 2.47 | 1.7x | 27.4 | 70k | 100 ms |
+| F0 rec_wm s7 + BoT (liveness) | 64 | 10 / 11, p 1.0 (vs rec_wm s7 65) | 0.89 / 0.34 | 3.65 / 0.20 / 0.87 | 1.3x | 10.2 | 26k | 90 ms |
+| F0 rec_wm s7 + BoT (C^pi) | 44 | 7 / 28, p 5e-4 | 0.57 / 0.77 | 4.35 / 0.22 / 2.31 | 1.6x | 25.5 | 65k | 101 ms |
+
+Cost: batch-1 pi0 query 0.33 s, monitor 16 ms, one BoT planning cycle (256 x 5 = 1,280 ten-step plans) 90-100 ms,
+one ForkCast decision (5 candidates x 50 steps) 34 ms. Per episode the planner adds 0.2-0.7x of the VLA time.
+
+**Decisions (pre-registered rules):**
+- "BoT helps on this protocol": **no**. BoT (liveness) −6 pt vs M0, 6 rescued / 12 broken, p 0.24 -> **inconclusive at
+  n = 100** (MDE ~8 pt), point estimate negative. BoT (C^pi) **hurts** (−34, p 1e-7).
+- ForkCast-style selector **hurts** with both scorers (C^pi −23, progress −53). Scorer swap: C^pi beats progress
+  +30 pt (39 / 9, p 2e-5) -> "C^pi better than progress as a test-time selector" holds, but only relative to a very
+  harmful baseline; liveness beats C^pi inside BoT (34 / 6, p 8e-6), i.e. the value trained on nominal on-policy
+  rollouts is the better test-time monitor here.
+- "Distillation matches test-time planning at lower cost": best distilled policy on this protocol is Original
+  (79.3, not a RetryVLA policy; RetryVLA F0 68.0 / F1 59.0 are below it). |79.3 − 79| <= 3, but the cost ratio is
+  only 1.2x (< 10x) -> we only state the ratio. Both are below M0 (85).
+- "Complementary": **no** (Original s7 + BoT 82 = Original s7 82; rec_wm s7 + BoT 64 vs 65).
+- Cross-paper: their +10 (78 -> 88, LLM teacher, distillation) is not reached by any test-time arm here; BoT's own
+  +8.9 pt was on a perturbed-start LIBERO-Goal with pi0.5, not on this protocol (deviation D1).
+
+**Reading (diagnosis, not a verdict on BoT in general).**
+1. Headroom and false alarms: M0 fails 15 / 100. The liveness monitor catches 87 % of them (as in the paper) but also
+   fires on 25 % of base successes; interventions rescue 6 and break 12. With 85 % base success, a 25 % false-alarm
+   rate is enough to make the net negative; BoT's setting had 27 % failures.
+2. C^pi as a monitor is miscalibrated on nominal states (it was trained on bridge end states from failure entries,
+   val AUC 0.66): it fires on 67 % of successes and the planner runs ~29 times per episode -> large breakage. The
+   C^pi that selects good bridges offline is not a usable online trigger.
+3. WM (D7): our Goal WM was trained on failure-state bridges, not on M0 rollouts + play data (theirs). Planner
+   exploitation of WM errors on nominal mid-task states is the leading suspect for the breakage after correct
+   triggers (13 / 34 triggered liveness episodes succeed vs 21 / 34 for M0).
+4. ForkCast-style: the progress head (label t / T) prefers `regrasp` (299 choices) whose imagined end state looks
+   "later in the task"; this is the progress-proxy failure mode RetryVLA's C^pi results predicted.
+Not run (pre-registered as later / skipped): best-RetryVLA-policy + BoT beyond F0 rec_wm s7 (F1 policies are below
+Original, coordinator 2026-11-24); LIBERO-Recover Spatial / Object BoT arms (secondary; not started). Seeds: 1 eval
+seed per arm (val, n = 100); no idea-loop review run yet for these baseline arms.
