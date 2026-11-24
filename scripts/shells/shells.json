@@ -49,13 +49,27 @@
    "tmux": "rv_lrsg*",
    "args": "LRS-G collection / SFT / eval (PLAN LRS-G)",
    "since": "2026-11-24T13:47:25"
+  },
+  "ea7f9ee3:0:rv_v2r": {
+   "tmux": "rv_v2r_*",
+   "host": "894e2ccf9223",
+   "started": "2026-11-24T16:01:37",
+   "note": "V2R R1 search lanes, then chain"
+  },
+  "ea7f9ee3:1:rv_v2r": {
+   "tmux": "rv_v2r_*",
+   "host": "894e2ccf9223",
+   "started": "2026-11-24T16:01:37",
+   "note": "V2R R1 search lanes, then chain"
   }
  },
  "allow_only": {
   "63e0f914": "vla_roboworm_1 (owner-busy; LIGHT-SHARE only, currently UNUSED). 2026-11-23: F1 moved to the RetryVLA-owned 2-GPU shell; watcher rv_f1_watch stopped, no claims.",
   "953bb534": "vla_RetryVLA_DoanhLT_2g (953bb534-56fa-4fdf-9e98-36e94fea2423), RetryVLA-OWNED, user account, started 2026-11-23 03:26 UTC for 2610.05151 F1 (user decision). Node cn62, 2x A100 80GB, 32 CPU. envcheck GPU0/1: OK video decode, OK sim 50 steps 0.98 / 0.96 s. Full use; KILL when F1 is done unless scripts/shells/keep_953bb534 exists.",
   "8f473147": "vla_RetryVLA_DoanhLT_2g_b (8f473147-f766-4ea5-8fe5-32d28567fd52), RetryVLA-OWNED second 2-GPU shell, user account, started 2026-11-23 08:25 UTC for the Goal campaign (queue > 12 h). Node cn36, 2x A100 80GB; envcheck GPU0/1 OK (sim 50 steps 0.96 s). Full use; kill when idle.",
-  "1123d1ea": "vla_RetryVLA_DoanhLT_lrs2g (1123d1ea-0e2a-4c73-bbbb-21d671e1e077), RetryVLA-OWNED 2-GPU shell, user account, started 2026-11-24 13:45 UTC for LRS-G (full 2610.05151 Recovery reproduction + demos). Full use; KILL when LRS-G is done."
+  "1123d1ea": "vla_RetryVLA_DoanhLT_lrs2g (1123d1ea-0e2a-4c73-bbbb-21d671e1e077), RetryVLA-OWNED 2-GPU shell, user account, started 2026-11-24 13:45 UTC for LRS-G (full 2610.05151 Recovery reproduction + demos). Full use; KILL when LRS-G is done.",
+  "ea7f9ee3": "vla_RetryVLA_DoanhLT_v2rec (ea7f9ee3-a123-4dd6-9b88-4791f00c6f48), RetryVLA-OWNED 2-GPU shell, user account, started 2026-11-24 15:05 UTC for V2R (v2 training track on LIBERO-Recover Spatial). envcheck OK (sim 50 steps 1.0 s). Full use; KILL when V2R is done.",
+  "f72a5ddd": "vla_RetryVLA_DoanhLT_v2rec_b (f72a5ddd-a436-428b-a803-f460009c84b4), RetryVLA-OWNED second 2-GPU shell for V2R, requested 2026-11-24 15:57 UTC (one shell would leave R3/R4 undone by morning). KILL when idle."
  },
  "share_ok": {
   "63e0f914": true,

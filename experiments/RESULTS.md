@@ -1129,3 +1129,32 @@ Decision (pre-registered): **no variant "clearly wins" or "promising" -> no sear
 outcome AUC; imagination alignment costs true-state AUC. The largest effect is retraining an independent critic
 (shipped C^pi pred-SR on its own picks +0.37 vs +0.08). Verdict "no gain at this design / data size", not closed;
 adversarial review (idea-loop step 4) pending. Rich records (33,296 bridges, 734 MB) in data/critic3d.
+
+## Goal G2 / P2-3 auto table (G2 wm; 2026-11-24 17:51 UTC; reading by the agent follows)
+Pre-registration: PLAN "Goal campaign G2 ... P2-3" (2026-11-24). `scripts/analyze_goal_g2.py` -> runs/goal_rsi/g2.{json,md}.
+
+| arm | val s7 / s8 / s9 | mean | Δ vs Original | fixed / broken vs Orig | vs M0 | RSR_E8 | Δ RSR_E8 | RSR_E8on | fail. incidence | first-attempt |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Original | 82 / 77 / 79 | 79.3 | - | - | (16, 33) | 0.147 | - | 0.170 | 0.22 | 0.68 |
+| F0_wm | 65 / 76 / 63 | 68.0 | -11.3 [-23.3, +1.3] | (34, 68) | (22, 73) | 0.282 | +13.5 [+6.0, +21.6] | - | - | - |
+| F1_wm | 58 / 69 / 50 | 59.0 | -20.3 [-33.7, -6.3] | (23, 84) | (22, 100) | 0.205 | +5.4 [+0.6, +10.1] | - | - | - |
+| D5_wm (old bank + cont, 36) | 80 / - / - | 80.0 | -2.0 [-12.0, +8.0] | (11, 13) | (8, 13) | - | - | - | - | - |
+| G2_wm (curated onset + cont, 36) | 67 / 72 / 79 | 72.7 | -6.7 [-18.3, +4.3] | (36, 56) | (25, 62) | 0.200 | +5.4 [+0.4, +10.3] | 0.208 | 0.32 | 0.56 |
+
+P2-3 B − A: nominal -, incidence -, RSR_E8 -
+rules: {'G2_curation_fixes_nominal_cost': False, 'G2_matches_theirs': False, 'G2_beats_F0': False}
+paper (cross-paper reference): Original 78 -> Recovery 88 (+10)
+
+| task | Original | F0_wm | F1_wm | D5_wm (old bank + cont, 36) | G2_wm (curated onset + cont, 36) |
+|---|---|---|---|---|---|
+| open_the_middle_drawer_of_the_cabinet | 9.7 | 5.0 | 5.7 | 8.0 | 3.7 |
+| open_the_top_drawer_and_put_the_bowl_inside | 8.0 | 7.0 | 5.7 | 10.0 | 8.0 |
+| push_the_plate_to_the_front_of_the_stove | 4.0 | 7.0 | 6.3 | 7.0 | 8.7 |
+| put_the_bowl_on_the_plate | 8.7 | 7.0 | 4.3 | 9.0 | 7.0 |
+| put_the_bowl_on_the_stove | 9.7 | 6.7 | 7.3 | 9.0 | 8.0 |
+| put_the_bowl_on_top_of_the_cabinet | 9.0 | 7.7 | 7.7 | 8.0 | 7.7 |
+| put_the_cream_cheese_in_the_bowl | 7.0 | 8.0 | 2.0 | 6.0 | 7.0 |
+| put_the_wine_bottle_on_the_rack | 4.0 | 3.0 | 1.3 | 3.0 | 4.3 |
+| put_the_wine_bottle_on_top_of_the_cabinet | 9.3 | 7.7 | 8.7 | 10.0 | 8.3 |
+| turn_on_the_stove | 10.0 | 9.0 | 10.0 | 10.0 | 10.0 |
+
