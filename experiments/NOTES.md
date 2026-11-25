@@ -1511,3 +1511,4 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
   lrs2_s8's entry evals (ETA ~12:30 UTC).
 - 2026-11-25 10:15 UTC: goal_g2_chain: G2-phys follow-ups finished, auto table appended to RESULTS.
 - 2026-11-25 10:19 UTC: v2r chain (agent): stage R1 complete, auto table appended to RESULTS (reading pending).
+- 2026-11-25 11:20 UTC: v2r chain (agent): stage R2 complete, auto table appended to RESULTS (reading pending).

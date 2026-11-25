@@ -57,3 +57,11 @@ Run directories (`runs/`) are gitignored; this file plus the `M*.md` docs are th
 | 20261125-084731_V2R_v2r_r3_s0 | V2R | v2r_r3_s0 | done | 6852583 | final_loss=0.415 | V2R (PLAN V2R, 2026-11-24) |
 | 20261125-084731_V2R_v2r_r3_s1 | V2R | v2r_r3_s1 | done | 6852583 | final_loss=0.407 | V2R (PLAN V2R, 2026-11-24) |
 | 20261125-094408_V2R_v2r_r2_s0_nominal | V2R | v2r_r2_s0_nominal | done | 6852583 | success_rate=0.788, n_episodes=500 | V2R (PLAN V2R, 2026-11-24) |
+| 20261125-091605_V2R_v2r_r2_s0_recover_test | V2R | v2r_r2_s0_recover_test | done | 134cc61 | rsr=0.427, rsr_close=0.404, rsr_open=0.450, n_episodes=560 | V2R (PLAN V2R, 2026-11-24) |
+| 20261125-094734_V2R_v2r_r2_s1_recover_test | V2R | v2r_r2_s1_recover_test | done | 134cc61 | rsr=0.412, rsr_close=0.379, rsr_open=0.446, n_episodes=560 | V2R (PLAN V2R, 2026-11-24) |
+| 20261125-095219_V2R_v2r_r2_s2_recover_test | V2R | v2r_r2_s2_recover_test | done | 134cc61 | rsr=0.421, rsr_close=0.411, rsr_open=0.432, n_episodes=560 | V2R (PLAN V2R, 2026-11-24) |
+| 20261125-095301_V2R_v2r_r2_s1_nominal | V2R | v2r_r2_s1_nominal | done | 134cc61 | success_rate=0.808, n_episodes=500 | V2R (PLAN V2R, 2026-11-24) |
+| 20261125-101519_V2R_v2r_r2_s2_nominal | V2R | v2r_r2_s2_nominal | done | 134cc61 | success_rate=0.776, n_episodes=500 | V2R (PLAN V2R, 2026-11-24) |
+| 20261125-102020_V2R_v2r_r3_s0_recover_test | V2R | v2r_r3_s0_recover_test | done | 134cc61 | rsr=0.427, rsr_close=0.368, rsr_open=0.486, n_episodes=560 | V2R (PLAN V2R, 2026-11-24) |
+| 20261125-102218_V2R_v2r_r3_s0_nominal | V2R | v2r_r3_s0_nominal | done | 134cc61 | success_rate=0.802, n_episodes=500 | V2R (PLAN V2R, 2026-11-24) |
+| 20261125-105328_V2R_v2r_r3_s1_nominal | V2R | v2r_r3_s1_nominal | done | 134cc61 | success_rate=0.800, n_episodes=500 | V2R (PLAN V2R, 2026-11-24) |
