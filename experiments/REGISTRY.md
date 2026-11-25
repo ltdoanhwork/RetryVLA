@@ -65,3 +65,8 @@ Run directories (`runs/`) are gitignored; this file plus the `M*.md` docs are th
 | 20261125-102020_V2R_v2r_r3_s0_recover_test | V2R | v2r_r3_s0_recover_test | done | 134cc61 | rsr=0.427, rsr_close=0.368, rsr_open=0.486, n_episodes=560 | V2R (PLAN V2R, 2026-11-24) |
 | 20261125-102218_V2R_v2r_r3_s0_nominal | V2R | v2r_r3_s0_nominal | done | 134cc61 | success_rate=0.802, n_episodes=500 | V2R (PLAN V2R, 2026-11-24) |
 | 20261125-105328_V2R_v2r_r3_s1_nominal | V2R | v2r_r3_s1_nominal | done | 134cc61 | success_rate=0.800, n_episodes=500 | V2R (PLAN V2R, 2026-11-24) |
+| 20261125-103824_V2R_v2r_r3_s1_recover_test | V2R | v2r_r3_s1_recover_test | done | 3effc78 | rsr=0.448, rsr_close=0.396, rsr_open=0.500, n_episodes=560 | V2R (PLAN V2R, 2026-11-24) |
+| 20261125-105627_V2R_v2r_r3_s2_recover_test | V2R | v2r_r3_s2_recover_test | done | 3effc78 | rsr=0.425, rsr_close=0.386, rsr_open=0.464, n_episodes=560 | V2R (PLAN V2R, 2026-11-24) |
+| 20261125-105729_V2R_v2r_r3_s2_nominal | V2R | v2r_r3_s2_nominal | done | 3effc78 | success_rate=0.810, n_episodes=500 | V2R (PLAN V2R, 2026-11-24) |
+| 20261125-111605_V2R_v2r_r0_s2_nominal | V2R | v2r_r0_s2_nominal | done | 3effc78 | success_rate=0.776, n_episodes=500 | V2R (PLAN V2R, 2026-11-24) |
+| 20261125-111936_V2R_v2r_pi1nom_nominal | V2R | v2r_pi1nom_nominal | done | 3effc78 | success_rate=0.774, n_episodes=500 | V2R (PLAN V2R, 2026-11-24) |
