@@ -1362,3 +1362,4 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
     busy.
   - Queue reordered to the pre-registered order (P2-3 before G2 random); G2-phys arm added (gated on phys_summary).
 - 2026-11-24 17:51 UTC: goal_g2_chain: G2 wm finished, auto table appended to RESULTS.
+- 2026-11-25 03:09 UTC: goal_g2_chain: G2 wm finished, auto table appended to RESULTS.
