@@ -31,3 +31,29 @@ Run directories (`runs/`) are gitignored; this file plus the `M*.md` docs are th
 | 20261014-200814_M4_sft_B_base_nom_random_wm_recover_test | M4 | sft_B_base_nom_random_wm_recover_test | done | 451ef58 | rsr=0.298, rsr_close=0.257, rsr_open=0.339, n_episodes=560 | M4 sft_B_base_nom_random_wm_recover_test |
 | 20261015-035127_M4_sft_A_base_nom_random_nominal | M4 | sft_A_base_nom_random_nominal | done | e2f6a82 | success_rate=0.756, n_episodes=500 | M4 sft_A_base_nom_random_nominal |
 | 20261015-035136_M4_sft_B_base_nom_random_wm_nominal | M4 | sft_B_base_nom_random_wm_nominal | done | e2f6a82 | success_rate=0.748, n_episodes=500 | M4 sft_B_base_nom_random_wm_nominal |
+| 20261124-160200_V2R_v2r_r1_search_s0of8 | V2R | v2r_r1_search_s0of8 | done | a547a63 | n_trajectories={'wm_diverse': 49} | V2R (PLAN V2R, 2026-11-24) |
+| 20261124-160200_V2R_v2r_r1_search_s1of8 | V2R | v2r_r1_search_s1of8 | done | a547a63 | n_trajectories={'wm_diverse': 50} | V2R (PLAN V2R, 2026-11-24) |
+| 20261124-160200_V2R_v2r_r1_search_s2of8 | V2R | v2r_r1_search_s2of8 | done | a547a63 | n_trajectories={'wm_diverse': 32} | V2R (PLAN V2R, 2026-11-24) |
+| 20261124-160200_V2R_v2r_r1_search_s3of8 | V2R | v2r_r1_search_s3of8 | done | a547a63 | n_trajectories={'wm_diverse': 62} | V2R (PLAN V2R, 2026-11-24) |
+| 20261124-173027_V2R_v2r_r1_search_s6of8 | V2R | v2r_r1_search_s6of8 | done | 7145e8d | n_trajectories={'wm_diverse': 65} | V2R (PLAN V2R, 2026-11-24) |
+| 20261124-173312_V2R_v2r_r1_search_s4of8 | V2R | v2r_r1_search_s4of8 | done | 7145e8d | n_trajectories={'wm_diverse': 64} | V2R (PLAN V2R, 2026-11-24) |
+| 20261124-174440_V2R_v2r_r1_search_s5of8 | V2R | v2r_r1_search_s5of8 | done | 7145e8d | n_trajectories={'wm_diverse': 59} | V2R (PLAN V2R, 2026-11-24) |
+| 20261124-174649_V2R_v2r_r1_search_s7of8 | V2R | v2r_r1_search_s7of8 | done | 7145e8d | n_trajectories={'wm_diverse': 55} | V2R (PLAN V2R, 2026-11-24) |
+| 20261125-031125_V2R_v2r_r0_s0_nominal | V2R | v2r_r0_s0_nominal | done | 2baf51f | success_rate=0.804, n_episodes=500 | V2R (PLAN V2R, 2026-11-24) |
+| 20261125-031354_V2R_v2r_r1_s0 | V2R | v2r_r1_s0 | done | c0c896e | final_loss=0.460 | V2R (PLAN V2R, 2026-11-24) |
+| 20261125-031354_V2R_v2r_r1_s1 | V2R | v2r_r1_s1 | done | c0c896e | final_loss=0.461 | V2R (PLAN V2R, 2026-11-24) |
+| 20261125-031402_V2R_v2r_r1_s2 | V2R | v2r_r1_s2 | done | c0c896e | final_loss=0.472 | V2R (PLAN V2R, 2026-11-24) |
+| 20261125-032628_V2R_v2r_r0_s1_nominal | V2R | v2r_r0_s1_nominal | done | c0c896e | success_rate=0.770, n_episodes=500 | V2R (PLAN V2R, 2026-11-24) |
+| 20261125-034001_V2R_v2r_r2_s0 | V2R | v2r_r2_s0 | done | c0c896e | final_loss=0.447 | V2R (PLAN V2R, 2026-11-24) |
+| 20261125-043724_V2R_v2r_r2_s1 | V2R | v2r_r2_s1 | done | c0c896e | final_loss=0.464 | V2R (PLAN V2R, 2026-11-24) |
+| 20261125-053326_V2R_v2r_r2_s2 | V2R | v2r_r2_s2 | done | b4d88d6 | final_loss=0.461 | V2R (PLAN V2R, 2026-11-24) |
+| 20261125-083923_V2R_v2r_r1_s0_nominal | V2R | v2r_r1_s0_nominal | done | 0c6900a | success_rate=0.788, n_episodes=500 | V2R (PLAN V2R, 2026-11-24) |
+| 20261125-083924_V2R_v2r_r1_s0_recover_test | V2R | v2r_r1_s0_recover_test | done | 7aaf42c | rsr=0.386, rsr_close=0.371, rsr_open=0.400, n_episodes=560 | V2R (PLAN V2R, 2026-11-24) |
+| 20261125-084021_V2R_v2r_r1_s1_recover_test | V2R | v2r_r1_s1_recover_test | done | 6852583 | rsr=0.398, rsr_close=0.382, rsr_open=0.414, n_episodes=560 | V2R (PLAN V2R, 2026-11-24) |
+| 20261125-084145_V2R_v2r_r1_s1_nominal | V2R | v2r_r1_s1_nominal | done | 7aaf42c | success_rate=0.778, n_episodes=500 | V2R (PLAN V2R, 2026-11-24) |
+| 20261125-084149_V2R_v2r_r1_s2_recover_test | V2R | v2r_r1_s2_recover_test | done | 7aaf42c | rsr=0.425, rsr_close=0.418, rsr_open=0.432, n_episodes=560 | V2R (PLAN V2R, 2026-11-24) |
+| 20261125-084405_V2R_v2r_r1_s2_nominal | V2R | v2r_r1_s2_nominal | done | 7aaf42c | success_rate=0.778, n_episodes=500 | V2R (PLAN V2R, 2026-11-24) |
+| 20261125-084433_V2R_v2r_r3_s2 | V2R | v2r_r3_s2 | done | 6852583 | final_loss=0.424 | V2R (PLAN V2R, 2026-11-24) |
+| 20261125-084731_V2R_v2r_r3_s0 | V2R | v2r_r3_s0 | done | 6852583 | final_loss=0.415 | V2R (PLAN V2R, 2026-11-24) |
+| 20261125-084731_V2R_v2r_r3_s1 | V2R | v2r_r3_s1 | done | 6852583 | final_loss=0.407 | V2R (PLAN V2R, 2026-11-24) |
+| 20261125-094408_V2R_v2r_r2_s0_nominal | V2R | v2r_r2_s0_nominal | done | 6852583 | success_rate=0.788, n_episodes=500 | V2R (PLAN V2R, 2026-11-24) |

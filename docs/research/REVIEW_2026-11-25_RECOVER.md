@@ -204,7 +204,38 @@ watchdog `rv_v2r_watch` (it also commits). The watchdog kills a shell after 2 h 
 ## 7. Auto results (refreshed by the chain)
 
 <!-- V2R_AUTO_BEGIN -->
-(no stage complete yet)
+_Auto-updated by the chain after R1, 2026-11-25 10:19 UTC._
+
+# V2R: RetryVLA v2 levers on LIBERO-Recover Spatial (test = dev split 56 x 10; nominal 10 x 50)
+
+Pre-registration: experiments/PLAN.md "V2R" (a547a63). R0 = pi1 (registered evals). ± = sd over SFT seeds. Δ = scene x seed bootstrap (10k) 95 % CI, p = paired sign-flip over scenes; McNemar pooled over seed pairs (seed k vs seed k). Nominal guard: mean >= 0.776. Events = E-v1s on nominal episodes (replay-checked).
+
+| arm | seeds | RSR | per seed | ΔRSR vs R0 [CI], p | McNemar vs R0 n01/n10, p | Δ vs control [CI] | L1 (1) | L2 (11) | L3 (16) | nominal | guard | incidence | first-attempt | compl. steps | jerk nom / rec |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| R0 | 3/3 | 0.418 ± 0.021 | 0.439 / 0.396 / 0.420 | (ref) | (ref) | - | 0.833 | 0.448 | 0.383 | 0.785 | pass | 0.078 | 0.765 | 109.0 | 0.496 / - |
+| R1 | 3/3 | 0.403 ± 0.020 | 0.386 / 0.398 / 0.425 | -0.015 [-0.068, +0.036], p 0.485 | 182/208, 0.21 | - | 0.733 | 0.373 | 0.388 | 0.781 | pass | 0.082 | 0.760 | 108.0 | 0.500 / 0.916 |
+| R2 | 0 | pending | | | | | | | | | | | | | | |
+| R3 | 0 | pending | | | | | | | | | | | | | | |
+| R4 | 0 | pending | | | | | | | | | | | | | | |
+
+## Nominal: events vs control and per-task regression
+
+| arm | Δ nominal vs control [CI] | Δ incidence vs control [CI] | Δ first-attempt vs control [CI] | tasks < pi1-nominal − 6 pt | tasks < pi0 |
+|---|---|---|---|---|---|
+| R1 (vs R0) | -0.004 [-0.044, +0.036] | +0.007 [-0.022, +0.034] | +0.008 [-0.036, +0.050] | [] | - |
+| R2 (vs R1) | +0.000 [-0.038, +0.036] | -0.010 [-0.036, +0.016] | +0.010 [-0.026, +0.048] | [] | - |
+| R3 | pending | | | | |
+| R4 | pending | | | | |
+
+## Banks and search
+
+- R1 search (critic swap): 436 verified trajectories
+- M5b wm_diverse (shipped C^pi): 423 verified trajectories
+- search, 256 paired instances: solved base-critic 0.570 vs shipped 0.547 (McNemar 25/19, p 0.451); hits / verification 0.178 vs 0.171; mean pred on picks 0.837 vs 0.735
+- R2 plausibility scan of the R1 bank: kept 5 / 436 (4 / 146 instances); reasons {'jerk': 362, 'seam': 331, 'replay_mismatch': 49, 'grip_flips': 50, 'obj_jump': 24, 'pen': 7, 'off_table': 2}; thresholds {"pen_cm": 1.0, "obj_jump_cm": 3.0, "d3": 0.1953, "seam": 0.246, "grip_flips": 1}
+- plausibility scan of D_P: kept 1 / 78 (1 / 42 instances); reasons {'jerk': 59, 'seam': 48, 'obj_jump': 7}; thresholds {"pen_cm": 1.0, "obj_jump_cm": 3.0, "d3": 0.1953, "seam": 0.246, "grip_flips": 1}
+- D_P funnel: 56 train source episodes -> 52 with t_last (>= 2/8) -> 48 s^- with a pi0 failure -> 42 with >= 1 verified pair -> 78 D_P trajectories; mean p(a-) 0.18; t_last distribution [0, 20, 20, 20, 20, 40, 40, 40, 40, 40, 40, 40, 40, 40, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 80, 80, 80, 80, 100, 100, 100, 100, 100, 120, 120, 120, 120, 140, 140, 140, 160, 160, 160, 160, 160, 160, 160, 160, 160, 160, 160]; sim steps 1,630,742
+
 <!-- V2R_AUTO_END -->
 
 ## 8. Open questions for the user
