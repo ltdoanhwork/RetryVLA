@@ -1467,3 +1467,4 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
   0.020). Visual check v2 (6 windows): smooth, but gripper chatter (13 flips, ep17) and 2 / 6 near-static windows;
   grader inflation persists. SFT lrs2_s7 / s9 on GPU0, lrs2_s8 on GPU1 (chain rv_lrsg2_chain), ETA ~11:40 UTC.
 - 2026-11-25 08:43 UTC: goal_g2_chain: G2 wm finished, auto table appended to RESULTS.
+- 2026-11-25 08:43 UTC: goal_g2_chain: P2-3 finished, auto table appended to RESULTS.
