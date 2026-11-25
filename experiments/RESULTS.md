@@ -1341,3 +1341,24 @@ vs G2" rule evaluates true (+10 vs G2-36), but it is **confounded**, see the phy
 - Seed 8: 21 / 53 confirmed (tipped 11, displaced 9, grasp_lost 7, stall 5); FC length 26; D_F = 1,400.
 - Pre-registered rebuild rule (s^f shifts >= 20 steps from t_on in >= 30 %): 10 % (s7) / 21 % (s8), so NOT met.
   D_R entries stay at t_on; D_F is stored for the later hinge L_P / critic hard negatives.
+
+## LRS-G: 2610.05151 Recovery arm reproduced on the Goal protocol (2026-11-24/25; PLAN "LRS-G", review docs/research/REVIEW_2026-11-25_LRS.md)
+Teacher loop (168 seed-7 entries, Qwen3-VL-8B teacher + LLM judge, 1 attempt; `runs/goal_rsi/lrs_goal.{json,md}`):
+- their rule accepts 132 / 168 (78.6 %); 217 hand-off tests; judge accepts 132, sim-GT successes 18.
+- **judge precision 0.114 [0.070, 0.179]**, recall 0.83 [0.61, 0.94] -> pre-registered "judge over-accepts" MET.
+- entries solved in sim 0.107 vs WM search 0.589 on the same entries (McNemar 2 / 83, p 2e-22).
+- cost: 15 LLM calls / 82 s LLM / 147 s wall per entry; 23,044 accepted teacher actions; windows 50 (volume-matched,
+  1,708 anchors, 4.3 %) / 292 (all, 10,552 anchors, 21.6 %).
+
+v1 SFT (their recipe, M0 + 2k), val / 100:
+| arm | s7 / s8 / s9 | mean | Δ vs Original | RSR_E8 |
+|---|---|---|---|---|
+| Original | 82 / 77 / 79 | 79.3 | - | 0.147 |
+| LRS v1 (4.3 %) | 14 / 21 / 8 | 14.3 | −65.0 [−75.7, −53.0] | 0.063 |
+| LRS v1 all (21.6 %) | 1 | 1 | −81 | 0.042 |
+
+**Reading: v1 is invalid as a measurement of their method.** Root cause is the teacher servo of our re-implementation
+(D-L9): bang-bang targets (42 % / 14 % / 41 % saturated at ±1 vs 0 % in D0), rotation exactly 0, per-target FM loss
+11.5x D0 at M0 -> 4 % of anchors carry ~1/3 of the gradient; trained policies copy it (val rotation std 0.003-0.028
+vs 0.06-0.08). Plumbing checked OK (recipe / init, masked loss == pi0 loss on D0 to 1e-7, mix share, replay). C0
+control (masked path, 0 windows) and v2 (demo-matched servo) are running; v2 is the primary LRS result.
