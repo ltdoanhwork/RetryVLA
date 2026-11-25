@@ -304,21 +304,10 @@ def claim(name) -> bool:
 
 
 def register(stage):
-    subprocess.call(["bash", "-lc", f"cd {REPO} && source env/activate.sh >/dev/null 2>&1 && "
-                     f"python scripts/v2r/analyze_v2r.py > runs/_analysis/v2r_analyze.log 2>&1"])
-    md = REPO / "runs/_analysis/v2r/v2r.md"
-    body = md.read_text() if md.exists() else "(analysis failed, see runs/_analysis/v2r_analyze.log)"
-    with open(REPO / "experiments/RESULTS.md", "a") as f:
-        f.write(f"\n## V2R auto table after {stage} ({time.strftime('%Y-%m-%d %H:%M UTC', time.gmtime())}; "
-                "pre-registration PLAN \"V2R\"; agent reading follows separately)\n"
-                "`scripts/v2r/analyze_v2r.py` -> runs/_analysis/v2r/v2r.{md,json}.\n\n" + body + "\n")
-    with open(REPO / "experiments/NOTES.md", "a") as f:
-        f.write(f"- {time.strftime('%Y-%m-%d %H:%M UTC', time.gmtime())}: v2r chain ({HOST}): stage {stage} complete, "
-                "auto table appended to RESULTS (reading pending).\n")
-    subprocess.call(["bash", "-lc", f"cd {REPO} && python scripts/v2r/register_runs.py >> runs/_analysis/v2r_analyze.log 2>&1; "
-                     f"scripts/git_commit.sh 'V2R {stage}: results (auto table) + registry' experiments/RESULTS.md "
-                     "experiments/NOTES.md experiments/REGISTRY.md && (env -u LD_LIBRARY_PATH git push -q origin main || "
-                     "(env -u LD_LIBRARY_PATH git pull -q --rebase origin main && env -u LD_LIBRARY_PATH git push -q origin main))"])
+    """registration (analysis -> RESULTS / NOTES / REGISTRY / review -> commit + push) runs on the AGENT box (working
+    git credentials): request it via a marker that scripts/v2r/watch.py picks up (scripts/v2r/register_stage.py)."""
+    (V / f"register_req_{stage}").write_text(time.strftime("%Y-%m-%dT%H:%M:%S"))
+    log(event="register_requested", stage=stage)
 
 
 def main():

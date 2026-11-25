@@ -119,6 +119,12 @@ def main():
                     killed.add(sid)
             log(sid=sid, event="poll", host=host, sess=sess, gpus=pr.get("GPUS"), load=pr.get("LOAD"),
                 hb_age=round(time.time() - hb.stat().st_mtime) if hb.exists() else None)
+        for req in sorted(V.glob("register_req_*")):   # chain stage registration requests (git works here)
+            st = req.name[len("register_req_"):]
+            if not (V / f"register_done_{st}").exists():
+                rc = subprocess.call(["bash", "-lc", f"cd {REPO} && source env/activate.sh >/dev/null 2>&1 && "
+                                      f"python scripts/v2r/register_stage.py {st} >> runs/v2r/register.log 2>&1"])
+                log(event="registered", stage=st, rc=rc)
         if len(killed) == len(SHELLS):
             log(event="watch_done")
             return
