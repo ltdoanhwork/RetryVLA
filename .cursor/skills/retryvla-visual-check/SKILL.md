@@ -2,7 +2,7 @@
 name: retryvla-visual-check
 description: >-
   Mandatory visual check of RetryVLA generated data and method comparisons: look at generated data with your own
-  eyes, not just numbers. Renders MP4 + GIF + contact-sheet PNG (caption bar: task, entry, segment bridge /
+  eyes, not just numbers. Renders full-frame-rate MP4 (every step, 20 Hz, H.264) + preview GIF + contact-sheet PNG (caption bar: task, entry, segment bridge /
   continuation / teacher / handoff, gripper, success; EE-xyz + gripper action strip) from RecoveryWriter banks, LRS-G
   teacher records, CRIT-V rich records or any action array, replayed bit-exactly in sim (CPU) when frames are not
   stored, and side-by-side videos on the same entry. Use after EVERY data-generation stage (recovery banks, D_P / D_F,
@@ -45,6 +45,23 @@ Visual check:
 ```
 
 Never write "bank looks fine" without having opened the sheets in this turn. Looking means: Read the PNG.
+
+### Rendering rule: never judge smoothness from a subsampled GIF
+
+The user once saw every demo as "giật giật" (jerky) because the GIFs kept every 4th to 6th step at 300-400 ms per
+frame with 48-64 colours, i.e. about 2.5 fps playback of 20 Hz data. That choppiness is a RENDERING artefact and says
+nothing about the motion. Rules:
+- **MP4 is the artefact for smoothness**: every sim step = one frame, played at the native control rate (LIBERO
+  20 Hz, or `meta/info.json` fps of the bank), H.264 yuv420p, CRF ~23, 256 px per panel. `render_traj.py` does this
+  by default (`write_mp4`), as does `scripts/demos/render_goal_demos.py`.
+- **GIFs are previews only**: every frame, or every 2nd frame for clips > 150 steps, with the matching real-time duration
+  (50 / 100 ms at 20 Hz), >= 128 colours (`write_gif` asserts stride <= 2). Never stride more than 2. Never slow it down.
+- **Do frame-by-frame checks on consecutive frames**: `scripts/demos/render_fullfps.py` writes `*_consec_sheet.png`
+  (12 consecutive steps around the clip's max |d3 a|, plus 12 at the window start). Evenly spaced tiles cannot show jerk.
+- **Report jerk numbers next to every clip**: mean ||d3 a[:6]|| (also d2), gripper flips per 100 steps, and the EE
+  jerk ||d3 ee_xyz|| in mm (what the camera actually sees), always next to a human-demo and an M0-nominal reference
+  clip of the same task (`render_fullfps.py` panels H / N). Then you can tell real data jerk (bridge, teacher, chatter)
+  from playback artefacts.
 
 ### What to look for
 
@@ -93,10 +110,17 @@ Sources:
   `data/goal_rsi/*/entries*.jsonl`, restored exactly like `goal_instances`) and LIBERO-Recover ids
   (`<scene_tag>__close<k> | __open<k>`, restored like `compare_arms` with eval.seed 7, noise 0.02, settle 20).
 
-Options: `--res` panel size (<= 384), `--tiles` contact-sheet frames (8), `--no_mp4`, `--gpu` (EGL, own GPU only),
-`--sim_res` camera size for replays. Outputs per trajectory: `<name>.mp4`, `<name>.gif` (<= 224 px / panel, <= 8 s),
-`<name>_sheet.png`, `<name>.json` (jerk = mean ||Δ²a||, max ||Δa||, gripper flips, boundary jumps, replay
-`replay_state_maxdiff`, logged vs replayed success step). Side-by-side prints the start-frame difference: > ~15/255
+Options: `--res` panel size (<= 384), `--tiles` contact-sheet frames (8), `--no_mp4`, `--no_gif`, `--fps` (20; banks use
+their own fps), `--gpu` (EGL, own GPU only), `--sim_res` camera size for replays. Outputs per trajectory: `<name>.mp4`
+(every step at the control rate), `<name>.gif` (preview, <= 224 px / panel, stride <= 2, real-time),
+`<name>_sheet.png`, `<name>.json` (jerk = mean ||Δ²a||, jerk3 = mean ||Δ³a||, max ||Δa||, gripper flips and flips per
+100 steps, boundary jumps, replay `replay_state_maxdiff`, logged vs replayed success step).
+
+Full-frame-rate reference set for LIBERO-Goal (human demo | M0 nominal | LRS v2 teacher + handoff | WM bridge + M0, on the
+episode clock, jerk numbers in the captions):
+`python -m scripts.demos.render_fullfps --entry <goal entry id>` -> `runs/_analysis/visual/fullfps/<entry>/`
+(`quad.mp4`, `sbs_L_vs_W.mp4`, single clips, `*_consec_sheet.png`, `stats.json`). Side-by-side prints the start-frame
+difference: > ~15/255
 means the two panels do not start from the same state (not a paired comparison).
 
 Checks the script does for you: bank `--replay` must give `replay_state_maxdiff` 0.0 and the logged success step
@@ -111,8 +135,8 @@ Embed images with absolute paths and link videos:
 ![side by side](/abs/path/sbs_....gif) · [MP4](/abs/path/sbs_....mp4)
 ```
 
-Put the 2-3 observation sentences right under the images. Keep committed examples small (sheet PNG + GIF only, MP4s
-stay under `runs/`).
+Put the 2-3 observation sentences right under the images. Keep committed examples small (sheet PNG, preview GIF, and
+MP4s < 3 MB under `docs/related_work/figs/demos/fullfps/`); everything else stays under `runs/`.
 
 ## Examples (committed, `examples/`)
 
@@ -125,6 +149,10 @@ stay under `runs/`).
   almost static (EE flat for 50 steps, so M0 does all the work afterwards: a "no-op bridge"). The LRS teacher keeps
   the gripper closed from step ~20 to ~230 without opening the drawer, and there is a 1.84 action jump at the
   teacher -> handoff boundary. The judge accepted it anyway.
+- Full-fps reference set (`docs/related_work/figs/demos/fullfps/`, `jerk_table.csv`): human demos |d3a| 0.06-0.09,
+  EE jerk 0.4-0.7 mm. M0 nominal is already 2-2.5x human (|d3a| 0.16-0.21) because SmolVLA re-plans every 5 steps: |Δa|
+  at chunk boundaries is 3-5x the within-chunk value (autocorrelation 0.6-0.7 at lag 5, also visible in EE accel), a
+  real ~4 Hz shudder. Use M0 nominal, not the human demo, as the bar for "M0-like" motion.
 
 ## Related skills
 

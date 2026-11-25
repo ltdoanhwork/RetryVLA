@@ -64,13 +64,17 @@ def play(sim, E, acts: np.ndarray, labels: list[str]) -> dict:
 def write_mp4(path: Path, frames: list[np.ndarray], fps: int = 20) -> None:
     import imageio.v2 as iio
 
-    with iio.get_writer(str(path), fps=fps, codec="libx264", quality=7, macro_block_size=8) as w:
+    with iio.get_writer(str(path), fps=fps, codec="libx264", quality=None, macro_block_size=8, pixelformat="yuv420p",
+                        ffmpeg_params=["-crf", "23", "-preset", "slow", "-movflags", "+faststart"]) as w:
         for f in frames:
             w.append_data(f)
 
 
-def write_gif(path: Path, frames: list[np.ndarray], every: int = 3, width: int = 0, fps: int = 10) -> None:
+def write_gif(path: Path, frames: list[np.ndarray], every: int = 2, width: int = 0, fps: int = 20) -> None:
+    """Preview only (judge smoothness from the MP4): every <= 2nd frame at the real-time duration every / fps."""
     from PIL import Image
+
+    assert every <= 2, "GIF previews may drop at most every 2nd frame"
 
     fr = frames[::every] + [frames[-1]] * 8
     if width:
@@ -78,7 +82,7 @@ def write_gif(path: Path, frames: list[np.ndarray], every: int = 3, width: int =
         fr = [cv2.resize(f, (width, h), interpolation=cv2.INTER_AREA) for f in fr]
     ims = [Image.fromarray(f).quantize(colors=128, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE)
            for f in fr]
-    ims[0].save(path, save_all=True, append_images=ims[1:], duration=int(1000 / fps), loop=0, optimize=True)
+    ims[0].save(path, save_all=True, append_images=ims[1:], duration=int(1000 * every / fps), loop=0, optimize=True)
 
 
 def panel_frames(run: dict, title: str, sub: str, seg_of, outcome: str, ok: bool, res: int) -> list[np.ndarray]:
@@ -205,7 +209,7 @@ def main() -> None:
             panels.append(pl)
         sbs = hstack(panels)
         write_mp4(od / "side_by_side.mp4", sbs)
-        write_gif(od / "side_by_side.gif", sbs, every=4, width=min(900, sbs[0].shape[1]), fps=8)
+        write_gif(od / "side_by_side.gif", sbs, every=2, width=min(900, sbs[0].shape[1]), fps=20)
         checks[iid] = ck
         print(iid, json.dumps(ck), flush=True)
     (out / "checks.json").write_text(json.dumps(checks, indent=1, default=float))

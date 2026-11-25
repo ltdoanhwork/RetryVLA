@@ -1,0 +1,13 @@
+task,clip,T,d3a,d2a,grip_flips,flips_per100,ee_d3_mm,window,win_T,win_d3a,win_flips_per100,win_ee_d3_mm,success_step
+cream_cheese_d13,human demo,85,0.088,0.063,2,2.4,0.67,,,,,,85
+cream_cheese_d13,M0 nominal (clean start),87,0.214,0.123,3,3.4,0.93,,,,,,87
+cream_cheese_d13,LRS v2 teacher + handoff + M0,388,0.347,0.188,55,14.2,1.07,teacher,88,0.154,4.5,0.71,
+cream_cheese_d13,ours: WM bridge + M0,203,0.392,0.211,25,12.3,1.51,bridge,50,0.149,0.0,0.48,203
+middle_drawer_d46,human demo,114,0.059,0.036,0,0.0,0.6,,,,,,114
+middle_drawer_d46,M0 nominal (clean start),104,0.158,0.085,0,0.0,0.55,,,,,,104
+middle_drawer_d46,LRS v2 teacher + handoff + M0,0,nan,nan,0,nan,nan,,,,,,
+middle_drawer_d46,ours: WM bridge + M0,300,0.333,0.18,0,0.0,1.01,bridge,50,0.0,0.0,0.04,300
+wine_rack_d19,human demo,129,0.063,0.042,1,0.8,0.36,,,,,,129
+wine_rack_d19,M0 nominal (clean start),189,0.161,0.089,4,2.1,0.59,,,,,,189
+wine_rack_d19,LRS v2 teacher + handoff + M0,600,0.292,0.158,16,2.7,0.9,teacher,300,0.237,4.7,0.78,
+wine_rack_d19,ours: WM bridge + M0,89,0.131,0.078,2,2.2,0.58,bridge,50,0.031,2.0,0.33,89

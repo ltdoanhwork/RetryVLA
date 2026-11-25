@@ -21,8 +21,10 @@ Usage (from the repo root, `source env/activate.sh`):
   python .cursor/skills/retryvla-visual-check/scripts/render_traj.py bank:data/recovery/m5b/s0/p0/random#3 --out DIR
   python ... --sample data/recovery/goal_search/s0/p0/wm_diverse --n 8 --out DIR   # stratified 8: random+worst+task
   python ... --side-by-side bank:<root>#<ep> lrs:data/recovery/lrs_goal#<iid> --out DIR
-Outputs per trajectory: <name>.mp4, <name>.gif (<= 10 s, <= 384 px per panel), <name>_sheet.png, <name>.json (jerk /
-gripper-flip / handoff-jump stats, replay state check).
+Outputs per trajectory: <name>.mp4 (EVERY step, at the control rate: 20 Hz for LIBERO or the bank's fps; H.264
+yuv420p), <name>.gif (PREVIEW only: every frame, or every 2nd for > 150 steps, at real-time 50 / 100 ms, 128 colours;
+never judge smoothness from it), <name>_sheet.png, <name>.json (jerk d2 / d3, gripper flips per 100 steps, handoff
+jumps, replay state check).
 """
 
 from __future__ import annotations
@@ -197,7 +199,11 @@ def load_bank(root: str, ep: int, do_replay: bool, res: int) -> dict:
         frames = rp["frames"]
     arm = row.get("arm", root.name)
     run = "_".join(p for p in root.parts[-4:] if p not in ("p0", "data", "recovery"))
-    return {"name": f"{run}_ep{ep}", "title": f"bank {arm} ep{ep}",
+    try:
+        fps = json.loads((root / "meta" / "info.json").read_text()).get("fps")
+    except Exception:
+        fps = None
+    return {"name": f"{run}_ep{ep}", "title": f"bank {arm} ep{ep}", "fps": fps,
             "task": row.get("task", ""), "entry": iid, "frames": frames, "state": st, "action": act, "seg": seg,
             "success": succ_step is not None, "success_step": succ_step, "info": info}
 
@@ -320,23 +326,28 @@ def stats(act, seg) -> dict:
     jump at every segment boundary (bridge -> continuation, teacher -> handoff, ...)."""
     import numpy as np
     a = np.asarray(act, np.float64)
-    if len(a) < 3:
-        return {"T": len(a), "jerk": 0.0, "max_step": 0.0, "grip_flips": 0, "boundary_jumps": []}
+    if len(a) < 4:
+        return {"T": len(a), "jerk": 0.0, "jerk3": 0.0, "max_step": 0.0, "grip_flips": 0, "flips_per100": 0.0,
+                "boundary_jumps": []}
     d1 = np.diff(a[:, :6], axis=0)
     d2 = np.diff(d1, axis=0)
+    d3 = np.diff(d2, axis=0)
     g = np.sign(a[:, 6])
     g = g[g != 0]
+    flips = int((np.diff(g) != 0).sum())
     jumps = [{"t": i, "from": seg[i - 1], "to": seg[i], "jump": float(np.linalg.norm(a[i, :6] - a[i - 1, :6])),
               "grip_change": bool(np.sign(a[i, 6]) != np.sign(a[i - 1, 6]))}
              for i in range(1, len(seg)) if seg[i] != seg[i - 1]]
     return {"T": len(a), "jerk": float(np.linalg.norm(d2, axis=1).mean()),
-            "max_step": float(np.linalg.norm(d1, axis=1).max()), "grip_flips": int((np.diff(g) != 0).sum()),
-            "boundary_jumps": jumps}
+            "jerk3": float(np.linalg.norm(d3, axis=1).mean()),
+            "max_step": float(np.linalg.norm(d1, axis=1).max()), "grip_flips": flips,
+            "flips_per100": 100.0 * flips / len(a), "boundary_jumps": jumps}
 
 
 def stats_line(s: dict) -> str:
     j = max([b["jump"] for b in s["boundary_jumps"]], default=0.0)
-    return f"T={s['T']} jerk={s['jerk']:.3f} max|da|={s['max_step']:.2f} flips={s['grip_flips']} handoff|da|={j:.2f}"
+    return (f"T={s['T']} jerk(d2)={s['jerk']:.3f} jerk(d3)={s.get('jerk3', 0):.3f} max|da|={s['max_step']:.2f} "
+            f"flips={s['grip_flips']} ({s.get('flips_per100', 0):.1f}/100) handoff|da|={j:.2f}")
 
 
 # ---------------------------------------------------------------------------------------------------------- rendering
@@ -459,31 +470,39 @@ def hstack(panels: list[list]) -> list:
     return out
 
 
-def write_mp4(path: Path, frames: list, fps: int = 20) -> None:
+def write_mp4(path: Path, frames: list, fps: int = 20, crf: int = 23) -> None:
+    """The artefact to judge smoothness from: EVERY sim step = one frame, played at the native control rate (LIBERO
+    20 Hz, or the dataset's meta/info.json fps), H.264 yuv420p (plays everywhere), even dims, faststart."""
     import imageio.v2 as iio
     h, w = frames[0].shape[:2]
-    with iio.get_writer(str(path), fps=fps, codec="libx264", quality=6, macro_block_size=1,
-                        ffmpeg_params=["-vf", f"scale={w - w % 2}:{h - h % 2}"]) as wr:
+    with iio.get_writer(str(path), fps=fps, codec="libx264", quality=None, macro_block_size=1, pixelformat="yuv420p",
+                        ffmpeg_params=["-vf", f"scale={w - w % 2}:{h - h % 2}", "-crf", str(crf), "-preset", "slow",
+                                       "-movflags", "+faststart"]) as wr:
         for f in frames:
             wr.append_data(f)
 
 
-def write_gif(path: Path, frames: list, n_panels: int = 1, max_frames: int = 56, fps: int = 8,
-              panel_w: int = 224) -> None:
-    """<= max_frames + 6 frames at `fps` (default <= 7.75 s), <= panel_w px per panel, 64 colours -> small files."""
+def write_gif(path: Path, frames: list, n_panels: int = 1, fps: int = 20, every: int = 0, panel_w: int = 224,
+              colors: int = 128) -> int:
+    """PREVIEW ONLY (never judge smoothness from a GIF; use the MP4). Keeps every frame (or every 2nd for clips longer
+    than 150 steps) and plays at the matching real-time duration (50 / 100 ms per frame at 20 Hz), >= 128 colours,
+    <= panel_w px per panel. Returns the frame stride used."""
     import cv2
     from PIL import Image
-    every = max(1, -(-len(frames) // max_frames))
-    fr = frames[::every] + [frames[-1]] * 6
+    every = every or (1 if len(frames) <= 150 else 2)
+    assert every <= 2, "GIF previews may drop at most every 2nd frame (choppy playback otherwise)"
+    fr = frames[::every] + [frames[-1]] * max(1, 10 // every)
     w = min(fr[0].shape[1], min(panel_w, MAX_PX) * n_panels + 4 * (n_panels - 1))
     if w < fr[0].shape[1]:
         h = int(fr[0].shape[0] * w / fr[0].shape[1])
         fr = [cv2.resize(f, (w, h), interpolation=cv2.INTER_AREA) for f in fr]
     import numpy as np
-    mosaic = Image.fromarray(np.concatenate(fr[:: max(1, len(fr) // 6)], 0))   # one global palette -> frame deltas
-    pal = mosaic.quantize(colors=64, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE)
+    mosaic = Image.fromarray(np.concatenate(fr[:: max(1, len(fr) // 8)], 0))   # one global palette -> frame deltas
+    pal = mosaic.quantize(colors=max(128, colors), method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE)
     ims = [Image.fromarray(f).quantize(palette=pal, dither=Image.Dither.NONE) for f in fr]
-    ims[0].save(path, save_all=True, append_images=ims[1:], duration=int(1000 / fps), loop=0, optimize=True)
+    ims[0].save(path, save_all=True, append_images=ims[1:], duration=int(round(1000 * every / fps)), loop=0,
+                optimize=True)
+    return every
 
 
 def sheet(tr: dict, n_tiles: int = 8, tile: int = 160, cols: int = 4):
@@ -547,12 +566,15 @@ def render_one(tr: dict, out: Path, a, name: str | None = None) -> dict:
     tr["stats"] = stats(tr["action"], tr["seg"])
     name = safe(name or tr["name"])
     fr = panel(tr, a.res)
-    paths = {"sheet": out / f"{name}_sheet.png", "gif": out / f"{name}.gif"}
+    fps = int(tr.get("fps") or a.fps)
+    paths = {"sheet": out / f"{name}_sheet.png"}
     save_png(paths["sheet"], sheet(tr, a.tiles))
-    write_gif(paths["gif"], fr)
+    if not a.no_gif:
+        paths["gif"] = out / f"{name}.gif"
+        write_gif(paths["gif"], fr, fps=fps)
     if not a.no_mp4:
         paths["mp4"] = out / f"{name}.mp4"
-        write_mp4(paths["mp4"], fr + [fr[-1]] * 15)
+        write_mp4(paths["mp4"], fr + [fr[-1]] * fps, fps=fps)
     rec = {"name": name, "entry": tr["entry"], "task": tr["task"], "title": tr["title"], "success": tr["success"],
            "success_step": tr["success_step"], "stats": tr["stats"], "info": tr["info"],
            "paths": {k: str(v) for k, v in paths.items()}}
@@ -573,12 +595,15 @@ def render_sbs(A: dict, B: dict, out: Path, a) -> dict:
         t["stats"] = stats(t["action"], t["seg"])
     name = safe(f"sbs_{A['name']}__VS__{B['name']}")
     fr = hstack([panel(A, a.res), panel(B, a.res)])
-    paths = {"sheet": out / f"{name}_sheet.png", "gif": out / f"{name}.gif"}
+    fps = int(A.get("fps") or B.get("fps") or a.fps)
+    paths = {"sheet": out / f"{name}_sheet.png"}
     save_png(paths["sheet"], vstack([sheet(A, a.tiles), sheet(B, a.tiles)]))
-    write_gif(paths["gif"], fr, n_panels=2)
+    if not a.no_gif:
+        paths["gif"] = out / f"{name}.gif"
+        write_gif(paths["gif"], fr, n_panels=2, fps=fps)
     if not a.no_mp4:
         paths["mp4"] = out / f"{name}.mp4"
-        write_mp4(paths["mp4"], fr + [fr[-1]] * 15)
+        write_mp4(paths["mp4"], fr + [fr[-1]] * fps, fps=fps)
     rec = {"name": name, "entry": [A["entry"], B["entry"]], "start_frame_diff": d0,
            "A": {"title": A["title"], "success": A["success"], "stats": A["stats"], "info": A["info"]},
            "B": {"title": B["title"], "success": B["success"], "stats": B["stats"], "info": B["info"]},
@@ -635,6 +660,9 @@ def main() -> None:
     ap.add_argument("--tiles", type=int, default=8)
     ap.add_argument("--replay", action="store_true", help="bank: replay in sim even if frames are stored (+ check)")
     ap.add_argument("--no_mp4", action="store_true")
+    ap.add_argument("--no_gif", action="store_true", help="skip the preview GIF (the MP4 is the artefact to judge)")
+    ap.add_argument("--fps", type=int, default=20, help="playback rate = control rate (LIBERO 20 Hz); bank sources "
+                    "use their meta/info.json fps")
     ap.add_argument("--gpu", action="store_true", help="use NVIDIA EGL (default: CPU OSMesa)")
     a = ap.parse_args()
     a.res = min(a.res, MAX_PX)

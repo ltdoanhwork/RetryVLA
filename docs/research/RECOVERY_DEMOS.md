@@ -46,6 +46,12 @@ thất bại):
 MP4 đầy đủ (256 px / panel, từng panel riêng và side-by-side) nằm ở
 `runs/_analysis/demos/goal/<entry>/{A_m0_alone,B_wm_bridge,C_wm_false_positive,L_lrs_teacher,side_by_side}.mp4`.
 
+**Lưu ý về độ giật (2026-11-25):** các GIF trong bảng trên chỉ lấy khoảng 1 / 6 frame, mỗi frame 400 ms, 48 màu, tức
+phát ở ~2.5 fps thay vì 20 Hz. Cảm giác "giật giật" khi xem GIF phần lớn do cách render. Muốn đánh giá độ mượt thì xem
+MP4 full frame rate (mọi bước sim, 20 Hz, H.264), có kèm clip tham chiếu human demo và M0 nominal của cùng task, và
+số jerk ghi trong caption: `../related_work/figs/demos/fullfps/` (`<task>__quad.mp4` gồm 4 panel
+[human | M0 nominal | LRS v2 + handoff | WM bridge + M0], bảng `jerk_table.csv`). Code: `scripts/demos/render_fullfps.py`.
+
 **Panel (c), WM false positive** (`C_wm_false_positive.mp4`): candidate `wm_diverse` có C^pi cao nhất (1.00) nhưng
 verification trong sim FAIL. Bridge được lấy từ log. Phần M0 chạy tiếp được chạy lại trên GPU với đúng policy seed đã
 log, và kết quả FAIL khớp với log ở 6 / 6 entry. Phép chạy lại closed-loop này **không bit-exact** so với lần search gốc
