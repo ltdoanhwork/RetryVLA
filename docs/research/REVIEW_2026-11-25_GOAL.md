@@ -16,8 +16,9 @@ cosine). Đánh giá: 100 val scene (1 trial / scene), 3 seed SFT (7, 8, 9).
      trong nhiều arm, nên cần replicate (seed 10-12) trước khi claim.
 3. **Prevention data D_P (P2-3 B vs A): inconclusive.** Nominal −4.0 [−13, +5], failure incidence −3.3 pt [−14, +8],
    RSR bằng nhau. D_P (alternative đã verify tại s^-) không giảm failure đo được.
-4. **G2-phys đáng chú ý nhưng confounded.** 84 / 82 trên 2 seed (Original 82 / 77, Δ +3.5, CI chứa 0; seed 9 đang
-   chạy). Filter vật lý chỉ giữ 18 / 132 trajectory, và 17 / 18 không có continuation (task xong ngay trong bridge),
+4. **G2-phys (cập nhật 08:45 UTC, đủ 3 seed): 84 / 82 / 83 = 83.0**, là arm duy nhất >= Original trên cả 3 seed.
+   Δ vs Original +3.7 [−4.3, +12.0]; vs G2 +10.3 [−0.3, +21.3]. Rule "G2phys helps" vì vậy KHÔNG đạt, sát nút (CI
+   chạm 0). Control: G2 @18 = 79.0 (2 seed), nên bộ lọc (không phải số lượng) mang phần chênh, nhưng mới là hướng. Filter vật lý chỉ giữ 18 / 132 trajectory, và 17 / 18 không có continuation (task xong ngay trong bridge),
    nên đó là data rất ít (1.6 %) và rất "sạch". Ba arm control đã pre-register và đang chạy.
 5. **F1 diagnosis (11-24): không có bug pipeline.** Bridge-only open-loop (có gripper flip từ perturbation) dạy hành vi
    có hại; thêm continuation anchor thì hết hại (80 vs 63, 1 seed).
@@ -33,7 +34,10 @@ cosine). Đánh giá: 100 val scene (1 trial / scene), 3 seed SFT (7, 8, 9).
 | G2: curated onset + continuation, 36 | 4.9 k (11 %) | 67 / 72 / 79 | 72.7 | −6.7 [−18.3, +4.3] | 36 / 56 | 0.200 (+5.4) | 0.32 | 0.56 |
 | **P2-3 A**: curated, 72 | 9.5 k (20 %) | 83 / 78 / 77 | **79.3** | +0.0 [−8.0, +8.0] | 38 / 38 | **0.248 (+10.1 [+5.0, +15.7])** | 0.30 | 0.65 |
 | P2-3 B: curated 36 + D_P 36 | 8.5 k (18 %) | 75 / 71 / 80 | 75.3 | −4.0 [−12.7, +5.0] | 30 / 42 | 0.248 (+10.1) | 0.27 | 0.65 |
-| G2-phys: 18 survivors | 0.6 k (1.6 %) | 84 / 82 / … | 83.0 | +3.5 [−5.0, +13.0] (2 seed) | 26 / 19 | 0.182 (+3.0) | 0.28 | 0.68 |
+| **G2-phys: 18 survivors** | 0.6 k (1.6 %) | 84 / 82 / 83 | **83.0** | +3.7 [−4.3, +12.0] | 40 / 29 | 0.183 (+3.6) | 0.26 | 0.69 |
+| G2 @18 (trajectory control) | ~2.4 k | 76 / 82 / - | 79.0 | −0.5 [−13, +12] | 26 / 27 | 0.164 (+1.2) | 0.30 | 0.62 |
+| G2-physns (no seam rule, 36) | ~4 k | 82 / … / … | 82.0 (s7) | +0.0 | 11 / 11 | 0.208 (+7.1) | 0.24 | 0.71 |
+| G2 random (36) | ~4 k | 80 / … / … | 80.0 (s7) | −2.0 | 10 / 12 | 0.250 (+11.3) | 0.32 | 0.61 |
 | 2610.05151 paper | 4.1 % teacher windows | 78 -> **88** | - | +10 (1 seed) | 18 / 8 | không đo | - | - |
 
 \* Detector E-v1 (`retryvla/eval/goal_events.py`, frozen 11-24) chạy trên replay bit-exact của val episode: grasp_lost,
@@ -100,6 +104,18 @@ Cái nó giữ:
 >   với G2-36 là confounded (chỉ 1.6 % anchor, gần như không có handoff). Seam rule (3 x median |Δa| của demo) là thủ
 >   phạm chính (96 / 132 bị loại vì seam).
 
+### Visual check bổ sung (08:40-09:05 UTC, MP4 full-fps + dải frame liên tiếp)
+
+![G2-physns ep8: continuation chatter (frames t72-94, every 2 steps)](/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/RetryVLA/runs/_analysis/visual_check/goal_g2/g2physns_keep/ep8_t62-84_every2.png)
+![G2-physns ep31: clean (wine rack)](/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/RetryVLA/runs/_analysis/visual_check/goal_g2/g2physns_keep/goal_search_onset_cur_s1_wm_diverse_ep31_sheet.png)
+![Strict random survivor ep16: trivial 4-step completion](/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/RetryVLA/runs/_analysis/visual_check/goal_g2/g2phys_rand_keep/goal_search_onset_cur_s1_random_ep16_sheet.png)
+
+> - G2-physns (bỏ seam rule): bridge mượt và sạch về vật lý.
+> - Nhưng continuation vẫn còn chatter: ep8 có 13 gripper flip, xem trên MP4 / frame liên tiếp thấy open-close
+>   liên tục khi EE hạ xuống cream cheese.
+> - Bộ strict random: phần lớn là đoạn ngắn sạch gần goal, nhưng có 5 / 28 là "đã xong" (2-10 step), gần như
+>   không có nội dung recovery.
+
 ## 4. Trạng thái các thành phần mới
 
 - **Critic swap:** CRIT-V `base` (`runs/20261124_CRITV_goal/ckpt/base_s0.pt`) đã được nối vào WMCriticRanker; mọi
@@ -110,7 +126,20 @@ Cái nó giữ:
   D_F để dành cho hinge L_P và hard negative của critic.
 - **Aux heads (c):** đã pre-register, code chưa viết. Chạy trên bank tốt nhất sau khi các follow-up G2-phys có kết quả.
 
-## 5. Queue (orchestrator chạy ngay trên shell 953bb534, tmux `rv_g2_chain`, watchdog 5 lần)
+## 5. Queue (cập nhật 08:45 UTC; orchestrator trên 953bb534, tmux `rv_g2_chain`)
+
+G3 đã pre-register (PLAN "Goal G3"):
+- replicate P2-3 A trên seed 10-12;
+- P2-3 A với `--cont_max 20`;
+- strict-phys survivors của cả 2 bank (46 trajectory).
+
+| job | trạng thái | ETA (UTC) |
+|---|---|---|
+| G2-physns s8 / s9, G2 @5 s7 / s8 | running (4 GPU) | ~09:30-11:00 |
+| G3-rep s10-12, G3-c20 s7-9, G3-phys-strict-r s7-9 (9 run) | queue | ~11-25 22:00 |
+| G2 random s8 / s9, D5 s8 / s9 (control) | queue | ~11-26 05:00 |
+
+### Queue cũ (03:45 UTC)
 
 Trước đó chain chạy ở local tmux của agent box, nhưng box đã đổi container nên chain chết 22:54 UTC 11-24, GPU idle
 ~4 h. Giờ nó chạy trên chính shell RetryVLA, dùng `det` từ trong shell.

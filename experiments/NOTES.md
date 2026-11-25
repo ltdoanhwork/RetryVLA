@@ -1469,3 +1469,18 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
 - 2026-11-25 08:43 UTC: goal_g2_chain: G2 wm finished, auto table appended to RESULTS.
 - 2026-11-25 08:43 UTC: goal_g2_chain: P2-3 finished, auto table appended to RESULTS.
 - 2026-11-25 08:44 UTC: goal_g2_chain: G2-phys finished, auto table appended to RESULTS.
+- 2026-11-25 08:40-09:05 UTC: visual check (full-fps MP4, every step at the bank's 10 fps, plus consecutive-frame
+  strips; runs/_analysis/visual_check/goal_g2/{g2physns_keep, g2phys_rand_keep}).
+  - **G2-physns** (no seam rule, 6 samples: 2 worst-jerk, worst seam, 3 mid):
+    - Bridges are smooth and physically clean.
+    - Continuations still carry the M0 behaviour the seam rule had removed. ep8 (cream cheese): 13 gripper flips
+      (7.8 / 100 steps) in the continuation; consecutive frames t 72-94 show open / close pulses while the EE
+      descends towards the cheese, with no grasp until ~t 120. Handoff jump 0.81.
+    - ep31 / 36 / 42 (wine rack): smooth bridge -> handoff 0.39-0.45 -> short clean continuation.
+    - Verdict: the filter is OK for the physics checks it applies. Continuation chatter remains, and G3-c20
+      (cont_max 20) targets exactly this.
+  - **Strict random survivors** (feed G3-phys-strict-r, 5 samples): mostly short, clean, near-goal bridges.
+    - 5 / 28 are trivial (2-10 steps; ep16: 4 steps, the plate is already at the stove front, success at step 4).
+    - ep2 (middle drawer, 281 steps): a slow, clean continuation with a 1-step gripper spike at t 195.
+    - Verdict OK to distill. Caveat for G3-phys-strict-r: ~11 % of its trajectories are trivial completions with
+      almost no action content (not filtered, pre-registration unchanged).
