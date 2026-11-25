@@ -1396,3 +1396,61 @@ paper (cross-paper reference): Original 78 -> Recovery 88 (+10)
 | put_the_wine_bottle_on_top_of_the_cabinet | 9.3 | 7.7 | 8.7 | 10.0 | 8.3 | 8.0 | 8.5 | 8.0 | 8.7 | 8.7 |
 | turn_on_the_stove | 10.0 | 9.0 | 10.0 | 10.0 | 10.0 | 10.0 | 8.5 | 10.0 | 10.0 | 10.0 |
 
+
+## Goal G2-phys, final 3 seeds + controls so far (2026-11-25 08:45 UTC; auto table runs/goal_rsi/g2.md)
+
+| arm | s7 / s8 / s9 | mean | Δ vs Original | Δ vs G2 (36) | RSR_E8 (Δ vs Orig) | fail. incidence | first-attempt |
+|---|---|---|---|---|---|---|---|
+| Original | 82 / 77 / 79 | 79.3 | - | - | 0.147 | 0.22 | 0.68 |
+| G2 wm (36) | 67 / 72 / 79 | 72.7 | −6.7 [−18.3, +4.3] | - | 0.200 (+5.4) | 0.32 | 0.56 |
+| **G2-phys (18 strict survivors, 1.6 % anchors)** | 84 / 82 / 83 | **83.0** | +3.7 [−4.3, +12.0] | +10.3 [−0.3, +21.3] | 0.183 (+3.6 [−1.2, +7.7]) | 0.26 | 0.69 |
+| G2 at 18 (trajectory-matched) | 76 / 82 / - | 79.0 | −0.5 [−13, +12] | - | 0.164 (+1.2) | 0.30 | 0.62 |
+| G2-physns (no seam rule, 36) | 82 / … / … | 82.0 | +0.0 [−9, +9] (s7) | - | 0.208 (+7.1) | 0.24 | 0.71 |
+| G2 random (36) | 80 / … / … | 80.0 | −2.0 (s7) | - | 0.250 (+11.3) | 0.32 | 0.61 |
+| paper | 78 -> 88 | - | +10 | - | - | - | - |
+
+Rules:
+- "G2phys helps (vs G2)" **NOT met, narrowly**: nominal +10.3 with CI lower bound −0.3 (needs > 0); incidence −6.0
+  [−17.0, +4.7] (CI not < 0); RSR within −3 (−1.8).
+- vs Original: +3.7, CI includes 0, so "matches theirs" is not met.
+- G2-phys is the best nominal arm so far (83.0, all 3 seeds >= 82, the only arm above Original on every seed), but
+  with less recovery gain (+3.6) than P2-3 A (+10.1).
+- Count control: G2 at 18 (79.0, 2 seeds) < G2-phys at 18 (83.0). The filter, not the smaller count, carries the
+  difference; directional only, the CI includes 0.
+- Pending: G2-physns s8 / s9, G2 at 5 s7 / s8. Next stage pre-registered: PLAN "Goal G3" (P2-3 A replication on seeds
+  10-12, continuation cap 20, strict-phys survivors of both banks = 46 trajectories).
+
+## Goal G2 / P2-3 auto table (G2 wm; 2026-11-25 08:43 UTC; reading by the agent follows)
+Pre-registration: PLAN "Goal campaign G2 ... P2-3" (2026-11-24). `scripts/analyze_goal_g2.py` -> runs/goal_rsi/g2.{json,md}.
+
+| arm | val s7 / s8 / s9 | mean | Δ vs Original | fixed / broken vs Orig | vs M0 | RSR_E8 | Δ RSR_E8 | RSR_E8on | fail. incidence | first-attempt |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Original | 82 / 77 / 79 | 79.3 | - | - | (16, 33) | 0.147 | - | 0.170 | 0.22 | 0.68 |
+| F0_wm | 65 / 76 / 63 | 68.0 | -11.3 [-23.3, +1.3] | (34, 68) | (22, 73) | 0.282 | +13.5 [+6.0, +21.6] | - | - | - |
+| F1_wm | 58 / 69 / 50 | 59.0 | -20.3 [-33.7, -6.3] | (23, 84) | (22, 100) | 0.205 | +5.4 [+0.6, +10.1] | - | - | - |
+| D5_wm (old bank + cont, 36) | 80 / - / - | 80.0 | -2.0 [-12.0, +8.0] | (11, 13) | (8, 13) | - | - | - | - | - |
+| G2_wm (curated onset + cont, 36) | 67 / 72 / 79 | 72.7 | -6.7 [-18.3, +4.3] | (36, 56) | (25, 62) | 0.200 | +5.4 [+0.4, +10.3] | 0.208 | 0.32 | 0.56 |
+| G2phys_wm (phys survivors = 18) | 84 / 82 / 83 | 83.0 | +3.7 [-4.3, +12.0] | (40, 29) | (29, 35) | 0.183 | +3.6 [-1.2, +7.7] | 0.189 | 0.26 | 0.69 |
+| G2_wm at 18 (count-matched to G2phys) | 76 / 82 / - | 79.0 | -0.5 [-13.0, +12.0] | (26, 27) | (17, 29) | 0.164 | +1.2 [-5.4, +8.3] | 0.170 | 0.30 | 0.62 |
+| G2physns_wm (phys filter w/o seam, 36) | 82 / - / - | 82.0 | +0.0 [-9.0, +9.0] | (11, 11) | (8, 11) | 0.208 | +7.1 [+1.2, +13.1] | 0.264 | 0.24 | 0.71 |
+| G2_random | 80 / - / - | 80.0 | -2.0 [-11.0, +7.0] | (10, 12) | (9, 14) | 0.250 | +11.3 [+6.0, +17.3] | 0.226 | 0.32 | 0.61 |
+| P2-3 A (curated D_R, 36 + n_P) | 83 / 78 / 77 | 79.3 | +0.0 [-8.0, +8.0] | (38, 38) | (27, 44) | 0.248 | +10.1 [+5.0, +15.7] | 0.245 | 0.30 | 0.65 |
+| P2-3 B (curated D_R 36 + D_P n_P) | 75 / 71 / 80 | 75.3 | -4.0 [-12.7, +5.0] | (30, 42) | (25, 54) | 0.248 | +10.1 [+4.8, +16.1] | 0.182 | 0.27 | 0.65 |
+
+P2-3 B − A: nominal -4.0 [-13.0, +5.3], incidence -3.3 [-13.7, +7.7], RSR_E8 +0.0 [-5.6, +5.4]
+rules: {'G2_curation_fixes_nominal_cost': False, 'G2_matches_theirs': False, 'G2_beats_F0': False, 'G2phys_helps': False, 'P2-3_prevention_helps': False, 'P2-3_prevention_eq_more_recovery': False}
+paper (cross-paper reference): Original 78 -> Recovery 88 (+10)
+
+| task | Original | F0_wm | F1_wm | D5_wm (old bank + cont, 36) | G2_wm (curated onset + cont, 36) | G2phys_wm (phys survivors = 18) | G2_wm at 18 (count-matched to G2phys) | G2physns_wm (phys filter w/o seam, 36) | G2_random | P2-3 A (curated D_R, 36 + n_P) | P2-3 B (curated D_R 36 + D_P n_P) |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| open_the_middle_drawer_of_the_cabinet | 9.7 | 5.0 | 5.7 | 8.0 | 3.7 | 10.0 | 10.0 | 9.0 | 8.0 | 8.0 | 8.3 |
+| open_the_top_drawer_and_put_the_bowl_inside | 8.0 | 7.0 | 5.7 | 10.0 | 8.0 | 4.0 | 6.0 | 9.0 | 7.0 | 7.0 | 4.7 |
+| push_the_plate_to_the_front_of_the_stove | 4.0 | 7.0 | 6.3 | 7.0 | 8.7 | 7.7 | 9.0 | 8.0 | 7.0 | 9.7 | 8.0 |
+| put_the_bowl_on_the_plate | 8.7 | 7.0 | 4.3 | 9.0 | 7.0 | 8.3 | 9.0 | 10.0 | 8.0 | 8.3 | 8.3 |
+| put_the_bowl_on_the_stove | 9.7 | 6.7 | 7.3 | 9.0 | 8.0 | 9.3 | 8.5 | 9.0 | 10.0 | 9.0 | 9.7 |
+| put_the_bowl_on_top_of_the_cabinet | 9.0 | 7.7 | 7.7 | 8.0 | 7.7 | 9.3 | 8.5 | 9.0 | 10.0 | 8.0 | 9.7 |
+| put_the_cream_cheese_in_the_bowl | 7.0 | 8.0 | 2.0 | 6.0 | 7.0 | 7.7 | 6.5 | 7.0 | 3.0 | 7.0 | 3.3 |
+| put_the_wine_bottle_on_the_rack | 4.0 | 3.0 | 1.3 | 3.0 | 4.3 | 8.7 | 4.5 | 2.0 | 9.0 | 3.7 | 4.7 |
+| put_the_wine_bottle_on_top_of_the_cabinet | 9.3 | 7.7 | 8.7 | 10.0 | 8.3 | 8.0 | 8.5 | 9.0 | 8.0 | 8.7 | 8.7 |
+| turn_on_the_stove | 10.0 | 9.0 | 10.0 | 10.0 | 10.0 | 10.0 | 8.5 | 10.0 | 10.0 | 10.0 | 10.0 |
+
