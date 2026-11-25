@@ -43,12 +43,13 @@ class Pool(torch.utils.data.Dataset):
     """Concatenation of LeRobotDatasets; optional anchor filter on the `segment` column for recovery sets."""
 
     def __init__(self, roots, chunk, seg_filter=None, max_traj: int = 0, seed: int = 0, groups=None, caps=None,
-                 keep_list=None):
+                 keep_list=None, cont_max: int = 0):
         """max_traj > 0: keep at most that many recovery trajectories over ALL recovery roots, round-robin over
         instances (= train.subset_mode roundrobin / match_trajectory_count_of of the SmolVLA recipe)."""
         from lerobot.datasets.lerobot_dataset import LeRobotDataset
 
         self.ds, self.idx = [], []
+        self.cont_max = int(cont_max)
         keep_eps = None
         if max_traj:
             per_inst = {}
@@ -98,6 +99,18 @@ class Pool(torch.utils.data.Dataset):
             if seg_filter is not None and k > 0 and "segment" in d.features:
                 seg = np.asarray(d.hf_dataset.with_format(None).select_columns(["segment"])["segment"]).reshape(-1)
                 keep = keep[np.isin(seg[keep], seg_filter)]
+            if getattr(self, "cont_max", 0) and k > 0 and "segment" in d.features:
+                # Goal G3 (opt-in): anchors = bridge + only the first `cont_max` continuation steps after the handoff
+                # (M0's later continuation chatters, visual check 2026-11-25); chunk targets are unchanged
+                hf_ = d.hf_dataset.with_format(None).select_columns(["segment", "episode_index"])[:]
+                seg = np.asarray(hf_["segment"]).reshape(-1)
+                ep = np.asarray(hf_["episode_index"])
+                off = np.zeros(len(seg), int)
+                for e in np.unique(ep):
+                    m = np.nonzero(ep == e)[0]
+                    c = np.cumsum(seg[m] == 1)
+                    off[m] = c
+                keep = keep[(seg[keep] == 0) | (off[keep] <= self.cont_max)]
             self.ds.append(d)
             self.idx += [(len(self.ds) - 1, int(i)) for i in keep]
 
@@ -189,6 +202,8 @@ def main():
     ap.add_argument("--recovery", nargs="*", default=[])
     ap.add_argument("--recovery_segments", nargs="*", type=int, default=None)
     ap.add_argument("--max_traj", type=int, default=0)
+    ap.add_argument("--cont_max", type=int, default=0,
+                    help="Goal G3: keep only the first N continuation anchors after the handoff (0 = all)")
     ap.add_argument("--keep_list", nargs="*", default=None,
                     help="goal_phys phys_<arm>.jsonl files: only rows with keep=true are eligible (G2-phys)")
     ap.add_argument("--stop_at", type=int, default=0,
@@ -256,7 +271,7 @@ def main():
         rows_ = [json.loads(l) for f in a.keep_list for l in open(REPO_ROOT / f)]
         kl = {"roots": {r_["root"] for r_ in rows_}, "keep": {(r_["root"], int(r_["episode_index"])) for r_ in rows_ if r_["keep"]}}
     data = Pool([REPO_ROOT / D0] + rec_roots, cfg.chunk_size, a.recovery_segments,
-                a.max_traj or (sum(caps.values()) if caps else 0), a.seed, groups, caps or None, kl)
+                a.max_traj or (sum(caps.values()) if caps else 0), a.seed, groups, caps or None, kl, a.cont_max)
     if a.masked_recovery:
         data.masked = True
         nd = data.lmin_filter(a.l_min)

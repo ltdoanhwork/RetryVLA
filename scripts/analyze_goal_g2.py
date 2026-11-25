@@ -31,7 +31,7 @@ def load(run, kind):
 
 def arm(prefix, kind):
     out = {}
-    for s in (7, 8, 9):
+    for s in ((10, 11, 12) if prefix == "g3rep_A" else (7, 8, 9)):
         x = load(f"{prefix}_s{s}", kind)
         if x:
             out[s] = x
@@ -67,6 +67,8 @@ def main():
             "G2_wm at 18 (count-matched to G2phys)": "g2_wm18",
             "G2physns_wm (phys filter w/o seam, 36)": "g2physns_wm", "G2_wm at 5 (anchor-matched to G2phys)": "g2_wm5",
             "G2_random": "g2_rand",
+            "G3-rep (P2-3 A data, seeds 10-12)": "g3rep_A", "G3-c20 (P2-3 A data, cont_max 20)": "g3c20_A",
+            "G3-phys-strict-r (wm 18 + random 28)": "g3physr",
             "P2-3 A (curated D_R, 36 + n_P)": "p23_A", "P2-3 B (curated D_R 36 + D_P n_P)": "p23_B"}
     V = {k: arm(p, "val") for k, p in arms.items()}
     V["D5_wm (old bank + cont, 36)"].update({7: load("diag_f1wm_full_s7", "val")} if load("diag_f1wm_full_s7", "val") else {})

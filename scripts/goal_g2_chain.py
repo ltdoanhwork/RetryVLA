@@ -106,6 +106,15 @@ def jobs():
     # G2-phys kept only 18 trajectories (11 entries): pre-registered count-matched control = G2 wm at 18, seeds 7, 8
     for s in (7, 8):
         js.append((f"g2_wm18_s{s}", s, [f"{CUR}/wm_diverse@18"], search_done))
+    # G3 (PLAN 2026-11-25 08:40): replication, continuation cap, strict-phys survivors of both banks
+    for s in (10, 11, 12):
+        js.append((f"g3rep_A_s{s}", s, [f"{CUR}/wm_diverse@72"], search_done))
+    for s in (7, 8, 9):
+        js.append((f"g3c20_A_s{s}", s, [f"{CUR}/wm_diverse@72", "--cont_max", "20"], search_done))
+    for s in (7, 8, 9):
+        js.append((f"g3physr_s{s}", s, [f"{CUR}/wm_diverse@18", f"{CUR}/random@28", "--keep_list",
+                                       "data/recovery/goal_search_onset_cur/phys_wm_diverse.jsonl",
+                                       "data/recovery/goal_search_onset_cur/phys_random.jsonl"], phys_done))
     for s in (7, 8, 9):
         js.append((f"g2_rand_s{s}", s, [f"{CUR}/random@36"], search_done))
     for s in (8, 9):   # D5 control (old fixed-cut uncurated bank + continuation) for 3 seeds (s7 = diag_f1wm_full_s7)
@@ -193,6 +202,8 @@ def main():
                            ("P2-3", [f"p23_{a}_s{s}" for a in ("A", "B") for s in (7, 8, 9)]),
                            ("G2-phys", [f"g2phys_wm_s{s}" for s in (7, 8, 9)] + ["g2_wm18_s7", "g2_wm18_s8"]),
                            ("G2-phys follow-ups", [f"g2physns_wm_s{s}" for s in (7, 8, 9)] + ["g2_wm5_s7", "g2_wm5_s8"]),
+                           ("G3", [f"g3rep_A_s{s}" for s in (10, 11, 12)] + [f"g3c20_A_s{s}" for s in (7, 8, 9)]
+                                   + [f"g3physr_s{s}" for s in (7, 8, 9)]),
                            ("G2 random + D5", [f"g2_rand_s{s}" for s in (7, 8, 9)] + ["d5_wm_s8", "d5_wm_s9"])):
             if tag not in registered and all(run_done(n) for n in names):
                 register(tag)

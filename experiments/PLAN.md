@@ -1256,3 +1256,32 @@ Rules (nominal = 100 val, scene x seed bootstrap; RSR_E8 entry x seed):
   RSR_E8 within −3.
 - "G2phys gain is a share effect" iff |nominal(G2phys) − nominal(g2_wm5)| < 3. If G2phys > g2_wm5 + 3 (CI > 0), the
   late, near-goal, handoff-free subset itself is the useful data.
+
+## Goal G3: next stage after the G2-phys controls (coordinator 2026-11-25 08:20 UTC; written BEFORE any G3 result)
+State at writing (val, 100 scenes, 3 seeds unless noted; Original 79.3):
+- G2-phys (18 strict survivors, 1.6 % anchors): 84 / 82 / 83 = 83.0, Δ vs Original +3.7 [−4.3, +12.0].
+- Pre-registered G2-phys vs G2 rule: nominal +10.3 [−0.3, +21.3] (CI lower bound not > 0) and failure incidence
+  −6.0 [−17.0, +4.7] (CI not < 0), so **NOT met (narrowly)**; RSR_E8 −1.8 (within −3).
+- G2 at 18 (s7, s8): 76 / 82; G2-physns s7: 82; G2 random s7: 80; P2-3 A: 79.3 with RSR_E8 +10.1.
+- Running: G2-physns s8 / s9, G2 at 5 s7 / s8. Queued: G2 random s8 / s9, D5 s8 / s9.
+
+Arms (3 seeds each unless noted; their recipe; anchors = all segments unless stated):
+- **G3-rep**: replication of P2-3 A (curated wm_diverse, 72 trajectories) with NEW seeds 10, 11, 12. Tests whether
+  "recovery without nominal cost" holds outside the seeds it was selected on.
+- **G3-c20**: P2-3 A data (72) with `--cont_max 20`: anchors = bridge + only the first 20 continuation steps after the
+  handoff. Seeds 7, 8, 9 (paired with P2-3 A). Targets the visually confirmed chatter in M0's later continuation.
+- **G3-phys-strict-r**: strict-phys survivors of BOTH banks (wm 18 + random 28 = 46 trajectories, round-robin).
+  Seeds 7, 8, 9. More data of the G2-phys kind (larger trajectory count, as the review doc proposed).
+
+Rules (paired with the stated control; scene x seed bootstrap; RSR_E8 entry x seed):
+- G3-rep: "A replicates" iff mean nominal(seeds 10-12) >= Original − 2 AND RSR_E8 − Original >= +5 (CI > 0).
+  Original has no seeds 10-12; the comparison is unpaired against Original's 3-seed mean (79.3; per-seed SD ~2.5),
+  reported as such.
+- G3-c20 vs P2-3 A: "masking continuation helps" iff nominal +3 (CI > 0) or failure incidence −5 pt (CI < 0), with
+  RSR_E8 within −3.
+- G3-phys-strict-r vs G2-phys (18): "more strict data helps" iff nominal >= G2-phys and RSR_E8 +3 (CI > 0); vs
+  Original: "matches theirs" iff nominal − Original >= +5 (CI > 0).
+- Every new bank gets a visual check (full-fps MP4) before its SFT is reported.
+- AUX heads (c) and the D_F hinge (P2-4) wait for G3 (best bank) and need their own code; not queued yet.
+- Queue order after the running jobs: G3-rep x3, G3-c20 x3, G3-phys-strict-r x3, then G2 random s8 / s9 and D5
+  s8 / s9 (controls, lower priority).
