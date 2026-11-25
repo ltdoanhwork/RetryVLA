@@ -7,3 +7,5 @@ middle_drawer_d46_t075,ours: M0 -> WM bridge -> M0,75,180,375,0.302,0.0,0.92,0.1
 middle_drawer_d46_t075,M0 alone,75,180,,0.379,0.0,1.18,0.165,0.0,,,,,,,0.437,0.0
 wine_rack_d19_t075,ours: M0 -> WM bridge -> M0,75,200,164,0.145,1.2,0.54,0.157,0.0,0.031,2.0,0.2,0.42,0.22,2.6,,
 wine_rack_d19_t075,M0 alone,75,200,,0.236,0.3,0.73,0.157,0.0,,,,,,,0.26,0.4
+distilled_g2phys_s7_wine_rack_d10_s8_t075,"distilled G2-phys s7 (closed loop, CPU)",75,180,146,0.168,0.7,0.51,0.137,0.0,,,,,0.183,1.4,,
+distilled_g2phys_s7_wine_rack_d10_s8_t075,M0 alone,75,180,,0.206,0.3,0.55,0.137,0.0,,,,,,,0.228,0.4

@@ -62,6 +62,12 @@ tiên mà M0 chạy lại thành công 0 %). Mọi frame là replay xác định
 đứng yên + M0 thêm 300 bước" (C^pi 0.0004, success đúng ở bước cuối), không phải recovery thật. Số jerk:
 `full_episode_jerk.csv`. Code: `scripts/demos/render_full_episode.py`.
 
+**Policy đã distill, closed loop:** `full_episode__distilled_g2phys_s7_wine_rack_d10_s8_t075.mp4`. Checkpoint G2-phys
+seed 7 (`runs/goal_rsi/g2phys_wm_s7/ckpt_02000`), entry thất bại held-out của audit seed 8 (bank huấn luyện lấy từ
+seed 7). Policy tự recovery và SUCCESS sau 71 bước kể từ CUT. M0 (action đã log của audit s8) FAIL. Rollout pi0 chạy
+trên CPU fp32 (`scripts/demos/goal_policy_clip.py`, ~100 s / lần gọi, 15 lần gọi), không dùng GPU, nên không bit-exact so
+với eval GPU bf16 (eval log: success ở bước 142 tính từ t = 0, tức 67 bước sau CUT). Kết quả success vẫn khớp.
+
 **Panel (c), WM false positive** (`C_wm_false_positive.mp4`): candidate `wm_diverse` có C^pi cao nhất (1.00) nhưng
 verification trong sim FAIL. Bridge được lấy từ log. Phần M0 chạy tiếp được chạy lại trên GPU với đúng policy seed đã
 log, và kết quả FAIL khớp với log ở 6 / 6 entry. Phép chạy lại closed-loop này **không bit-exact** so với lần search gốc
