@@ -78,10 +78,28 @@ class GSess:
         return f"{self.state_txt()}; objects: {objs}; goal predicates: {'; '.join(preds)}"
 
 
+SERVO = {"mode": "bang"}   # set by --servo; "bang" = v1 (err / 1 cm, clip 1), "demo" = v2 (demo-matched, below)
+DEMO_VMAX = 0.6            # v2: |a_xyz| cap ~ D0 q75-q90 (D0 |a| q50 0.13-0.38, q90 0.70-0.88; v1 saturated 42 %)
+DEMO_GAIN = 1.0 / 0.04     # v2: a = err / 4 cm (proportional: decelerates over the last ~2.4 cm)
+ROT_GAIN, ROT_VMAX = 2.0, 0.3   # v2: hold the stage-start orientation (OSC axis-angle delta), small corrections
+
+
+def _rot_hold(s: GSess, ref_aa: np.ndarray) -> np.ndarray:
+    """axis-angle delta from the current eef orientation to the reference (both from the 8-d state, world frame)."""
+    from scipy.spatial.transform import Rotation as Rot
+
+    cur = Rot.from_rotvec(np.asarray(s.obs["state"][3:6], float))
+    ref = Rot.from_rotvec(np.asarray(ref_aa, float))
+    return np.clip(ROT_GAIN * (ref * cur.inv()).as_rotvec(), -ROT_VMAX, ROT_VMAX)
+
+
 def exec_cmd(s: GSess, c: dict, grip: float, left: int) -> tuple[list[np.ndarray], float, str]:
-    """One bounded tool command (same servo as retryvla.baselines.lrs_teacher.exec_cmd)."""
+    """One bounded tool command. v1 servo = retryvla.baselines.lrs_teacher.exec_cmd (bang-bang: err / 1 cm clipped to
+    +-1, rotation 0); v2 (--servo demo, LRS-G fix 2026-11-25) = proportional, |a| <= 0.6, orientation hold."""
     acts: list[np.ndarray] = []
     tool = str(c.get("tool", ""))
+    demo = SERVO["mode"] == "demo"
+    ref_aa = np.asarray(s.obs["state"][3:6], float).copy()
     if tool in ("move_to", "move_by"):
         try:
             v = np.asarray(c.get("xyz") if tool == "move_to" else c.get("dxyz"), float).reshape(3)
@@ -99,7 +117,11 @@ def exec_cmd(s: GSess, c: dict, grip: float, left: int) -> tuple[list[np.ndarray
             if np.linalg.norm(err) < 0.008:
                 break
             a = np.zeros(7, np.float32)
-            a[:3] = np.clip(err / STEP_M, -1.0, 1.0)
+            if demo:
+                a[:3] = np.clip(err * DEMO_GAIN, -DEMO_VMAX, DEMO_VMAX)
+                a[3:6] = _rot_hold(s, ref_aa)
+            else:
+                a[:3] = np.clip(err / STEP_M, -1.0, 1.0)
             a[6] = grip
             s.step(a)
             acts.append(a)
@@ -110,6 +132,8 @@ def exec_cmd(s: GSess, c: dict, grip: float, left: int) -> tuple[list[np.ndarray
         g = 1.0 if str(c.get("cmd", "")).lower().startswith("c") else -1.0
         for _ in range(min(10, left)):
             a = np.zeros(7, np.float32)
+            if demo:
+                a[3:6] = _rot_hold(s, ref_aa)
             a[6] = g
             s.step(a)
             acts.append(a)
@@ -352,7 +376,10 @@ def main() -> None:
     ap.add_argument("--delta", type=int, default=10)
     ap.add_argument("--C", type=int, default=10)
     ap.add_argument("--gt_max", type=int, default=300)
+    ap.add_argument("--servo", default="bang", choices=["bang", "demo"],
+                    help="teacher low-level servo: bang = v1 (2026-11-24 collection), demo = v2 demo-matched fix")
     a = ap.parse_args()
+    SERVO["mode"] = a.servo
 
     import torch
 

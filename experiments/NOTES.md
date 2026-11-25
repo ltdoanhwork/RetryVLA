@@ -1419,3 +1419,38 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
   survivors are reported only as a bank statistic. Visual check of the strict survivors: runs/_analysis/visual/
   recover_v2r_r2/ (5); of the hard-filter selection: recover_v2r_r2h/. Chain restarted on both shells to pick this up
   (running children kept; restarted chain now counts live claims of its host as occupied slots).
+
+### LRS-G v1 results + diagnosis (2026-11-25 03:10-03:40 UTC; coordinator: "val looks broken")
+- v1 chain finished 2026-11-24 23:08 UTC. Val (100 scenes): lrs_s7 14, lrs_s8 21, lrs_s9 8 (mean 14.3), lrs_all_s7 1
+  vs Original 82 / 77 / 79 (79.3), M0 85. Per task: open drawer 0, push plate 0, cream cheese 0, wine rack 0, stove 0.
+- Teacher-loop statistics (168 seed-7 entries, 1 attempt; `runs/goal_rsi/lrs_goal.json`): accepted 132 (78.6 %),
+  budget 25, turn cap 8, abort 3; 217 hand-off tests, judge accepts 132, sim-GT successes 18 -> **judge precision
+  0.114 [0.070, 0.179]**, recall 0.83 [0.61, 0.94]; entries solved in sim 0.107 vs goal_search wm_diverse 0.589
+  (McNemar 2 / 83, p 2e-22). 15.0 LLM calls, 82 s LLM, 147 s wall / entry / lane; 1.36 stages; 23,044 accepted teacher
+  actions; datasets: `lrs_goal_ds` 18 paths / 50 windows / 1,708 anchors (4.3 %), `lrs_goal_ds_all` 118 paths / 292
+  windows / 10,552 anchors (21.6 %).
+- Checks that PASS (no pipeline bug in the trainer / eval path):
+  - args.json lrs_s7 = orig_s7 recipe + `--recovery lrs_goal_ds --masked_recovery --l_min 5` (init m0_s7/ckpt_04000,
+    2k, bs 48 accum 3, warmup 200, cosine; the bf16 / resume path is the validated D2 path, 84).
+  - masked loss == standard pi0 loss on D0 anchors (M0, 6 batches: 0.13776 vs 0.13776, pairwise equal to 1e-7):
+    `scripts/lrs/check_masked_loss.py`, `runs/_analysis/lrs_goal_masked_loss_check.json`.
+  - windows replay in sim from the exact entry snapshot (dataset builder; visual check renders replay them).
+- ROOT CAUSE (data, not plumbing): **the teacher's low-level servo (`exec_cmd`, inherited from the 2026-11-17 Spatial
+  LRS pilot) emits bang-bang actions**: a_xyz = clip(err / 1 cm, +-1) -> 42 % / 14 % / 41 % of x / y / z targets are
+  saturated at +-1 (D0: 0 %, |a| q99 0.94; WM bridges 0.1-0.8 %); rotation targets are exactly 0 (D0 std 0.06-0.10).
+  At the M0 init the per-target FM loss on these windows is 1.58 vs 0.138 on D0 (11.5x), so a 4 % anchor share carries
+  ~33 % of the gradient. The trained policies copy it: val actions of lrs_s7 have mean gripper +0.27 (Original -0.20),
+  |a_x| saturated 3.6 % (Original 0 %), rotation std 0.014-0.028 (Original 0.06-0.08); lrs_all_s7 (21 % share):
+  saturated x 14 %, rotation std 0.003 -> near-frozen orientation, SR 1. The damage is broad (tasks never in the
+  windows also collapse, e.g. turn_on_stove 10 -> 0): out-of-distribution, max-magnitude targets with a zero-rotation
+  prior shift the whole action head.
+- This is our implementation's deviation, not the paper's method: their teacher uses "native actions" + motion
+  helpers with units / limits (unknown servo). Logged as **D-L9 (v1 servo)**. Fix v2 (`--servo demo`): proportional
+  a = err / 4 cm, |a_xyz| <= 0.6 (~D0 q75-q90), orientation hold (axis-angle P control, |a_rot| <= 0.3); unit test on
+  the cream-cheese entry: saturation 51 % -> 0 %, |a| q50 1.0 -> 0.59, rotation drift 2.6 -> 1.2 deg.
+- Controls launched (shell 1123d1ea): C0 = masked path with 0 teacher windows, seed 7 (GPU1, `lrsdiag_c0_masked_nowin_s7`;
+  must reproduce ~Original 82); v2 re-collection lanes 0-1 on GPU0 (`rv_lrsg2_l*`, data/recovery/lrs_goal_v2), lanes
+  2-3 after C0. C1 (v1 windows, unmasked loss) dropped: the masked loss is proven identical, so it adds nothing.
+- Pre-registered for v2 (written BEFORE any v2 result): same rules as PLAN "LRS-G"; v2 is the primary LRS arm, v1 is
+  reported as the servo ablation. Gate before SFT: v2 windows have |a_xyz| saturation < 2 % and rotation std > 0.01
+  (visual check of 6 windows), else no SFT.
