@@ -83,8 +83,8 @@ def main():
     thr = json.loads(thr_f.read_text())
     TH = {"pen_cm": 1.0, "obj_jump_cm": 3.0, "d3": 2 * thr["d3_med"], "seam": 3 * thr["d1_med"], "grip_flips": 1}
     extra = {}
-    if (bank / "sminus.json").exists():   # rec_prevent pre-failure states
-        extra = {k: (v[0], v[1], v[2]) for k, v in json.loads((bank / "sminus.json").read_text()).items()}
+    for smf in sorted(bank.glob("**/sminus.json")):   # rec_prevent pre-failure states (one file per shard)
+        extra.update({k: (v[0], v[1], v[2]) for k, v in json.loads(smf.read_text()).items()})
     loads = instance_loads(extra)
     outp = bank / f"phys_{a.arm}.jsonl"
     done = set()

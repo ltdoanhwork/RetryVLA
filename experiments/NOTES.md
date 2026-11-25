@@ -1484,3 +1484,21 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
     - ep2 (middle drawer, 281 steps): a slow, clean continuation with a 1-step gripper spike at t 195.
     - Verdict OK to distill. Caveat for G3-phys-strict-r: ~11 % of its trajectories are trivial completions with
       almost no action content (not filtered, pre-registration unchanged).
+- **Incident 2 (2026-11-25 ~04:15 -> 08:35 UTC): chain idle with zombie claims.** Tasks launched by a chain process
+  that was later restarted became `<defunct>` when they finished (nobody reaps them in the container), /proc/<pid>
+  stayed, and both the stale-claim check and the slot accounting counted them as alive -> after the R1 SFTs (done
+  ~04:15) and D_P (done ~06:30) no eval was launched; only f72a5ddd GPU1 kept training (R2 s0-s2 SFT, done 06:25).
+  ~4 h x 3 GPUs lost. Fix: `alive()` reads /proc/<pid>/stat and treats Z / X as dead (both checks); chains restarted
+  08:39 UTC. Also: up to 3 sim jobs per shell (9 workers each, least-loaded GPU) instead of 1 per GPU.
+- D_P CLOSED (both shards): 56 train source episodes -> 52 with t_last (>= 2 / 8 pi0 successes) -> 48 s^- with a
+  pi0 failure -> 42 with >= 1 verified pair -> 78 positive trajectories (n_P = 70 for R3), 1.63 M sim steps.
+  dp_phys (aux targets for R4) failed 3x: rec_phys read `<bank>/sminus.json` but rec_prevent writes one per shard
+  (`sh*/sminus.json`); fixed, re-queued.
+- Visual check D_P (runs/_analysis/visual/recover_v2r_dp/, full-fps renderer, looked at 4 / 8 sheets 08:50 UTC): the
+  "FAIL" banner is a renderer artefact (D_P meta has no success_step; only re-run-confirmed successes are written).
+  Late s^- (t140-t160): bowl already held above the plate, a+ = 5-24 steps of lowering / release ending in success
+  inside the bridge, while pi0's own a- fails there (p(a-) mostly 0): prevention concentrated at the place phase.
+  Early s^- (t060-t080): 50-step reach / regrasp + pi0 continuation. Smoother than R1 (bridge d3 median 0.24 vs
+  0.45, no > 1 flips). OK to distill. R3 SFT s0-s2 launched 08:43 (138 R2-selected + 70 D_P = 208, 21.6k frames).
+- R0 event re-evals (E-v1s, nominal 500 episodes, replay ok 480-482): s0 SR 0.804, incidence 0.068, first-attempt
+  0.784; s1 SR 0.770, incidence 0.088, first-attempt 0.746 (s2 queued). Registered R0 nominal stays 0.785.

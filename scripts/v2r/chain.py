@@ -30,7 +30,8 @@ CL = V / "claims"
 LOGD = V / "logs"
 HOST = socket.gethostname()
 VISUAL_WAIT_H = 0.75
-NW = 10
+NW = 9
+SIM_PER_SHELL = 3
 PI1NOM = "runs/20261013-080655_M1_sft_nominal_only/checkpoints/006000/pretrained_model"
 R0 = {0: "runs/20261016-042447_M5_m5c_sft_wm_diverse_rr/checkpoints/006000/pretrained_model",
       1: "runs/20261018-232806_M8_seed_pi1_s1/checkpoints/006000/pretrained_model",
@@ -38,6 +39,16 @@ R0 = {0: "runs/20261016-042447_M5_m5c_sft_wm_diverse_rr/checkpoints/006000/pretr
 R1B = "data/recovery/v2r_r1/s*/p*/wm_diverse"
 PHYS1 = "data/recovery/v2r_r1/phys_wm_diverse_hard.jsonl"   # deviation 2026-11-25 03:35 UTC (NOTES)
 DPB = "data/recovery/v2r_dp/sh*/bank*"
+
+
+def alive(pid) -> bool:
+    """pid exists and is not a zombie (children of a killed chain become <defunct> and keep /proc/<pid>; 11-25 04:15
+    -> 08:35 UTC every slot looked occupied by zombies and nothing launched)"""
+    try:
+        st = Path(f"/proc/{int(pid)}/stat").read_text()
+    except Exception:
+        return False
+    return st.rsplit(")", 1)[1].split()[0] not in ("Z", "X")
 
 
 def log(**kw):
@@ -288,7 +299,7 @@ def claim(name) -> bool:
             c = {}
         hb = V / f"hb_{c.get('host')}"
         stale = (not hb.exists()) or time.time() - hb.stat().st_mtime > 1200
-        if c.get("host") == HOST and not Path(f"/proc/{c.get('pid')}").exists():
+        if c.get("host") == HOST and not alive(c.get('pid') or -1):
             stale = True
         if not stale:
             return False
@@ -340,22 +351,28 @@ def main():
         T = tasks()
         all_done = all(t[4]() for t in T)
         used = {(gpu, kind) for _, gpu, kind in procs.values()}
+        nsim = {0: 0, 1: 0}
+        for _, gpu_, kind_ in procs.values():
+            if kind_ == "sim":
+                nsim[gpu_] += 1
         kinds = {t[0]: t[1] for t in T}
         for c in CL.glob("*"):   # tasks of this host started by an earlier chain process (still alive) keep their slot
             try:
                 cc = json.loads(c.read_text())
             except Exception:
                 continue
-            if cc.get("host") == HOST and c.name not in procs and Path(f"/proc/{cc.get('pid')}").exists() \
+            if cc.get("host") == HOST and c.name not in procs and alive(cc.get('pid') or -1) \
                     and "gpu" in cc:
                 used.add((int(cc["gpu"]), kinds.get(c.name, "sim")))
+                if kinds.get(c.name, "sim") == "sim" and c.name not in procs:
+                    nsim[int(cc["gpu"])] += 1
         orphan = set()
         for cf in CL.glob("*") if CL.exists() else []:   # orphans of a previous chain process on this host
             try:
                 c = json.loads(cf.read_text())
             except Exception:
                 continue
-            if c.get("host") == HOST and cf.name not in procs and c.get("pid", -1) > 0 and Path(f"/proc/{c['pid']}").exists():
+            if c.get("host") == HOST and cf.name not in procs and c.get("pid", -1) > 0 and alive(c["pid"]):
                 used.add((c.get("gpu", 0), c.get("kind", "sim")))
                 orphan.add(cf.name)
         if external_sim_busy():
@@ -366,7 +383,10 @@ def main():
             fails = int((V / "fails" / name).read_text()) if (V / "fails" / name).exists() else 0
             if fails > 2 or not ready():
                 continue
-            free = [gp for gp in (0, 1) if (gp, kind) not in used]
+            if kind == "sim":   # up to SIM_PER_SHELL sim jobs per shell (CPU-bound: NW workers each), least-loaded GPU
+                free = sorted([gp for gp in (0, 1)], key=lambda gp: nsim[gp]) if sum(nsim.values()) < SIM_PER_SHELL else []
+            else:
+                free = [gp for gp in (0, 1) if (gp, kind) not in used]
             if not free:
                 continue
             if not claim(name):
@@ -386,6 +406,8 @@ def main():
             (CL / name).write_text(json.dumps({"host": HOST, "pid": p.pid, "t": time.time(), "gpu": gpu, "kind": kind}))
             procs[name] = (p, gpu, kind)
             used.add((gpu, kind))
+            if kind == "sim":
+                nsim[gpu] += 1
             log(event="launch", task=name, gpu=gpu, kind=kind, args=args[:6])
         for st, ok in STAGES:
             m = V / f"registered_{st}"
