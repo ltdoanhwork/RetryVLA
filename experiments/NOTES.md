@@ -1460,3 +1460,4 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
   (group: 307 eligible, 208 selected over 118 instances, 23.2k recovery frames).
 - D_P progress 03:45 UTC: 7 / 56 source episodes, t_last in 40-160, 6 verified positives at 5 s^- (p(a-) mostly 0),
   5-12 min per episode -> D_P closes ~06:30 UTC.
+- 2026-11-25 06:22 UTC: goal_g2_chain: G2-phys finished, auto table appended to RESULTS.
