@@ -1502,3 +1502,10 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
   0.45, no > 1 flips). OK to distill. R3 SFT s0-s2 launched 08:43 (138 R2-selected + 70 D_P = 208, 21.6k frames).
 - R0 event re-evals (E-v1s, nominal 500 episodes, replay ok 480-482): s0 SR 0.804, incidence 0.068, first-attempt
   0.784; s1 SR 0.770, incidence 0.088, first-attempt 0.746 (s2 queued). Registered R0 nominal stays 0.785.
+- 2026-11-25 09:50 UTC: v2 val: lrs2_s7 40, lrs2_s8 29 (Original 82 / 77). Per task (s7): drawer 0, top drawer 1,
+  cream cheese 0, wine rack 0, wine cabinet 1; other tasks 7-8. Val actions now in-distribution (saturation 0 %,
+  rotation std 0.024-0.055 vs Original 0.06-0.08), so the v1 failure mode is gone, but nominal still drops 40-50 pt.
+  M0 per-target FM loss on v2 windows 1.07 vs 0.131 on D0 (8.2x; v1 11.5x): still far off-manifold (the policy cannot
+  predict the teacher's chunks) -> 4 % of anchors still carry ~1 / 4 of the gradient. Masked == pi0 loss on D0 (1e-8).
+  lrs2_s9 started 09:25 (GPU0, ETA ~11:45 val), lrs2gt_s7 (13 GT-verified windows, 707 frames) queued on GPU1 after
+  lrs2_s8's entry evals (ETA ~12:30 UTC).

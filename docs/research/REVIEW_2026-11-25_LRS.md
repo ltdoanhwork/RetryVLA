@@ -106,7 +106,19 @@ kept as a servo ablation, and they show how fragile a pi0 continuation is to out
   saturated steps, small orientation corrections). Task quality is still weak: ep17 (wine bottle) chatters the gripper
   13 times while hovering; ep4 (cream cheese) closes on the cheese and lifts, then reopens. 2 of the 6 sampled windows
   are 10-20 near-static frames. The LLM grader still passes these at q >= 0.75.
-- v2 SFT lrs2_s7 / s8 / s9: running (ETA s7 / s8 ~09:10 UTC, s9 ~11:40 UTC).
+- **v2 SFT** (their recipe, 4.3 % anchors): **lrs2_s7 40, lrs2_s8 29** / 100 (Original 82 / 77); lrs2_s9 running
+  (ETA ~11:45 UTC). Better than v1 (14.3), still −40 to −50 vs Original.
+  - Per task (s7): open drawer 0, top drawer 1, cream cheese 0, wine rack 0, wine cabinet 1; the other 5 tasks 7-8.
+    The collapse concentrates on the drawer / grasp-heavy tasks where the teacher windows come from.
+  - Val actions are now in-distribution (0 % saturation; rotation std 0.02-0.06 vs Original 0.06-0.08). The v1 failure
+    mode is gone.
+  - Why it still hurts: at M0, the per-target FM loss on v2 windows is **1.07 vs 0.131 on D0 (8.2x)**. The teacher's
+    multi-command chunks (stop / turn / gripper toggles every 10-40 steps, hovering, regrasping) are not predictable from
+    the image, so 4 % of anchors still drive about 1/4 of the gradient. The grader passes them (q >= 0.75), and 93 % of
+    the judge-accepted paths are false positives in sim (precision 0.074).
+  - Pre-registered follow-up **v2-GT** (PLAN 09:15 UTC): only paths that the judge accepted AND that succeed in sim
+    (10 paths / 13 windows / 707 frames), seed 7. It tests whether the judge's false accepts drive the damage.
+    ETA ~12:30 UTC.
 
 ## 7. Demos
 `docs/research/RECOVERY_DEMOS.md`: 6 entries side by side (M0 alone | WM bridge + M0 | LRS teacher + M0), with the
