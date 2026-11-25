@@ -1285,3 +1285,9 @@ Rules (paired with the stated control; scene x seed bootstrap; RSR_E8 entry x se
 - AUX heads (c) and the D_F hinge (P2-4) wait for G3 (best bank) and need their own code; not queued yet.
 - Queue order after the running jobs: G3-rep x3, G3-c20 x3, G3-phys-strict-r x3, then G2 random s8 / s9 and D5
   s8 / s9 (controls, lower priority).
+- Follow-up LRS-G v2-GT (2026-11-25 09:15 UTC; written after lrs2_s7 = 40 but BEFORE any GT-filtered result): is the
+  remaining v2 damage caused by the judge's false accepts? Arm `lrs2gt` = the v2 pipeline with the LLM-judge accept
+  replaced by accept AND sim-GT success (10 paths, 655 anchors = 1.7 %, all windows, no subsampling), seed 7, their
+  recipe. Rule: lrs2gt >= Original_s7 - 5 (>= 77) and lrs2_s7 < 70 -> "judge false accepts drive the damage";
+  lrs2gt < 70 -> "even verified teacher windows hurt at this teacher strength (window quality / grader)". 1 seed,
+  labelled preliminary.

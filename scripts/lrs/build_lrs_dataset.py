@@ -75,6 +75,8 @@ def main() -> None:
     ap.add_argument("--src", default="data/recovery/lrs_goal")
     ap.add_argument("--out", default="data/recovery/lrs_goal_ds")
     ap.add_argument("--workers", type=int, default=8)
+    ap.add_argument("--gt_only", action="store_true",
+                    help="LRS-G follow-up: keep only accepted paths whose hand-off was ALSO a sim-GT success")
     ap.add_argument("--target_anchors", type=int, default=0,
                     help="> 0: subsample whole accepted paths (seed 0, round-robin over tasks) until the anchors "
                          "(window frames with >= L_min valid targets) reach this count (their 1,639)")
@@ -83,7 +85,7 @@ def main() -> None:
     rows, paths = {}, {}
     for p in sorted(src.glob("a*/l*/rows.jsonl")):
         for r in map(json.loads, p.read_text().splitlines()):
-            if r["status"] == "accepted" and r["instance_id"] not in rows:
+            if r["status"] == "accepted" and r["instance_id"] not in rows and (not a.gt_only or r.get("accepted_gt")):
                 rows[r["instance_id"]] = r
                 paths[r["instance_id"]] = np.load(p.parent / "actions" / f"{r['instance_id']}.npz")["path"]
     plan = {}
