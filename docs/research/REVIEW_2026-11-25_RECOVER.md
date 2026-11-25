@@ -30,6 +30,54 @@ in the auto section at the end are refreshed by the chain after each stage.
   - Only 5 / 436 trajectories pass the pre-registered plausibility filter.
   - 11 % do not even replay to success from their rebuilt snapshot.
 
+
+## 0b. Update 2026-11-25 08:55 UTC
+
+- **Second incident.** From about 04:15 to 08:35 UTC the chain launched nothing new. Tasks from a restarted chain
+  became zombies, and the chain counted them as alive.
+  - Only f72a5ddd GPU1 kept working; it trained R2 s0-s2.
+  - Fixed and restarted at 08:39 UTC. The chain now runs 3 sim jobs per shell.
+- **Trained so far:** R1 s0-s2 and R2 s0-s2.
+- **Evaluating since 08:39:** R1 s0-s2 RSR + nominal (RSR about 45 min, nominal about 20 min + event replay).
+- **D_P closed** (`data/recovery/v2r_dp`):
+
+  | stage | count |
+  |---|---|
+  | train source episodes | 56 |
+  | with t_last (>= 2 / 8 pi0 successes) | 52 |
+  | s^- with a pi0 failure | 48 |
+  | s^- with >= 1 verified pair | 42 |
+  | positive trajectories | 78 (n_P = 70) |
+
+- **R3 SFT s0-s2** since 08:43 UTC: 138 R2-selected + 70 D_P = 208 trajectories.
+- **D_P visual check** (full fps, `/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/RetryVLA/runs/_analysis/visual/recover_v2r_dp/`):
+  - Most late pairs (s^- at t140-160) are the "last centimetre" of the task: the bowl is already over the plate, a+ =
+    5-24 steps of lowering / release, and pi0's own a- fails there.
+  - Early pairs (t060-080) are 50-step reaches / regrasps.
+  - The bank is smoother than R1: bridge d3 median 0.24 vs 0.45, no chatter.
+  - The "FAIL" banner on these sheets is a renderer artefact: there is no success_step in the D_P meta.
+
+  ![D_P late pair](/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/RetryVLA/runs/_analysis/visual/recover_v2r_dp/v2r_dp_sh0_bank0_ep16_sheet.png)
+  ![D_P early pair](/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/RetryVLA/runs/_analysis/visual/recover_v2r_dp/v2r_dp_sh1_bank0_ep1_sheet.png)
+
+- **R0 event baselines** (E-v1s on 500 nominal episodes; 96 % replay-checked):
+
+  | seed | SR | failure incidence | first-attempt success |
+  |---|---|---|---|
+  | s0 | 0.804 | 0.068 | 0.784 |
+  | s1 | 0.770 | 0.088 | 0.746 |
+
+  Dominant events: grasp_lost, tipped, displaced.
+- **New ETAs (UTC):**
+
+  | item | ETA |
+  |---|---|
+  | R1 table | ~09:40 |
+  | R2 | ~10:30 |
+  | R3 | ~11:30 |
+  | R4 (aux) SFT / evals | ~12:30 / ~13:30 |
+
+
 ## 1. What ran
 
 | step | what | where / when | output |
