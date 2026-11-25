@@ -36,7 +36,7 @@ R0 = {0: "runs/20261016-042447_M5_m5c_sft_wm_diverse_rr/checkpoints/006000/pretr
       1: "runs/20261018-232806_M8_seed_pi1_s1/checkpoints/006000/pretrained_model",
       2: "runs/20261019-004004_M8_seed_pi1_s2/checkpoints/006000/pretrained_model"}
 R1B = "data/recovery/v2r_r1/s*/p*/wm_diverse"
-PHYS1 = "data/recovery/v2r_r1/phys_wm_diverse.jsonl"
+PHYS1 = "data/recovery/v2r_r1/phys_wm_diverse_hard.jsonl"   # deviation 2026-11-25 03:35 UTC (NOTES)
 DPB = "data/recovery/v2r_dp/sh*/bank*"
 
 
@@ -189,12 +189,12 @@ def tasks():
     T.append(("vis_r1", "sim", r1_search_done, [sh, "visual", "v2r_r1", R1B, "-"],
               lambda: (REPO / "runs/_analysis/visual/recover_v2r_r1/index.md").exists()))
     T.append(("vis_r2", "sim", lambda: (REPO / "data/recovery/v2r_r1/phys_summary_wm_diverse.json").exists(),
-              [sh, "visual", "v2r_r2", R1B, PHYS1],
-              lambda: (REPO / "runs/_analysis/visual/recover_v2r_r2/index.md").exists()))
+              [sh, "visual", "v2r_r2h", R1B, PHYS1],
+              lambda: (REPO / "runs/_analysis/visual/recover_v2r_r2h/index.md").exists()))
     T.append(("vis_dp", "sim", dp_done, [sh, "visual", "v2r_dp", DPB, "-"],
               lambda: (REPO / "runs/_analysis/visual/recover_v2r_dp/index.md").exists()))
     gates = {"r1": lambda: r1_search_done() and looked("v2r_r1", 0),
-             "r2": lambda: (REPO / "data/recovery/v2r_r1/phys_summary_wm_diverse.json").exists() and looked("v2r_r2", 0),
+             "r2": lambda: (REPO / "data/recovery/v2r_r1/phys_summary_wm_diverse.json").exists() and looked("v2r_r2h", 0),
              "r3": lambda: (REPO / "data/recovery/v2r_r1/phys_summary_wm_diverse.json").exists() and dp_done()
              and looked("v2r_dp", 0)}
     if (REPO / "data/recovery/v2r_r1/phys_summary_wm_diverse.json").exists() and n2() < 208:
@@ -351,6 +351,15 @@ def main():
         T = tasks()
         all_done = all(t[4]() for t in T)
         used = {(gpu, kind) for _, gpu, kind in procs.values()}
+        kinds = {t[0]: t[1] for t in T}
+        for c in CL.glob("*"):   # tasks of this host started by an earlier chain process (still alive) keep their slot
+            try:
+                cc = json.loads(c.read_text())
+            except Exception:
+                continue
+            if cc.get("host") == HOST and c.name not in procs and Path(f"/proc/{cc.get('pid')}").exists() \
+                    and "gpu" in cc:
+                used.add((int(cc["gpu"]), kinds.get(c.name, "sim")))
         orphan = set()
         for cf in CL.glob("*") if CL.exists() else []:   # orphans of a previous chain process on this host
             try:

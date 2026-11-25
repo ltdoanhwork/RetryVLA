@@ -1405,3 +1405,17 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
     - The phys filter removes seam / jerk / object-jump cases that also look bad.
     - Its survivors are short near-goal bridges without continuation.
   - Review doc: docs/research/REVIEW_2026-11-25_GOAL.md.
+- **Deviation D-V1 (2026-11-25 03:35 UTC, before any R2 training / eval result): R2 filter.** The pre-registered
+  rec_phys rules keep only 5 / 436 R1 trajectories (4 / 146 instances): Spatial D0 thresholds d3 > 0.195 (2 x demo
+  median 0.098) and seam > 0.246 (3 x median ||Δa|| 0.082) reject 362 / 331 trajectories, because searched bridges are
+  ~4.6x jerkier than demos (bank d3 median 0.446; cf. SMOOTH-V 4.7x). Other rejects: replay mismatch 49 (11 %, open-loop
+  replay from the rebuilt snapshot does not reproduce success; to investigate), gripper flips > 1 50, object jump
+  24, penetration 7, off table 2. The pre-registered fallback ("all survivors + R1 re-matched to the same count") at
+  n = 5 tests nothing, so R2 is redefined BEFORE any result: hard physical rejects stay (replay mismatch, penetration,
+  off table, impulse, gripper flips > 1) -> 307 trajectories / 118 instances; jerk and seam become the SMOOTH-V
+  smooth-first ranking instead of rejects (round-robin over instances, lowest bridge d3 first) -> 208 selected,
+  118 instances, bridge d3 median 0.374 vs 0.446 for all R1 trajectories (−16 %), seam median 0.79. Keep list
+  `data/recovery/v2r_r1/phys_wm_diverse_hard.jsonl` (strict flags kept as `reject_strict`). The strict 5-trajectory
+  survivors are reported only as a bank statistic. Visual check of the strict survivors: runs/_analysis/visual/
+  recover_v2r_r2/ (5); of the hard-filter selection: recover_v2r_r2h/. Chain restarted on both shells to pick this up
+  (running children kept; restarted chain now counts live claims of its host as occupied slots).
