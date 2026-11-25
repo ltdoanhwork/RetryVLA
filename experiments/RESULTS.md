@@ -1288,3 +1288,56 @@ paper (cross-paper reference): Original 78 -> Recovery 88 (+10)
 | put_the_wine_bottle_on_top_of_the_cabinet | 9.3 | 7.7 | 8.7 | 10.0 | 8.3 | 8.5 | 8.0 | 8.7 | 8.7 |
 | turn_on_the_stove | 10.0 | 9.0 | 10.0 | 10.0 | 10.0 | 10.0 | 10.0 | 10.0 | 10.0 |
 
+
+## Goal G2 / G2-phys / P2-3 / FC: reading vs the pre-registered rules (2026-11-25 03:30 UTC; tables above = auto, runs/goal_rsi/g2.md)
+Val nominal (100 scenes, their protocol), Δ vs Original (scene x seed bootstrap 95 %), RSR_E8 = 168 held-out seed-8
+M0 failures. Detector E-v1 metrics are secondary (not validated against hand labels).
+
+| arm | anchors (recovery share) | val s7 / s8 / s9 | mean | Δ vs Original | RSR_E8 (Δ) | fail. incidence | first-attempt |
+|---|---|---|---|---|---|---|---|
+| Original | 0 | 82 / 77 / 79 | 79.3 | - | 0.147 | 0.22 | 0.68 |
+| G2 wm (curated onset + continuation, 36 traj) | 4.9 k (11 %) | 67 / 72 / 79 | 72.7 | −6.7 [−18.3, +4.3] | 0.200 (+5.4 [+0.4, +10.3]) | 0.32 | 0.56 |
+| P2-3 A (curated, 72 traj) | 9.5 k (20 %) | 83 / 78 / 77 | **79.3** | **+0.0 [−8.0, +8.0]** | **0.248 (+10.1 [+5.0, +15.7])** | 0.30 | 0.65 |
+| P2-3 B (curated 36 + D_P 36) | 8.5 k (18 %) | 75 / 71 / 80 | 75.3 | −4.0 [−12.7, +5.0] | 0.248 (+10.1 [+4.8, +16.1]) | 0.27 | 0.65 |
+| G2-phys wm (18 survivors) | 0.6 k (1.6 %) | 84 / 82 / (running) | 83.0 | +3.5 [−5.0, +13.0] (2 seeds) | 0.182 (+3.0 [−2.4, +7.7]) | 0.28 | 0.68 |
+| paper (cross-paper) | 4.1 % | Original 78 -> Recovery 88 | - | +10 (1 seed, p 0.076) | - | - | - |
+
+**G2 rules:**
+- "curation fixes the nominal cost" NOT met (−6.7, lower CI −18.3).
+- "matches theirs" not met; "beats F0" not met (RSR 0.200 < 0.252).
+- G2 still costs nominal at 11 % share, and more failure events (0.32 vs 0.22), mostly `displaced` (collateral
+  pushes).
+
+**P2-3 (decisive) rules:**
+- B − A: nominal −4.0 [−13.0, +5.3], failure incidence −3.3 pt [−13.7, +7.7], RSR_E8 +0.0 [−5.6, +5.4],
+  first-attempt equal (0.65). Onset-state RSR_E8on: B 0.182 vs A 0.245.
+- "prevention helps" NOT met. "prevention data = more recovery data" also not met (|Δ nominal| >= 3), so the
+  verdict is **inconclusive at n = 100 x 3 seeds** (MDE ~7 pt).
+- Direction: D_P positives (verified alternatives at s^-) did not lower failure incidence measurably, and they cost
+  nominal vs the same count of extra recovery trajectories. The hinge L_P (Algorithm 2) is not tested yet.
+
+**By-product, pre-registered stage-4 rule "recovery without nominal cost" (nominal >= Original and RSR_E8 >= +10):
+MET by P2-3 A** (72 curated onset trajectories with continuation: nominal 79.3 = Original, RSR_E8 +10.1 [+5.0, +15.7]).
+- This is the first arm that keeps nominal AND raises held-out own-failure recovery.
+- Caveats:
+  - the ordering vs G2-36 (72.7) is non-monotonic in share and carries large seed variance (G2 s7 67 vs A s7 83);
+  - it is selected post hoc among several arms (multiplicity).
+  It needs a replication (new seeds 10-12) before any claim.
+
+**G2-phys (interim, 2 / 3 seeds):** 84 / 82 vs Original 82 / 77 (Δ +3.5, CI incl. 0). The pre-registered "G2phys helps
+vs G2" rule evaluates true (+10 vs G2-36), but it is **confounded**, see the phys scan and visual check below:
+- Only 18 / 132 trajectories survive (rejects: seam 96, jerk 57, obj_jump 10, grip_flips 8, pen 7).
+- 17 / 18 survivors have no continuation: the task completes inside the bridge (late cuts, mean t 194, mean length
+  35 frames). The arm therefore adds only 632 recovery anchors (1.6 %).
+- Follow-ups pre-registered 2026-11-25 03:30 and queued:
+  - phys filter without the seam rule at 36 trajectories (63 survivors / 28 entries);
+  - G2 at 5 trajectories (anchor-matched);
+  - G2 at 18 (trajectory-matched, running).
+
+**FC labelling (a):**
+- Seed 7: 52 labelled. The first physical event after t_last falls within the onset window for only 13. Event types:
+  grasp_lost 10, tipped 7, displaced 5, stall 3. 19 rollouts have events before t_last (recoverable incidents /
+  detector false alarms). FC length 23 steps; D_F = 1,210 actions.
+- Seed 8: 21 / 53 confirmed (tipped 11, displaced 9, grasp_lost 7, stall 5); FC length 26; D_F = 1,400.
+- Pre-registered rebuild rule (s^f shifts >= 20 steps from t_on in >= 30 %): 10 % (s7) / 21 % (s8), so NOT met.
+  D_R entries stay at t_on; D_F is stored for the later hinge L_P / critic hard negatives.

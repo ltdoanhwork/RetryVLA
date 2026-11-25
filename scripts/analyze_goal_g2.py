@@ -63,7 +63,9 @@ def fb(A, B):
 
 def main():
     arms = {"Original": "orig", "F0_wm": "rec_wm", "F1_wm": "f1_wm", "D5_wm (old bank + cont, 36)": "d5_wm",
-            "G2_wm (curated onset + cont, 36)": "g2_wm", "G2phys_wm (phys-filtered, 36)": "g2phys_wm",
+            "G2_wm (curated onset + cont, 36)": "g2_wm", "G2phys_wm (phys survivors = 18)": "g2phys_wm",
+            "G2_wm at 18 (count-matched to G2phys)": "g2_wm18",
+            "G2physns_wm (phys filter w/o seam, 36)": "g2physns_wm", "G2_wm at 5 (anchor-matched to G2phys)": "g2_wm5",
             "G2_random": "g2_rand",
             "P2-3 A (curated D_R, 36 + n_P)": "p23_A", "P2-3 B (curated D_R 36 + D_P n_P)": "p23_B"}
     V = {k: arm(p, "val") for k, p in arms.items()}
@@ -106,15 +108,15 @@ def main():
         f0 = a.get("F0_wm", {})
         rules["G2_beats_F0"] = bool(np.mean(list(g2.get("rsr_e8", {0: 0}).values())) >= 0.282 - 0.03
                                     and g2["val_mean"] >= f0.get("val_mean", 1e9) + 8)
-    gp = a.get("G2phys_wm (phys-filtered, 36)")
+    gp = a.get("G2phys_wm (phys survivors = 18)")
     if gp and g2:
-        dn_ = boot(V["G2phys_wm (phys-filtered, 36)"], V["G2_wm (curated onset + cont, 36)"])
+        dn_ = boot(V["G2phys_wm (phys survivors = 18)"], V["G2_wm (curated onset + cont, 36)"])
         res["G2phys_minus_G2_nominal"] = dn_
         ie = None
-        if EV["G2phys_wm (phys-filtered, 36)"] and EV["G2_wm (curated onset + cont, 36)"]:
-            ie = boot({s: {k: {"success": v[k]["n_events"] > 0} for k in v} for s, v in EV["G2phys_wm (phys-filtered, 36)"].items()},
+        if EV["G2phys_wm (phys survivors = 18)"] and EV["G2_wm (curated onset + cont, 36)"]:
+            ie = boot({s: {k: {"success": v[k]["n_events"] > 0} for k in v} for s, v in EV["G2phys_wm (phys survivors = 18)"].items()},
                       {s: {k: {"success": v[k]["n_events"] > 0} for k in v} for s, v in EV["G2_wm (curated onset + cont, 36)"].items()})
-        er = boot(E["G2phys_wm (phys-filtered, 36)"], E["G2_wm (curated onset + cont, 36)"])
+        er = boot(E["G2phys_wm (phys survivors = 18)"], E["G2_wm (curated onset + cont, 36)"])
         rules["G2phys_helps"] = bool((er is None or er["delta"] >= -3) and ((dn_["delta"] >= 3 and dn_["ci"][0] > 0) or
                                      (ie is not None and ie["delta"] <= -5 and ie["ci"][1] < 0)))
     A_, B_ = "P2-3 A (curated D_R, 36 + n_P)", "P2-3 B (curated D_R 36 + D_P n_P)"

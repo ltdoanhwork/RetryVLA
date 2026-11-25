@@ -1234,3 +1234,25 @@ the goal_phys metrics); all new code is opt-in, default paths unchanged.
   12 checkpoints x 1.2 GB, verification logs slim).
 - Review: docs/research/REVIEW_2026-11-25_RECOVER.md by 2026-11-25 05:00 UTC; adversarial review (idea-loop step 4)
   before any close / scale.
+
+## Goal G2-phys follow-ups (2026-11-25 03:30 UTC; written after the G2-phys s7 / s8 numbers but BEFORE these runs)
+Observation that motivates them (visual check + phys_wm_diverse.jsonl):
+- Only 18 / 132 wm trajectories survive (rejects: seam 96, jerk 57, obj_jump 10, grip_flips 8, pen 7).
+- 17 / 18 survivors have NO continuation: the task completes inside the bridge, mean length 35 frames, late cuts
+  (mean t 194). The seam rule (3 x median D0 |Δa| = 0.197) removes nearly every bridge -> M0 handoff.
+- So G2phys (18 trajectories = 632 anchors = 1.6 %) changes BOTH the data quality and the share. The G2phys vs G2-36
+  comparison is confounded.
+
+Arms:
+- (i) `g2physns` = physical filter WITHOUT the seam rule (penetration / off-table / object jump / jerk / flips only):
+  63 survivors at 28 entries -> 36 trajectories round-robin (= G2's count). Seeds 7, 8, 9. The clean test of
+  physical plausibility at equal count.
+- (ii) `g2_wm5` = G2 at 5 trajectories (≈ 600-700 anchors ≈ G2phys's anchor count). Seeds 7, 8. Share control for
+  G2phys.
+- (iii) `g2_wm18` (already queued): trajectory-count control.
+
+Rules (nominal = 100 val, scene x seed bootstrap; RSR_E8 entry x seed):
+- "physical plausibility helps" iff nominal(g2physns) − nominal(G2) >= +3 (CI > 0) or failure incidence −5 pt, with
+  RSR_E8 within −3.
+- "G2phys gain is a share effect" iff |nominal(G2phys) − nominal(g2_wm5)| < 3. If G2phys > g2_wm5 + 3 (CI > 0), the
+  late, near-goal, handoff-free subset itself is the useful data.

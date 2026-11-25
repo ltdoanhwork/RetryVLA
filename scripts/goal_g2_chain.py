@@ -98,6 +98,14 @@ def jobs():
     for s in (7, 8, 9):   # G2-phys: only physically plausible survivors are eligible (goal_phys keep list)
         js.append((f"g2phys_wm_s{s}", s, [f"{CUR}/wm_diverse@36", "--keep_list",
                                          "data/recovery/goal_search_onset_cur/phys_wm_diverse.jsonl"], phys_done))
+    for s in (7, 8, 9):   # follow-up (PLAN 2026-11-25): physical filter without the seam rule, at G2's count
+        js.append((f"g2physns_wm_s{s}", s, [f"{CUR}/wm_diverse@36", "--keep_list",
+                                           "data/recovery/goal_search_onset_cur/phys_noseam_wm_diverse.jsonl"], phys_done))
+    for s in (7, 8):      # share control for G2phys (~632 anchors)
+        js.append((f"g2_wm5_s{s}", s, [f"{CUR}/wm_diverse@5"], search_done))
+    # G2-phys kept only 18 trajectories (11 entries): pre-registered count-matched control = G2 wm at 18, seeds 7, 8
+    for s in (7, 8):
+        js.append((f"g2_wm18_s{s}", s, [f"{CUR}/wm_diverse@18"], search_done))
     for s in (7, 8, 9):
         js.append((f"g2_rand_s{s}", s, [f"{CUR}/random@36"], search_done))
     for s in (8, 9):   # D5 control (old fixed-cut uncurated bank + continuation) for 3 seeds (s7 = diag_f1wm_full_s7)
@@ -183,7 +191,8 @@ def main():
             search_done=search_done(), dp_done=dp_done(), n_dp=n_dp() if dp_done() else None)
         for tag, names in (("G2 wm", [f"g2_wm_s{s}" for s in (7, 8, 9)]),
                            ("P2-3", [f"p23_{a}_s{s}" for a in ("A", "B") for s in (7, 8, 9)]),
-                           ("G2-phys", [f"g2phys_wm_s{s}" for s in (7, 8, 9)]),
+                           ("G2-phys", [f"g2phys_wm_s{s}" for s in (7, 8, 9)] + ["g2_wm18_s7", "g2_wm18_s8"]),
+                           ("G2-phys follow-ups", [f"g2physns_wm_s{s}" for s in (7, 8, 9)] + ["g2_wm5_s7", "g2_wm5_s8"]),
                            ("G2 random + D5", [f"g2_rand_s{s}" for s in (7, 8, 9)] + ["d5_wm_s8", "d5_wm_s9"])):
             if tag not in registered and all(run_done(n) for n in names):
                 register(tag)
