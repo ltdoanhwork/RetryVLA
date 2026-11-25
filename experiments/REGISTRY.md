@@ -70,3 +70,12 @@ Run directories (`runs/`) are gitignored; this file plus the `M*.md` docs are th
 | 20261125-105729_V2R_v2r_r3_s2_nominal | V2R | v2r_r3_s2_nominal | done | 3effc78 | success_rate=0.810, n_episodes=500 | V2R (PLAN V2R, 2026-11-24) |
 | 20261125-111605_V2R_v2r_r0_s2_nominal | V2R | v2r_r0_s2_nominal | done | 3effc78 | success_rate=0.776, n_episodes=500 | V2R (PLAN V2R, 2026-11-24) |
 | 20261125-111936_V2R_v2r_pi1nom_nominal | V2R | v2r_pi1nom_nominal | done | 3effc78 | success_rate=0.774, n_episodes=500 | V2R (PLAN V2R, 2026-11-24) |
+| 20261125-115508_V2R_v2r_r4_s2 | V2R | v2r_r4_s2 | done | 34879e5 | final_loss=0.476 | V2R (PLAN V2R, 2026-11-24) |
+| 20261125-115702_V2R_v2r_r4_s0 | V2R | v2r_r4_s0 | done | 34879e5 | final_loss=0.463 | V2R (PLAN V2R, 2026-11-24) |
+| 20261125-115702_V2R_v2r_r4_s1 | V2R | v2r_r4_s1 | done | 34879e5 | final_loss=0.472 | V2R (PLAN V2R, 2026-11-24) |
+| 20261125-125102_V2R_v2r_r4_s2_nominal | V2R | v2r_r4_s2_nominal | done | 34879e5 | success_rate=0.798, n_episodes=500 | V2R (PLAN V2R, 2026-11-24) |
+| 20261125-125103_V2R_v2r_r4_s2_recover_test | V2R | v2r_r4_s2_recover_test | done | 34879e5 | rsr=0.425, rsr_close=0.404, rsr_open=0.446, n_episodes=560 | V2R (PLAN V2R, 2026-11-24) |
+| 20261125-125348_V2R_v2r_r4_s0_nominal | V2R | v2r_r4_s0_nominal | done | 34879e5 | success_rate=0.798, n_episodes=500 | V2R (PLAN V2R, 2026-11-24) |
+| 20261125-125348_V2R_v2r_r4_s0_recover_test | V2R | v2r_r4_s0_recover_test | done | 34879e5 | rsr=0.425, rsr_close=0.421, rsr_open=0.429, n_episodes=560 | V2R (PLAN V2R, 2026-11-24) |
+| 20261125-125531_V2R_v2r_r4_s1_recover_test | V2R | v2r_r4_s1_recover_test | done | 34879e5 | rsr=0.445, rsr_close=0.389, rsr_open=0.500, n_episodes=560 | V2R (PLAN V2R, 2026-11-24) |
+| 20261125-125550_V2R_v2r_r4_s1_nominal | V2R | v2r_r4_s1_nominal | done | 34879e5 | success_rate=0.788, n_episodes=500 | V2R (PLAN V2R, 2026-11-24) |
