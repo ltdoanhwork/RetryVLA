@@ -24,8 +24,9 @@ import json
 import os
 from pathlib import Path
 
-os.environ.setdefault("MUJOCO_GL", "osmesa")
-os.environ.setdefault("PYOPENGL_PLATFORM", "osmesa")
+os.environ["MUJOCO_GL"] = "osmesa"
+os.environ["PYOPENGL_PLATFORM"] = "osmesa"
+os.environ.pop("__EGL_VENDOR_LIBRARY_FILENAMES", None)
 os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
 import cv2  # noqa: E402

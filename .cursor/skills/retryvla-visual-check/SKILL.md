@@ -150,7 +150,7 @@ MP4s < 3 MB under `docs/related_work/figs/demos/fullfps/`); everything else stay
   the gripper closed from step ~20 to ~230 without opening the drawer, and there is a 1.84 action jump at the
   teacher -> handoff boundary. The judge accepted it anyway.
 - Full-fps reference set (`docs/related_work/figs/demos/fullfps/`, `jerk_table.csv`): human demos |d3a| 0.06-0.09,
-  EE jerk 0.4-0.7 mm. M0 nominal is already 2-2.5x human (|d3a| 0.16-0.21) because SmolVLA re-plans every 5 steps: |Δa|
+  EE jerk 0.4-0.7 mm. M0 nominal is already 2-2.5x human (|d3a| 0.16-0.21) because the Goal M0 (pi0, execute 5 / replan) re-plans every 5 steps: |Δa|
   at chunk boundaries is 3-5x the within-chunk value (autocorrelation 0.6-0.7 at lag 5, also visible in EE accel), a
   real ~4 Hz shudder. Use M0 nominal, not the human demo, as the bar for "M0-like" motion.
 

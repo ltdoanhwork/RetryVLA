@@ -1,0 +1,9 @@
+clip,panel,cut_t,onset_t,success_t,all_d3a,all_flips100,all_ee_d3_mm,orig_d3a,orig_flips100,bridge_d3a,bridge_flips100,seam_cut_to_bridge,seam_bridge_to_m0,cont_d3a,cont_flips100,alone_d3a,alone_flips100
+cream_cheese_d13_t075,ours: M0 -> WM bridge -> M0,75,120,278,0.36,10.4,1.37,0.244,5.3,0.149,0.0,0.81,0.94,0.45,16.3,,
+cream_cheese_d13_t075,M0 alone,75,120,,0.443,12.3,1.54,0.244,5.3,,,,,,,0.511,14.2
+middle_drawer_d46_on180_physns,ours: M0 -> WM bridge -> M0,180,180,248,0.292,0.0,1.06,0.343,0.0,0.061,0.0,0.61,0.56,0.194,0.0,,
+middle_drawer_d46_on180_physns,M0 alone,180,180,,0.379,0.0,1.18,0.343,0.0,,,,,,,0.419,0.0
+middle_drawer_d46_t075,ours: M0 -> WM bridge -> M0,75,180,375,0.302,0.0,0.92,0.165,0.0,0.0,0.0,0.37,0.55,0.39,0.0,,
+middle_drawer_d46_t075,M0 alone,75,180,,0.379,0.0,1.18,0.165,0.0,,,,,,,0.437,0.0
+wine_rack_d19_t075,ours: M0 -> WM bridge -> M0,75,200,164,0.145,1.2,0.54,0.157,0.0,0.031,2.0,0.2,0.42,0.22,2.6,,
+wine_rack_d19_t075,M0 alone,75,200,,0.236,0.3,0.73,0.157,0.0,,,,,,,0.26,0.4

@@ -52,6 +52,16 @@ MP4 full frame rate (mọi bước sim, 20 Hz, H.264), có kèm clip tham chiế
 số jerk ghi trong caption: `../related_work/figs/demos/fullfps/` (`<task>__quad.mp4` gồm 4 panel
 [human | M0 nominal | LRS v2 + handoff | WM bridge + M0], bảng `jerk_table.csv`). Code: `scripts/demos/render_fullfps.py`.
 
+**Video đầy đủ từ đầu tới cuối (2026-11-25):** `../related_work/figs/demos/fullfps/full_episode__<entry>.mp4`, 20 Hz,
+mọi frame. Panel (a): M0 chạy từ t = 0 (`M0 original attempt`), tới CUT, sau đó là `RECOVERY BRIDGE (WM + C^pi,
+sim-verified)` 50 bước, rồi `M0 continues` tới khi BDDL success. Panel (b): M0 tự chạy tiếp từ cùng CUT (action đã
+log của audit) và FAIL. Bước `FAILURE ONSET` lấy từ onset scan (`data/goal_rsi/onset_s7/scan.jsonl`, bước probe đầu
+tiên mà M0 chạy lại thành công 0 %). Mọi frame là replay xác định (state lệch 0.0 so với log). Bridge lấy từ
+`goal_search` vì bank G2-phys đã lọc không giữ bridge nào cho 3 entry này. `middle_drawer_d46_on180_physns` là bản cắt
+ở onset (t = 180), bridge lấy từ bank lọc vật lý không có luật seam (`g2physns`). Bản t075 của drawer chỉ là "bridge
+đứng yên + M0 thêm 300 bước" (C^pi 0.0004, success đúng ở bước cuối), không phải recovery thật. Số jerk:
+`full_episode_jerk.csv`. Code: `scripts/demos/render_full_episode.py`.
+
 **Panel (c), WM false positive** (`C_wm_false_positive.mp4`): candidate `wm_diverse` có C^pi cao nhất (1.00) nhưng
 verification trong sim FAIL. Bridge được lấy từ log. Phần M0 chạy tiếp được chạy lại trên GPU với đúng policy seed đã
 log, và kết quả FAIL khớp với log ở 6 / 6 entry. Phép chạy lại closed-loop này **không bit-exact** so với lần search gốc
