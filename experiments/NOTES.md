@@ -1515,3 +1515,4 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
 - 2026-11-25 12:01 UTC: v2r chain (agent): stage R3 complete, auto table appended to RESULTS (reading pending).
 - 2026-11-25 14:13 UTC: v2r chain (agent): stage R4 complete, auto table appended to RESULTS (reading pending).
 - 2026-11-25 19:09 UTC: goal_g2_chain: G3 finished, auto table appended to RESULTS.
+- 2026-11-25 22:20 UTC: goal_g2_chain: G2 random + D5 finished, auto table appended to RESULTS.
