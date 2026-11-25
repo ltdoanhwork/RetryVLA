@@ -92,7 +92,21 @@ kept as a servo ablation, and they show how fragile a pi0 continuation is to out
   +5 or more is unlikely given judge precision 0.11 and the quality of the windows.
 
 ## 6. Results as they land
-(appended by the agent)
+- **C0 control** (masked path, 0 teacher windows, seed 7): val **77 / 100**. That is inside the Original range
+  (82 / 77 / 79), so the training and eval path is clean (07:15 UTC).
+- **v2 collection** (168 entries, `--servo demo`, done 06:27 UTC; `runs/goal_rsi/lrs_goal_v2_collection.json`):
+  - their rule accepts 136; 214 hand-offs; 11 sim-GT successes;
+  - **judge precision 0.074 [0.040, 0.130]**, recall 0.91;
+  - solved in sim 0.060 vs WM search 0.589 (McNemar 0 / 89);
+  - cost 14.2 LLM calls, 74 s LLM, 121 s wall per entry.
+  The servo fix does not make the teacher better at the task. It only makes its actions in-distribution.
+- **v2 dataset:** 16 paths / 20 windows / 1,725 frames / 1,645 anchors. Gate passed: saturation 0.0 %, rotation std
+  min 0.020.
+- **v2 visual check** (`docs/research/figs/lrs_goal/v2_window_ep{4,17}_sheet.png`): motions are now smooth (no
+  saturated steps, small orientation corrections). Task quality is still weak: ep17 (wine bottle) chatters the gripper
+  13 times while hovering; ep4 (cream cheese) closes on the cheese and lifts, then reopens. 2 of the 6 sampled windows
+  are 10-20 near-static frames. The LLM grader still passes these at q >= 0.75.
+- v2 SFT lrs2_s7 / s8 / s9: running (ETA s7 / s8 ~09:10 UTC, s9 ~11:40 UTC).
 
 ## 7. Demos
 `docs/research/RECOVERY_DEMOS.md`: 6 entries side by side (M0 alone | WM bridge + M0 | LRS teacher + M0), with the

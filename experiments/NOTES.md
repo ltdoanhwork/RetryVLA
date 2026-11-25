@@ -1461,3 +1461,8 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
 - D_P progress 03:45 UTC: 7 / 56 source episodes, t_last in 40-160, 6 verified positives at 5 s^- (p(a-) mostly 0),
   5-12 min per episode -> D_P closes ~06:30 UTC.
 - 2026-11-25 06:22 UTC: goal_g2_chain: G2-phys finished, auto table appended to RESULTS.
+- 2026-11-25 07:15 UTC: C0 (masked path, 0 windows, s7) val 77 (Original 82 / 77 / 79): trainer / eval path clean.
+  v2 collection done 06:27 (`runs/goal_rsi/lrs_goal_v2_collection.json`): accepted 136 / 168, judge precision 0.074
+  [0.040, 0.130], solved in sim 0.060; dataset 16 paths / 20 windows / 1,645 anchors; gate PASS (sat 0.0 %, rot std
+  0.020). Visual check v2 (6 windows): smooth, but gripper chatter (13 flips, ep17) and 2 / 6 near-static windows;
+  grader inflation persists. SFT lrs2_s7 / s9 on GPU0, lrs2_s8 on GPU1 (chain rv_lrsg2_chain), ETA ~11:40 UTC.

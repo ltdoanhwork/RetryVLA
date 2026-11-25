@@ -4,8 +4,10 @@
 cd /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/RetryVLA; source env/activate.sh >/dev/null 2>&1
 export HF_HUB_OFFLINE=1 PYTHONUNBUFFERED=1
 D=data/recovery/lrs_goal_v2
-until [ -f runs/goal_rsi/lrsdiag_c0_masked_nowin_s7/DONE ]; do sleep 60; done
-bash scripts/lrs/collect_v2.sh 4 3 3 1
+# lane 3 on the first GPU that frees up: GPU0 after lane 0 or 1 is done, or GPU1 after C0 training
+until [ -f $D/a0/l0/DONE ] || [ -f $D/a0/l1/DONE ] || [ -f runs/goal_rsi/lrsdiag_c0_masked_nowin_s7/DONE ]; do sleep 60; done
+if [ -f runs/goal_rsi/lrsdiag_c0_masked_nowin_s7/DONE ]; then G3=1; else G3=0; fi
+[ -f $D/a0/l3/DONE ] || bash scripts/lrs/collect_v2.sh 4 3 3 $G3
 until [ "$(ls $D/a0/l*/DONE 2>/dev/null | wc -l)" -ge 4 ]; do sleep 60; done
 echo "[lrsg2] collection done $(date -Is)"
 export MUJOCO_EGL_DEVICE_ID=0 CUDA_VISIBLE_DEVICES=0
