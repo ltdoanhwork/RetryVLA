@@ -17,9 +17,10 @@ in the auto section at the end are refreshed by the chain after each stage.
   - smoke tests of every new code path.
 - **Running:**
   - R1 SFT x 3 seeds (about 55 min each);
-  - D_P generation, 2 shards over 56 train source episodes (about 5 min per episode);
+  - D_P generation, 2 shards over 56 train source episodes (5-12 min per episode). The first 7 episodes give 6 verified
+    positives at 5 / 7 s^- (t_last 40-160);
   - R0 nominal re-evals with saved actions (event metrics);
-  - R2 SFT, which starts as soon as an SFT slot frees.
+  - R2 SFT s0 (since 03:39 UTC; s1 / s2 follow when the R1 SFTs finish).
 - **Can be said now (search level only):**
   - the retrained `base` critic does **not** find recoveries for more instances: solved 0.570 vs 0.547 for the
     shipped C^pi v2 on the same instances and slot seeds, McNemar 25 / 19, p 0.45;
@@ -142,11 +143,11 @@ Decision rules, from the pre-registration:
 | R1 RSR + nominal evals (6) | ~06:00 |
 | R2 SFT x 3 (as SFT slots free) | ~05:15 |
 | R2 evals | ~07:00 |
-| D_P closed | ~05:45 |
-| R3 SFT | from ~06:30 |
-| R3 evals | ~09:00 |
-| R4 (needs R1-R3 evals) SFT | ~10:15 |
-| R4 evals | ~12:00 |
+| D_P closed (measured ~5-12 min / source episode, 28 per shard) | ~06:30 |
+| R3 SFT | from ~06:45 |
+| R3 evals | ~09:30 |
+| R4 (needs R1-R3 evals) SFT | ~10:30 |
+| R4 evals | ~12:15 |
 | Object held-out | not queued yet; after R4, if the winner is clear |
 
 Each stage completion appends an auto table to RESULTS and NOTES and refreshes section 7 below, via the agent-box

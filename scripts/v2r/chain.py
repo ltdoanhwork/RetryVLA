@@ -136,8 +136,8 @@ def best_arm():
 
 def n2():
     """R2 trajectory count = min(208, physically plausible survivors) (PLAN: if < 208, all survivors)."""
-    f = REPO / "data/recovery/v2r_r1/phys_summary_wm_diverse.json"
-    return min(208, json.load(open(f))["kept"]) if f.exists() else 208
+    f = REPO / PHYS1   # D-V1: survivors of the HARD physical rules (strict jerk / seam rules -> ranking)
+    return min(208, sum(json.loads(l)["keep"] for l in open(f))) if f.exists() else 208
 
 
 def arm_groups(arm):

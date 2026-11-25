@@ -1454,3 +1454,9 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
 - Pre-registered for v2 (written BEFORE any v2 result): same rules as PLAN "LRS-G"; v2 is the primary LRS arm, v1 is
   reported as the servo ablation. Gate before SFT: v2 windows have |a_xyz| saturation < 2 % and rotation std > 0.01
   (visual check of 6 windows), else no SFT.
+- 2026-11-25 03:33-03:39 UTC: the chain briefly launched the pre-registered "R1 re-matched to the R2 count" check
+  (`v2r_r1m_s0`) because its count still read the STRICT survivors (5); killed after ~2 min (no checkpoint, run dir
+  deleted), count now reads the D-V1 hard keep list (307 >= 208 -> no re-match needed). R2 s0 SFT launched 03:39
+  (group: 307 eligible, 208 selected over 118 instances, 23.2k recovery frames).
+- D_P progress 03:45 UTC: 7 / 56 source episodes, t_last in 40-160, 6 verified positives at 5 s^- (p(a-) mostly 0),
+  5-12 min per episode -> D_P closes ~06:30 UTC.
