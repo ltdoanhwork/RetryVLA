@@ -1364,3 +1364,30 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
 - 2026-11-24 17:51 UTC: goal_g2_chain: G2 wm finished, auto table appended to RESULTS.
 - 2026-11-25 03:09 UTC: goal_g2_chain: G2 wm finished, auto table appended to RESULTS.
 - 2026-11-25 03:09 UTC: goal_g2_chain: P2-3 finished, auto table appended to RESULTS.
+
+## V2R (RetryVLA v2 training track on LIBERO-Recover Spatial), ops log
+- 2026-11-24 15:05 UTC: 2-GPU user-account shell `ea7f9ee3` (vla_RetryVLA_DoanhLT_v2rec, host 894e2ccf9223) requested,
+  envcheck OK (sim 50 steps 1.0 s); 15:57 UTC second 2-GPU shell `f72a5ddd` (_v2rec_b, host 442c67d05c0d). Both in
+  shells.json allow_only. Never used 953bb534 / 8f473147 / 1123d1ea.
+- 15:59 UTC pre-registration committed (PLAN "V2R", a547a63) before any V2R result.
+- 16:01-~19:00 UTC R1 search (critic swap, 8 shards as 4 tmux lanes rv_v2r_s0..3 on ea7f9ee3): all 8 shards DONE.
+  Search-level vs M5b wm_diverse (same 256 instances / slot seeds, historical control): solved 0.570 vs 0.547
+  (McNemar 25 / 19, p 0.45: no detectable ranking gain at n = 256), hits / verification 0.178 vs 0.171, mean
+  predicted value on picks 0.837 vs 0.735 (base critic more optimistic in absolute terms on its own picks; real hit
+  rate 0.18). 436 verified trajectories (6.0 GB bank, slim verification log 25 MB).
+- Smokes (16:03-16:23 UTC): eval save_actions + E-v1s replay (6 nominal episodes, replay_ok 6 / 6, events tipped /
+  displaced found), rec_phys + visual_bank on a 6-trajectory copy of an M5b shard, sft groups + aux (failed only
+  because the smoke bank had no CLOSED marker), rec_prevent: KeyError 'akita_black_bowl_1' -> the scenes_full
+  bddl dumps declare one object per line, which the LIBERO parser collapses; fix = rewrite the (:objects) block into
+  the benchmark-scene form (rec_prevent.fix_bddl, cached under data/recovery/v2r_dp/bddl_fix; init regions untouched).
+- **Incident (agent): the chain was NOT launched after the smokes on 11-24; both shells sat idle from ~19:00 UTC
+  (search done) to 03:10 UTC 11-25 (~8 h x 4 GPUs lost).** The previous agent turn ended before `rv_v2r_watch`
+  was started. Lesson (already in retryvla-run-lessons 1): start the watchdog in the same turn as the first lane.
+- 2026-11-25 03:10 UTC: local watchdog `rv_v2r_watch` (scripts/v2r/watch.py) started; it started `rv_v2r_chain`
+  (scripts/v2r/chain.py, shared claim queue on /pfss) on both shells. 03:10 dp_sh0 / dp_sh1 (ea7f9ee3), r1_phys +
+  vis_r1 (f72a5ddd); 03:13 R1 SFT s0 / s1 (ea7f9ee3), s2 (f72a5ddd); r0 nominal event re-evals as sim slots free up.
+- Visual check R1 bank (runs/_analysis/visual/recover_v2r_r1/, 8 stratified renders; looked at 5 sheets 03:20 UTC):
+  successes are genuine (bowl visibly on the plate at the end); the worst bridges are gripper chatter (11-14 flips in
+  50 steps, perturbation family) with little EE motion, a 1.79 action jump at one handoff, and the pi0 continuations
+  themselves chatter (15-53 flips). Same character as the M5b bank behind pi1 -> distilled as R1 (pi1 recipe); the
+  R2 filter targets exactly these (flips > 1, jerk, seam).

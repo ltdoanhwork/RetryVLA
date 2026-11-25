@@ -43,6 +43,11 @@ def main() -> None:
     max_videos = int(cfg.eval.max_videos) if cfg.eval.save_videos != "none" else 0
     for j in jobs[:: max(1, len(jobs) // max(1, max_videos))][:max_videos]:
         j.record = "all"
+    save_actions = bool(cfg.eval.get("save_actions", False))  # V2R (opt-in): every episode's actions -> actions.npz
+    if save_actions:
+        for j in jobs:
+            if j.record == "none":
+                j.record, j.record_cfg = "all", {"img_until": -1}   # actions / proprio only, no images
 
     with tracking.start(cfg) as run:
         policy = SmolVLAWrapper(cfg.policy.path, cfg.policy.device, cfg.policy.n_action_steps)
@@ -56,13 +61,16 @@ def main() -> None:
             policy = make_wrapper(policy, to_dict(cfg.bot), cfg.policy.device)
             run.summary["bot"] = to_dict(cfg.bot)
         rows = []
+        acts: dict[int, np.ndarray] = {}
 
         def on_result(r):
-            row = {**r.meta, "success": r.success, "steps": r.steps}
+            row = {**r.meta, "success": r.success, "steps": r.steps, **({"job": r.job_id} if save_actions else {})}
             if hasattr(policy, "pop_episode_stats"):
                 row.update(policy.pop_episode_stats(id(jobs[r.job_id])))
             rows.append(row)
-            if r.record is not None and (cfg.eval.save_videos == "all" or not r.success):
+            if save_actions and r.record is not None:
+                acts[r.job_id] = r.record["action"].astype(np.float32)
+            if r.record is not None and "image" in r.record and (cfg.eval.save_videos == "all" or not r.success):
                 save_video(r.record["image"], run.path("videos", f"t{r.meta['task_id']}_ep{r.meta['episode']}_"
                                                       f"{'succ' if r.success else 'fail'}.mp4"), cfg.eval.video_fps)
             r.record = None
@@ -74,6 +82,8 @@ def main() -> None:
         if callable(getattr(type(policy), "stats", None)):  # B3.3 residual diagnostics (bridge.py)
             run.summary["residual_stats"] = policy.stats()
         write_jsonl(run.path("episodes.jsonl"), rows)
+        if save_actions:   # key = job index (episodes.jsonl rows carry it as `job`)
+            np.savez_compressed(run.path("actions.npz"), **{str(k): v for k, v in acts.items()})
         per_task = rate_table(rows, "task_id")
         sr = float(np.mean([r["success"] for r in rows]))
         for tid, v in per_task.items():

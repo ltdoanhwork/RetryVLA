@@ -89,6 +89,11 @@ def main() -> None:
     max_videos = int(cfg.eval.max_videos) if cfg.eval.save_videos != "none" else 0
     for j in jobs[:: max(1, len(jobs) // max(1, max_videos))][:max_videos]:
         j.record = "all"
+    save_actions = bool(cfg.eval.get("save_actions", False))  # V2R (opt-in): every episode's actions -> actions.npz
+    if save_actions:
+        for j in jobs:
+            if j.record == "none":
+                j.record, j.record_cfg = "all", {"img_until": -1}   # actions / proprio only, no images
     log.info("evaluating %d episodes over parts %s (instruction=%s)", len(jobs), list(cfg.recover_eval.splits),
              cfg.recover.instruction)
 
@@ -121,16 +126,20 @@ def main() -> None:
             policy = make_wrapper(policy, to_dict(cfg.bot), cfg.policy.device)
             run.summary["bot"] = to_dict(cfg.bot) | {"pca_k": policy.kpca}
         rows = []
+        acts: dict[int, np.ndarray] = {}
 
         def on_result(r):
-            rows.append({**r.meta, "success": r.success, "steps": r.steps, "progress": r.progress})
+            rows.append({**r.meta, "success": r.success, "steps": r.steps, "progress": r.progress,
+                         **({"job": r.job_id} if save_actions else {})})
             if hasattr(policy, "pop_episode_stats"):
                 rows[-1].update(policy.pop_episode_stats(id(jobs[r.job_id])))
             if hasattr(policy, "events") and hasattr(policy, "eps"):  # Backtrack: per-episode backtrack count
                 ev = policy.events(jobs[r.job_id].policy_seed)
                 rows[-1].update({"n_bt": ev.get("n_bt", 0), "bt_triggers": ev.get("triggers", [])})
                 policy.drop(jobs[r.job_id].policy_seed)
-            if r.record is not None and (cfg.eval.save_videos == "all" or not r.success):
+            if save_actions and r.record is not None:
+                acts[r.job_id] = r.record["action"].astype(np.float32)
+            if r.record is not None and "image" in r.record and (cfg.eval.save_videos == "all" or not r.success):
                 m = r.meta
                 save_video(r.record["image"], run.path("videos", f"{m['scene']}_{m['gripper_init']}{m['trial']}_"
                                                       f"{'succ' if r.success else 'fail'}.mp4"), cfg.eval.video_fps)
@@ -154,6 +163,8 @@ def main() -> None:
             if hasattr(policy, "bench"):
                 run.summary["bot_stats"] = run.summary["residual_stats"]
         write_jsonl(run.path("episodes.jsonl"), rows)
+        if save_actions:   # key = job index (episodes.jsonl rows carry it as `job`)
+            np.savez_compressed(run.path("actions.npz"), **{str(k): v for k, v in acts.items()})
         summ = summarize(rows, root)
         run.log({"recover/rsr": summ["rsr"], **{f"recover/rsr_{g}": summ.get(f"rsr_{g}", float("nan"))
                                                 for g in ("close", "open")}})

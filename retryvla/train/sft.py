@@ -55,12 +55,19 @@ def build_datasets(cfg, policy_cfg):
     if tc.get("match_trajectory_count_of"):
         n_match = count_trajectories(REPO_ROOT / tc.match_trajectory_count_of)
         log.info("matching trajectory count of %s: %d", tc.match_trajectory_count_of, n_match)
-    roots = [Path(r) for r in expand_roots([REPO_ROOT / r for r in tc.recovery_datasets])]
+    if tc.get("recovery_groups"):   # V2R (opt-in): per-group counts, keep lists, smooth-first ranking
+        from retryvla.train.v2r_data import group_subsets
+
+        gs = group_subsets(tc, int(tc.get("subset_seed", 0)))
+        roots, subs = [r for r, _ in gs], [s_ for _, s_ in gs]
+    else:
+        roots = [Path(r) for r in expand_roots([REPO_ROOT / r for r in tc.recovery_datasets])]
     log.info("recovery roots: %d", len(roots))
     if not roots:  # action-free arms (Part 4): no grounded recovery data
         return orig, recs
-    subs = recovery_episode_subsets(roots, int(n_match) if n_match else None, int(tc.get("min_traj_len", 0)),
-                                    mode=str(tc.get("subset_mode", "score")))
+    if not tc.get("recovery_groups"):
+        subs = recovery_episode_subsets(roots, int(n_match) if n_match else None, int(tc.get("min_traj_len", 0)),
+                                        mode=str(tc.get("subset_mode", "score")))
     for root, sub in zip(roots, subs):
         if sub is not None and not sub:
             continue
@@ -191,6 +198,11 @@ def main() -> None:
             mix = MixDataset(orig, recs, float(tc.recovery_ratio), n_items, tuple(tc.recovery_segments),
                              seed=int(tc.seed), futures=futs, future_ratio=float(tc.get("future_ratio", 0.0)))
             run.summary.update({"n_future_samples": sum(len(f) for f in futs), "future_ratio": mix.future_ratio})
+        elif float(tc.get("aux_beta", 0.0) or 0.0) > 0:   # V2R R4 (opt-in): aux structured heads
+            from retryvla.train.v2r_data import AuxMixDataset, AuxTargets, aux_stats
+
+            mix = AuxMixDataset(orig, recs, float(tc.recovery_ratio), n_items, tuple(tc.recovery_segments),
+                                seed=int(tc.seed), aux=AuxTargets(list(tc.aux_phys_dirs)))
         else:  # default path (bit-for-bit pre-Part-4)
             mix = MixDataset(orig, recs, float(tc.recovery_ratio), n_items, tuple(tc.recovery_segments),
                              seed=int(tc.seed))
@@ -207,6 +219,14 @@ def main() -> None:
             params = params + list(fut["head"].parameters())
         elif getattr(mix, "with_future", False):
             raise ValueError("future samples present but train.future_beta <= 0: they would only add zero-loss items")
+        aux = None
+        if float(tc.get("aux_beta", 0.0) or 0.0) > 0:
+            from retryvla.train.v2r_data import aux_loss, build_aux_head
+
+            a_mu, a_sd = aux_stats(mix)
+            a_head, a_cap, a_hook = build_aux_head(policy, device)
+            aux = {"beta": float(tc.aux_beta), "head": a_head, "cap": a_cap, "mu": a_mu.to(device), "sd": a_sd.to(device)}
+            params = params + list(a_head.parameters())
         log.info("trainable params: %.1fM", sum(p.numel() for p in params) / 1e6)
         opt = torch.optim.AdamW(params, lr=float(tc.lr), betas=(0.9, 0.95), eps=1e-8,
                                 weight_decay=float(tc.weight_decay))
@@ -221,13 +241,20 @@ def main() -> None:
             if fut is not None:
                 f_ha, f_hf = batch.pop("has_action").to(device), batch.pop("has_future").to(device)
                 f_tg = batch.pop("future_latent").to(device)
-            lf = None
+            lf = la = None
+            if aux is not None:
+                a_tg, a_mk = batch.pop("aux").to(device), batch.pop("aux_mask").to(device)
             batch = pre(batch)
             with torch.autocast(device_type=device.type, dtype=amp, enabled=amp is not None):
                 if fut is not None:
                     loss, out, lf = future_forward(fut, policy, batch, f_ha, f_hf, f_tg)
                     lp, lfm = None, loss.detach()
                     loss = loss + fut["beta"] * lf
+                elif aux is not None:   # V2R R4: FM + beta * aux (head on the action-expert hidden states)
+                    loss, out = policy.forward(batch)
+                    lp = None
+                    la = aux_loss(aux["head"], aux["cap"], a_tg, a_mk, aux["mu"], aux["sd"])
+                    loss = loss + aux["beta"] * la
                 elif pres is None:
                     loss, out = policy.forward(batch)
                     lp = None
@@ -246,6 +273,7 @@ def main() -> None:
                          "train/lr": sched.get_last_lr()[0], "train/recovery_frac": float(src.float().mean()),
                          "train/steps_per_s": step / (time.time() - t0),
                          **({"train/preserve_loss": float(lp.detach())} if lp is not None else {}),
+                         **({"train/aux_loss": float(la.detach())} if la is not None else {}),
                          **({"train/future_loss": float(lf.detach()), "train/fm_loss": float(lfm),
                              "train/future_frac": float((src == 2).float().mean())}
                             if lf is not None else {})}, step)
@@ -272,6 +300,11 @@ def main() -> None:
             if last.exists() or last.is_symlink():
                 last.unlink()
             last.symlink_to(Path(ckpt_dir).parent.name)
+        if aux is not None:   # aux head saved apart: the evaluated policy checkpoint is the plain SmolVLA
+            tmp = run.path("aux_head.pt.tmp")
+            torch.save({"head": aux["head"].state_dict(), "mu": aux["mu"].cpu(), "sd": aux["sd"].cpu(),
+                        "beta": aux["beta"]}, tmp)
+            Path(tmp).replace(run.path("aux_head.pt"))
         if fut is not None:  # head + target centering, for the embedding probe (scripts/af_probe.py)
             tmp = run.path("future_head.pt.tmp")
             torch.save({"head": fut["head"].state_dict(), "target_mean": [f.target_mean for f in futs],

@@ -267,6 +267,28 @@ class _RecordingSim:
                 out.append(sample(t + 1))
         return out
 
+    def events_scan_load(self, load_cmd: str, load_kwargs: dict, actions, every: int = 5) -> dict:
+        """V2R (opt-in): events_scan for any LiberoSim load command (load_nominal / load_scene) instead of a demo init
+        state; same privileged sampler. Returns {"samples", "success_step"} (first success step during the replay,
+        None if never) for the replay check."""
+        orig = self.sim.load_init_state
+        self.sim.load_init_state = lambda *a, **k: getattr(self.sim, load_cmd)(**load_kwargs)
+        succ = {"t": None}
+        step0 = self.sim.step
+
+        def step(a):
+            r = step0(a)
+            if succ["t"] is None and r.success:
+                succ["t"] = int(self.sim.t)
+            return r
+        self.sim.step = step
+        try:
+            out = self.events_scan(None, None, actions, every)
+        finally:
+            self.sim.load_init_state = orig
+            del self.sim.step
+        return {"samples": out, "success_step": succ["t"]}
+
     def phys_scan(self, bddl: str, snap: dict, actions) -> dict:
         """Goal G2-phys / aux targets (opt-in): restore an exact snapshot, replay `actions` open-loop and return the
         privileged geometry (retryvla.geom.features.sim_geom, [T + 1, G]) after every step + success flags."""

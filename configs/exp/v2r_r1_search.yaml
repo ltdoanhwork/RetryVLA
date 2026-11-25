@@ -1,0 +1,16 @@
+# V2R R1 (PLAN "V2R", 2026-11-24): re-search of the M5b train failure instances with wm_diverse ranked by the CRIT-V
+# retrained `base` critic (critic swap). Same selection / pool / budget / continuation seeds as m5b_compare_arms.
+defaults: [exp/m5b_compare_arms]
+milestone: V2R
+tag: v2r_r1_search
+eval:
+  n_workers: 7
+m5b:
+  arms: [wm_diverse]
+  critic_link: data/wm/spatial_critic_base.txt
+  precheck_from: ["runs/*_M5_m5b_compare_arms_s*of8/precheck.csv"]
+  out_root: data/recovery/v2r_r1
+  verif_out: data/wm/verif_v2r_r1
+  verif_slim: true
+  worker_retries: 2
+  oom_retries: 3
