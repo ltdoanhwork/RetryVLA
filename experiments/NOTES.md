@@ -1393,3 +1393,15 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
   R2 filter targets exactly these (flips > 1, jerk, seam).
 - 2026-11-25 03:20 UTC: goal_g2_chain: G2 wm finished, auto table appended to RESULTS.
 - 2026-11-25 03:20 UTC: goal_g2_chain: P2-3 finished, auto table appended to RESULTS.
+- 2026-11-25 03:10-03:45 UTC:
+  - goal_g2_chain had died at 22:54 UTC 11-24: the agent box changed container (local tmux gone). GPUs were idle ~4 h.
+  - The chain now runs ON 953bb534 (tmux `rv_g2_chain`, scripts/goal_g2_chain_remote.sh, 5 restarts; det works from
+    inside the shell). It relaunched g2phys_wm_s9, g2_wm18_s7 / s8 and g2_rand_s7 at 03:09 and auto-registered the
+    G2 wm + P2-3 tables.
+  - Follow-ups queued: g2physns_wm x3, g2_wm5 x2.
+  - Visual check (runs/_analysis/visual_check/goal_g2):
+    - G2 bridges are smooth, but M0 continuations chatter (ep26: 21 gripper flips over 280 steps; ep44: 9; handoff
+      jumps up to 1.59).
+    - The phys filter removes seam / jerk / object-jump cases that also look bad.
+    - Its survivors are short near-goal bridges without continuation.
+  - Review doc: docs/research/REVIEW_2026-11-25_GOAL.md.
