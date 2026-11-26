@@ -1837,11 +1837,12 @@ Also paired now: G3-rep (P2-3 A recipe) s10 75, s11 75 vs Original s10 76, s11 8
 | G3-rep (P2-3 A recipe) | 10-11 (+12) | 75 / 75 (/ 71) | 75.0 | −3.5 [−11.5, +4.5] (paired s10-11) | - |
 | paper | 1 | 78 -> 88 | - | +10 (p 0.076) | 18 / 8 |
 
-Per task (5-seed means, Original -> G2-phys / strict-phys):
-- push plate 4.4 -> 7.4 / 6.6;
-- wine rack 4.2 -> 6.8 / 5.6;
-- cream cheese 6.0 -> 6.4 / 7.4;
-- top drawer + bowl 7.8 -> 5.2 / 7.4;
+Per task (5-seed means, Original -> G2-phys / strict-phys; corrected 17:35 UTC, the first version merged the two
+wine-bottle tasks):
+- push plate 4.2 -> 7.8 / 8.0;
+- wine rack 4.2 -> 6.8 / 5.2;
+- cream cheese 6.2 -> 7.4 / 6.0;
+- top drawer + bowl 7.8 -> **4.0** / 6.2;
 - the other tasks within ±1.
 
 Pre-registered G4 rules:
@@ -1855,8 +1856,8 @@ Reading:
 - The two physically filtered small-share banks give a consistent, small nominal gain (+3 pt, 5 / 5 seeds >= Original
   for G2-phys on the paired seed except s8 equal-or-better; 60 fixed vs 45 broken scenes). It is not significant at
   n = 100 scenes x 5 seeds.
-- The gain concentrates on the two weakest tasks (push plate +3.0, wine rack +2.6), with a regression on top drawer
-  (−2.6, G2-phys).
+- The gain concentrates on the two weakest tasks (push plate +3.6 / +3.8, wine rack +2.6 / +1.0), with a regression on
+  top drawer + bowl (−3.8 G2-phys, −1.6 strict-phys).
 - The paper's +10 is not reproduced. Our defensible claims: (1) verified recovery data raises own-failure recovery
   (+6 to +14 pt, CI > 0 in several arms); (2) at small, physically filtered shares it does so without costing
   nominal (here +3.0, CI [−4, +10]).

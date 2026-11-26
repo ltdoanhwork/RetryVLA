@@ -49,8 +49,8 @@ Seed mới của G4 (11-26): G2_wm@5 s9 74 (wine rack 0 / 10), G2_wm@18 s9 72, O
 - **"matches theirs" (Δ >= +5, CI > 0): KHÔNG đạt.**
 - Seed 10 / 11 kéo hai arm về gần Original: G2-phys 80 / 81, strict-phys 78 / 81, so với 82-87 ở seed 7-9. Trung bình
   3 seed (83.0 / 83.7) có phần do may mắn seed.
-- Gain tập trung ở task yếu: push plate 4.4 -> 7.4 / 6.6, wine rack 4.2 -> 6.8 / 5.6. Regression ở top drawer + bowl
-  (7.8 -> 5.2, G2-phys).
+- Gain tập trung ở task yếu: push plate 4.2 -> 7.8 / 8.0, wine rack 4.2 -> 6.8 / 5.2. Regression ở top drawer + bowl
+  (7.8 -> 4.0 G2-phys, 6.2 strict-phys).
 
 ## 3. Đọc trung thực
 
