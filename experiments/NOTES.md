@@ -1516,3 +1516,12 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
 - 2026-11-25 14:13 UTC: v2r chain (agent): stage R4 complete, auto table appended to RESULTS (reading pending).
 - 2026-11-25 19:09 UTC: goal_g2_chain: G3 finished, auto table appended to RESULTS.
 - 2026-11-25 22:20 UTC: goal_g2_chain: G2 random + D5 finished, auto table appended to RESULTS.
+- 2026-11-26 04:06 UTC (user: one more 2-GPU shell + short seed-filling runs):
+  - 953bb534 and 8f473147 are TERMINATED (the G2 queue finished 2026-11-25 22:20 UTC), so there are no existing
+    RetryVLA GPUs to fall back on.
+  - Requested `7485771f` vla_RetryVLA_DoanhLT_2g_c (2-slot yaml) at 04:06 UTC: QUEUED.
+  - Local tmux `rv_g4_watch` (scripts/goal_g4_watch.sh) waits for RUNNING (writes runs/goal_rsi/g4_queued_30min after
+    30 min), then envchecks both GPUs, launches lanes rv_g4_g0 / rv_g4_g1 (scripts/goal_g4_lane.sh, val eval first),
+    and kills the shell when both lanes print LANE_DONE.
+  - Caveat: this watcher runs on the agent box, whose container can change (it did on 11-24); the lanes themselves
+    run in remote tmux and survive that.

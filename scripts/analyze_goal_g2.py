@@ -31,7 +31,7 @@ def load(run, kind):
 
 def arm(prefix, kind):
     out = {}
-    for s in ((10, 11, 12) if prefix == "g3rep_A" else (7, 8, 9)):
+    for s in ((10, 11, 12) if prefix == "g3rep_A" else (7, 8, 9, 10, 11)):   # G4 (2026-11-26) adds seeds 10, 11
         x = load(f"{prefix}_s{s}", kind)
         if x:
             out[s] = x
@@ -69,6 +69,7 @@ def main():
             "G2_random": "g2_rand",
             "G3-rep (P2-3 A data, seeds 10-12)": "g3rep_A", "G3-c20 (P2-3 A data, cont_max 20)": "g3c20_A",
             "G3-phys-strict-r (wm 18 + random 28)": "g3physr",
+            "G4 phys sweep 5 (s7)": "g4sw5", "G4 phys sweep 18 (s7)": "g4sw18", "G4 phys sweep 36 (s7)": "g4sw36",
             "P2-3 A (curated D_R, 36 + n_P)": "p23_A", "P2-3 B (curated D_R 36 + D_P n_P)": "p23_B"}
     V = {k: arm(p, "val") for k, p in arms.items()}
     V["D5_wm (old bank + cont, 36)"].update({7: load("diag_f1wm_full_s7", "val")} if load("diag_f1wm_full_s7", "val") else {})
@@ -140,13 +141,13 @@ def main():
     res["paper"] = {"Original": 78, "Recovery": 88}
     (R / "g2.json").write_text(json.dumps(res, indent=1, default=str))
     f = lambda d: "-" if not d else f"{d['delta']:+.1f} [{d['ci'][0]:+.1f}, {d['ci'][1]:+.1f}]"
-    md = ["| arm | val s7 / s8 / s9 | mean | Δ vs Original | fixed / broken vs Orig | vs M0 | RSR_E8 | Δ RSR_E8 | "
+    md = ["| arm | val s7 / s8 / s9 (/ s10 / s11) | mean | Δ vs Original | fixed / broken vs Orig | vs M0 | RSR_E8 | Δ RSR_E8 | "
           "RSR_E8on | fail. incidence | first-attempt |", "|---|---|---|---|---|---|---|---|---|---|---|"]
     for k, r in a.items():
-        md.append(f"| {k} | {' / '.join(str(r['val'].get(s, '-')) for s in (7, 8, 9))} | {r['val_mean']:.1f} | "
+        md.append(f"| {k} | {' / '.join(str(r['val'].get(s, '-')) for s in (7, 8, 9, 10, 11) if s in r['val'] or s <= 9)} | {r['val_mean']:.1f} | "
                   f"{f(r['d_vs_orig'])} | {r['fixed_broken_vs_orig'] or '-'} | {r['fixed_broken_vs_m0']} | "
                   f"{np.mean(list(r['rsr_e8'].values())):.3f} | " if r.get("rsr_e8") else
-                  f"| {k} | {' / '.join(str(r['val'].get(s, '-')) for s in (7, 8, 9))} | {r['val_mean']:.1f} | "
+                  f"| {k} | {' / '.join(str(r['val'].get(s, '-')) for s in (7, 8, 9, 10, 11) if s in r['val'] or s <= 9)} | {r['val_mean']:.1f} | "
                   f"{f(r['d_vs_orig'])} | {r['fixed_broken_vs_orig'] or '-'} | {r['fixed_broken_vs_m0']} | - | ")
         md[-1] += (f"{f(r.get('rsr_e8_d_vs_orig'))} | " if r.get("rsr_e8") else "- | ")
         md[-1] += (f"{np.mean(list(r['rsr_e8on'].values())):.3f} | " if r.get("rsr_e8on") else "- | ")
