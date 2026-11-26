@@ -1795,3 +1795,30 @@ paper (cross-paper reference): Original 78 -> Recovery 88 (+10)
   - The G2-phys gain is at least partly a share effect (G2_wm@5 is as good), pending seed 9.
   - G2-physns gives the best trade-off: +2.3 nominal, +9.9 RSR.
   - No arm beats Original with a CI excluding 0 at 3 seeds. The seed-filling runs G4 (PLAN) tighten this.
+
+## Goal G4 round 1-2 (shell 7485771f, 2026-11-26 04:30-10:09 UTC; val only; pre-registration PLAN "Goal G4")
+
+| run | val | per task (drawer, top-drawer+bowl, push plate, bowl/plate, bowl/stove, bowl/cabinet, cream cheese, wine rack, wine/cabinet, stove) |
+|---|---|---|
+| G2_wm@5 s9 | **74** | 9, 6, 9, 8, 10, 9, 4, **0**, 9, 10 |
+| G2_wm@18 s9 | **72** | 9, 10, 8, 4, 10, 8, 4, 1, 9, 9 |
+| Original s10 | 76 | 10, 6, 4, 10, 9, 9, 4, 5, 9, 10 |
+| Original s11 | 81 | 9, 9, 5, 10, 9, 9, 6, 4, 10, 10 |
+
+Updated (paired seeds; scene x seed bootstrap 95 %; Original over 5 seeds = 82 / 77 / 79 / 76 / 81 = 79.0, SD 2.5):
+
+| arm | seeds | val | mean | Δ vs Original (paired) |
+|---|---|---|---|---|
+| G2_wm@5 | 7, 8, 9 | 86 / 85 / **74** | 81.7 | +2.3 [−7.3, +11.3] (was +6.0 at 2 seeds) |
+| G2_wm@18 | 7, 8, 9 | 76 / 82 / **72** | 76.7 | −2.7 [−12.3, +7.7] |
+| G2-phys (18 strict) | 7, 8, 9 | 84 / 82 / 83 | 83.0 | +3.7 [−4.3, +12.0] |
+| G3-phys-strict-r (46) | 7, 8, 9 | 80 / 87 / 84 | 83.7 | +4.3 [−5.0, +13.0] |
+
+Readings:
+- Seed 9 pulled G2_wm@5 down (74; wine rack 0 / 10). The 2-seed +6.0 was seed luck.
+- G2-phys − G2_wm@5 is now +1.3 [−8.3, +11.7] and G2-phys − G2_wm@18 +6.3 [−3.7, +16.0]. The pre-registered
+  "G2phys gain is a share effect" (|Δ vs wm@5| < 3) is MET at 3 seeds: the filter adds nothing measurable beyond the
+  small share at n = 100 x 3.
+- But G2-phys is the more STABLE arm: 82-84 on every seed vs 74-86.
+- The new Original seeds (76, 81) keep the Original mean at 79.0. G2-phys / strict-phys seeds 10 / 11 (running) give
+  5-seed paired Δs for the "beats Original" rule.

@@ -1535,3 +1535,9 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
     imagination search -> bridge replay; + shipped WM v1 reference); rv_e1_e2 (ObjDyn, < 1 h); rv_e1_watch
     (relaunch <= 3x, 45-min stall kill, CHAIN_DONE marker). ETA: trainings ~17:00-18:00 UTC, last search + replay
     ~18:30 UTC, then analysis + online gate only if an arm PASSes.
+- 2026-11-26 10:30 UTC: G4 status check (coordinator).
+  - No restart: lane logs show round 1 (G2_wm@5 s9 = 74, G2_wm@18 s9 = 72, done 07:03-07:04), round 2 (Original
+    s10 = 76, s11 = 81, done 10:09), and round 3 (G2-phys s10 / s11) started 10:09 UTC; "step 150" at 10:23 is round 3.
+  - Each run takes 2 h 33 min - 3 h 05 min (2k x 4.28 s + val eval).
+  - Shell 7485771f (node of container 2581ab29dd50) is RUNNING; watcher `rv_g4_watch` alive. e112b373 (E1,
+    another agent) untouched.
