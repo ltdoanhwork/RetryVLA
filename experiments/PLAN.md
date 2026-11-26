@@ -1291,3 +1291,32 @@ Rules (paired with the stated control; scene x seed bootstrap; RSR_E8 entry x se
   recipe. Rule: lrs2gt >= Original_s7 - 5 (>= 77) and lrs2_s7 < 70 -> "judge false accepts drive the damage";
   lrs2gt < 70 -> "even verified teacher windows hurt at this teacher strength (window quality / grader)". 1 seed,
   labelled preliminary.
+
+## Goal G4: short seed-filling runs on a new 2-GPU shell (user request 2026-11-26 03:55 UTC; written BEFORE any G4 result)
+State:
+- 953bb534 / 8f473147 were TERMINATED after the queue finished (all_done 2026-11-25 22:20 UTC).
+- New shell 7485771f `vla_RetryVLA_DoanhLT_2g_c` requested 04:06 UTC.
+- Best nominal arms (Original 79.3):
+  - G2_wm@5: 86 / 85, 2 seeds;
+  - G3-phys-strict-r: 80 / 87 / 84;
+  - G2-phys: 84 / 82 / 83;
+  - G2-physns: 82 / 82 / 81.
+  None has a CI excluding 0 vs Original.
+
+Runs: M0 + 2k (their recipe, bf16 path), then val eval (100 scenes) FIRST. E8 / events are evaluated later only if
+GPU time remains.
+- (1) missing seeds: `g2_wm5_s9`, `g2_wm18_s9`.
+- (2) extra seeds 10, 11: `g2phys_wm`, `g3physr`, and the paired **Original** (`orig_s10`, `orig_s11`, D0 only).
+- (3) if time, phys-bank share mini-sweep, seed 7: strict survivors of both banks at 5 / 18 / 36 trajectories
+  (wm : random split 2:3, 7:11, 14:22), plus the existing 46 (`g3physr_s7` = 80).
+
+Rules (paired by seed where both arms exist; scene x seed bootstrap 95 %):
+- "beats Original" for an arm iff mean Δ >= +3 with CI lower bound > 0 over all available paired seeds (7-11).
+- "matches theirs" iff Δ >= +5 with CI lower bound > 0.
+- For G2_wm@5 vs G2-phys (share control, PLAN 2026-11-25 03:30): "G2phys gain is a share effect" iff |Δ| < 3.
+- Share sweep: report the curve only (1 seed, no decision).
+
+Order (2 lanes, sequential, val only first):
+- GPU0: g2_wm5_s9 -> orig_s10 -> g2phys_s10 -> g3physr_s10 -> sweep 5 -> sweep 36;
+- GPU1: g2_wm18_s9 -> orig_s11 -> g2phys_s11 -> g3physr_s11 -> sweep 18.
+- ~2.6 h per run (2k x 4.3 s + 10 min eval). The shell kills itself when both lanes are done.

@@ -1774,3 +1774,24 @@ paper (cross-paper reference): Original 78 -> Recovery 88 (+10)
 | put_the_wine_bottle_on_top_of_the_cabinet | 9.3 | 7.7 | 8.7 | 8.3 | 8.3 | 8.0 | 8.5 | 9.0 | 8.0 | 8.7 | 9.0 | 7.0 | 9.0 | 8.7 | 8.7 |
 | turn_on_the_stove | 10.0 | 9.0 | 10.0 | 9.3 | 10.0 | 10.0 | 8.5 | 9.7 | 9.0 | 10.0 | 9.0 | 9.3 | 10.0 | 10.0 | 10.0 |
 
+
+## Goal G3 + G2 random / D5 controls: reading vs rules (agent, 2026-11-26 04:10 UTC; auto tables above)
+- **G3-rep (P2-3 A recipe, new seeds 10-12): 75 / 75 / 71 = 73.7. "A replicates" NOT met** (needs >= 77.3). P2-3 A's
+  79.3 on seeds 7-9 did not hold on new seeds, so the "recovery without nominal cost" result is withdrawn as
+  not replicated. RSR_E8 0.226 (still above Original's 0.147).
+- **G3-c20 (continuation cap 20): 62 / 72 / 77 = 70.3**, Δ vs P2-3 A −9.0. "masking continuation helps" NOT met; it
+  is worse (fewer continuation anchors = less closed-loop context, consistent with the F1 diagnosis).
+- **G3-phys-strict-r (46 strict survivors): 80 / 87 / 84 = 83.7, Δ vs Original +4.3 [−5.0, +13.0]**; RSR_E8 +2.0;
+  failure incidence 0.21 (= Original 0.22); first-attempt 0.76 (highest of all arms).
+  - "more strict data helps" (vs G2-phys: nominal >= and RSR +3) NOT met (RSR +2.0 vs +3.6).
+  - "matches theirs" NOT met (CI includes 0).
+- **Controls:**
+  - G2-physns (no seam rule, 36): 81.7 (+2.3), RSR +9.9 [+3.6, +17.1]. The best recovery at ~Original nominal.
+  - G2_wm@5 (anchor-matched to G2-phys): 86 / 85 (2 seeds) = 85.5, Δ +6.0 [−2.0, +14.0], RSR +6.5.
+  - G2 random @36: 78.7; D5 @36: 75.3.
+- **Reading:**
+  - Small recovery shares (1-2 %, G2_wm@5, G2-phys, strict-phys) are where nominal sits at or above Original;
+    11-20 % shares cost nominal.
+  - The G2-phys gain is at least partly a share effect (G2_wm@5 is as good), pending seed 9.
+  - G2-physns gives the best trade-off: +2.3 nominal, +9.9 RSR.
+  - No arm beats Original with a CI excluding 0 at 3 seeds. The seed-filling runs G4 (PLAN) tighten this.
