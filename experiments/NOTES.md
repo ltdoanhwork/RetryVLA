@@ -1525,3 +1525,13 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
     and kills the shell when both lanes print LANE_DONE.
   - Caveat: this watcher runs on the agent box, whose container can change (it did on 11-24); the lanes themselves
     run in remote tmux and survive that.
+- 2026-11-26 08:06 UTC (E1 / E2, user decision 07:37 UTC; PLAN 'E1 ... run plan and deviations', pre-registration
+  committed 80fddbb before any result):
+  - Requested own 2-GPU shell `e112b373` vla_RetryVLA_DoanhLT_e1wm at 07:44 UTC: RUNNING immediately (queue 0 min),
+    envcheck OK (sim 50 steps 0.95 s). 2g_c (`7485771f`, G4 lanes until ~17:30 / ~20:10 UTC) is NOT used; no claim on it.
+  - Remote tmux on e112b373: rv_e1_tr{0,1}{0,1,2} = 6 training lanes (3 per GPU, shared locked queue of 18 WMs:
+    A0 / A2 / A1 / A4 / A3 / A2x3 x seeds 1-3, M2 recipe 20k steps, ~2 it/s each under sharing -> ~2.8 h / WM);
+    rv_e1_pools (75 held-out pools, z0 vs stored frame-0 latent normalised MSE 0.0002); rv_e1_post (per finished WM:
+    imagination search -> bridge replay; + shipped WM v1 reference); rv_e1_e2 (ObjDyn, < 1 h); rv_e1_watch
+    (relaunch <= 3x, 45-min stall kill, CHAIN_DONE marker). ETA: trainings ~17:00-18:00 UTC, last search + replay
+    ~18:30 UTC, then analysis + online gate only if an arm PASSes.

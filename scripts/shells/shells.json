@@ -49,19 +49,31 @@
    "tmux": "rv_lrsg*",
    "args": "LRS-G collection / SFT / eval (PLAN LRS-G)",
    "since": "2026-11-24T13:47:25"
+  },
+  "e112b373:0:rv_e1": {
+   "tmux": "rv_e1*",
+   "args": "E1 WM trainings / imagination search / replays (PLAN E1)",
+   "since": "2026-11-26T07:52:13"
+  },
+  "e112b373:1:rv_e1": {
+   "tmux": "rv_e1*",
+   "args": "E1 WM trainings / imagination search / replays (PLAN E1)",
+   "since": "2026-11-26T07:52:13"
   }
  },
  "allow_only": {
   "63e0f914": "vla_roboworm_1 (owner-busy; LIGHT-SHARE only, currently UNUSED). 2026-11-23: F1 moved to the RetryVLA-owned 2-GPU shell; watcher rv_f1_watch stopped, no claims.",
   "953bb534": "vla_RetryVLA_DoanhLT_2g (953bb534-56fa-4fdf-9e98-36e94fea2423), RetryVLA-OWNED, user account, started 2026-11-23 03:26 UTC for 2610.05151 F1 (user decision). Node cn62, 2x A100 80GB, 32 CPU. envcheck GPU0/1: OK video decode, OK sim 50 steps 0.98 / 0.96 s. Full use; KILL when F1 is done unless scripts/shells/keep_953bb534 exists.",
   "8f473147": "vla_RetryVLA_DoanhLT_2g_b (8f473147-f766-4ea5-8fe5-32d28567fd52), RetryVLA-OWNED second 2-GPU shell, user account, started 2026-11-23 08:25 UTC for the Goal campaign (queue > 12 h). Node cn36, 2x A100 80GB; envcheck GPU0/1 OK (sim 50 steps 0.96 s). Full use; kill when idle.",
-  "1123d1ea": "vla_RetryVLA_DoanhLT_lrs2g (1123d1ea-0e2a-4c73-bbbb-21d671e1e077), RetryVLA-OWNED 2-GPU shell, user account, started 2026-11-24 13:45 UTC for LRS-G (full 2610.05151 Recovery reproduction + demos). Full use; KILL when LRS-G is done."
+  "1123d1ea": "vla_RetryVLA_DoanhLT_lrs2g (1123d1ea-0e2a-4c73-bbbb-21d671e1e077), RetryVLA-OWNED 2-GPU shell, user account, started 2026-11-24 13:45 UTC for LRS-G (full 2610.05151 Recovery reproduction + demos). Full use; KILL when LRS-G is done.",
+  "e112b373": "vla_RetryVLA_DoanhLT_e1wm (e112b373-8907-43c8-b3b6-05e33f18576c), RetryVLA-OWNED 2-GPU shell, user account, started 2026-11-26 07:45 UTC for E1 (WM-DAgger x 3D aux) + E2. envcheck GPU0 OK (sim 50 steps 0.95 s). Full use; KILL when E1/E2 are done."
  },
  "share_ok": {
   "63e0f914": true,
   "953bb534": true,
   "8f473147": true,
-  "1123d1ea": true
+  "1123d1ea": true,
+  "e112b373": true
  },
  "gone": {
   "0097c39c": "vla_RetryVLA_DoanhLT_1 (cn69), RetryVLA's GPU 2026-10-27..10-31; not RUNNING since 2026-11-01 (user 2026-11-02: no longer running). Removed from allow_only",
