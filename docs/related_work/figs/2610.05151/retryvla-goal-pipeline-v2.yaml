@@ -1,0 +1,49 @@
+# RetryVLA CURRENT pipeline on the 2610.05151 LIBERO-Goal protocol (G2 / G2-phys / P2-3 / G3, 2026-11-25/26).
+# Grounded in experiments/PLAN.md ("Goal campaign G2 ... P2-3", "Goal campaign additions", "G2-phys follow-ups",
+# "Goal G3"), experiments/RESULTS.md (Goal G2 / P2-3 auto table, latest 2026-11-25 22:20 UTC) and
+# docs/research/REVIEW_2026-11-25_GOAL.md.
+slug: retryvla-goal-pipeline-v2
+eyebrow: RetryVLA · LIBERO-Goal · 2610.05151 protocol
+title: "Current RetryVLA pipeline: onset cuts → WM search → sim-verified, physically curated bank"
+subtitle: "Ground truth comes from the simulator, not the WM; the physical filter + low share keep nominal at or above Original (CI still includes 0)."
+columns:
+  - name: COLLECTION
+    nodes:
+      - {id: bench, icon: test, title: LIBERO-Goal benchmark, subtitle: ["10 tasks · 300 train scenes", "100 val scenes (their split)"], kind: external}
+      - {id: m0, icon: robot, title: "M0 audit rollouts", subtitle: ["π0 3B + LoRA 4k (val 85)", "300 train scenes x seeds 7 / 8", "~56 failures per seed"]}
+      - {id: onset, icon: search, title: Failure-onset scan, subtitle: ["sim branching · 20-step grid", "K = 8 M0 continuations, need 2", "52 (s7) / 53 (s8) onset entries"]}
+      - {id: cut, icon: backup, title: Cut states at onset, subtitle: ["t_on = t_last + 20", "bit-exact sim snapshots"], kind: storage}
+  - name: DISCOVERY
+    nodes:
+      - {id: pool, icon: stack-2, title: Candidate pool, subtitle: ["128 π0 samples · noise 1.0", "+ 8 fixed + random primitives", "no perturbation family", "> 1 gripper flip dropped"]}
+      - {id: wm, icon: cube, title: "Latent WM v1", note: "over-optimistic under search", subtitle: ["DINOv2 tokens · 2 cams", "imagines end states"], kind: bottleneck}
+      - {id: critic, icon: chart-line, title: "Critic C^π ranks", subtitle: ["wm_diverse picks · 16 verif. / entry", "bank: shipped C^π; new search:", "CRIT-V retrained base"]}
+  - name: VERIFICATION & CURATION
+    nodes:
+      - {id: verify, icon: server, title: Sim ground-truth verification, subtitle: ["restore snapshot → bridge", "→ M0 continuation → BDDL success", "≤ 4 trajectories / entry"], kind: storage}
+      - {id: phys, icon: alert-triangle, title: Physical-plausibility filter, note: "jerky bridges / seam jumps", subtitle: ["penetration > 1 cm · off-table", "obj jump w/o contact · bridge jerk", "> 1 gripper flip · seam / handoff jump", "strict: 18 / 132 wm, 28 / 115 rand"]}
+      - {id: vis, icon: desktop, title: Visual check, subtitle: ["full-fps MP4 + contact sheets", "retryvla-visual-check"]}
+      - {id: bank, icon: database, title: Curated recovery bank, subtitle: ["bridge + M0 continuation", "1.6 % (phys 18) – 20 % (A, 72)", "opt. D_P: 82 a+ at 44 / 51 s^-"], kind: storage}
+  - name: TRAINING & EVAL
+    nodes:
+      - {id: demos, icon: file, title: Original demos D0, subtitle: ["their demos · pooled uniformly"], kind: external}
+      - {id: sft, icon: refresh, title: "Distill (their recipe)", note: "high share swamps demos (F0 47 % → 68.0)", subtitle: ["M0 + 2k steps · warmup 200 · cosine", "D0 + bank uniform · 3 seeds"]}
+      - {id: eval, icon: monitoring, title: Evaluation, subtitle: ["nominal SR · 100 val scenes", "RSR_E8: 168 held-out s8 entries", "E-v1 incidence + first-attempt"]}
+      - {id: res, icon: chart-line, title: "Val SR (mean of 3 seeds)", subtitle: ["Original 79.3 · G2 72.7", "G2-phys 83.0 (+3.7, CI incl. 0)", "G3-phys-strict-r 83.7 (+4.3, CI incl. 0)", "P2-3 A 79.3 · B (+D_P) 75.3", "paper: 78 → Recovery 88"]}
+      - {id: paper, icon: file, title: "Paper 2610.05151", subtitle: ["LLM-teacher recovery · 4.1 %", "1 seed · cross-paper only"], kind: external}
+edges:
+  - {from: bench, to: m0, label: SCENES, dashed: true}
+  - {from: m0, to: onset, label: FAILS}
+  - {from: onset, to: cut, label: T_ON}
+  - {from: cut, to: pool, label: ENTRY}
+  - {from: pool, to: wm, label: ENCODE}
+  - {from: wm, to: critic, label: IMAGINE, kind: pain}
+  - {from: critic, to: verify, label: TOP-K, kind: pain}
+  - {from: verify, to: phys, label: PASS}
+  - {from: phys, to: vis, label: KEEP}
+  - {from: vis, to: bank, label: OK}
+  - {from: demos, to: sft, label: D0, dashed: true}
+  - {from: bank, to: sft, label: SHARE, kind: pain}
+  - {from: sft, to: eval, label: CKPT}
+  - {from: eval, to: res, label: SR, kind: neutral}
+legend: {pain: "risk: WM over-optimism / share swamping demos", neutral: "eval", dashed: "external / mix"}
