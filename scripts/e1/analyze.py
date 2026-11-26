@@ -160,7 +160,7 @@ def main() -> None:
                 dec[f"{x}_vs_{c}"] = {"gap": rg, "cb": rc, "gap_base": rb, "val_rel": float((vx - vc) / vc),
                                       "verdict": verdict}
     L.append("\nPre-registered verdicts at bud512: " + ", ".join(f"{k} **{v['verdict']}**" for k, v in dec.items()))
-    close = all(abs(dec.get(k, {"gap": {"d": 0}})["gap"]["d"]) < 0.05 for k in ("A2_vs_A1", "A3_vs_A0"))
+    close = all(k in dec and abs(dec[k]["gap"]["d"]) < 0.05 for k in ("A2_vs_A1", "A3_vs_A0"))
     L.append(f"\nCLOSE rule (|d gap| < 0.05 for A2 vs A1 and A3 vs A0): {close}")
     # 3. fixed candidates (independence effect + sanity)
     L.append("\n## 3. Fixed candidates of the held-out instances (verif_m5b: 16 random + 48 picked by WM v1), gap = C_imag - C_true\n")

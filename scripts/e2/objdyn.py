@@ -184,6 +184,9 @@ def main() -> None:
     # RGR GeomHead veto on WM v1 imagined latents
     df["geom_valid"] = geom_veto(df, dev)
     df.to_parquet(out / "rows.parquet")
+    torch.save({"objdyn": model.state_dict(), "csym": csym.state_dict(), "vocab": vocab,
+                "norm": {"xm": xm, "xs": xs, "qm": qm, "qs": qs, "cm": cm, "cs": cs_, "stm": stm, "sts": sts}},
+               out / "objdyn.pt")
     report(df, out)
 
 

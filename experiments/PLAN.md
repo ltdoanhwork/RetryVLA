@@ -1366,3 +1366,11 @@ Deviations (D) and clarifications (C):
   critic on TRUE end sym (same training instances); veto J = min(C_v1, C_sym(ObjDyn)). Tests (a)-(d) on the 75
   held-out instances' verif_m5b candidates (WM v1 imagined C from runs/_analysis/wm_optimism/cache), as written;
   (d) compares with the RGR GeomHead E_geom veto on WM v1 imagined latents at equal retention.
+- E2 addendum (2026-11-26 10:45 UTC, after the pre-registered E2 tests (a)-(d) were read: (a) pass, (b) FAIL,
+  (c) pass, (d) pass -> by the rule E2 is NOT added to the online gate). Exploratory, not a decision input: the
+  (c) gain (FP@top4 0.761 -> 0.528) was measured on picks made by WM v1 alone, i.e. with the independence effect in
+  ObjDyn's favour. Self-exploitation check: imagination search on the 75 held-out pools with
+  J = min(C^pi v2(WM v1), C_sym(ObjDyn)) - R (same bud / unc procedure, `scripts/e2/selfexploit.py`, tag
+  WMv1_objdyn), picks replayed like E1; report C^pi gap, true C^pi of picks, and ObjDyn's own gap
+  (C_sym(ObjDyn) - C_sym(TRUE end sym)) vs the WMv1 reference. ObjDyn is retrained once with the same script to save
+  its weights (first-run table kept as runs/_analysis/e2/e2_run1.md).
