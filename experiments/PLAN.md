@@ -1320,3 +1320,49 @@ Order (2 lanes, sequential, val only first):
 - GPU0: g2_wm5_s9 -> orig_s10 -> g2phys_s10 -> g3physr_s10 -> sweep 5 -> sweep 36;
 - GPU1: g2_wm18_s9 -> orig_s11 -> g2phys_s11 -> g3physr_s11 -> sweep 18.
 - ~2.6 h per run (2k x 4.3 s + 10 min eval). The shell kills itself when both lanes are done.
+
+## E1 (WM-DAgger x 3D/contact aux heads) + E2 (object-centric rigid partner): run plan and deviations (user decision 2026-11-26 07:37 UTC; written BEFORE any E1 / E2 result)
+Design, arms and decision rules: `docs/research/WM_3D_FOUNDATION.md` section 4 (committed fe7f198). Everything there
+holds except the deviations below, fixed before any number is seen. Code: `retryvla/wm/train_wm_e1.py`,
+`scripts/e1/*`, `scripts/e2/*`. Compute: own shell `e112b373` (`vla_RetryVLA_DoanhLT_e1wm`, 2x A100, RUNNING at
+07:45 UTC, queue 0 min) -> 2g_c (G4) is not taken; killed when E1 / E2 are done.
+
+Deviations (D) and clarifications (C):
+- D1 held-out split. The RQ3 63 instances share failure-episode groups (task__episode) with 131 of the 193 other
+  verif_m5b instances, so search-selected bridges of the same failure (other object-noise trial) would leak into
+  the DAgger arms. Held-out = all verif_m5b instances of 16 groups: the 9 groups of the WM_OPTIMISM_VISUAL gallery
+  instances (so the before / after gallery is on held-out FPs) + random groups (random.Random(20261126)) until >= 72
+  instances -> 75 held-out instances (12 of them RQ3), 181 DAgger-pool instances (`configs/exp/e1_split.json`).
+  DAgger pool: 2,896 `random` + 8,688 search-selected (wm_diverse / wm_noise / wm_qd) bridges; 1x = 2,896
+  (per instance 16 of 48, stratified over the 3 arms by logged rank). collect_v1 is kept whole in every arm (48 of
+  its files are in held-out groups, as for WM v1; reported as a stratum).
+- D2 pools. RQ3 pools were not stored. One 256-candidate pool per held-out instance is drawn once (restore snapshot,
+  SmolVLA `Proposals`, seed crc32(instance)) and shared by every WM (paired). Imagination search per WM:
+  (i) `wm_bud`: arm_wm_budget logic, lambda 0, mu 1, N in {8, 32, 128, 512}, top-8 (not 4) by J = C^pi - R;
+  (ii) `wm_unc_l0`: pool + 2 elite-local CEM rounds (768), diverse top-8. Same CEM seeds per instance for every WM.
+  U_ens is not used (lambda 0; bootstrap heads exist only for WM v1). Primary = wm_bud at N = 512.
+- D3 the normalizer of every new WM is fixed to WM v1's (C^pi v2 reads WM v1-normalised latents).
+- D4 aux heads. Object flow = per-class (robot / obj / goal / other) point-cloud centroid displacement from t = 0
+  + obj-class xyz spread at t = 10..50 (records have no point correspondences, so the '16 FPS point flow' is not
+  defined). Sym 25-d at t = 0..50 / 5: binary dims BCE, continuous dims standardised MSE, pred pads (-1) masked.
+  Heads read (z, q) through a 1-query attention pool + MLP, applied to the TRUE latents (teacher) and to the
+  open-loop imagined latents at every step (gradient into the dynamics); weights 0.1 (sym) + 0.1 (flow).
+- D5 A5 (AWM) dropped (optional in the design).
+- D6 seeds 1, 2, 3 for every arm (seed 0 = shipped WM v1, run through the same pipeline as a reference only).
+- D7 true end state = bridge-only replay (50 steps, NVIDIA EGL, identical action sequences of one instance replayed
+  once), C^pi v2 on the TRUE end latent; end sym recorded (grasped etc.) for per-cause tables. Robustness critic:
+  CRIT-V `base_s0` (Spatial).
+- D8 statistics: per seed index s, d_s = metric(X, s) - metric(control, s) on the 75 held-out instances (each arm's
+  own picks); decision on the seed mean, instance-cluster bootstrap 1,000 reps; '3/3 seeds same sign' = sign of
+  each d_s. Per-family (action heuristic of scripts/wm_optimism/cache_stats.action_family), per-camera token error
+  (agent / wrist) and RQ3-subset tables are descriptive only.
+- D9 online gate (only if an arm PASSes): on the 75 held-out instances (group-disjoint) instead of 127 M5b instances
+  (the others are DAgger training instances); 8 verifications / instance with pi continuation, arms X, A0, A0 +
+  linear recalibrator (T2Mem F2 recipe, fit on DAgger-pool verified candidates only). MDE at n = 75 is ~ +0.4 hits /
+  instance; solved differences are not interpretable at this n.
+- E2 concretised: ObjDyn input = per-class centroids + obj up-axis + sym at t = 0 (critic3d) + q0 + 50 x 7 actions;
+  output = sym (25) + centroids at t = 10..50; train on critic3d collect_v1 + verif_r1 + verif_m5b DAgger-pool
+  instances (no held-out group). 'ObjDyn agrees' = C_sym(ObjDyn end sym) > 0.5 where C_sym = small MLP success
+  critic on TRUE end sym (same training instances); veto J = min(C_v1, C_sym(ObjDyn)). Tests (a)-(d) on the 75
+  held-out instances' verif_m5b candidates (WM v1 imagined C from runs/_analysis/wm_optimism/cache), as written;
+  (d) compares with the RGR GeomHead E_geom veto on WM v1 imagined latents at equal retention.
