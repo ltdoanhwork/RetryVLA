@@ -1822,3 +1822,41 @@ Readings:
 - But G2-phys is the more STABLE arm: 82-84 on every seed vs 74-86.
 - The new Original seeds (76, 81) keep the Original mean at 79.0. G2-phys / strict-phys seeds 10 / 11 (running) give
   5-seed paired Δs for the "beats Original" rule.
+
+## Goal G4 rounds 3-4 + 5-seed rule test (2026-11-26 17:25 UTC; shell 7485771f; pre-registration PLAN "Goal G4")
+New runs (val, 100 scenes):
+- G2-phys s10 80, s11 81 (done 12:42);
+- strict-phys (46) s10 78, s11 81 (done 15:16).
+Also paired now: G3-rep (P2-3 A recipe) s10 75, s11 75 vs Original s10 76, s11 81.
+
+| arm | seeds | val | mean | Δ vs Original (paired, 5 seeds; bootstrap 10k) | fixed / broken |
+|---|---|---|---|---|---|
+| Original | 7-11 | 82 / 77 / 79 / 76 / 81 | 79.0 | - | - |
+| G2-phys (18 strict) | 7-11 | 84 / 82 / 83 / 80 / 81 | **82.0** | **+3.0 [−3.8, +9.8]** | 60 / 45 |
+| strict-phys (46) | 7-11 | 80 / 87 / 84 / 78 / 81 | **82.0** | **+3.0 [−4.0, +10.2]** | 57 / 42 |
+| G3-rep (P2-3 A recipe) | 10-11 (+12) | 75 / 75 (/ 71) | 75.0 | −3.5 [−11.5, +4.5] (paired s10-11) | - |
+| paper | 1 | 78 -> 88 | - | +10 (p 0.076) | 18 / 8 |
+
+Per task (5-seed means, Original -> G2-phys / strict-phys):
+- push plate 4.4 -> 7.4 / 6.6;
+- wine rack 4.2 -> 6.8 / 5.6;
+- cream cheese 6.0 -> 6.4 / 7.4;
+- top drawer + bowl 7.8 -> 5.2 / 7.4;
+- the other tasks within ±1.
+
+Pre-registered G4 rules:
+- **"beats Original" (Δ >= +3 with CI lower bound > 0): NOT met** for G2-phys and strict-phys. Δ = +3.0 meets the
+  size bar exactly, but the CI lower bounds are −3.8 / −4.0.
+- **"matches theirs" (Δ >= +5, CI > 0): NOT met.**
+- Extra seeds 10 / 11 regressed toward Original (80 / 81 and 78 / 81 vs 82-87 on seeds 7-9): the 3-seed means
+  (83.0 / 83.7) were partly seed luck.
+
+Reading:
+- The two physically filtered small-share banks give a consistent, small nominal gain (+3 pt, 5 / 5 seeds >= Original
+  for G2-phys on the paired seed except s8 equal-or-better; 60 fixed vs 45 broken scenes). It is not significant at
+  n = 100 scenes x 5 seeds.
+- The gain concentrates on the two weakest tasks (push plate +3.0, wine rack +2.6), with a regression on top drawer
+  (−2.6, G2-phys).
+- The paper's +10 is not reproduced. Our defensible claims: (1) verified recovery data raises own-failure recovery
+  (+6 to +14 pt, CI > 0 in several arms); (2) at small, physically filtered shares it does so without costing
+  nominal (here +3.0, CI [−4, +10]).

@@ -29,18 +29,28 @@ có 5 seed 7-11: 82 / 77 / 79 / 76 / 81 = **79.0**, SD 2.5). Paper: 78 -> 88 (1 
 | Original | 0 | 7-11 | 82 / 77 / 79 / 76 / 81 | 79.0 | - | 0.147 |
 | G2 (curated onset + cont., 36) | 11 % | 7-9 | 67 / 72 / 79 | 72.7 | −6.7 [−18, +4] | 0.200 (+5.4) |
 | P2-3 A (72) | 20 % | 7-9 | 83 / 78 / 77 | 79.3 | +0.0 [−8, +8] | 0.248 (+10.1) |
-| P2-3 A replication | 20 % | 10-12 | 75 / 75 / 71 | 73.7 | không replicate | 0.226 |
+| P2-3 A replication | 20 % | 10-12 | 75 / 75 / 71 | 73.7 | −3.5 [−11.5, +4.5] (paired s10-11) | 0.226 |
 | P2-3 B (36 + D_P 36) | 18 % | 7-9 | 75 / 71 / 80 | 75.3 | −4.0 [−13, +5] | 0.248 (+10.1) |
 | G2_wm@5 | ~1.5 % | 7-9 | 86 / 85 / 74 | 81.7 | +2.3 [−7, +11] | 0.217 (+6.5) |
 | G2_wm@18 | ~5 % | 7-9 | 76 / 82 / 72 | 76.7 | −2.7 [−12, +8] | 0.164 (+1.2) |
-| **G2-phys (18 strict)** | 1.6 % | 7-9 (+10, 11 chạy) | 84 / 82 / 83 | **83.0** | +3.7 [−4, +12] | 0.183 (+3.6) |
+| **G2-phys (18 strict)** | 1.6 % | 7-11 | 84 / 82 / 83 / 80 / 81 | **82.0** | **+3.0 [−3.8, +9.8]** (5 seed) | 0.183 (+3.6, s7-9) |
 | **G2-physns (36, bỏ seam rule)** | ~10 % | 7-9 | 82 / 82 / 81 | 81.7 | +2.3 [−5, +11] | **0.246 (+9.9)** |
-| **strict-phys (46)** | ~3 % | 7-9 (+10, 11 queue) | 80 / 87 / 84 | **83.7** | +4.3 [−5, +13] | 0.167 (+2.0) |
+| **strict-phys (46)** | ~3 % | 7-11 | 80 / 87 / 84 / 78 / 81 | **82.0** | **+3.0 [−4.0, +10.2]** (5 seed) | 0.167 (+2.0, s7-9) |
 | G3-c20 (cap continuation 20) | ~8 % | 7-9 | 62 / 72 / 77 | 70.3 | −9.0 vs P2-3 A | 0.224 |
 | G2 random (36) | 11 % | 7-9 | 80 / 76 / 80 | 78.7 | −0.7 | 0.218 (+7.1) |
 | paper (cross-paper) | 4.1 % teacher | 1 | 78 -> 88 | - | +10 | không đo |
 
 Seed mới của G4 (11-26): G2_wm@5 s9 74 (wine rack 0 / 10), G2_wm@18 s9 72, Original s10 76, s11 81.
+
+## 2b. Kết quả rule G4 (cập nhật 17:25 UTC, 5 seed paired)
+
+- **"beats Original" (Δ >= +3, CI lower bound > 0): KHÔNG đạt.** G2-phys và strict-phys đều +3.0, nhưng CI là
+  [−3.8, +9.8] và [−4.0, +10.2].
+- **"matches theirs" (Δ >= +5, CI > 0): KHÔNG đạt.**
+- Seed 10 / 11 kéo hai arm về gần Original: G2-phys 80 / 81, strict-phys 78 / 81, so với 82-87 ở seed 7-9. Trung bình
+  3 seed (83.0 / 83.7) có phần do may mắn seed.
+- Gain tập trung ở task yếu: push plate 4.4 -> 7.4 / 6.6, wine rack 4.2 -> 6.8 / 5.6. Regression ở top drawer + bowl
+  (7.8 -> 5.2, G2-phys).
 
 ## 3. Đọc trung thực
 
@@ -61,9 +71,9 @@ Seed mới của G4 (11-26): G2_wm@5 s9 74 (wine rack 0 / 10), G2_wm@18 s9 72, O
 |---|---|---|---|
 | 1 | G2_wm@5 s9 = 74 | G2_wm@18 s9 = 72 | 07:04 (xong) |
 | 2 | Original s10 = 76 | Original s11 = 81 | 10:09 (xong) |
-| 3 | G2-phys s10 | G2-phys s11 | ~12:45 |
-| 4 | strict-phys s10 | strict-phys s11 | ~15:20 |
-| 5 | share sweep 5, rồi 36 (s7) | share sweep 18 (s7) | ~17:55 / 20:30 |
+| 3 | G2-phys s10 = 80 | G2-phys s11 = 81 | 12:42 (xong) |
+| 4 | strict-phys s10 = 78 | strict-phys s11 = 81 | 15:16 (xong) |
+| 5 | share sweep 5 (chạy), rồi 36 (s7) | share sweep 18 (chạy, s7) | ~17:55 / ~20:30 |
 
 Shell tự kill khi cả hai lane xong (watcher `rv_g4_watch`). E8 / failure events của các run G4 chỉ chạy nếu còn GPU.
 

@@ -1541,3 +1541,8 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
   - Each run takes 2 h 33 min - 3 h 05 min (2k x 4.28 s + val eval).
   - Shell 7485771f (node of container 2581ab29dd50) is RUNNING; watcher `rv_g4_watch` alive. e112b373 (E1,
     another agent) untouched.
+- 2026-11-26 17:25 UTC: G4 rounds 3-4 registered.
+  - G2-phys s10 / s11 80 / 81; strict-phys s10 / s11 78 / 81.
+  - 5-seed paired Δ +3.0 / +3.0, CI lower bounds −3.8 / −4.0: "beats Original" NOT met.
+  - Round 5 (phys share sweep s7) running since 15:16: sw5 on GPU0 (then sw36), sw18 on GPU1, both at step ~1650 at
+    17:18. ETA sw5 / sw18 ~17:55, sw36 ~20:30. The watcher kills 7485771f after LANE_DONE on both lanes.
