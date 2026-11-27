@@ -1,0 +1,1954 @@
+{
+ "groups": {
+  "d0|-1": {
+   "n": 64,
+   "loss": 0.1315312218539475,
+   "ci": [
+    0.11159379992031973,
+    0.1553923853636661
+   ],
+   "ratio": 1.0,
+   "d3": 0.06908141961866932,
+   "flips": 0.625
+  },
+  "gs_rand|0": {
+   "n": 60,
+   "loss": 1.8694198100361974,
+   "ci": [
+    0.9168701770199308,
+    3.108486472850586
+   ],
+   "ratio": 14.212745716845879,
+   "d3": 0.2526493447609634,
+   "flips": 0.75
+  },
+  "gs_wm|0": {
+   "n": 60,
+   "loss": 2.5699231191848715,
+   "ci": [
+    1.221491233954827,
+    4.544639677250136
+   ],
+   "ratio": 19.538502592475865,
+   "d3": 0.26973222291562704,
+   "flips": 1.3833333333333333
+  },
+  "gs_wm|1": {
+   "n": 45,
+   "loss": 0.6210410465796788,
+   "ci": [
+    0.5266209995239559,
+    0.7175647162470139
+   ],
+   "ratio": 4.721624552908692,
+   "d3": 0.23222824487214286,
+   "flips": 1.3555555555555556
+  },
+  "lrs_v1|0": {
+   "n": 50,
+   "loss": 2.3835900907590983,
+   "ci": [
+    2.0053660575337706,
+    2.798713421402499
+   ],
+   "ratio": 18.12185773964634,
+   "d3": 0.47435766473412516,
+   "flips": 0.24
+  },
+  "lrs_v2|0": {
+   "n": 40,
+   "loss": 1.353307723486796,
+   "ci": [
+    1.2022727864538318,
+    1.5093997592292725
+   ],
+   "ratio": 10.288870614989888,
+   "d3": 0.13027465503718644,
+   "flips": 0.45
+  },
+  "lrs_v2gt|0": {
+   "n": 13,
+   "loss": 1.056776280873097,
+   "ci": [
+    0.7094603615024915,
+    1.4003784486522466
+   ],
+   "ratio": 8.03441392832603,
+   "d3": 0.09607249267663484,
+   "flips": 0.23076923076923078
+  },
+  "onset_rand|0": {
+   "n": 115,
+   "loss": 0.728905902252249,
+   "ci": [
+    0.6349711770621007,
+    0.8143763835630987
+   ],
+   "ratio": 5.541694906944812,
+   "d3": 0.20144319925153548,
+   "flips": 0.8782608695652174
+  },
+  "onset_rand|1": {
+   "n": 90,
+   "loss": 0.6879630178109639,
+   "ci": [
+    0.6126016093847446,
+    0.7651392655488518
+   ],
+   "ratio": 5.230416080030635,
+   "d3": 0.22431075753993354,
+   "flips": 1.3333333333333333
+  },
+  "onset_wm|0": {
+   "n": 132,
+   "loss": 1.213752747739129,
+   "ci": [
+    1.00696468250191,
+    1.4561591112121912
+   ],
+   "ratio": 9.227867958885703,
+   "d3": 0.2368729559935728,
+   "flips": 0.9166666666666666
+  },
+  "onset_wm|1": {
+   "n": 98,
+   "loss": 0.6531149765443323,
+   "ci": [
+    0.5702603220445465,
+    0.7337397653635649
+   ],
+   "ratio": 4.965474868541496,
+   "d3": 0.19051535760334037,
+   "flips": 1.4183673469387754
+  }
+ },
+ "family": {
+  "perturb-like": {
+   "n": 8,
+   "loss": 14.633656457066536,
+   "ci": [
+    6.531300857663155,
+    25.716993167996407
+   ]
+  },
+  "pi0_rough": {
+   "n": 23,
+   "loss": 4.786348175743352,
+   "ci": [
+    3.101908166220655,
+    7.390443043086838
+   ]
+  },
+  "pi0_smooth": {
+   "n": 247,
+   "loss": 0.6642203408930647,
+   "ci": [
+    0.5899285775508453,
+    0.7518597920855078
+   ]
+  },
+  "prim": {
+   "n": 52,
+   "loss": 0.9679156253830745,
+   "ci": [
+    0.833383657093733,
+    1.0974613870153775
+   ]
+  },
+  "prim+cem": {
+   "n": 37,
+   "loss": 1.860832994451394,
+   "ci": [
+    1.5457652350937998,
+    2.2200784724205733
+   ]
+  }
+ },
+ "phys": {
+  "phys_wm_diverse|0": {
+   "keep": [
+    18,
+    0.4260670807626512
+   ],
+   "reject": [
+    114,
+    1.3381241688406782
+   ],
+   "p": 7.43257825201524e-05
+  },
+  "phys_wm_diverse|1": {
+   "keep": [
+    1,
+    0.4446985125541687
+   ],
+   "reject": [
+    97,
+    0.655263599884437
+   ],
+   "p": NaN
+  },
+  "phys_noseam_wm_diverse|0": {
+   "keep": [
+    63,
+    0.4884720202239733
+   ],
+   "reject": [
+    69,
+    1.8759655859051407
+   ],
+   "p": 2.8962161292974155e-15
+  },
+  "phys_noseam_wm_diverse|1": {
+   "keep": [
+    46,
+    0.6278712025884053
+   ],
+   "reject": [
+    52,
+    0.6754460073514985
+   ],
+   "p": 0.4273584737971372
+  }
+ },
+ "L_d0": 0.1315312218539475,
+ "arms": [
+  {
+   "arm": "F0_wm (all 282)",
+   "seeds": [
+    7,
+    8,
+    9
+   ],
+   "n_rec": 34078,
+   "share": 0.47122431483171545,
+   "L_rec": 1.3240018412874481,
+   "L_ratio": 10.066065095613741,
+   "grad_share": 0.8997039815282895,
+   "delta_nominal": -11.333333333333329
+  },
+  {
+   "arm": "F0_random (all 282)",
+   "seeds": [
+    7,
+    8,
+    9
+   ],
+   "n_rec": 34554,
+   "share": 0.4746819792840069,
+   "L_rec": 1.8344905903191018,
+   "L_ratio": 13.947187325273411,
+   "grad_share": 0.9264857290163001,
+   "delta_nominal": -11.666666666666657
+  },
+  {
+   "arm": "F1_wm (bridge only, 36)",
+   "seeds": [
+    7,
+    8,
+    9
+   ],
+   "n_rec": 1718,
+   "share": 0.04299514490214725,
+   "L_rec": 2.442146664726638,
+   "L_ratio": 18.56704917892728,
+   "grad_share": 0.4547906107474954,
+   "delta_nominal": -20.33333333333333
+  },
+  {
+   "arm": "F1_random (bridge only, 36)",
+   "seeds": [
+    7,
+    8,
+    9
+   ],
+   "n_rec": 1650,
+   "share": 0.041363750313361744,
+   "L_rec": 1.773241289189557,
+   "L_ratio": 13.481523734026947,
+   "grad_share": 0.3677720565280566,
+   "delta_nominal": -21.333333333333336
+  },
+  {
+   "arm": "D5 (old bank 36)",
+   "seeds": [
+    8,
+    9
+   ],
+   "n_rec": 4203,
+   "share": 0.09902693023584572,
+   "L_rec": 1.3240018412874481,
+   "L_ratio": 10.066065095613741,
+   "grad_share": 0.525250088029999,
+   "delta_nominal": -5.0
+  },
+  {
+   "arm": "G2_wm@36",
+   "seeds": [
+    7,
+    8,
+    9
+   ],
+   "n_rec": 4864,
+   "share": 0.11284335560504825,
+   "L_rec": 0.8669758764044577,
+   "L_ratio": 6.5914074558445845,
+   "grad_share": 0.4560502071161497,
+   "delta_nominal": -6.666666666666657
+  },
+  {
+   "arm": "G2_wm@18",
+   "seeds": [
+    7,
+    8,
+    9
+   ],
+   "n_rec": 2535,
+   "share": 0.0621704475781729,
+   "L_rec": 0.8669758764044577,
+   "L_ratio": 6.5914074558445845,
+   "grad_share": 0.3040847265706743,
+   "delta_nominal": -2.6666666666666714
+  },
+  {
+   "arm": "G2_wm@5",
+   "seeds": [
+    7,
+    8,
+    9
+   ],
+   "n_rec": 973,
+   "share": 0.024813199704179736,
+   "L_rec": 0.8669758764044577,
+   "L_ratio": 6.5914074558445845,
+   "grad_share": 0.14362699789489958,
+   "delta_nominal": 2.333333333333343
+  },
+  {
+   "arm": "G2_random@36",
+   "seeds": [
+    7,
+    8,
+    9
+   ],
+   "n_rec": 4455,
+   "share": 0.1043447710504743,
+   "L_rec": 0.7184570176932148,
+   "L_ratio": 5.462254570180993,
+   "grad_share": 0.3888869225271937,
+   "delta_nominal": -0.6666666666666572
+  },
+  {
+   "arm": "G2-phys (18)",
+   "seeds": [
+    7,
+    8,
+    9,
+    10,
+    11
+   ],
+   "n_rec": 632,
+   "share": 0.01625848940111134,
+   "L_rec": 0.476115649468796,
+   "L_ratio": 3.619791884830779,
+   "grad_share": 0.05644800946093506,
+   "delta_nominal": 3.0
+  },
+  {
+   "arm": "G2-physns (36)",
+   "seeds": [
+    7,
+    8,
+    9
+   ],
+   "n_rec": 4346,
+   "share": 0.10205231766308176,
+   "L_rec": 0.5555677699493425,
+   "L_ratio": 4.223847099711778,
+   "grad_share": 0.32434389727462487,
+   "delta_nominal": 2.333333333333343
+  },
+  {
+   "arm": "strict-phys (46)",
+   "seeds": [
+    7,
+    8,
+    9,
+    10,
+    11
+   ],
+   "n_rec": 1917,
+   "share": 0.04773762980302313,
+   "L_rec": 0.5537843882522284,
+   "L_ratio": 4.210288480914072,
+   "grad_share": 0.17428044262261827,
+   "delta_nominal": 3.0
+  },
+  {
+   "arm": "P2-3 A (72)",
+   "seeds": [
+    7,
+    8,
+    9
+   ],
+   "n_rec": 9508,
+   "share": 0.1991287593197621,
+   "L_rec": 0.8669758764044577,
+   "L_ratio": 6.5914074558445845,
+   "grad_share": 0.6210525977029743,
+   "delta_nominal": 0.0
+  },
+  {
+   "arm": "G3-rep (72, s10-12)",
+   "seeds": [
+    10,
+    11,
+    12
+   ],
+   "n_rec": 9181,
+   "share": 0.19360620821998692,
+   "L_rec": 0.8669758764044577,
+   "L_ratio": 6.5914074558445845,
+   "grad_share": 0.6127818909627625,
+   "delta_nominal": -4.833333333333329
+  },
+  {
+   "arm": "G3-c20 (72, cont<=20)",
+   "seeds": [
+    7,
+    8,
+    9
+   ],
+   "n_rec": 4366,
+   "share": 0.10247382997699854,
+   "L_rec": 1.0476287809194733,
+   "L_ratio": 7.964867703295284,
+   "grad_share": 0.47626921862722504,
+   "delta_nominal": -9.0
+  },
+  {
+   "arm": "LRS v1",
+   "seeds": [
+    7,
+    8,
+    9
+   ],
+   "n_rec": 1708,
+   "share": 0.042755582256934016,
+   "L_rec": 2.1495782574209183,
+   "L_ratio": 16.342722489173056,
+   "grad_share": 0.42194932785211037,
+   "delta_nominal": -65.0
+  },
+  {
+   "arm": "LRS v2",
+   "seeds": [
+    7,
+    8,
+    9
+   ],
+   "n_rec": 1645,
+   "share": 0.041243575278926914,
+   "L_rec": 1.3921761916707391,
+   "L_ratio": 10.584378157884172,
+   "grad_share": 0.31286423537596186,
+   "delta_nominal": -40.666666666666664
+  },
+  {
+   "arm": "LRS v2-GT",
+   "seeds": [
+    7
+   ],
+   "n_rec": 655,
+   "share": 0.01684021082401337,
+   "L_rec": 0.8785044289229614,
+   "L_ratio": 6.67905624642075,
+   "grad_share": 0.1026587876874907,
+   "delta_nominal": -5.0
+  }
+ ],
+ "corr": {
+  "share": {
+   "spearman": -0.051679648674574516,
+   "p": 0.8386249897192163
+  },
+  "L_rec": {
+   "spearman": -0.9242832981215118,
+   "p": 4.275106057869369e-08
+  },
+  "grad_share": {
+   "spearman": -0.40310125966168125,
+   "p": 0.097179217288576
+  },
+  "share_noLRS": {
+   "spearman": -0.29695933026258853,
+   "p": 0.2824530983649667
+  },
+  "L_rec_noLRS": {
+   "spearman": -0.9190074972809803,
+   "p": 1.2971835459701015e-06
+  },
+  "grad_share_noLRS": {
+   "spearman": -0.5921297488970891,
+   "p": 0.02003675133686689
+  },
+  "task_excess_vs_delta": {
+   "spearman": -0.114794615886401,
+   "p": 0.12491188450987065,
+   "n": 180
+  },
+  "task_excess_vs_delta_arm_demeaned": {
+   "spearman": -0.03835429075076066,
+   "p": 0.6092249945367547
+  },
+  "task_share_vs_delta_arm_demeaned": {
+   "spearman": -0.03964021822915156,
+   "p": 0.597268958975191
+  },
+  "tasks_without_data_mean_delta": {
+   "n": 33,
+   "mean": -1.1444444444444448
+  }
+ },
+ "task_points": [
+  {
+   "arm": "F0_wm (all 282)",
+   "task": "open_the_middle_drawer_of_the_cabinet",
+   "delta": -4.6,
+   "excess": 1.4433624819742905,
+   "has_data": true,
+   "rec_share_task": 1.5876122451158798
+  },
+  {
+   "arm": "F0_wm (all 282)",
+   "task": "open_the_top_drawer_and_put_the_bowl_inside",
+   "delta": -0.7999999999999998,
+   "excess": 0.5737115826914218,
+   "has_data": true,
+   "rec_share_task": 0.46782227740398624
+  },
+  {
+   "arm": "F0_wm (all 282)",
+   "task": "push_the_plate_to_the_front_of_the_stove",
+   "delta": 2.8,
+   "excess": 1.4235300383000187,
+   "has_data": true,
+   "rec_share_task": 0.9887116923911742
+  },
+  {
+   "arm": "F0_wm (all 282)",
+   "task": "put_the_bowl_on_the_plate",
+   "delta": -2.1999999999999993,
+   "excess": 0.9198274835521182,
+   "has_data": true,
+   "rec_share_task": 0.7448963183337908
+  },
+  {
+   "arm": "F0_wm (all 282)",
+   "task": "put_the_bowl_on_the_stove",
+   "delta": -2.7333333333333334,
+   "excess": 0.0,
+   "has_data": false,
+   "rec_share_task": 0.0
+  },
+  {
+   "arm": "F0_wm (all 282)",
+   "task": "put_the_bowl_on_top_of_the_cabinet",
+   "delta": -1.333333333333333,
+   "excess": 0.260084153973121,
+   "has_data": true,
+   "rec_share_task": 0.2643574918315259
+  },
+  {
+   "arm": "F0_wm (all 282)",
+   "task": "put_the_cream_cheese_in_the_bowl",
+   "delta": 1.7999999999999998,
+   "excess": 3.3483654312681996,
+   "has_data": true,
+   "rec_share_task": 3.291385275264114
+  },
+  {
+   "arm": "F0_wm (all 282)",
+   "task": "put_the_wine_bottle_on_the_rack",
+   "delta": -1.2000000000000002,
+   "excess": 2.4636058717513363,
+   "has_data": true,
+   "rec_share_task": 1.4824561660339595
+  },
+  {
+   "arm": "F0_wm (all 282)",
+   "task": "put_the_wine_bottle_on_top_of_the_cabinet",
+   "delta": -1.7333333333333334,
+   "excess": 0.0,
+   "has_data": false,
+   "rec_share_task": 0.0
+  },
+  {
+   "arm": "F0_wm (all 282)",
+   "task": "turn_on_the_stove",
+   "delta": -1.0,
+   "excess": 0.19434710111680473,
+   "has_data": true,
+   "rec_share_task": 0.08436941228665722
+  },
+  {
+   "arm": "F0_random (all 282)",
+   "task": "open_the_middle_drawer_of_the_cabinet",
+   "delta": -3.2666666666666666,
+   "excess": 3.2175166290788013,
+   "has_data": true,
+   "rec_share_task": 1.9531903765690377
+  },
+  {
+   "arm": "F0_random (all 282)",
+   "task": "open_the_top_drawer_and_put_the_bowl_inside",
+   "delta": 1.2000000000000002,
+   "excess": 0.563995747367723,
+   "has_data": true,
+   "rec_share_task": 0.32452928870292885
+  },
+  {
+   "arm": "F0_random (all 282)",
+   "task": "push_the_plate_to_the_front_of_the_stove",
+   "delta": 1.7999999999999998,
+   "excess": 1.7175631791680153,
+   "has_data": true,
+   "rec_share_task": 0.9414225941422594
+  },
+  {
+   "arm": "F0_random (all 282)",
+   "task": "put_the_bowl_on_the_plate",
+   "delta": -3.8666666666666663,
+   "excess": 2.118610114758132,
+   "has_data": true,
+   "rec_share_task": 1.24163179916318
+  },
+  {
+   "arm": "F0_random (all 282)",
+   "task": "put_the_bowl_on_the_stove",
+   "delta": -1.0666666666666664,
+   "excess": 0.0,
+   "has_data": false,
+   "rec_share_task": 0.0
+  },
+  {
+   "arm": "F0_random (all 282)",
+   "task": "put_the_bowl_on_top_of_the_cabinet",
+   "delta": -2.0,
+   "excess": 0.4044772080235885,
+   "has_data": true,
+   "rec_share_task": 0.23274058577405857
+  },
+  {
+   "arm": "F0_random (all 282)",
+   "task": "put_the_cream_cheese_in_the_bowl",
+   "delta": 2.8,
+   "excess": 4.468688328444265,
+   "has_data": true,
+   "rec_share_task": 2.6040794979079496
+  },
+  {
+   "arm": "F0_random (all 282)",
+   "task": "put_the_wine_bottle_on_the_rack",
+   "delta": -3.5333333333333337,
+   "excess": 2.6754134925991884,
+   "has_data": true,
+   "rec_share_task": 1.6001569037656904
+  },
+  {
+   "arm": "F0_random (all 282)",
+   "task": "put_the_wine_bottle_on_top_of_the_cabinet",
+   "delta": -3.0666666666666673,
+   "excess": 0.0,
+   "has_data": false,
+   "rec_share_task": 0.0
+  },
+  {
+   "arm": "F0_random (all 282)",
+   "task": "turn_on_the_stove",
+   "delta": -0.3333333333333339,
+   "excess": 0.22182578642455655,
+   "has_data": true,
+   "rec_share_task": 0.138336820083682
+  },
+  {
+   "arm": "F1_wm (bridge only, 36)",
+   "task": "open_the_middle_drawer_of_the_cabinet",
+   "delta": -3.9333333333333327,
+   "excess": 0.1229394814093969,
+   "has_data": true,
+   "rec_share_task": 0.0631952548456953
+  },
+  {
+   "arm": "F1_wm (bridge only, 36)",
+   "task": "open_the_top_drawer_and_put_the_bowl_inside",
+   "delta": -2.133333333333333,
+   "excess": 0.05814077895532736,
+   "has_data": true,
+   "rec_share_task": 0.025559253729300426
+  },
+  {
+   "arm": "F1_wm (bridge only, 36)",
+   "task": "push_the_plate_to_the_front_of_the_stove",
+   "delta": 2.133333333333333,
+   "excess": 0.15289817133681105,
+   "has_data": true,
+   "rec_share_task": 0.06504830074106958
+  },
+  {
+   "arm": "F1_wm (bridge only, 36)",
+   "task": "put_the_bowl_on_the_plate",
+   "delta": -4.866666666666666,
+   "excess": 0.0908312311222326,
+   "has_data": true,
+   "rec_share_task": 0.03738040857910187
+  },
+  {
+   "arm": "F1_wm (bridge only, 36)",
+   "task": "put_the_bowl_on_the_stove",
+   "delta": -2.0666666666666673,
+   "excess": 0.0,
+   "has_data": false,
+   "rec_share_task": 0.0
+  },
+  {
+   "arm": "F1_wm (bridge only, 36)",
+   "task": "put_the_bowl_on_top_of_the_cabinet",
+   "delta": -1.333333333333333,
+   "excess": 0.017909992346648973,
+   "has_data": true,
+   "rec_share_task": 0.00958472014848766
+  },
+  {
+   "arm": "F1_wm (bridge only, 36)",
+   "task": "put_the_cream_cheese_in_the_bowl",
+   "delta": -4.2,
+   "excess": 0.28834791622141187,
+   "has_data": true,
+   "rec_share_task": 0.12840330092257302
+  },
+  {
+   "arm": "F1_wm (bridge only, 36)",
+   "task": "put_the_wine_bottle_on_the_rack",
+   "delta": -2.866666666666667,
+   "excess": 0.2816270591956251,
+   "has_data": true,
+   "rec_share_task": 0.10907411528978957
+  },
+  {
+   "arm": "F1_wm (bridge only, 36)",
+   "task": "put_the_wine_bottle_on_top_of_the_cabinet",
+   "delta": -0.7333333333333343,
+   "excess": 0.0,
+   "has_data": false,
+   "rec_share_task": 0.0
+  },
+  {
+   "arm": "F1_wm (bridge only, 36)",
+   "task": "turn_on_the_stove",
+   "delta": 0.0,
+   "excess": 0.025390445473025384,
+   "has_data": true,
+   "rec_share_task": 0.011022428170760809
+  },
+  {
+   "arm": "F1_random (bridge only, 36)",
+   "task": "open_the_middle_drawer_of_the_cabinet",
+   "delta": -4.6,
+   "excess": 0.10545261896846203,
+   "has_data": true,
+   "rec_share_task": 0.07406322862912945
+  },
+  {
+   "arm": "F1_random (bridge only, 36)",
+   "task": "open_the_top_drawer_and_put_the_bowl_inside",
+   "delta": -0.13333333333333286,
+   "excess": 0.029877817975509983,
+   "has_data": true,
+   "rec_share_task": 0.017192021501654938
+  },
+  {
+   "arm": "F1_random (bridge only, 36)",
+   "task": "push_the_plate_to_the_front_of_the_stove",
+   "delta": -1.2000000000000002,
+   "excess": 0.11450832422334754,
+   "has_data": true,
+   "rec_share_task": 0.059725082696749254
+  },
+  {
+   "arm": "F1_random (bridge only, 36)",
+   "task": "put_the_bowl_on_the_plate",
+   "delta": -4.199999999999999,
+   "excess": 0.06971861441596483,
+   "has_data": true,
+   "rec_share_task": 0.04308320588314727
+  },
+  {
+   "arm": "F1_random (bridge only, 36)",
+   "task": "put_the_bowl_on_the_stove",
+   "delta": -1.4000000000000004,
+   "excess": 0.0,
+   "has_data": false,
+   "rec_share_task": 0.0
+  },
+  {
+   "arm": "F1_random (bridge only, 36)",
+   "task": "put_the_bowl_on_top_of_the_cabinet",
+   "delta": 0.0,
+   "excess": 0.01792669078530599,
+   "has_data": true,
+   "rec_share_task": 0.010315212900992963
+  },
+  {
+   "arm": "F1_random (bridge only, 36)",
+   "task": "put_the_cream_cheese_in_the_bowl",
+   "delta": -4.533333333333333,
+   "excess": 0.18893376257417516,
+   "has_data": true,
+   "rec_share_task": 0.11302034935187956
+  },
+  {
+   "arm": "F1_random (bridge only, 36)",
+   "task": "put_the_wine_bottle_on_the_rack",
+   "delta": -3.2,
+   "excess": 0.1661746153265105,
+   "has_data": true,
+   "rec_share_task": 0.10359912156897265
+  },
+  {
+   "arm": "F1_random (bridge only, 36)",
+   "task": "put_the_wine_bottle_on_top_of_the_cabinet",
+   "delta": -1.0666666666666664,
+   "excess": 0.0,
+   "has_data": false,
+   "rec_share_task": 0.0
+  },
+  {
+   "arm": "F1_random (bridge only, 36)",
+   "task": "turn_on_the_stove",
+   "delta": -0.6666666666666661,
+   "excess": 0.01578140800681042,
+   "has_data": true,
+   "rec_share_task": 0.01048713311600951
+  },
+  {
+   "arm": "D5 (old bank 36)",
+   "task": "open_the_middle_drawer_of_the_cabinet",
+   "delta": -3.0999999999999996,
+   "excess": 0.17801668266148082,
+   "has_data": true,
+   "rec_share_task": 0.19580768431897538
+  },
+  {
+   "arm": "D5 (old bank 36)",
+   "task": "open_the_top_drawer_and_put_the_bowl_inside",
+   "delta": 0.7000000000000002,
+   "excess": 0.07075854751018386,
+   "has_data": true,
+   "rec_share_task": 0.05769872151913123
+  },
+  {
+   "arm": "D5 (old bank 36)",
+   "task": "push_the_plate_to_the_front_of_the_stove",
+   "delta": 3.8,
+   "excess": 0.17557065411629139,
+   "has_data": true,
+   "rec_share_task": 0.12194246267739026
+  },
+  {
+   "arm": "D5 (old bank 36)",
+   "task": "put_the_bowl_on_the_plate",
+   "delta": -1.1999999999999993,
+   "excess": 0.11344664925669208,
+   "has_data": true,
+   "rec_share_task": 0.09187156599439295
+  },
+  {
+   "arm": "D5 (old bank 36)",
+   "task": "put_the_bowl_on_the_stove",
+   "delta": -1.4000000000000004,
+   "excess": 0.0,
+   "has_data": false,
+   "rec_share_task": 0.0
+  },
+  {
+   "arm": "D5 (old bank 36)",
+   "task": "put_the_bowl_on_top_of_the_cabinet",
+   "delta": -1.0,
+   "excess": 0.032077401817859834,
+   "has_data": true,
+   "rec_share_task": 0.032604452672337095
+  },
+  {
+   "arm": "D5 (old bank 36)",
+   "task": "put_the_cream_cheese_in_the_bowl",
+   "delta": -0.20000000000000018,
+   "excess": 0.41296965513293743,
+   "has_data": true,
+   "rec_share_task": 0.40594202453005085
+  },
+  {
+   "arm": "D5 (old bank 36)",
+   "task": "put_the_wine_bottle_on_the_rack",
+   "delta": -0.7000000000000002,
+   "excess": 0.3038480978628694,
+   "has_data": true,
+   "rec_share_task": 0.18283829056402168
+  },
+  {
+   "arm": "D5 (old bank 36)",
+   "task": "put_the_wine_bottle_on_top_of_the_cabinet",
+   "delta": -1.9000000000000004,
+   "excess": 0.0,
+   "has_data": false,
+   "rec_share_task": 0.0
+  },
+  {
+   "arm": "D5 (old bank 36)",
+   "task": "turn_on_the_stove",
+   "delta": -1.0,
+   "excess": 0.023969741944771708,
+   "has_data": true,
+   "rec_share_task": 0.010405676384788435
+  },
+  {
+   "arm": "G2_wm@36",
+   "task": "open_the_middle_drawer_of_the_cabinet",
+   "delta": -5.933333333333334,
+   "excess": 0.077940195055877,
+   "has_data": true,
+   "rec_share_task": 0.1532413023372799
+  },
+  {
+   "arm": "G2_wm@36",
+   "task": "open_the_top_drawer_and_put_the_bowl_inside",
+   "delta": 0.20000000000000018,
+   "excess": 0.04144971712261341,
+   "has_data": true,
+   "rec_share_task": 0.061009790847378585
+  },
+  {
+   "arm": "G2_wm@36",
+   "task": "push_the_plate_to_the_front_of_the_stove",
+   "delta": 4.466666666666666,
+   "excess": 0.05196988869178165,
+   "has_data": true,
+   "rec_share_task": 0.06029296562854515
+  },
+  {
+   "arm": "G2_wm@36",
+   "task": "put_the_bowl_on_the_plate",
+   "delta": -2.1999999999999993,
+   "excess": 0.1454869192524521,
+   "has_data": true,
+   "rec_share_task": 0.1361171443318146
+  },
+  {
+   "arm": "G2_wm@36",
+   "task": "put_the_bowl_on_the_stove",
+   "delta": -1.4000000000000004,
+   "excess": 0.0,
+   "has_data": false,
+   "rec_share_task": 0.0
+  },
+  {
+   "arm": "G2_wm@36",
+   "task": "put_the_bowl_on_top_of_the_cabinet",
+   "delta": -1.333333333333333,
+   "excess": 0.04177879424740449,
+   "has_data": true,
+   "rec_share_task": 0.04627505023802475
+  },
+  {
+   "arm": "G2_wm@36",
+   "task": "put_the_cream_cheese_in_the_bowl",
+   "delta": 0.7999999999999998,
+   "excess": 0.3239925664585872,
+   "has_data": true,
+   "rec_share_task": 0.43829879769337377
+  },
+  {
+   "arm": "G2_wm@36",
+   "task": "put_the_wine_bottle_on_the_rack",
+   "delta": 0.13333333333333286,
+   "excess": 0.21925350139062855,
+   "has_data": true,
+   "rec_share_task": 0.3290227754445443
+  },
+  {
+   "arm": "G2_wm@36",
+   "task": "put_the_wine_bottle_on_top_of_the_cabinet",
+   "delta": -1.0666666666666664,
+   "excess": 0.005433654918664158,
+   "has_data": true,
+   "rec_share_task": 0.01608874380048365
+  },
+  {
+   "arm": "G2_wm@36",
+   "task": "turn_on_the_stove",
+   "delta": 0.0,
+   "excess": 0.028155746055945792,
+   "has_data": true,
+   "rec_share_task": 0.03161995687520796
+  },
+  {
+   "arm": "G2_wm@18",
+   "task": "open_the_middle_drawer_of_the_cabinet",
+   "delta": 0.06666666666666643,
+   "excess": 0.04062055807291287,
+   "has_data": true,
+   "rec_share_task": 0.07986568697060126
+  },
+  {
+   "arm": "G2_wm@18",
+   "task": "open_the_top_drawer_and_put_the_bowl_inside",
+   "delta": -0.4666666666666668,
+   "excess": 0.021602597225704148,
+   "has_data": true,
+   "rec_share_task": 0.03179683795191297
+  },
+  {
+   "arm": "G2_wm@18",
+   "task": "push_the_plate_to_the_front_of_the_stove",
+   "delta": 4.466666666666666,
+   "excess": 0.02708545802501367,
+   "has_data": true,
+   "rec_share_task": 0.03142324586109416
+  },
+  {
+   "arm": "G2_wm@18",
+   "task": "put_the_bowl_on_the_plate",
+   "delta": -1.8666666666666663,
+   "excess": 0.0758242887140144,
+   "has_data": true,
+   "rec_share_task": 0.07094098702326275
+  },
+  {
+   "arm": "G2_wm@18",
+   "task": "put_the_bowl_on_the_stove",
+   "delta": -0.40000000000000036,
+   "excess": 0.0,
+   "has_data": false,
+   "rec_share_task": 0.0
+  },
+  {
+   "arm": "G2_wm@18",
+   "task": "put_the_bowl_on_top_of_the_cabinet",
+   "delta": -0.6666666666666661,
+   "excess": 0.021774104320964306,
+   "has_data": true,
+   "rec_share_task": 0.02411744497397055
+  },
+  {
+   "arm": "G2_wm@18",
+   "task": "put_the_cream_cheese_in_the_bowl",
+   "delta": -0.5333333333333332,
+   "excess": 0.16885714555356057,
+   "has_data": true,
+   "rec_share_task": 0.22843080841955232
+  },
+  {
+   "arm": "G2_wm@18",
+   "task": "put_the_wine_bottle_on_the_rack",
+   "delta": -0.8666666666666667,
+   "excess": 0.11426965995584774,
+   "has_data": true,
+   "rec_share_task": 0.17147876968583878
+  },
+  {
+   "arm": "G2_wm@18",
+   "task": "put_the_wine_bottle_on_top_of_the_cabinet",
+   "delta": -0.7333333333333343,
+   "excess": 0.002831890464394252,
+   "has_data": true,
+   "rec_share_task": 0.00838506692726687
+  },
+  {
+   "arm": "G2_wm@18",
+   "task": "turn_on_the_stove",
+   "delta": -1.333333333333334,
+   "excess": 0.014674098735983262,
+   "has_data": true,
+   "rec_share_task": 0.01647956222834132
+  },
+  {
+   "arm": "G2_wm@5",
+   "task": "open_the_middle_drawer_of_the_cabinet",
+   "delta": 0.06666666666666643,
+   "excess": 0.015591243788932632,
+   "has_data": true,
+   "rec_share_task": 0.030654561507848135
+  },
+  {
+   "arm": "G2_wm@5",
+   "task": "open_the_top_drawer_and_put_the_bowl_inside",
+   "delta": 0.20000000000000018,
+   "excess": 0.008291647771443842,
+   "has_data": true,
+   "rec_share_task": 0.012204466795744112
+  },
+  {
+   "arm": "G2_wm@5",
+   "task": "push_the_plate_to_the_front_of_the_stove",
+   "delta": 3.466666666666667,
+   "excess": 0.01039611465812162,
+   "has_data": true,
+   "rec_share_task": 0.012061072277256257
+  },
+  {
+   "arm": "G2_wm@5",
+   "task": "put_the_bowl_on_the_plate",
+   "delta": -0.8666666666666654,
+   "excess": 0.029103366042893892,
+   "has_data": true,
+   "rec_share_task": 0.027229025788416038
+  },
+  {
+   "arm": "G2_wm@5",
+   "task": "put_the_bowl_on_the_stove",
+   "delta": 0.5999999999999996,
+   "excess": 0.0,
+   "has_data": false,
+   "rec_share_task": 0.0
+  },
+  {
+   "arm": "G2_wm@5",
+   "task": "put_the_bowl_on_top_of_the_cabinet",
+   "delta": 0.0,
+   "excess": 0.008357476727533834,
+   "has_data": true,
+   "rec_share_task": 0.00925691280460487
+  },
+  {
+   "arm": "G2_wm@5",
+   "task": "put_the_cream_cheese_in_the_bowl",
+   "delta": 0.13333333333333286,
+   "excess": 0.06481183535448301,
+   "has_data": true,
+   "rec_share_task": 0.08767778169318519
+  },
+  {
+   "arm": "G2_wm@5",
+   "task": "put_the_wine_bottle_on_the_rack",
+   "delta": 0.7999999999999998,
+   "excess": 0.043859715635913156,
+   "has_data": true,
+   "rec_share_task": 0.0658180839859255
+  },
+  {
+   "arm": "G2_wm@5",
+   "task": "put_the_wine_bottle_on_top_of_the_cabinet",
+   "delta": -1.0666666666666664,
+   "excess": 0.001086954407043632,
+   "has_data": true,
+   "rec_share_task": 0.003218410303838526
+  },
+  {
+   "arm": "G2_wm@5",
+   "task": "turn_on_the_stove",
+   "delta": -0.6666666666666661,
+   "excess": 0.005632306931010537,
+   "has_data": true,
+   "rec_share_task": 0.006325291537742053
+  },
+  {
+   "arm": "G2_random@36",
+   "task": "open_the_middle_drawer_of_the_cabinet",
+   "delta": -1.9333333333333327,
+   "excess": 0.0962166752981695,
+   "has_data": true,
+   "rec_share_task": 0.17966855797780698
+  },
+  {
+   "arm": "G2_random@36",
+   "task": "open_the_top_drawer_and_put_the_bowl_inside",
+   "delta": 1.2000000000000002,
+   "excess": 0.05128214757116969,
+   "has_data": true,
+   "rec_share_task": 0.06731495567157691
+  },
+  {
+   "arm": "G2_random@36",
+   "task": "push_the_plate_to_the_front_of_the_stove",
+   "delta": 2.466666666666667,
+   "excess": 0.08704303373483406,
+   "has_data": true,
+   "rec_share_task": 0.16063243934625396
+  },
+  {
+   "arm": "G2_random@36",
+   "task": "put_the_bowl_on_the_plate",
+   "delta": -0.1999999999999993,
+   "excess": 0.11210945648924789,
+   "has_data": true,
+   "rec_share_task": 0.1400572302721498
+  },
+  {
+   "arm": "G2_random@36",
+   "task": "put_the_bowl_on_the_stove",
+   "delta": -0.7333333333333343,
+   "excess": 0.0,
+   "has_data": false,
+   "rec_share_task": 0.0
+  },
+  {
+   "arm": "G2_random@36",
+   "task": "put_the_bowl_on_top_of_the_cabinet",
+   "delta": 0.6666666666666661,
+   "excess": 0.00763623305241465,
+   "has_data": true,
+   "rec_share_task": 0.011178656898529017
+  },
+  {
+   "arm": "G2_random@36",
+   "task": "put_the_cream_cheese_in_the_bowl",
+   "delta": -4.866666666666667,
+   "excess": 0.19397627094447428,
+   "has_data": true,
+   "rec_share_task": 0.317376650206063
+  },
+  {
+   "arm": "G2_random@36",
+   "task": "put_the_wine_bottle_on_the_rack",
+   "delta": 3.8,
+   "excess": 0.12010081333023555,
+   "has_data": true,
+   "rec_share_task": 0.25905322290938987
+  },
+  {
+   "arm": "G2_random@36",
+   "task": "put_the_wine_bottle_on_top_of_the_cabinet",
+   "delta": -0.7333333333333343,
+   "excess": 0.015615601293817097,
+   "has_data": true,
+   "rec_share_task": 0.02316736139840072
+  },
+  {
+   "arm": "G2_random@36",
+   "task": "turn_on_the_stove",
+   "delta": 0.0,
+   "excess": -0.0002055401704465052,
+   "has_data": true,
+   "rec_share_task": 0.006561385570875728
+  },
+  {
+   "arm": "G2-phys (18)",
+   "task": "open_the_middle_drawer_of_the_cabinet",
+   "delta": 0.40000000000000036,
+   "excess": 0.019874608894673216,
+   "has_data": true,
+   "rec_share_task": 0.04890167364016736
+  },
+  {
+   "arm": "G2-phys (18)",
+   "task": "open_the_top_drawer_and_put_the_bowl_inside",
+   "delta": -3.8,
+   "excess": 0.0,
+   "has_data": false,
+   "rec_share_task": 0.0
+  },
+  {
+   "arm": "G2-phys (18)",
+   "task": "push_the_plate_to_the_front_of_the_stove",
+   "delta": 3.5999999999999996,
+   "excess": 0.009593850856957424,
+   "has_data": true,
+   "rec_share_task": 0.04053347280334728
+  },
+  {
+   "arm": "G2-phys (18)",
+   "task": "put_the_bowl_on_the_plate",
+   "delta": -0.7999999999999989,
+   "excess": 0.0025932378275588595,
+   "has_data": true,
+   "rec_share_task": 0.0036610878661087866
+  },
+  {
+   "arm": "G2-phys (18)",
+   "task": "put_the_bowl_on_the_stove",
+   "delta": 0.1999999999999993,
+   "excess": 0.0,
+   "has_data": false,
+   "rec_share_task": 0.0
+  },
+  {
+   "arm": "G2-phys (18)",
+   "task": "put_the_bowl_on_top_of_the_cabinet",
+   "delta": 0.40000000000000036,
+   "excess": 0.0,
+   "has_data": false,
+   "rec_share_task": 0.0
+  },
+  {
+   "arm": "G2-phys (18)",
+   "task": "put_the_cream_cheese_in_the_bowl",
+   "delta": 1.2000000000000002,
+   "excess": 0.003242907644629911,
+   "has_data": true,
+   "rec_share_task": 0.018043933054393304
+  },
+  {
+   "arm": "G2-phys (18)",
+   "task": "put_the_wine_bottle_on_the_rack",
+   "delta": 2.5999999999999996,
+   "excess": 0.013037332375744623,
+   "has_data": true,
+   "rec_share_task": 0.01202928870292887
+  },
+  {
+   "arm": "G2-phys (18)",
+   "task": "put_the_wine_bottle_on_top_of_the_cabinet",
+   "delta": -0.8000000000000007,
+   "excess": 0.009458626682679582,
+   "has_data": true,
+   "rec_share_task": 0.025889121338912136
+  },
+  {
+   "arm": "G2-phys (18)",
+   "task": "turn_on_the_stove",
+   "delta": 0.0,
+   "excess": -0.0008504182956891619,
+   "has_data": true,
+   "rec_share_task": 0.016213389121338913
+  },
+  {
+   "arm": "G2-physns (36)",
+   "task": "open_the_middle_drawer_of_the_cabinet",
+   "delta": -2.5999999999999996,
+   "excess": 0.10021481440625908,
+   "has_data": true,
+   "rec_share_task": 0.24084571442888283
+  },
+  {
+   "arm": "G2-physns (36)",
+   "task": "open_the_top_drawer_and_put_the_bowl_inside",
+   "delta": 0.8666666666666663,
+   "excess": 0.0,
+   "has_data": false,
+   "rec_share_task": 0.0
+  },
+  {
+   "arm": "G2-physns (36)",
+   "task": "push_the_plate_to_the_front_of_the_stove",
+   "delta": 4.8,
+   "excess": 0.021920045110258756,
+   "has_data": true,
+   "rec_share_task": 0.058095106857414876
+  },
+  {
+   "arm": "G2-physns (36)",
+   "task": "put_the_bowl_on_the_plate",
+   "delta": 0.13333333333333464,
+   "excess": 0.013522864124255012,
+   "has_data": true,
+   "rec_share_task": 0.0214121965274472
+  },
+  {
+   "arm": "G2-physns (36)",
+   "task": "put_the_bowl_on_the_stove",
+   "delta": -0.40000000000000036,
+   "excess": 0.0,
+   "has_data": false,
+   "rec_share_task": 0.0
+  },
+  {
+   "arm": "G2-physns (36)",
+   "task": "put_the_bowl_on_top_of_the_cabinet",
+   "delta": 0.6666666666666661,
+   "excess": 0.02564669050811245,
+   "has_data": true,
+   "rec_share_task": 0.04597812742715406
+  },
+  {
+   "arm": "G2-physns (36)",
+   "task": "put_the_cream_cheese_in_the_bowl",
+   "delta": 1.7999999999999998,
+   "excess": 0.1479062943382788,
+   "has_data": true,
+   "rec_share_task": 0.30226054167815
+  },
+  {
+   "arm": "G2-physns (36)",
+   "task": "put_the_wine_bottle_on_the_rack",
+   "delta": -1.8666666666666667,
+   "excess": 0.16652540776031677,
+   "has_data": true,
+   "rec_share_task": 0.43206160899957413
+  },
+  {
+   "arm": "G2-physns (36)",
+   "task": "put_the_wine_bottle_on_top_of_the_cabinet",
+   "delta": -0.40000000000000036,
+   "excess": 0.0067238684433151156,
+   "has_data": true,
+   "rec_share_task": 0.025561847017262544
+  },
+  {
+   "arm": "G2-physns (36)",
+   "task": "turn_on_the_stove",
+   "delta": -0.3333333333333339,
+   "excess": -0.0005397864631320428,
+   "has_data": true,
+   "rec_share_task": 0.010291133214742064
+  },
+  {
+   "arm": "strict-phys (46)",
+   "task": "open_the_middle_drawer_of_the_cabinet",
+   "delta": 0.0,
+   "excess": 0.07219248802021505,
+   "has_data": true,
+   "rec_share_task": 0.1373648191393588
+  },
+  {
+   "arm": "strict-phys (46)",
+   "task": "open_the_top_drawer_and_put_the_bowl_inside",
+   "delta": -1.5999999999999996,
+   "excess": 0.0,
+   "has_data": false,
+   "rec_share_task": 0.0
+  },
+  {
+   "arm": "strict-phys (46)",
+   "task": "push_the_plate_to_the_front_of_the_stove",
+   "delta": 3.8,
+   "excess": 0.03178945349694405,
+   "has_data": true,
+   "rec_share_task": 0.0772735942405094
+  },
+  {
+   "arm": "strict-phys (46)",
+   "task": "put_the_bowl_on_the_plate",
+   "delta": 0.0,
+   "excess": 0.030896571417238804,
+   "has_data": true,
+   "rec_share_task": 0.029935118867051202
+  },
+  {
+   "arm": "strict-phys (46)",
+   "task": "put_the_bowl_on_the_stove",
+   "delta": 0.1999999999999993,
+   "excess": 0.0,
+   "has_data": false,
+   "rec_share_task": 0.0
+  },
+  {
+   "arm": "strict-phys (46)",
+   "task": "put_the_bowl_on_top_of_the_cabinet",
+   "delta": 0.1999999999999993,
+   "excess": 0.0,
+   "has_data": false,
+   "rec_share_task": 0.0
+  },
+  {
+   "arm": "strict-phys (46)",
+   "task": "put_the_cream_cheese_in_the_bowl",
+   "delta": -0.20000000000000018,
+   "excess": 0.034859830348348934,
+   "has_data": true,
+   "rec_share_task": 0.06754830714389345
+  },
+  {
+   "arm": "strict-phys (46)",
+   "task": "put_the_wine_bottle_on_the_rack",
+   "delta": 1.0,
+   "excess": 0.02853220212892442,
+   "has_data": true,
+   "rec_share_task": 0.09529299876484236
+  },
+  {
+   "arm": "strict-phys (46)",
+   "task": "put_the_wine_bottle_on_top_of_the_cabinet",
+   "delta": -0.40000000000000036,
+   "excess": 0.06430698072418266,
+   "has_data": true,
+   "rec_share_task": 0.053503276530798984
+  },
+  {
+   "arm": "strict-phys (46)",
+   "task": "turn_on_the_stove",
+   "delta": 0.0,
+   "excess": -0.0012652278245055383,
+   "has_data": true,
+   "rec_share_task": 0.04038941669429894
+  },
+  {
+   "arm": "P2-3 A (72)",
+   "task": "open_the_middle_drawer_of_the_cabinet",
+   "delta": -1.5999999999999996,
+   "excess": 0.15235513457879907,
+   "has_data": true,
+   "rec_share_task": 0.29955146024318613
+  },
+  {
+   "arm": "P2-3 A (72)",
+   "task": "open_the_top_drawer_and_put_the_bowl_inside",
+   "delta": -0.7999999999999998,
+   "excess": 0.0810246526319507,
+   "has_data": true,
+   "rec_share_task": 0.11926009279952211
+  },
+  {
+   "arm": "P2-3 A (72)",
+   "task": "push_the_plate_to_the_front_of_the_stove",
+   "delta": 5.466666666666666,
+   "excess": 0.10158916564174753,
+   "has_data": true,
+   "rec_share_task": 0.1178588645551413
+  },
+  {
+   "arm": "P2-3 A (72)",
+   "task": "put_the_bowl_on_the_plate",
+   "delta": -0.8666666666666654,
+   "excess": 0.28439342686108443,
+   "has_data": true,
+   "rec_share_task": 0.26607767440520014
+  },
+  {
+   "arm": "P2-3 A (72)",
+   "task": "put_the_bowl_on_the_stove",
+   "delta": -0.40000000000000036,
+   "excess": 0.0,
+   "has_data": false,
+   "rec_share_task": 0.0
+  },
+  {
+   "arm": "P2-3 A (72)",
+   "task": "put_the_bowl_on_top_of_the_cabinet",
+   "delta": -1.0,
+   "excess": 0.08166792263657932,
+   "has_data": true,
+   "rec_share_task": 0.09045706777613885
+  },
+  {
+   "arm": "P2-3 A (72)",
+   "task": "put_the_cream_cheese_in_the_bowl",
+   "delta": 0.7999999999999998,
+   "excess": 0.6333308638750508,
+   "has_data": true,
+   "rec_share_task": 0.8567732254252874
+  },
+  {
+   "arm": "P2-3 A (72)",
+   "task": "put_the_wine_bottle_on_the_rack",
+   "delta": -0.5333333333333337,
+   "excess": 0.4285901092150692,
+   "has_data": true,
+   "rec_share_task": 0.6431637641707909
+  },
+  {
+   "arm": "P2-3 A (72)",
+   "task": "put_the_wine_bottle_on_top_of_the_cabinet",
+   "delta": -0.7333333333333343,
+   "excess": 0.010621544195447948,
+   "has_data": true,
+   "rec_share_task": 0.031449789484991476
+  },
+  {
+   "arm": "P2-3 A (72)",
+   "task": "turn_on_the_stove",
+   "delta": 0.0,
+   "excess": 0.0550380003083743,
+   "has_data": true,
+   "rec_share_task": 0.06180973477990898
+  },
+  {
+   "arm": "G3-rep (72, s10-12)",
+   "task": "open_the_middle_drawer_of_the_cabinet",
+   "delta": -4.933333333333333,
+   "excess": 0.14711532294572507,
+   "has_data": true,
+   "rec_share_task": 0.28924925920200795
+  },
+  {
+   "arm": "G3-rep (72, s10-12)",
+   "task": "open_the_top_drawer_and_put_the_bowl_inside",
+   "delta": -2.466666666666667,
+   "excess": 0.07823804541585397,
+   "has_data": true,
+   "rec_share_task": 0.11515848885069546
+  },
+  {
+   "arm": "G3-rep (72, s10-12)",
+   "task": "push_the_plate_to_the_front_of_the_stove",
+   "delta": 4.466666666666666,
+   "excess": 0.09809530182550316,
+   "has_data": true,
+   "rec_share_task": 0.1138054517754262
+  },
+  {
+   "arm": "G3-rep (72, s10-12)",
+   "task": "put_the_bowl_on_the_plate",
+   "delta": -1.8666666666666663,
+   "excess": 0.2746125422814068,
+   "has_data": true,
+   "rec_share_task": 0.25692670684835317
+  },
+  {
+   "arm": "G3-rep (72, s10-12)",
+   "task": "put_the_bowl_on_the_stove",
+   "delta": -0.06666666666666643,
+   "excess": 0.0,
+   "has_data": false,
+   "rec_share_task": 0.0
+  },
+  {
+   "arm": "G3-rep (72, s10-12)",
+   "task": "put_the_bowl_on_top_of_the_cabinet",
+   "delta": 0.0,
+   "excess": 0.07885919202002889,
+   "has_data": true,
+   "rec_share_task": 0.08734606008127163
+  },
+  {
+   "arm": "G3-rep (72, s10-12)",
+   "task": "put_the_cream_cheese_in_the_bowl",
+   "delta": 1.4666666666666668,
+   "excess": 0.6115492912533489,
+   "has_data": true,
+   "rec_share_task": 0.8273070028007534
+  },
+  {
+   "arm": "G3-rep (72, s10-12)",
+   "task": "put_the_wine_bottle_on_the_rack",
+   "delta": -0.5333333333333337,
+   "excess": 0.4138499992325988,
+   "has_data": true,
+   "rec_share_task": 0.621044017548594
+  },
+  {
+   "arm": "G3-rep (72, s10-12)",
+   "task": "put_the_wine_bottle_on_top_of_the_cabinet",
+   "delta": -0.40000000000000036,
+   "excess": 0.010256247082289399,
+   "has_data": true,
+   "rec_share_task": 0.030368165467154682
+  },
+  {
+   "arm": "G3-rep (72, s10-12)",
+   "task": "turn_on_the_stove",
+   "delta": -1.0,
+   "excess": 0.05314512840041906,
+   "has_data": true,
+   "rec_share_task": 0.05968396876465548
+  },
+  {
+   "arm": "G3-c20 (72, cont<=20)",
+   "task": "open_the_middle_drawer_of_the_cabinet",
+   "delta": -4.6,
+   "excess": 0.059369307712104726,
+   "has_data": true,
+   "rec_share_task": 0.1374651213195984
+  },
+  {
+   "arm": "G3-c20 (72, cont<=20)",
+   "task": "open_the_top_drawer_and_put_the_bowl_inside",
+   "delta": -1.4666666666666668,
+   "excess": 0.0352011208647066,
+   "has_data": true,
+   "rec_share_task": 0.0409906645042466
+  },
+  {
+   "arm": "G3-c20 (72, cont<=20)",
+   "task": "push_the_plate_to_the_front_of_the_stove",
+   "delta": 5.466666666666666,
+   "excess": 0.09015164525522117,
+   "has_data": true,
+   "rec_share_task": 0.10364782310359498
+  },
+  {
+   "arm": "G3-c20 (72, cont<=20)",
+   "task": "put_the_bowl_on_the_plate",
+   "delta": -1.5333333333333323,
+   "excess": 0.16131065503863087,
+   "has_data": true,
+   "rec_share_task": 0.10745409909327502
+  },
+  {
+   "arm": "G3-c20 (72, cont<=20)",
+   "task": "put_the_bowl_on_the_stove",
+   "delta": -2.4000000000000004,
+   "excess": 0.0,
+   "has_data": false,
+   "rec_share_task": 0.0
+  },
+  {
+   "arm": "G3-c20 (72, cont<=20)",
+   "task": "put_the_bowl_on_top_of_the_cabinet",
+   "delta": 0.6666666666666661,
+   "excess": 0.030317115072723177,
+   "has_data": true,
+   "rec_share_task": 0.0409906645042466
+  },
+  {
+   "arm": "G3-c20 (72, cont<=20)",
+   "task": "put_the_cream_cheese_in_the_bowl",
+   "delta": 0.13333333333333286,
+   "excess": 0.34817979887011763,
+   "has_data": true,
+   "rec_share_task": 0.33495228709184366
+  },
+  {
+   "arm": "G3-c20 (72, cont<=20)",
+   "task": "put_the_wine_bottle_on_the_rack",
+   "delta": -1.8666666666666667,
+   "excess": 0.29820861280637173,
+   "has_data": true,
+   "rec_share_task": 0.3273397351124836
+  },
+  {
+   "arm": "G3-c20 (72, cont<=20)",
+   "task": "put_the_wine_bottle_on_top_of_the_cabinet",
+   "delta": -2.4000000000000004,
+   "excess": 0.009987302740107453,
+   "has_data": true,
+   "rec_share_task": 0.029571836535206477
+  },
+  {
+   "arm": "G3-c20 (72, cont<=20)",
+   "task": "turn_on_the_stove",
+   "delta": -0.6666666666666661,
+   "excess": 0.01321637230949521,
+   "has_data": true,
+   "rec_share_task": 0.01932417040914483
+  },
+  {
+   "arm": "LRS v1",
+   "task": "open_the_middle_drawer_of_the_cabinet",
+   "delta": -9.6,
+   "excess": 0.12032338527135157,
+   "has_data": true,
+   "rec_share_task": 0.038625628272940186
+  },
+  {
+   "arm": "LRS v1",
+   "task": "open_the_top_drawer_and_put_the_bowl_inside",
+   "delta": -7.466666666666667,
+   "excess": 0.06149435110957969,
+   "has_data": true,
+   "rec_share_task": 0.05735320561739603
+  },
+  {
+   "arm": "LRS v1",
+   "task": "push_the_plate_to_the_front_of_the_stove",
+   "delta": -4.2,
+   "excess": 0.14685330974429903,
+   "has_data": true,
+   "rec_share_task": 0.08310362446602282
+  },
+  {
+   "arm": "LRS v1",
+   "task": "put_the_bowl_on_the_plate",
+   "delta": -6.199999999999999,
+   "excess": 0.05526270839985777,
+   "has_data": true,
+   "rec_share_task": 0.025048134698209698
+  },
+  {
+   "arm": "LRS v1",
+   "task": "put_the_bowl_on_the_stove",
+   "delta": -6.066666666666666,
+   "excess": 0.0,
+   "has_data": false,
+   "rec_share_task": 0.0
+  },
+  {
+   "arm": "LRS v1",
+   "task": "put_the_bowl_on_top_of_the_cabinet",
+   "delta": -3.0,
+   "excess": 0.05786780306719474,
+   "has_data": true,
+   "rec_share_task": 0.07491030937782339
+  },
+  {
+   "arm": "LRS v1",
+   "task": "put_the_cream_cheese_in_the_bowl",
+   "delta": -6.2,
+   "excess": 0.21447056120756658,
+   "has_data": true,
+   "rec_share_task": 0.08380590861643991
+  },
+  {
+   "arm": "LRS v1",
+   "task": "put_the_wine_bottle_on_the_rack",
+   "delta": -4.2,
+   "excess": 0.05481152474092986,
+   "has_data": true,
+   "rec_share_task": 0.01942986149487294
+  },
+  {
+   "arm": "LRS v1",
+   "task": "put_the_wine_bottle_on_top_of_the_cabinet",
+   "delta": -9.066666666666666,
+   "excess": 0.0035386238572853597,
+   "has_data": true,
+   "rec_share_task": 0.004681894336113962
+  },
+  {
+   "arm": "LRS v1",
+   "task": "turn_on_the_stove",
+   "delta": -8.666666666666666,
+   "excess": 0.18674392945036278,
+   "has_data": true,
+   "rec_share_task": 0.059694152785453015
+  },
+  {
+   "arm": "LRS v2",
+   "task": "open_the_middle_drawer_of_the_cabinet",
+   "delta": -9.6,
+   "excess": 0.08358803994540165,
+   "has_data": true,
+   "rec_share_task": 0.054613880298344554
+  },
+  {
+   "arm": "LRS v2",
+   "task": "open_the_top_drawer_and_put_the_bowl_inside",
+   "delta": -6.8,
+   "excess": 0.07787924109950853,
+   "has_data": true,
+   "rec_share_task": 0.09227002607482869
+  },
+  {
+   "arm": "LRS v2",
+   "task": "push_the_plate_to_the_front_of_the_stove",
+   "delta": 0.7999999999999998,
+   "excess": 0.022850177377620604,
+   "has_data": true,
+   "rec_share_task": 0.01670835607300952
+  },
+  {
+   "arm": "LRS v2",
+   "task": "put_the_bowl_on_the_plate",
+   "delta": -3.5333333333333323,
+   "excess": 0.03548818859778967,
+   "has_data": true,
+   "rec_share_task": 0.02244406039657995
+  },
+  {
+   "arm": "LRS v2",
+   "task": "put_the_bowl_on_the_stove",
+   "delta": -2.7333333333333334,
+   "excess": 0.0,
+   "has_data": false,
+   "rec_share_task": 0.0
+  },
+  {
+   "arm": "LRS v2",
+   "task": "put_the_bowl_on_top_of_the_cabinet",
+   "delta": -1.666666666666667,
+   "excess": 0.0,
+   "has_data": false,
+   "rec_share_task": 0.0
+  },
+  {
+   "arm": "LRS v2",
+   "task": "put_the_cream_cheese_in_the_bowl",
+   "delta": -5.866666666666667,
+   "excess": 0.0683707834297965,
+   "has_data": true,
+   "rec_share_task": 0.056858286338002544
+  },
+  {
+   "arm": "LRS v2",
+   "task": "put_the_wine_bottle_on_the_rack",
+   "delta": -3.8666666666666667,
+   "excess": 0.036682707358680844,
+   "has_data": true,
+   "rec_share_task": 0.02593535868049239
+  },
+  {
+   "arm": "LRS v2",
+   "task": "put_the_wine_bottle_on_top_of_the_cabinet",
+   "delta": -6.066666666666666,
+   "excess": 0.11108643504065584,
+   "has_data": true,
+   "rec_share_task": 0.07157161482020497
+  },
+  {
+   "arm": "LRS v2",
+   "task": "turn_on_the_stove",
+   "delta": -1.0,
+   "excess": 0.10635593744045804,
+   "has_data": true,
+   "rec_share_task": 0.0897762415863198
+  },
+  {
+   "arm": "LRS v2-GT",
+   "task": "open_the_middle_drawer_of_the_cabinet",
+   "delta": -1.5999999999999996,
+   "excess": 0.0,
+   "has_data": false,
+   "rec_share_task": 0.0
+  },
+  {
+   "arm": "LRS v2-GT",
+   "task": "open_the_top_drawer_and_put_the_bowl_inside",
+   "delta": -4.8,
+   "excess": 0.04078321291456353,
+   "has_data": true,
+   "rec_share_task": 0.07268173021725365
+  },
+  {
+   "arm": "LRS v2-GT",
+   "task": "push_the_plate_to_the_front_of_the_stove",
+   "delta": 4.8,
+   "excess": 0.04031255515071686,
+   "has_data": true,
+   "rec_share_task": 0.03755222727891438
+  },
+  {
+   "arm": "LRS v2-GT",
+   "task": "put_the_bowl_on_the_plate",
+   "delta": 0.8000000000000007,
+   "excess": 0.0265962940949704,
+   "has_data": true,
+   "rec_share_task": 0.026165422878211313
+  },
+  {
+   "arm": "LRS v2-GT",
+   "task": "put_the_bowl_on_the_stove",
+   "delta": 0.5999999999999996,
+   "excess": 0.0,
+   "has_data": false,
+   "rec_share_task": 0.0
+  },
+  {
+   "arm": "LRS v2-GT",
+   "task": "put_the_bowl_on_top_of_the_cabinet",
+   "delta": 1.0,
+   "excess": 0.0,
+   "has_data": false,
+   "rec_share_task": 0.0
+  },
+  {
+   "arm": "LRS v2-GT",
+   "task": "put_the_cream_cheese_in_the_bowl",
+   "delta": -3.2,
+   "excess": 0.008771247600764668,
+   "has_data": true,
+   "rec_share_task": 0.02907269208690146
+  },
+  {
+   "arm": "LRS v2-GT",
+   "task": "put_the_wine_bottle_on_the_rack",
+   "delta": 1.7999999999999998,
+   "excess": 0.011483199295000265,
+   "has_data": true,
+   "rec_share_task": 0.005814538417380291
+  },
+  {
+   "arm": "LRS v2-GT",
+   "task": "put_the_wine_bottle_on_top_of_the_cabinet",
+   "delta": -1.4000000000000004,
+   "excess": 0.0,
+   "has_data": false,
+   "rec_share_task": 0.0
+  },
+  {
+   "arm": "LRS v2-GT",
+   "task": "turn_on_the_stove",
+   "delta": 0.0,
+   "excess": 0.0,
+   "has_data": false,
+   "rec_share_task": 0.0
+  }
+ ]
+}
