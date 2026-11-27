@@ -66,7 +66,8 @@
   "953bb534": "vla_RetryVLA_DoanhLT_2g (953bb534-56fa-4fdf-9e98-36e94fea2423), RetryVLA-OWNED, user account, started 2026-11-23 03:26 UTC for 2610.05151 F1 (user decision). Node cn62, 2x A100 80GB, 32 CPU. envcheck GPU0/1: OK video decode, OK sim 50 steps 0.98 / 0.96 s. Full use; KILL when F1 is done unless scripts/shells/keep_953bb534 exists.",
   "8f473147": "vla_RetryVLA_DoanhLT_2g_b (8f473147-f766-4ea5-8fe5-32d28567fd52), RetryVLA-OWNED second 2-GPU shell, user account, started 2026-11-23 08:25 UTC for the Goal campaign (queue > 12 h). Node cn36, 2x A100 80GB; envcheck GPU0/1 OK (sim 50 steps 0.96 s). Full use; kill when idle.",
   "1123d1ea": "vla_RetryVLA_DoanhLT_lrs2g (1123d1ea-0e2a-4c73-bbbb-21d671e1e077), RetryVLA-OWNED 2-GPU shell, user account, started 2026-11-24 13:45 UTC for LRS-G (full 2610.05151 Recovery reproduction + demos). Full use; KILL when LRS-G is done.",
-  "e112b373": "vla_RetryVLA_DoanhLT_e1wm (e112b373-8907-43c8-b3b6-05e33f18576c), RetryVLA-OWNED 2-GPU shell, user account, started 2026-11-26 07:45 UTC for E1 (WM-DAgger x 3D aux) + E2. envcheck GPU0 OK (sim 50 steps 0.95 s). Full use; KILL when E1/E2 are done."
+  "e112b373": "vla_RetryVLA_DoanhLT_e1wm (e112b373-8907-43c8-b3b6-05e33f18576c), RetryVLA-OWNED 2-GPU shell, user account, started 2026-11-26 07:45 UTC for E1 (WM-DAgger x 3D aux) + E2. envcheck GPU0 OK (sim 50 steps 0.95 s). Full use; KILL when E1/E2 are done.",
+  "f43a0cac": "vla-recovery-quang-1 (cn03, 2x A100). SECONDARY-rule light borrow 2026-11-26 17:58 UTC: GPU0 owner (45 GB, 100 %), GPU1 idle at probe (0 MiB / 0 %), envcheck GPU1 OK (sim 1.01 s). LRS debug uses GPU1 only; back off if the owner appears on GPU1."
  },
  "share_ok": {
   "63e0f914": true,
@@ -94,7 +95,8 @@
   "a3da0634": "vla_RetryVLA_DoanhLT_critic (cn28): CRIT-V shell (rich replay 11-23, critic-variant training 11-24 08:55-10:09 UTC); killed 2026-11-24 ~12:45 UTC by the CRIT-V agent after all pre-registered jobs finished",
   "bb15ca35": "vla_RetryVLA_DoanhLT_lrsdemo 1-GPU, requested 2026-11-24 13:20 UTC for LRS demos, killed unused 13:50 UTC (scope moved to the 2-GPU shell 1123d1ea)",
   "ea7f9ee3": "V2R shell killed 2026-11-25 14:13 UTC (idle / done)",
-  "f72a5ddd": "V2R shell killed 2026-11-25 14:13 UTC (idle / done)"
+  "f72a5ddd": "V2R shell killed 2026-11-25 14:13 UTC (idle / done)",
+  "9119f6d6": "vla_RetryVLA_DoanhLT_lrsdbg: requested 2026-11-26 17:23 UTC, never got RUNNING in time, TERMINATED by 2026-11-27 03:30 UTC"
  },
  "_mode": "user 2026-11-17 09:20 UTC: DEFAULT = run on THIS machine, 8b889199 (vla_cvpr_DoanhLT_4g, local 4x A100 80GB; GPUs 1-3 free, GPU0 has the user's LAWAM server). Launch locally: scripts/shells/launch_remote.sh 8b889199 <gpu> <name> <module> <cfg> [k=v] (local fast path, no det) or scripts/launch.sh with CUDA_VISIBLE_DEVICES=MUJOCO_EGL_DEVICE_ID=<gpu>; register claims as '8b889199:<gpu>' (dag_run.py: use local:<gpu>:<lane> slots). SECONDARY (user 2026-11-16 04:26 UTC, still valid): extra light GPU work may use shells whose NAME contains thanhnv/Thanhnv, DoanhLT or quang (read-only probe first, clearly idle GPUs only, never disturb others' processes/tmux, <=8 sim workers + owner back-off watchdog, add to allow_only after probing, register + release claims). Prefer the local machine, then existing shells, over new requests. Never any other shell. History: 2026-11-08 thanhnv 335de36e/b936d1d7 light jobs; d2ecd68c/e26be342/cb2b6ab1/f02ea5c5 = agent-requested user-account shells (all gone by 2026-11-17).",
  "probes": {

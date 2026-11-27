@@ -1546,3 +1546,32 @@ Revised ETA (UTC): b2x s1 ~14:55, s2 ~17:30, s3 ~20:00; progress SFT ~17:00, RSR
   - 5-seed paired Δ +3.0 / +3.0, CI lower bounds −3.8 / −4.0: "beats Original" NOT met.
   - Round 5 (phys share sweep s7) running since 15:16: sw5 on GPU0 (then sw36), sw18 on GPU1, both at step ~1650 at
     17:18. ETA sw5 / sw18 ~17:55, sw36 ~20:30. The watcher kills 7485771f after LANE_DONE on both lanes.
+
+### LRS-G debug 2026-11-27 (coordinator task "find the remaining bug"; doc docs/research/DEBUG_2026-11-27_LRS.md)
+Pre-registration (2026-11-26 17:55 UTC, written BEFORE any control result; recipe = lrs_run.sh: M0 + 2k, bs 48 =
+16 x 3, warmup 200, cosine 2k, --masked_recovery --l_min 5, seed 7, val / 100):
+- Checks already done (no training): (4) normaliser stats of every ckpt (M0, orig, lrs v1, lrs2 s7/s8, lrs2gt, C0,
+  g2phys, f1, g2) are bit-identical (max |diff| 0.0) -> stat recompute ruled out (also for Problem B). Action frame /
+  scale per dim (corr(a_i, Δeef_i) 0.77-0.94, gain 0.007-0.012 m / unit on all three sets), gripper sign (+1 -> width
+  0.022, -1 -> 0.062-0.073 on D0 / v2), image keys / flip (side-by-side sheet), task strings + task_index, obs / action
+  alignment (replayed eef after each teacher command vs logged feedback: median 0.3 mm, max 1 mm, 109 + 40 commands):
+  all consistent.
+- Controls (all seed 7, 2k, masked path; "~Original" = within the Original / C0 range 76-82):
+  - C1 `lrsdbg_c1_s7`: 13 D0 episodes (1,848 frames, ~4.5 %) rewritten in the LRS window format (q = 1, run_end,
+    one episode per window, same writer) as the recovery root. Expect ~Original. < 72 -> plumbing bug in the
+    writer / masked path for recovery roots.
+  - C3 `lrsdbg_c3_s7`: the v2 windows' frames (same images / states / q / windows) with every action replaced by
+    M0's own predicted action at that frame (first action of its chunk, fixed noise). Expect ~Original if the
+    damage is in the teacher ACTIONS; <= 60 -> the observations (frames) themselves are the problem.
+  - C2 `lrsdbg_c2_s7`: 3 whole v2 windows (204 frames, ~0.5 % anchors). Dose check; expect >= 72.
+- Also: per-dim / per-episode FM loss of M0 on D0 / v2 / v2-GT (scripts/lrs/diag_m0_windows.py).
+- Observation already in hand (pre-existing evals, no new training): LRS policies chatter the gripper at val:
+  flips / episode 12.2-13.6 (lrs2 s7-s9), 17.9 (lrs v1 s8) vs 2.6-3.2 Original / C0, 3.9 v2-GT; share of episodes
+  with >= 10 flips 0.35-0.52 vs 0.07-0.08. In the data: chunks with >= 2 gripper toggles (close + reopen inside the
+  50-step target) 34 % of v2 anchors, 28 % v2-GT, 12 % v1, 2.7 % D0.
+- 2026-11-27 03:40 UTC partial read-out (doc docs/research/DEBUG_2026-11-27_LRS.md): no convention / plumbing bug
+  found (stats identical across all runs, action frame / scale / gripper / alignment / tasks / keys consistent).
+  M0 per-dim FM loss on v2 windows 1.12 vs D0 0.129; gripper dim 1.58 vs 0.048 (33x); 5 episodes carry 82 % of
+  window loss. Val gripper chatter 12-14 flips / ep for lrs2 vs 2.6-3.2 Original. Compute: own shell 9119f6d6 never
+  ran (TERMINATED); borrowed f43a0cac:1 CPU-starved (load 47/32), lane killed 03:33, claim released; new own shell
+  42c2100b requested 03:34 (QUEUED), local watcher rv_lrsdbg_watch launches C1/C2/C3 + lrs2gt_s8 and kills it after.

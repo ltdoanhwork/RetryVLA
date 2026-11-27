@@ -1861,3 +1861,11 @@ Reading:
 - The paper's +10 is not reproduced. Our defensible claims: (1) verified recovery data raises own-failure recovery
   (+6 to +14 pt, CI > 0 in several arms); (2) at small, physically filtered shares it does so without costing
   nominal (here +3.0, CI [−4, +10]).
+
+## LRS-G debug (2026-11-27, partial; docs/research/DEBUG_2026-11-27_LRS.md)
+- Normalisation stats of every Goal ckpt (M0, Original, LRS v1/v2/v2-GT, C0, F1, G2, G2-phys) are bit-identical:
+  the "mixed-dataset stats recompute" hypothesis is ruled out for LRS and for our own distillation (Problem B).
+- Action convention, observation alignment (replay vs log <= 1 mm), gripper sign, keys, task strings, recipe: consistent.
+- Mechanism evidence: M0 FM loss on v2 windows 8.7x D0 overall, 33x on the gripper dim; LRS policies chatter the
+  gripper at val (12-14 flips / episode vs 2.6-3.2 Original); v2-GT (sim-verified windows) 77 = Original range.
+- Controls C1 (D0 in LRS format), C2 (0.5 %), C3 (v2 frames + M0 actions): pending compute (shell 42c2100b queued).
